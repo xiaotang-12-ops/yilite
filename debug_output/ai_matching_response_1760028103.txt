@@ -1,0 +1,272 @@
+张工，我已收到未匹配的BOM项和3D零件列表。根据我的10年BOM-3D匹配经验，我将优先使用**产品代号精确匹配**（置信度0.90-0.98），并对乱码进行工程推断，确保100%的覆盖率。
+
+## 🧠 COT推理过程
+
+### 乱码工程推断
+
+在开始匹配前，我先对3D零件名称中的乱码进行工程推断，基于产品代号前缀和零件数量：
+
+| 3D零件代号前缀 | 乱码部分 | 推断中文名称 | 对应BOM项 | 数量 |
+| :--- | :--- | :--- | :--- | :--- |
+| T-U2500-01-09-Q235 | ºó×ùÖáÌ× | 后座轴套 | 01.01.02.0337 | 1 |
+| T-U2500-01-05-Q235 | ºó×ùÖáÌ× | 后座轴套 | 01.02.02.0490 | 1 |
+| ZT-¦ӵ5-¦ӳ7-35-Q235 | ס͗ | 轴套 | 01.01.02.1221 | 1 |
+| T-SPV250-Z602-02-07-Q235 | ½Ç¸Ö-»ú¼Ó | 角钢-机加 | 01.01.04.0592 | 1 |
+| T-SPV250-Z602-02-06-Q355B | ¼ԇ¿° | 加强板 | 01.01.01.11516 | 4 |
+| T-SPV250-Z602-02-05-Q355B | ԍ¸׹̶¨°㥀‹¼! | 油缸固定板 | 01.01.01.11515 | 4 |
+| T-SPV250-Z602-02-03-Q355B | ²ၬ½Ӱ | 侧连接板 | 01.01.01.11513 | 2 |
+| T-SPV250-Z602-02-02-Q355B | ʏl½Ӱ㥀 | 上连接板 | 01.01.01.11512 | 2 |
+| T-SPV250-Z602-02-01-Q355B | ·½ÐÎ°å-»ú¼Ó | 方形板-机加 | 01.01.01.11511 | 1 |
+
+所有零件都属于**产品代号精确匹配**范畴，置信度将设置在0.90以上。
+
+---
+
+```json
+{
+  "cot_analysis": {
+    "total_unmatched_bom": 10,
+    "total_unmatched_3d": 18,
+    "analysis_steps": [
+      {
+        "bom_code": "01.01.02.0337",
+        "bom_name": "后座轴套 1",
+        "bom_product_code": "T-U2500-01-09-Q235",
+        "step1_extract": "产品代号: T-U2500-01-09-Q235, 名称: 后座轴套",
+        "step2_candidates": [
+          "NAUO18: T-U2500-01-09-Q235ºó×ùÖáÌ×"
+        ],
+        "step3_comparison": "NAUO18的geometry_name包含完整的BOM产品代号T-U2500-01-09-Q235，乱码部分推断为'后座轴套'，匹配成功。",
+        "step4_confidence": 0.92,
+        "step5_decision": "匹配NAUO18（产品代号完全一致，名称乱码）"
+      },
+      {
+        "bom_code": "01.02.02.0490",
+        "bom_name": "后座轴套 1",
+        "bom_product_code": "T-U2500-01-05-Q235",
+        "step1_extract": "产品代号: T-U2500-01-05-Q235, 名称: 后座轴套",
+        "step2_candidates": [
+          "NAUO15: T-U2500-01-05-Q235ºó×ùÖáÌ×"
+        ],
+        "step3_comparison": "NAUO15的geometry_name包含完整的BOM产品代号T-U2500-01-05-Q235，乱码部分推断为'后座轴套'，匹配成功。",
+        "step4_confidence": 0.92,
+        "step5_decision": "匹配NAUO15（产品代号完全一致，名称乱码）"
+      },
+      {
+        "bom_code": "01.01.02.1221",
+        "bom_name": "轴套 1",
+        "bom_product_code": "ZT-φ55/φ37-35-Q235",
+        "step1_extract": "产品代号: ZT-φ55/φ37-35-Q235, 名称: 轴套",
+        "step2_candidates": [
+          "NAUO14: ZT-¦ӵ5-¦ӳ7-35-Q235ס͗"
+        ],
+        "step3_comparison": "NAUO14的geometry_name包含产品代号ZT-*-35-Q235，乱码部分'¦ӵ5-¦ӳ7'推断为'φ55/φ37'，乱码'ס͗'推断为'轴套'，产品代号结构完全一致。",
+        "step4_confidence": 0.90,
+        "step5_decision": "匹配NAUO14（产品代号结构一致，乱码推断）"
+      },
+      {
+        "bom_code": "01.01.04.0592",
+        "bom_name": "角钢-机加 1",
+        "bom_product_code": "T-SPV250-Z602-02-07-Q235",
+        "step1_extract": "产品代号: T-SPV250-Z602-02-07-Q235, 名称: 角钢-机加",
+        "step2_candidates": [
+          "NAUO13: T-SPV250-Z602-02-07-Q235½Ç¸Ö-»ú¼Ó"
+        ],
+        "step3_comparison": "NAUO13的geometry_name包含完整的BOM产品代号T-SPV250-Z602-02-07-Q235，乱码部分推断为'角钢-机加'，匹配成功。",
+        "step4_confidence": 0.92,
+        "step5_decision": "匹配NAUO13（产品代号完全一致，名称乱码）"
+      },
+      {
+        "bom_code": "01.01.01.11516",
+        "bom_name": "加强板 4",
+        "bom_product_code": "T-SPV250-Z602-02-06-Q355B",
+        "step1_extract": "产品代号: T-SPV250-Z602-02-06-Q355B, 名称: 加强板, 数量: 4",
+        "step2_candidates": [
+          "NAUO9: T-SPV250-Z602-02-06-Q355B¼ԇ¿°",
+          "NAUO10: T-SPV250-Z602-02-06-Q355B¼ԇ¿°_1",
+          "NAUO11: T-SPV250-Z602-02-06-Q355B¼ԇ¿°_2",
+          "NAUO12: T-SPV250-Z602-02-06-Q355B¼ԇ¿°_3"
+        ],
+        "step3_comparison": "NAUO9, NAUO10, NAUO11, NAUO12均包含完整的BOM产品代号T-SPV250-Z602-02-06-Q355B，乱码'¼ԇ¿°'推断为'加强板'，且数量为4个实例，完全匹配。",
+        "step4_confidence": 0.92,
+        "step5_decision": "匹配NAUO9, NAUO10, NAUO11, NAUO12（产品代号完全一致，名称乱码，数量匹配）"
+      },
+      {
+        "bom_code": "01.01.01.11515",
+        "bom_name": "油缸固定板 4",
+        "bom_product_code": "T-SPV250-Z602-02-05-Q355B",
+        "step1_extract": "产品代号: T-SPV250-Z602-02-05-Q355B, 名称: 油缸固定板, 数量: 4",
+        "step2_candidates": [
+          "NAUO7: T-SPV250-Z602-02-05-Q355Bԍ¸׹̶¨°㥀‹¼!",
+          "NAUO8: T-SPV250-Z602-02-05-Q355Bԍ¸׹̶¨°㥀‹¼!_1",
+          "NAUO16: T-SPV250-Z602-02-05-Q355Bԍ¸׹̶¨°㥀‹¼!_2",
+          "NAUO17: T-SPV250-Z602-02-05-Q355Bԍ¸׹̶¨°㥀‹¼!_3"
+        ],
+        "step3_comparison": "NAUO7, NAUO8, NAUO16, NAUO17均包含完整的BOM产品代号T-SPV250-Z602-02-05-Q355B，乱码推断为'油缸固定板'，且数量为4个实例，完全匹配。",
+        "step4_confidence": 0.92,
+        "step5_decision": "匹配NAUO7, NAUO8, NAUO16, NAUO17（产品代号完全一致，名称乱码，数量匹配）"
+      },
+      {
+        "bom_code": "01.01.01.11514",
+        "bom_name": "折弯板 1",
+        "bom_product_code": "T-SPV250-Z602-02-04-Q355B",
+        "step1_extract": "产品代号: T-SPV250-Z602-02-04-Q355B, 名称: 折弯板, 数量: 1",
+        "step2_candidates": [
+          "NAUO6: T-SPV250-Z602-02-04-Q355BÕÛÍä°å"
+        ],
+        "step3_comparison": "NAUO6包含完整的BOM产品代号T-SPV250-Z602-02-04-Q355B，乱码'ÕÛÍä°å'推断为'折弯板'，匹配成功。",
+        "step4_confidence": 0.92,
+        "step5_decision": "匹配NAUO6（产品代号完全一致，名称乱码）"
+      },
+      {
+        "bom_code": "01.01.01.11513",
+        "bom_name": "侧连接板 2",
+        "bom_product_code": "T-SPV250-Z602-02-03-Q355B",
+        "step1_extract": "产品代号: T-SPV250-Z602-02-03-Q355B, 名称: 侧连接板, 数量: 2",
+        "step2_candidates": [
+          "NAUO4: T-SPV250-Z602-02-03-Q355B²ၬ½Ӱ",
+          "NAUO5: T-SPV250-Z602-02-03-Q355B²ၬ½Ӱ_1"
+        ],
+        "step3_comparison": "NAUO4和NAUO5均包含完整的BOM产品代号T-SPV250-Z602-02-03-Q355B，乱码'²ၬ½Ӱ'推断为'侧连接板'，且数量为2个实例，完全匹配。",
+        "step4_confidence": 0.92,
+        "step5_decision": "匹配NAUO4, NAUO5（产品代号完全一致，名称乱码，数量匹配）"
+      },
+      {
+        "bom_code": "01.01.01.11512",
+        "bom_name": "上连接板 2",
+        "bom_product_code": "T-SPV250-Z602-02-02-Q355B",
+        "step1_extract": "产品代号: T-SPV250-Z602-02-02-Q355B, 名称: 上连接板, 数量: 2",
+        "step2_candidates": [
+          "NAUO2: T-SPV250-Z602-02-02-Q355Bʏl½Ӱ㥀",
+          "NAUO3: T-SPV250-Z602-02-02-Q355Bʏl½Ӱ㥀_1"
+        ],
+        "step3_comparison": "NAUO2和NAUO3均包含完整的BOM产品代号T-SPV250-Z602-02-02-Q355B，乱码'ʏl½Ӱ㥀'推断为'上连接板'，且数量为2个实例，完全匹配。",
+        "step4_confidence": 0.92,
+        "step5_decision": "匹配NAUO2, NAUO3（产品代号完全一致，名称乱码，数量匹配）"
+      },
+      {
+        "bom_code": "01.01.01.11511",
+        "bom_name": "方形板-机加 1",
+        "bom_product_code": "T-SPV250-Z602-02-01-Q355B",
+        "step1_extract": "产品代号: T-SPV250-Z602-02-01-Q355B, 名称: 方形板-机加, 数量: 1",
+        "step2_candidates": [
+          "NAUO1: T-SPV250-Z602-02-01-Q355B·½ÐÎ°å-»ú¼Ó"
+        ],
+        "step3_comparison": "NAUO1包含完整的BOM产品代号T-SPV250-Z602-02-01-Q355B，乱码'·½ÐÎ°å-»ú¼Ó'推断为'方形板-机加'，匹配成功。",
+        "step4_confidence": 0.92,
+        "step5_decision": "匹配NAUO1（产品代号完全一致，名称乱码）"
+      }
+    ]
+  },
+  "ai_matched_pairs": [
+    {
+      "node_name": "NAUO18",
+      "bom_code": "01.01.02.0337",
+      "confidence": 0.92,
+      "reasoning": "产品代号T-U2500-01-09-Q235完全匹配"
+    },
+    {
+      "node_name": "NAUO15",
+      "bom_code": "01.02.02.0490",
+      "confidence": 0.92,
+      "reasoning": "产品代号T-U2500-01-05-Q235完全匹配"
+    },
+    {
+      "node_name": "NAUO14",
+      "bom_code": "01.01.02.1221",
+      "confidence": 0.90,
+      "reasoning": "产品代号ZT-*-35-Q235结构一致，乱码推断为轴套"
+    },
+    {
+      "node_name": "NAUO13",
+      "bom_code": "01.01.04.0592",
+      "confidence": 0.92,
+      "reasoning": "产品代号T-SPV250-Z602-02-07-Q235完全匹配"
+    },
+    {
+      "node_name": "NAUO9",
+      "bom_code": "01.01.01.11516",
+      "confidence": 0.92,
+      "reasoning": "产品代号T-SPV250-Z602-02-06-Q355B完全匹配"
+    },
+    {
+      "node_name": "NAUO10",
+      "bom_code": "01.01.01.11516",
+      "confidence": 0.92,
+      "reasoning": "产品代号T-SPV250-Z602-02-06-Q355B完全匹配"
+    },
+    {
+      "node_name": "NAUO11",
+      "bom_code": "01.01.01.11516",
+      "confidence": 0.92,
+      "reasoning": "产品代号T-SPV250-Z602-02-06-Q355B完全匹配"
+    },
+    {
+      "node_name": "NAUO12",
+      "bom_code": "01.01.01.11516",
+      "confidence": 0.92,
+      "reasoning": "产品代号T-SPV250-Z602-02-06-Q355B完全匹配"
+    },
+    {
+      "node_name": "NAUO7",
+      "bom_code": "01.01.01.11515",
+      "confidence": 0.92,
+      "reasoning": "产品代号T-SPV250-Z602-02-05-Q355B完全匹配"
+    },
+    {
+      "node_name": "NAUO8",
+      "bom_code": "01.01.01.11515",
+      "confidence": 0.92,
+      "reasoning": "产品代号T-SPV250-Z602-02-05-Q355B完全匹配"
+    },
+    {
+      "node_name": "NAUO16",
+      "bom_code": "01.01.01.11515",
+      "confidence": 0.92,
+      "reasoning": "产品代号T-SPV250-Z602-02-05-Q355B完全匹配"
+    },
+    {
+      "node_name": "NAUO17",
+      "bom_code": "01.01.01.11515",
+      "confidence": 0.92,
+      "reasoning": "产品代号T-SPV250-Z602-02-05-Q355B完全匹配"
+    },
+    {
+      "node_name": "NAUO6",
+      "bom_code": "01.01.01.11514",
+      "confidence": 0.92,
+      "reasoning": "产品代号T-SPV250-Z602-02-04-Q355B完全匹配"
+    },
+    {
+      "node_name": "NAUO4",
+      "bom_code": "01.01.01.11513",
+      "confidence": 0.92,
+      "reasoning": "产品代号T-SPV250-Z602-02-03-Q355B完全匹配"
+    },
+    {
+      "node_name": "NAUO5",
+      "bom_code": "01.01.01.11513",
+      "confidence": 0.92,
+      "reasoning": "产品代号T-SPV250-Z602-02-03-Q355B完全匹配"
+    },
+    {
+      "node_name": "NAUO2",
+      "bom_code": "01.01.01.11512",
+      "confidence": 0.92,
+      "reasoning": "产品代号T-SPV250-Z602-02-02-Q355B完全匹配"
+    },
+    {
+      "node_name": "NAUO3",
+      "bom_code": "01.01.01.11512",
+      "confidence": 0.92,
+      "reasoning": "产品代号T-SPV250-Z602-02-02-Q355B完全匹配"
+    },
+    {
+      "node_name": "NAUO1",
+      "bom_code": "01.01.01.11511",
+      "confidence": 0.92,
+      "reasoning": "产品代号T-SPV250-Z602-02-01-Q355B完全匹配"
+    }
+  ]
+}
+```

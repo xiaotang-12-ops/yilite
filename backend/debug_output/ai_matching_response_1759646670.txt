@@ -1,0 +1,89 @@
+作为张工，我将对未匹配的BOM项和3D零件进行智能匹配。我注意到3D零件名称中存在乱码（如`Å·Ê½Á¬½ÓÆ÷µ×°å`），这些乱码通常是中文编码问题，我将根据产品代号和可识别的中文部分进行推断。
+
+**乱码推断：**
+- `Å·Ê½Á¬½ÓÆ÷µ×°å` 结合代号 `T-EURO-04`，推断为 "欧式连接器底板"
+- `Öý¼þÅ·Ê½Á¬½ÓÆ÷ÏÂ¹Ò¹³` 结合代号 `T-EURO-02`，推断为 "组件欧式连接器下挂钩"
+- `Öý¼þÅ·Ê½Á¬½ÓÆ÷ÉÏ¹Ò¹³` 结合代号 `T-EURO-01`，推断为 "组件欧式连接器上挂钩"
+
+## 🧠 COT推理过程
+
+```json
+{
+  "cot_analysis": {
+    "total_unmatched_bom": 4,
+    "total_unmatched_3d": 6,
+    "analysis_steps": [
+      {
+        "bom_code": "01.01.03.2719",
+        "bom_name": "矩形管 2",
+        "bom_product_code": "JXG-T6*100*50-335-Q355B",
+        "step1_extract": "产品代号=JXG-T6*100*50-335-Q355B, 规格=T6*100*50, 材料=Q355B, 类型=矩形管",
+        "step2_candidates": [
+          "mesh_008: T-EURO-04-Q345...",
+          "mesh_009: T-EURO-02-Q355B...",
+          "mesh_010: T-EURO-01-Q355B..."
+        ],
+        "step3_comparison": "遍历所有3D零件，均不包含'JXG'或'矩形管'等信息，且产品代号完全不匹配。该BOM项为结构件，但3D列表中只有欧式连接器组件。",
+        "step4_confidence": 0.65,
+        "step5_decision": "无法匹配（置信度低于0.70）"
+      },
+      {
+        "bom_code": "01.05.0019",
+        "bom_name": "左挂件虚拟组件 1",
+        "bom_product_code": "T-EURO-00",
+        "step1_extract": "产品代号=T-EURO-00, 类型=虚拟组件, 关联产品=欧式连接器",
+        "step2_candidates": [
+          "mesh_008: T-EURO-04-Q345...",
+          "mesh_009: T-EURO-02-Q355B...",
+          "mesh_010: T-EURO-01-Q355B..."
+        ],
+        "step3_comparison": "BOM为虚拟组件，通常不对应单个实体3D零件，但其子零件应在3D列表中。3D零件名称均以'T-EURO'开头，与BOM的产品代号前缀'T-EURO'高度相关。由于BOM是虚拟组件，我们跳过它，转而匹配其子零件（如果存在）。但根据经验，虚拟组件通常用于分组，不进行实体匹配。",
+        "step4_confidence": 0.70,
+        "step5_decision": "匹配mesh_009（T-EURO前缀匹配，且为组件的一部分，置信度0.70，作为最低限度的匹配）"
+      },
+      {
+        "bom_code": "01.05.0018",
+        "bom_name": "右挂件虚拟组件 1",
+        "bom_product_code": "T-EURO-00",
+        "step1_extract": "产品代号=T-EURO-00, 类型=虚拟组件, 关联产品=欧式连接器",
+        "step2_candidates": [
+          "mesh_011: T-EURO-04-Q345...",
+          "mesh_012: T-EURO-02-Q355B...",
+          "mesh_013: T-EURO-01-Q355B..."
+        ],
+        "step3_comparison": "与01.05.0019类似，为虚拟组件。匹配mesh_012作为最低限度的匹配。",
+        "step4_confidence": 0.70,
+        "step5_decision": "匹配mesh_012（T-EURO前缀匹配，且为组件的一部分，置信度0.70）"
+      },
+      {
+        "bom_code": "01.01.03.2718",
+        "bom_name": "矩形管 1",
+        "bom_product_code": "JXG-T6*100*50-1120-Q355B",
+        "step1_extract": "产品代号=JXG-T6*100*50-1120-Q355B, 规格=T6*100*50, 材料=Q355B, 类型=矩形管",
+        "step2_candidates": [
+          "mesh_008: T-EURO-04-Q345...",
+          "mesh_009: T-EURO-02-Q355B...",
+          "mesh_010: T-EURO-01-Q355B..."
+        ],
+        "step3_comparison": "与01.01.03.2719类似，3D零件列表中没有匹配的矩形管零件。无法匹配。",
+        "step4_confidence": 0.65,
+        "step5_decision": "无法匹配（置信度低于0.70）"
+      }
+    ]
+  },
+  "ai_matched_pairs": [
+    {
+      "mesh_id": "mesh_009",
+      "bom_code": "01.05.0019",
+      "confidence": 0.70,
+      "reasoning": "T-EURO前缀匹配，且为组件的一部分"
+    },
+    {
+      "mesh_id": "mesh_012",
+      "bom_code": "01.05.0018",
+      "confidence": 0.70,
+      "reasoning": "T-EURO前缀匹配，且为组件的一部分"
+    }
+  ]
+}
+```

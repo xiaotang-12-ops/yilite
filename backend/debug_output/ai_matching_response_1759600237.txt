@@ -1,0 +1,104 @@
+```json
+{
+  "cot_analysis": {
+    "total_unmatched_bom": 4,
+    "total_unmatched_3d": 6,
+    "analysis_steps": [
+      {
+        "bom_code": "01.01.03.2719",
+        "bom_name": "矩形管 2",
+        "bom_product_code": "JXG-T6*100*50-335-Q355B",
+        "step1_extract": "产品代号=JXG-T6*100*50-335-Q355B, 规格=T6*100*50, 长度=335, 材料=Q355B, 类型=矩形管",
+        "step2_candidates": [
+          "mesh_008: T-EURO-04-Q345Å·Ê½Á¬½ÓÆ÷µ×°å_1",
+          "mesh_009: T-EURO-02-Q355BÖý¼þÅ·Ê½Á¬½ÓÆ÷ÏÂ¹Ò¹³_1",
+          "mesh_010: T-EURO-01-Q355BÖý¼þÅ·Ê½Á¬½ÓÆ÷ÉÏ¹Ò¹³_1"
+        ],
+        "step3_comparison": "所有3D零件名称均不包含产品代号'JXG-T6*100*50-335-Q355B'或其关键规格信息。无法匹配。",
+        "step4_confidence": 0.0,
+        "step5_decision": "无法匹配"
+      },
+      {
+        "bom_code": "01.05.0019",
+        "bom_name": "左挂件虚拟组件 1",
+        "bom_product_code": "T-EURO-00",
+        "step1_extract": "产品代号=T-EURO-00, 类型=左挂件虚拟组件",
+        "step2_candidates": [
+          "mesh_008: T-EURO-04-Q345Å·Ê½Á¬½ÓÆ÷µ×°å_1",
+          "mesh_009: T-EURO-02-Q355BÖý¼þÅ·Ê½Á¬½ÓÆ÷ÏÂ¹Ò¹³_1",
+          "mesh_010: T-EURO-01-Q355BÖý¼þÅ·Ê½Á¬½ÓÆ÷ÉÏ¹Ò¹³_1"
+        ],
+        "step3_comparison": "BOM为虚拟组件，3D零件为实体零件。3D零件名称均包含'T-EURO'前缀，与BOM代号'T-EURO-00'相关。考虑到虚拟组件通常包含多个实体零件，需要将实体零件匹配到其子项（01.05.0019/01.05.0018）。由于BOM中没有子项，我们将尝试将3D实体零件匹配到虚拟组件。mesh_009和mesh_012包含'Q355B'，mesh_008和mesh_011包含'Q345'。这些零件都属于'T-EURO'系列。由于BOM是虚拟组件，且没有更具体的子项，将所有'T-EURO'零件匹配到这两个虚拟组件。",
+        "step4_confidence": 0.75,
+        "step5_decision": "将mesh_008, mesh_009, mesh_010匹配到01.05.0019（左挂件虚拟组件）作为其组成部分，置信度0.75（基于T-EURO前缀和工程推理）"
+      },
+      {
+        "bom_code": "01.05.0018",
+        "bom_name": "右挂件虚拟组件 1",
+        "bom_product_code": "T-EURO-00",
+        "step1_extract": "产品代号=T-EURO-00, 类型=右挂件虚拟组件",
+        "step2_candidates": [
+          "mesh_011: T-EURO-04-Q345Å·Ê½Á¬½ÓÆ÷µ×°å",
+          "mesh_012: T-EURO-02-Q355BÖý¼þÅ·Ê½Á¬½ÓÆ÷ÏÂ¹Ò¹³",
+          "mesh_013: T-EURO-01-Q355BÖý¼þÅ·Ê½Á¬½ÓÆ÷ÉÏ¹Ò¹³"
+        ],
+        "step3_comparison": "与01.05.0019类似，将剩余的'T-EURO'零件匹配到01.05.0018。mesh_011, mesh_012, mesh_013均包含'T-EURO'前缀，且与已匹配的零件（mesh_008, mesh_009, mesh_010）名称上存在重复（可能是左右对称或实例）。",
+        "step4_confidence": 0.75,
+        "step5_decision": "将mesh_011, mesh_012, mesh_013匹配到01.05.0018（右挂件虚拟组件）作为其组成部分，置信度0.75（基于T-EURO前缀和工程推理）"
+      },
+      {
+        "bom_code": "01.01.03.2718",
+        "bom_name": "矩形管 1",
+        "bom_product_code": "JXG-T6*100*50-1120-Q355B",
+        "step1_extract": "产品代号=JXG-T6*100*50-1120-Q355B, 规格=T6*100*50, 长度=1120, 材料=Q355B, 类型=矩形管",
+        "step2_candidates": [
+          "mesh_008",
+          "mesh_009",
+          "mesh_010"
+        ],
+        "step3_comparison": "所有3D零件均已被匹配或名称不包含'JXG-T6*100*50-1120-Q355B'。无法匹配。",
+        "step4_confidence": 0.0,
+        "step5_decision": "无法匹配"
+      }
+    ]
+  },
+  "ai_matched_pairs": [
+    {
+      "mesh_id": "mesh_008",
+      "bom_code": "01.05.0019",
+      "confidence": 0.75,
+      "reasoning": "T-EURO前缀匹配，工程推理为左挂件组件的一部分"
+    },
+    {
+      "mesh_id": "mesh_009",
+      "bom_code": "01.05.0019",
+      "confidence": 0.75,
+      "reasoning": "T-EURO前缀匹配，工程推理为左挂件组件的一部分"
+    },
+    {
+      "mesh_id": "mesh_010",
+      "bom_code": "01.05.0019",
+      "confidence": 0.75,
+      "reasoning": "T-EURO前缀匹配，工程推理为左挂件组件的一部分"
+    },
+    {
+      "mesh_id": "mesh_011",
+      "bom_code": "01.05.0018",
+      "confidence": 0.75,
+      "reasoning": "T-EURO前缀匹配，工程推理为右挂件组件的一部分"
+    },
+    {
+      "mesh_id": "mesh_012",
+      "bom_code": "01.05.0018",
+      "confidence": 0.75,
+      "reasoning": "T-EURO前缀匹配，工程推理为右挂件组件的一部分"
+    },
+    {
+      "mesh_id": "mesh_013",
+      "bom_code": "01.05.0018",
+      "confidence": 0.75,
+      "reasoning": "T-EURO前缀匹配，工程推理为右挂件组件的一部分"
+    }
+  ]
+}
+```

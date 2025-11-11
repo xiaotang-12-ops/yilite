@@ -1,0 +1,468 @@
+{
+  "success": true,
+  "product_name": "",
+  "assembly_steps": [
+    {
+      "step_number": 1,
+      "title": "安装连接器后座",
+      "component_code": "01.03.6999",
+      "component_name": "连接器后座组件",
+      "connection_type": "螺栓连接",
+      "fasteners": [
+        {
+          "bom_code": "02.03.0458",
+          "bom_name": "六角头螺栓全螺纹8.8级",
+          "spec": "M30*60",
+          "quantity": 2,
+          "torque": "400N·m"
+        },
+        {
+          "bom_code": "02.03.0006",
+          "bom_name": "平垫圈",
+          "spec": "30*4",
+          "quantity": 2,
+          "torque": ""
+        },
+        {
+          "bom_code": "02.03.0147",
+          "bom_name": "1型非金属嵌件六角锁紧螺母",
+          "spec": "M30",
+          "quantity": 2,
+          "torque": "400N·m"
+        }
+      ],
+      "operation": "将连接器后座组件（01.03.6999）对准基准组件（推雪板主体）上的安装孔。使用2套M30*60螺栓、平垫圈和锁紧螺母，从内侧穿入螺栓，在外侧拧紧螺母。注意：此步骤是基准组件与推雪板主体连接的关键步骤。",
+      "quality_check": "检查连接器后座组件是否紧密贴合，M30螺栓是否按规定力矩拧紧，无松动。",
+      "estimated_time_minutes": 15,
+      "safety_warnings": [
+        "连接器后座组件可能较重，搬运时请使用合适的吊具或两人协作，防止砸伤。",
+        "使用大扭矩工具（400N·m）时，务必站稳，防止工具反作用力伤人。",
+        "确保工件稳定，防止在拧紧过程中倾倒或移动。"
+      ]
+    },
+    {
+      "step_number": 2,
+      "title": "安装后座连接架",
+      "component_code": "01.03.7000",
+      "component_name": "后座连接架组件",
+      "connection_type": "销轴连接",
+      "fasteners": [
+        {
+          "bom_code": "01.09.2561",
+          "bom_name": "销轴",
+          "spec": "XZ-φ50*15-φ35*485-φ10*10-45#",
+          "quantity": 1,
+          "torque": ""
+        },
+        {
+          "bom_code": "02.03.0001",
+          "bom_name": "安全销",
+          "spec": "φ8*45",
+          "quantity": 1,
+          "torque": ""
+        }
+      ],
+      "operation": "将后座连接架组件（01.03.7000）的下部连接孔与连接器后座组件（01.03.6999）的连接孔对齐。插入销轴（01.09.2561），确保销轴完全穿过。最后，在销轴末端的小孔中插入安全销（02.03.0001）并锁紧，防止销轴脱落。",
+      "quality_check": "检查销轴是否到位，安全销是否可靠锁定。连接架应能围绕销轴自由转动。",
+      "estimated_time_minutes": 10,
+      "safety_warnings": [
+        "安装连接架时，注意保持平衡，防止连接架突然下落夹伤手部。",
+        "插入销轴时，避免用手直接敲击，应使用铜棒或专用工具辅助，防止金属飞溅或手部受伤。"
+      ]
+    },
+    {
+      "step_number": 3,
+      "title": "安装油缸和销轴",
+      "component_code": "02.08.01.0338",
+      "component_name": "油缸",
+      "connection_type": "销轴连接",
+      "fasteners": [
+        {
+          "bom_code": "01.09.2563",
+          "bom_name": "销轴",
+          "spec": "XZ-φ40*10-φ30*87-φ10*10-45#",
+          "quantity": 1,
+          "torque": ""
+        },
+        {
+          "bom_code": "01.09.2562",
+          "bom_name": "销轴",
+          "spec": "XZ-φ35*10-φ25*145-φ10*10-45#",
+          "quantity": 1,
+          "torque": ""
+        },
+        {
+          "bom_code": "02.03.0001",
+          "bom_name": "安全销",
+          "spec": "φ8*45",
+          "quantity": 2,
+          "torque": ""
+        }
+      ],
+      "operation": "安装油缸（02.08.01.0338）。先用销轴（01.09.2563）连接油缸底部到后座连接架组件的下连接点，用安全销（02.03.0001）固定。再用销轴（01.09.2562）连接油缸活塞杆端到推雪板主体上部的连接点，用另一个安全销（02.03.0001）固定。",
+      "quality_check": "检查油缸两端销轴是否完全穿过，安全销是否可靠固定。油缸安装方向是否正确。",
+      "estimated_time_minutes": 20,
+      "safety_warnings": [
+        "油缸属于重物，搬运和对位时必须使用吊装设备或两人以上协作，防止油缸滑落伤人。",
+        "在对准销轴孔时，注意油缸活塞杆的移动，防止挤压或夹伤手指。",
+        "安装完成后，确保油缸处于稳定状态，避免意外摆动。"
+      ]
+    },
+    {
+      "step_number": 4,
+      "title": "安装滑雪板（对称件）",
+      "component_code": "01.03.7001",
+      "component_name": "左滑雪板组件",
+      "connection_type": "螺栓连接",
+      "fasteners": [
+        {
+          "bom_code": "02.03.1035",
+          "bom_name": "内六角平圆头螺钉",
+          "spec": "M16*85",
+          "quantity": 2,
+          "torque": "120N·m"
+        },
+        {
+          "bom_code": "02.03.0072",
+          "bom_name": "平垫圈",
+          "spec": "16*3",
+          "quantity": 2,
+          "torque": ""
+        },
+        {
+          "bom_code": "02.03.0019",
+          "bom_name": "1型非金属嵌件六角锁紧螺母",
+          "spec": "M16",
+          "quantity": 2,
+          "torque": "120N·m"
+        }
+      ],
+      "operation": "将左滑雪板组件（01.03.7001）和右滑雪板组件（假设存在，未列出BOM）同步安装到推雪板主体两侧的安装位置。使用M16*85内六角平圆头螺钉、平垫圈和M16锁紧螺母进行连接。螺钉从外侧穿入，螺母在内侧拧紧。",
+      "quality_check": "检查滑雪板安装是否牢固，螺栓是否按规定力矩拧紧。确保左右滑雪板高度一致。",
+      "estimated_time_minutes": 15,
+      "safety_warnings": [
+        "滑雪板组件边缘可能锋利，操作时请佩戴防割手套，防止划伤。",
+        "滑雪板组件体积较大，安装时注意周围环境，防止碰撞或跌落。"
+      ]
+    },
+    {
+      "step_number": 5,
+      "title": "安装橡胶刀板和挡板",
+      "component_code": "01.02.07.0239",
+      "component_name": "橡胶刀板",
+      "connection_type": "螺栓连接",
+      "fasteners": [
+        {
+          "bom_code": "02.03.0398",
+          "bom_name": "六角头螺栓全螺纹8.8级",
+          "spec": "M8*40",
+          "quantity": 12,
+          "torque": "25N·m"
+        },
+        {
+          "bom_code": "02.03.0028",
+          "bom_name": "1型非金属嵌件六角锁紧螺母",
+          "spec": "M8",
+          "quantity": 12,
+          "torque": "25N·m"
+        },
+        {
+          "bom_code": "02.03.0088",
+          "bom_name": "六角头螺栓8.8级",
+          "spec": "M8*80",
+          "quantity": 6,
+          "torque": "25N·m"
+        }
+      ],
+      "operation": "将橡胶刀板（01.02.07.0239）安装到推雪板底部的刀板安装位。使用M8*40螺栓和M8锁紧螺母固定。然后，将橡胶挡板（01.02.07.0071）安装到推雪板上沿，使用M8*80螺栓和M8锁紧螺母固定。",
+      "quality_check": "检查橡胶刀板和挡板是否平整安装，所有M8螺栓是否均匀拧紧，无遗漏。",
+      "estimated_time_minutes": 25,
+      "safety_warnings": [
+        "安装刀板时，可能需要弯腰或蹲下，注意保持姿势，防止扭伤。",
+        "橡胶刀板和挡板可能带有油污或粉尘，操作后请及时清洗双手。"
+      ]
+    },
+    {
+      "step_number": 6,
+      "title": "安装辅助件和反光片",
+      "component_code": "01.09.2556",
+      "component_name": "方形板-机加-镀锌",
+      "connection_type": "螺栓连接/销轴",
+      "fasteners": [
+        {
+          "bom_code": "01.09.2556",
+          "bom_name": "方形板-机加-镀锌",
+          "spec": "T-SPV1830-EURO-09-Q235",
+          "quantity": 2,
+          "torque": ""
+        },
+        {
+          "bom_code": "01.09.2555",
+          "bom_name": "方形板-机加-镀锌",
+          "spec": "T-SPV1830-EURO-08-Q235",
+          "quantity": 2,
+          "torque": ""
+        },
+        {
+          "bom_code": "02.03.0378",
+          "bom_name": "六角头螺栓全螺纹8.8级",
+          "spec": "M6*20",
+          "quantity": 4,
+          "torque": "10N·m"
+        },
+        {
+          "bom_code": "02.03.0146",
+          "bom_name": "1型非金属嵌件六角锁紧螺母",
+          "spec": "M6",
+          "quantity": 4,
+          "torque": "10N·m"
+        },
+        {
+          "bom_code": "02.04.0029",
+          "bom_name": "推雪板反光片",
+          "quantity": 2,
+          "torque": ""
+        },
+        {
+          "bom_code": "01.09.0308",
+          "bom_name": "推雪板反光片固定板-镀锌",
+          "quantity": 2,
+          "torque": ""
+        },
+        {
+          "bom_code": "02.03.0012",
+          "bom_name": "安全销",
+          "spec": "Φ4.5*40",
+          "quantity": 2,
+          "torque": ""
+        }
+      ],
+      "operation": "安装反光片：将反光片（02.04.0029）固定在反光片固定板（01.09.0308）上，然后使用M6*20螺栓和M6锁紧螺母将固定板安装到推雪板主体上。安装方形板（01.09.2556和01.09.2555）：将方形板安装到指定位置，用于支撑或连接其他未列出的附件。最后，检查所有销轴连接点（如滑雪板高度调节销轴）是否已插入安全销（02.03.0012）。",
+      "quality_check": "检查反光片是否朝向正确，所有小零件是否安装到位，安全销是否全部锁定。",
+      "estimated_time_minutes": 15
+    }
+  ],
+  "raw_result": {
+    "product_name": "V型推雪板",
+    "total_steps": 6,
+    "assembly_steps": [
+      {
+        "step_number": 1,
+        "title": "安装连接器后座",
+        "component_code": "01.03.6999",
+        "component_name": "连接器后座组件",
+        "connection_type": "螺栓连接",
+        "fasteners": [
+          {
+            "bom_code": "02.03.0458",
+            "bom_name": "六角头螺栓全螺纹8.8级",
+            "spec": "M30*60",
+            "quantity": 2,
+            "torque": "400N·m"
+          },
+          {
+            "bom_code": "02.03.0006",
+            "bom_name": "平垫圈",
+            "spec": "30*4",
+            "quantity": 2,
+            "torque": ""
+          },
+          {
+            "bom_code": "02.03.0147",
+            "bom_name": "1型非金属嵌件六角锁紧螺母",
+            "spec": "M30",
+            "quantity": 2,
+            "torque": "400N·m"
+          }
+        ],
+        "operation": "将连接器后座组件（01.03.6999）对准基准组件（推雪板主体）上的安装孔。使用2套M30*60螺栓、平垫圈和锁紧螺母，从内侧穿入螺栓，在外侧拧紧螺母。注意：此步骤是基准组件与推雪板主体连接的关键步骤。",
+        "quality_check": "检查连接器后座组件是否紧密贴合，M30螺栓是否按规定力矩拧紧，无松动。",
+        "estimated_time_minutes": 15
+      },
+      {
+        "step_number": 2,
+        "title": "安装后座连接架",
+        "component_code": "01.03.7000",
+        "component_name": "后座连接架组件",
+        "connection_type": "销轴连接",
+        "fasteners": [
+          {
+            "bom_code": "01.09.2561",
+            "bom_name": "销轴",
+            "spec": "XZ-φ50*15-φ35*485-φ10*10-45#",
+            "quantity": 1,
+            "torque": ""
+          },
+          {
+            "bom_code": "02.03.0001",
+            "bom_name": "安全销",
+            "spec": "φ8*45",
+            "quantity": 1,
+            "torque": ""
+          }
+        ],
+        "operation": "将后座连接架组件（01.03.7000）的下部连接孔与连接器后座组件（01.03.6999）的连接孔对齐。插入销轴（01.09.2561），确保销轴完全穿过。最后，在销轴末端的小孔中插入安全销（02.03.0001）并锁紧，防止销轴脱落。",
+        "quality_check": "检查销轴是否到位，安全销是否可靠锁定。连接架应能围绕销轴自由转动。",
+        "estimated_time_minutes": 10
+      },
+      {
+        "step_number": 3,
+        "title": "安装油缸和销轴",
+        "component_code": "02.08.01.0338",
+        "component_name": "油缸",
+        "connection_type": "销轴连接",
+        "fasteners": [
+          {
+            "bom_code": "01.09.2563",
+            "bom_name": "销轴",
+            "spec": "XZ-φ40*10-φ30*87-φ10*10-45#",
+            "quantity": 1,
+            "torque": ""
+          },
+          {
+            "bom_code": "01.09.2562",
+            "bom_name": "销轴",
+            "spec": "XZ-φ35*10-φ25*145-φ10*10-45#",
+            "quantity": 1,
+            "torque": ""
+          },
+          {
+            "bom_code": "02.03.0001",
+            "bom_name": "安全销",
+            "spec": "φ8*45",
+            "quantity": 2,
+            "torque": ""
+          }
+        ],
+        "operation": "安装油缸（02.08.01.0338）。先用销轴（01.09.2563）连接油缸底部到后座连接架组件的下连接点，用安全销（02.03.0001）固定。再用销轴（01.09.2562）连接油缸活塞杆端到推雪板主体上部的连接点，用另一个安全销（02.03.0001）固定。",
+        "quality_check": "检查油缸两端销轴是否完全穿过，安全销是否可靠固定。油缸安装方向是否正确。",
+        "estimated_time_minutes": 20
+      },
+      {
+        "step_number": 4,
+        "title": "安装滑雪板（对称件）",
+        "component_code": "01.03.7001",
+        "component_name": "左滑雪板组件",
+        "connection_type": "螺栓连接",
+        "fasteners": [
+          {
+            "bom_code": "02.03.1035",
+            "bom_name": "内六角平圆头螺钉",
+            "spec": "M16*85",
+            "quantity": 2,
+            "torque": "120N·m"
+          },
+          {
+            "bom_code": "02.03.0072",
+            "bom_name": "平垫圈",
+            "spec": "16*3",
+            "quantity": 2,
+            "torque": ""
+          },
+          {
+            "bom_code": "02.03.0019",
+            "bom_name": "1型非金属嵌件六角锁紧螺母",
+            "spec": "M16",
+            "quantity": 2,
+            "torque": "120N·m"
+          }
+        ],
+        "operation": "将左滑雪板组件（01.03.7001）和右滑雪板组件（假设存在，未列出BOM）同步安装到推雪板主体两侧的安装位置。使用M16*85内六角平圆头螺钉、平垫圈和M16锁紧螺母进行连接。螺钉从外侧穿入，螺母在内侧拧紧。",
+        "quality_check": "检查滑雪板安装是否牢固，螺栓是否按规定力矩拧紧。确保左右滑雪板高度一致。",
+        "estimated_time_minutes": 15
+      },
+      {
+        "step_number": 5,
+        "title": "安装橡胶刀板和挡板",
+        "component_code": "01.02.07.0239",
+        "component_name": "橡胶刀板",
+        "connection_type": "螺栓连接",
+        "fasteners": [
+          {
+            "bom_code": "02.03.0398",
+            "bom_name": "六角头螺栓全螺纹8.8级",
+            "spec": "M8*40",
+            "quantity": 12,
+            "torque": "25N·m"
+          },
+          {
+            "bom_code": "02.03.0028",
+            "bom_name": "1型非金属嵌件六角锁紧螺母",
+            "spec": "M8",
+            "quantity": 12,
+            "torque": "25N·m"
+          },
+          {
+            "bom_code": "02.03.0088",
+            "bom_name": "六角头螺栓8.8级",
+            "spec": "M8*80",
+            "quantity": 6,
+            "torque": "25N·m"
+          }
+        ],
+        "operation": "将橡胶刀板（01.02.07.0239）安装到推雪板底部的刀板安装位。使用M8*40螺栓和M8锁紧螺母固定。然后，将橡胶挡板（01.02.07.0071）安装到推雪板上沿，使用M8*80螺栓和M8锁紧螺母固定。",
+        "quality_check": "检查橡胶刀板和挡板是否平整安装，所有M8螺栓是否均匀拧紧，无遗漏。",
+        "estimated_time_minutes": 25
+      },
+      {
+        "step_number": 6,
+        "title": "安装辅助件和反光片",
+        "component_code": "01.09.2556",
+        "component_name": "方形板-机加-镀锌",
+        "connection_type": "螺栓连接/销轴",
+        "fasteners": [
+          {
+            "bom_code": "01.09.2556",
+            "bom_name": "方形板-机加-镀锌",
+            "spec": "T-SPV1830-EURO-09-Q235",
+            "quantity": 2,
+            "torque": ""
+          },
+          {
+            "bom_code": "01.09.2555",
+            "bom_name": "方形板-机加-镀锌",
+            "spec": "T-SPV1830-EURO-08-Q235",
+            "quantity": 2,
+            "torque": ""
+          },
+          {
+            "bom_code": "02.03.0378",
+            "bom_name": "六角头螺栓全螺纹8.8级",
+            "spec": "M6*20",
+            "quantity": 4,
+            "torque": "10N·m"
+          },
+          {
+            "bom_code": "02.03.0146",
+            "bom_name": "1型非金属嵌件六角锁紧螺母",
+            "spec": "M6",
+            "quantity": 4,
+            "torque": "10N·m"
+          },
+          {
+            "bom_code": "02.04.0029",
+            "bom_name": "推雪板反光片",
+            "quantity": 2,
+            "torque": ""
+          },
+          {
+            "bom_code": "01.09.0308",
+            "bom_name": "推雪板反光片固定板-镀锌",
+            "quantity": 2,
+            "torque": ""
+          },
+          {
+            "bom_code": "02.03.0012",
+            "bom_name": "安全销",
+            "spec": "Φ4.5*40",
+            "quantity": 2,
+            "torque": ""
+          }
+        ],
+        "operation": "安装反光片：将反光片（02.04.0029）固定在反光片固定板（01.09.0308）上，然后使用M6*20螺栓和M6锁紧螺母将固定板安装到推雪板主体上。安装方形板（01.09.2556和01.09.2555）：将方形板安装到指定位置，用于支撑或连接其他未列出的附件。最后，检查所有销轴连接点（如滑雪板高度调节销轴）是否已插入安全销（02.03.0012）。",
+        "quality_check": "检查反光片是否朝向正确，所有小零件是否安装到位，安全销是否全部锁定。",
+        "estimated_time_minutes": 15
+      }
+    ]
+  }
+}

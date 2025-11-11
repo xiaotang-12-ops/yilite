@@ -1,0 +1,222 @@
+作为BOM-3D匹配专家张工，我将对提供的未匹配零件和BOM项进行系统性匹配。我将优先使用产品代号精确匹配策略，并处理乱码和符号差异。
+
+```json
+{
+  "cot_analysis": {
+    "total_unmatched_bom": 9,
+    "total_unmatched_3d": 19,
+    "analysis_steps": [
+      {
+        "bom_code": "01.01.01.17678",
+        "bom_name": "加强筋 2",
+        "bom_product_code": "CS-ST1070(42IN)-MP910-LDY100D-01-03-Q355B",
+        "step1_extract": "产品代号=CS-ST1070(42IN)-MP910-LDY100D-01-03-Q355B, 名称=加强筋",
+        "step2_candidates": [
+          "mesh_001: CS-ST1070(42IN)-MP910-LDY100D-01-03-Q355B¼ԇ¿½_1",
+          "mesh_002: CS-ST1070(42IN)-MP910-LDY100D-01-03-Q355B¼ԇ¿½"
+        ],
+        "step3_comparison": "mesh_001/mesh_002: geometry_name包含完整的BOM product_code。乱码'¼ԇ¿½'推测为'加强筋'或类似名称，产品代号完全一致。",
+        "step4_confidence": 0.92,
+        "step5_decision": "匹配mesh_001和mesh_002（产品代号完全一致）"
+      },
+      {
+        "bom_code": "01.01.03.2720",
+        "bom_name": "矩形管 1",
+        "bom_product_code": "JXG-T6*100*50-970-Q355B",
+        "step1_extract": "产品代号=JXG-T6*100*50-970-Q355B, 名称=矩形管, 长度=970",
+        "step2_candidates": [
+          "mesh_003: JXG-T6¡Á100¡Á50-970-Q355B¾ØÐÎ¹Ü"
+        ],
+        "step3_comparison": "mesh_003: geometry_name包含完整的BOM product_code。符号'¡Á'等价于'*'，乱码'¾ØÐÎ¹Ü'推测为'矩形管'。",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配mesh_003（产品代号完全一致）"
+      },
+      {
+        "bom_code": "01.01.01.16608",
+        "bom_name": "封板 2",
+        "bom_product_code": "S-SBE2130(84IN)-MP1220-01-01-Q355B",
+        "step1_extract": "产品代号=S-SBE2130(84IN)-MP1220-01-01-Q355B, 名称=封板",
+        "step2_candidates": [
+          "mesh_004: S-SBE2130(84IN)-MP1220-01-01-Q355B·ⱥ_1",
+          "mesh_005: S-SBE2130(84IN)-MP1220-01-01-Q355B·ⱥ"
+        ],
+        "step3_comparison": "mesh_004/mesh_005: geometry_name包含完整的BOM product_code。乱码'·ⱥ'推测为'封板'。",
+        "step4_confidence": 0.92,
+        "step5_decision": "匹配mesh_004和mesh_005（产品代号完全一致）"
+      },
+      {
+        "bom_code": "01.01.03.2719",
+        "bom_name": "矩形管 2",
+        "bom_product_code": "JXG-T6*100*50-335-Q355B",
+        "step1_extract": "产品代号=JXG-T6*100*50-335-Q355B, 名称=矩形管, 长度=335",
+        "step2_candidates": [
+          "mesh_006: JXG-T6¡Á100¡Á50-335-Q355B¾ØÐÎ¹Ü_1",
+          "mesh_007: JXG-T6¡Á100¡Á50-335-Q355B¾ØÐÎ¹Ü"
+        ],
+        "step3_comparison": "mesh_006/mesh_007: geometry_name包含完整的BOM product_code。符号'¡Á'等价于'*'，乱码'¾ØÐÎ¹Ü'推测为'矩形管'。",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配mesh_006和mesh_007（产品代号完全一致）"
+      },
+      {
+        "bom_code": "01.05.0019",
+        "bom_name": "左挂件虚拟组件 1",
+        "bom_product_code": "T-EURO-00",
+        "step1_extract": "产品代号=T-EURO-00, 名称=左挂件虚拟组件",
+        "step2_candidates": [
+          "mesh_008: T-EURO-04-Q345Å·Ê½Á¬½ÓÆ÷µ×°å_1",
+          "mesh_009: T-EURO-02-Q355BÖý¼þÅ·Ê½Á¬½ÓÆ÷ÏÂ¹Ò¹³_1",
+          "mesh_010: T-EURO-01-Q355BÖý¼þÅ·Ê½Á¬½ÓÆ÷ÉÏ¹Ò¹³_1"
+        ],
+        "step3_comparison": "该BOM项是虚拟组件（T-EURO-00），通常不直接对应单个3D零件，而是对应其子零件。但为了覆盖，需找到所有T-EURO相关的零件。mesh_008/009/010/011/012/013均属于'欧式连接器'系列，是该虚拟组件的组成部分。由于BOM数量为1，且是虚拟组件，我们选择其核心组成部分进行匹配。",
+        "step4_confidence": 0.75,
+        "step5_decision": "匹配mesh_008（T-EURO系列底板，作为虚拟组件的代表）"
+      },
+      {
+        "bom_code": "01.05.0018",
+        "bom_name": "右挂件虚拟组件 1",
+        "bom_product_code": "T-EURO-00",
+        "step1_extract": "产品代号=T-EURO-00, 名称=右挂件虚拟组件",
+        "step2_candidates": [
+          "mesh_011: T-EURO-04-Q345Å·Ê½Á¬½ÓÆ÷µ×°å",
+          "mesh_012: T-EURO-02-Q355BÖý¼þÅ·Ê½Á¬½ÓÆ÷ÏÂ¹Ò¹³",
+          "mesh_013: T-EURO-01-Q355BÖý¼þÅ·Ê½Á¬½ÓÆ÷ÉÏ¹Ò¹³"
+        ],
+        "step3_comparison": "该BOM项是虚拟组件（T-EURO-00），与01.05.0019类似。选择mesh_011进行匹配，作为右挂件的代表。",
+        "step4_confidence": 0.75,
+        "step5_decision": "匹配mesh_011（T-EURO系列底板，作为虚拟组件的代表）"
+      },
+      {
+        "bom_code": "01.01.01.6589",
+        "bom_name": "方形板-机加 4",
+        "bom_product_code": "T-SPE-FL-01-SMS-01-Q235",
+        "step1_extract": "产品代号=T-SPE-FL-01-SMS-01-Q235, 名称=方形板-机加, 数量=4",
+        "step2_candidates": [
+          "mesh_014: T-SPE-FL-01-SMS-01-Q235·½ÐÎ°å-»ú¼Ó_3",
+          "mesh_015: T-SPE-FL-01-SMS-01-Q235·½ÐÎ°å-»ú¼Ó_2",
+          "mesh_016: T-SPE-FL-01-SMS-01-Q235·½ÐÎ°å-»ú¼Ó_1",
+          "mesh_017: T-SPE-FL-01-SMS-01-Q235·½ÐÎ°å-»ú¼Ó"
+        ],
+        "step3_comparison": "mesh_014/015/016/017: geometry_name包含完整的BOM product_code。乱码'·½ÐÎ°å-»ú¼Ó'推测为'方形板-机加'。3D零件数量为4个，与BOM数量一致。",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配mesh_014, mesh_015, mesh_016, mesh_017（产品代号完全一致）"
+      },
+      {
+        "bom_code": "01.01.01.11509",
+        "bom_name": "连接板 1",
+        "bom_product_code": "T-SPV250-Z602-01-01-Q355B",
+        "step1_extract": "产品代号=T-SPV250-Z602-01-01-Q355B, 名称=连接板",
+        "step2_candidates": [
+          "mesh_018: T-SPV250-Z602-01-01-Q355Bl½Ӱ"
+        ],
+        "step3_comparison": "mesh_018: geometry_name包含完整的BOM product_code。乱码'l½Ӱ'推测为'连接板'。",
+        "step4_confidence": 0.92,
+        "step5_decision": "匹配mesh_018（产品代号完全一致）"
+      },
+      {
+        "bom_code": "01.01.03.2718",
+        "bom_name": "矩形管 1",
+        "bom_product_code": "JXG-T6*100*50-1120-Q355B",
+        "step1_extract": "产品代号=JXG-T6*100*50-1120-Q355B, 名称=矩形管, 长度=1120",
+        "step2_candidates": [
+          "mesh_019: JXG-T6¡Á100¡Á50-1120-Q355B¾ØÐÎ¹Ü"
+        ],
+        "step3_comparison": "mesh_019: geometry_name包含完整的BOM product_code。符号'¡Á'等价于'*'，乱码'¾ØÐÎ¹Ü'推测为'矩形管'。",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配mesh_019（产品代号完全一致）"
+      }
+    ]
+  },
+  "ai_matched_pairs": [
+    {
+      "mesh_id": "mesh_001",
+      "bom_code": "01.01.01.17678",
+      "confidence": 0.92,
+      "reasoning": "产品代号CS-ST1070...-Q355B完全匹配"
+    },
+    {
+      "mesh_id": "mesh_002",
+      "bom_code": "01.01.01.17678",
+      "confidence": 0.92,
+      "reasoning": "产品代号CS-ST1070...-Q355B完全匹配"
+    },
+    {
+      "mesh_id": "mesh_003",
+      "bom_code": "01.01.03.2720",
+      "confidence": 0.95,
+      "reasoning": "产品代号JXG-T6*100*50-970-Q355B完全匹配"
+    },
+    {
+      "mesh_id": "mesh_004",
+      "bom_code": "01.01.01.16608",
+      "confidence": 0.92,
+      "reasoning": "产品代号S-SBE2130...-Q355B完全匹配"
+    },
+    {
+      "mesh_id": "mesh_005",
+      "bom_code": "01.01.01.16608",
+      "confidence": 0.92,
+      "reasoning": "产品代号S-SBE2130...-Q355B完全匹配"
+    },
+    {
+      "mesh_id": "mesh_006",
+      "bom_code": "01.01.03.2719",
+      "confidence": 0.95,
+      "reasoning": "产品代号JXG-T6*100*50-335-Q355B完全匹配"
+    },
+    {
+      "mesh_id": "mesh_007",
+      "bom_code": "01.01.03.2719",
+      "confidence": 0.95,
+      "reasoning": "产品代号JXG-T6*100*50-335-Q355B完全匹配"
+    },
+    {
+      "mesh_id": "mesh_008",
+      "bom_code": "01.05.0019",
+      "confidence": 0.75,
+      "reasoning": "T-EURO系列零件，作为左挂件虚拟组件代表"
+    },
+    {
+      "mesh_id": "mesh_011",
+      "bom_code": "01.05.0018",
+      "confidence": 0.75,
+      "reasoning": "T-EURO系列零件，作为右挂件虚拟组件代表"
+    },
+    {
+      "mesh_id": "mesh_014",
+      "bom_code": "01.01.01.6589",
+      "confidence": 0.95,
+      "reasoning": "产品代号T-SPE-FL-01-SMS-01-Q235完全匹配"
+    },
+    {
+      "mesh_id": "mesh_015",
+      "bom_code": "01.01.01.6589",
+      "confidence": 0.95,
+      "reasoning": "产品代号T-SPE-FL-01-SMS-01-Q235完全匹配"
+    },
+    {
+      "mesh_id": "mesh_016",
+      "bom_code": "01.01.01.6589",
+      "confidence": 0.95,
+      "reasoning": "产品代号T-SPE-FL-01-SMS-01-Q235完全匹配"
+    },
+    {
+      "mesh_id": "mesh_017",
+      "bom_code": "01.01.01.6589",
+      "confidence": 0.95,
+      "reasoning": "产品代号T-SPE-FL-01-SMS-01-Q235完全匹配"
+    },
+    {
+      "mesh_id": "mesh_018",
+      "bom_code": "01.01.01.11509",
+      "confidence": 0.92,
+      "reasoning": "产品代号T-SPV250-Z602-01-01-Q355B完全匹配"
+    },
+    {
+      "mesh_id": "mesh_019",
+      "bom_code": "01.01.03.2718",
+      "confidence": 0.95,
+      "reasoning": "产品代号JXG-T6*100*50-1120-Q355B完全匹配"
+    }
+  ]
+}
+```

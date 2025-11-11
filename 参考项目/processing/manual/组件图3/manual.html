@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>组件图3 · 自动装配手册</title>
+  <style>
+    :root { color-scheme: dark; font-family: 'Segoe UI', system-ui, sans-serif; }
+    body { margin:0; padding:24px; background:#0f172a; color:#e2e8f0; }
+    h1 { margin:0 0 4px; font-size:20px; }
+    .meta { color:#94a3b8; font-size:13px; margin-bottom:18px; }
+    .layout { display:grid; gap:16px; grid-template-columns: minmax(0,1fr) 360px; }
+    .panel { background:rgba(15,23,42,0.9); border:1px solid rgba(148,163,184,0.2); border-radius:16px; padding:16px; }
+    .panel h2 { margin:0 0 12px; font-size:15px; color:#94a3b8; text-transform:uppercase; letter-spacing:0.05em; }
+    .images { display:grid; gap:12px; }
+    .images img { width:100%; border-radius:12px; border:1px solid rgba(148,163,184,0.2); background:#0b1323; }
+    ol { padding-left:18px; margin:0; display:grid; gap:12px; }
+    li { background:rgba(30,41,59,0.8); border-radius:12px; padding:12px 14px; box-shadow:0 8px 20px rgba(15,23,42,0.3); }
+    .code { font-family: 'JetBrains Mono', Consolas, Monaco, monospace; background:rgba(58,73,99,0.4); padding:2px 6px; border-radius:6px; }
+    .empty { color:#94a3b8; font-style:italic; }
+    @media (max-width: 1080px) { .layout { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <h1>组件图3 · 自动装配手册</h1>
+  <div class="meta">来源：E:\装配\测试-pdf\组件图3.pdf<br/>生成时间：2025-09-23 15:42</div>
+  <div class="layout">
+    <section class="panel">
+      <h2>装配图页</h2>
+      <div class="images">
+        <img src="images\page-01.png" alt="page-01.png" loading="lazy" /><img src="images\page-02.png" alt="page-02.png" loading="lazy" />
+      </div>
+    </section>
+    <aside class="panel">
+      <h2>装配步骤（自动生成）</h2>
+      <ol><li>
+  <div><strong>步骤 1：</strong> 安装 <span class="code"></span></div>
+  <div class="meta">物料号 <span class="code">08.02</span>
+   · 数量 1 · 重量 8.02</div>
+  <div class="meta">原始信息：1 08.02 拼装 是</div>
+</li><li>
+  <div><strong>步骤 15：</strong> 安装 <span class="code">T-U2500-02-12-Q345 左铲雪板加强板</span></div>
+  <div class="meta">物料号 <span class="code">01.02.01.4983</span>
+   · 数量 2 · 重量 1.48</div>
+  <div class="meta">原始信息：15 01.02.01.4983 T-U2500-02-12-Q345 左铲雪板加强板 2 0.74 1.48</div>
+</li><li>
+  <div><strong>步骤 14：</strong> 安装 <span class="code">FXB-T8*95*80-Q355B 方形板</span></div>
+  <div class="meta">物料号 <span class="code">01.01.01.11529</span>
+   · 数量 3 · 重量 1.38</div>
+  <div class="meta">原始信息：14 01.01.01.11529 FXB-T8*95*80-Q355B 方形板 3 0.46 1.38</div>
+</li><li>
+  <div><strong>步骤 13：</strong> 安装 <span class="code">FXB-T8*190*100-Q355B 方形板</span></div>
+  <div class="meta">物料号 <span class="code">01.01.01.11528</span>
+   · 数量 1 · 重量 1.16</div>
+  <div class="meta">原始信息：13 01.01.01.11528 FXB-T8*190*100-Q355B 方形板 1 1.16 1.16</div>
+</li><li>
+  <div><strong>步骤 12：</strong> 安装 <span class="code">ZT-φ60/φ35-50-Q235 轴套</span></div>
+  <div class="meta">物料号 <span class="code">01.01.02.1222</span>
+   · 数量 2 · 重量 1.46</div>
+  <div class="meta">原始信息：12 01.01.02.1222 ZT-φ60/φ35-50-Q235 轴套 2 0.73 1.46</div>
+</li><li>
+  <div><strong>步骤 11：</strong> 安装 <span class="code">T-SPV250-Z602-03-11-Q235 反光片安装板</span></div>
+  <div class="meta">物料号 <span class="code">01.01.01.11527</span>
+   · 数量 1 · 重量 0.18</div>
+  <div class="meta">原始信息：11 01.01.01.11527 T-SPV250-Z602-03-11-Q235 反光片安装板 1 0.18 0.18</div>
+</li><li>
+  <div><strong>步骤 10：</strong> 安装 <span class="code">T-SPV250-Z602-03-10-Q235 轴套加强板</span></div>
+  <div class="meta">物料号 <span class="code">01.01.01.11526</span>
+   · 数量 2 · 重量 0.83</div>
+  <div class="meta">原始信息：10 01.01.01.11526 T-SPV250-Z602-03-10-Q235 轴套加强板 2 0.41 0.83</div>
+</li><li>
+  <div><strong>步骤 9：</strong> 安装 <span class="code">T-SPV250-Z602-03-09-Q235 支撑固定板</span></div>
+  <div class="meta">物料号 <span class="code">01.01.01.11525</span>
+   · 数量 1 · 重量 0.66</div>
+  <div class="meta">原始信息：9 01.01.01.11525 T-SPV250-Z602-03-09-Q235 支撑固定板 1 0.66 0.66</div>
+</li><li>
+  <div><strong>步骤 8：</strong> 安装 <span class="code">T-SPV250-Z602-03-08-Q235 后弹簧固定板</span></div>
+  <div class="meta">物料号 <span class="code">01.01.01.11524</span>
+   · 数量 2 · 重量 0.82</div>
+  <div class="meta">原始信息：8 01.01.01.11524 T-SPV250-Z602-03-08-Q235 后弹簧固定板 2 0.41 0.82</div>
+</li><li>
+  <div><strong>步骤 7：</strong> 安装 <span class="code">T-SPV250-Z602-03-07-Q235 前弹簧固定板</span></div>
+  <div class="meta">物料号 <span class="code">01.01.01.11523</span>
+   · 数量 1 · 重量 0.89</div>
+  <div class="meta">原始信息：7 01.01.01.11523 T-SPV250-Z602-03-07-Q235 前弹簧固定板 1 0.89 0.89</div>
+</li><li>
+  <div><strong>步骤 6：</strong> 安装 <span class="code">T-SPV250-Z602-03-06-Q355B 前油缸固定板</span></div>
+  <div class="meta">物料号 <span class="code">01.01.01.11522</span>
+   · 数量 2 · 重量 2.41</div>
+  <div class="meta">原始信息：6 01.01.01.11522 T-SPV250-Z602-03-06-Q355B 前油缸固定板 2 1.20 2.41</div>
+</li><li>
+  <div><strong>步骤 5：</strong> 安装 <span class="code">T-SPV250-Z602-03-05-Q355B 底部连接板</span></div>
+  <div class="meta">物料号 <span class="code">01.01.01.11521</span>
+   · 数量 6 · 重量 3.47</div>
+  <div class="meta">原始信息：5 01.01.01.11521 T-SPV250-Z602-03-05-Q355B 底部连接板 6 0.58 3.47</div>
+</li><li>
+  <div><strong>步骤 4：</strong> 安装 <span class="code">T-SPV1830-EURO-03-03-Q355B 前加强板</span></div>
+  <div class="meta">物料号 <span class="code">01.01.01.18600</span>
+   · 数量 1 · 重量 3.34</div>
+  <div class="meta">原始信息：4 01.01.01.18600 T-SPV1830-EURO-03-03-Q355B 前加强板 1 3.34 3.34</div>
+</li><li>
+  <div><strong>步骤 3：</strong> 安装 <span class="code">T-SPV250-Z602-03-03-Q355B 后加强板</span></div>
+  <div class="meta">物料号 <span class="code">01.01.01.11519</span>
+   · 数量 1 · 重量 2.56</div>
+  <div class="meta">原始信息：3 01.01.01.11519 T-SPV250-Z602-03-03-Q355B 后加强板 1 2.56 2.56</div>
+</li><li>
+  <div><strong>步骤 2：</strong> 安装 <span class="code">T-SPV1830-EURO-03-02-Q235 方形板-机加</span></div>
+  <div class="meta">物料号 <span class="code">01.01.01.18599</span>
+   · 数量 1 · 重量 11.69</div>
+  <div class="meta">原始信息：2 01.01.01.18599 T-SPV1830-EURO-03-02-Q235 方形板-机加 1 11.69 11.69</div>
+</li><li>
+  <div><strong>步骤 1：</strong> 安装 <span class="code">T-SPV1830-EURO-03-01-Q235 左铲板</span></div>
+  <div class="meta">物料号 <span class="code">01.01.01.18598</span>
+   · 数量 1 · 重量 28.38</div>
+  <div class="meta">原始信息：1 01.01.01.18598 T-SPV1830-EURO-03-01-Q235 左铲板 1 28.38 28.38</div>
+</li></ol>
+      <div class="meta" style="margin-top:12px;">自动提取的步骤仅供草稿，请结合经验审核。</div>
+    </aside>
+  </div>
+</body>
+</html>

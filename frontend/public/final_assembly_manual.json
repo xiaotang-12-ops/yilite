@@ -1,0 +1,2637 @@
+{
+  "product_overview": {
+    "product_name": "T-SPV1830-EURO 推雪板",
+    "product_type": "推雪板",
+    "drawing_number": "T-SPV1830-EURO",
+    "version": "1.0",
+    "created_at": "2025-10-02 21:28:08",
+    "total_parts": 87,
+    "main_parts": 60,
+    "standard_parts": 27,
+    "total_weight_kg": 608.52,
+    "complexity": "中等",
+    "estimated_time_hours": 32.2,
+    "main_structure": "框架+铲板+液压系统+连接组件",
+    "working_principle": "通过液压系统驱动铲板进行积雪清理，框架提供结构支撑，连接组件实现各部件的装配与运动。"
+  },
+  "bom_items": [
+    {
+      "id": "53",
+      "seq": "53",
+      "code": "01.09.2556",
+      "name": "方形板-机加-镀锌",
+      "specification": "",
+      "quantity": 1,
+      "weight": 3.65,
+      "material": "",
+      "mesh_ids": [
+        "mesh_019"
+      ]
+    },
+    {
+      "id": "52",
+      "seq": "52",
+      "code": "02.03.0088",
+      "name": "六角头螺栓8.8级GB/T5782-2016",
+      "specification": "",
+      "quantity": 1,
+      "weight": 0.0,
+      "material": "",
+      "mesh_ids": [
+        "mesh_038",
+        "mesh_039"
+      ]
+    },
+    {
+      "id": "51",
+      "seq": "51",
+      "code": "01.09.1240",
+      "name": "电磁阀保护罩组件-漆后",
+      "specification": "",
+      "quantity": 1,
+      "weight": 1.76,
+      "material": "",
+      "mesh_ids": [
+        "mesh_065",
+        "mesh_066"
+      ]
+    },
+    {
+      "id": "50",
+      "seq": "50",
+      "code": "02.03.0610",
+      "name": "平垫圈 倒角型 A级(钢)GB／T 97．2-1985",
+      "specification": "",
+      "quantity": 1,
+      "weight": 0.04,
+      "material": "",
+      "mesh_ids": [
+        "mesh_067",
+        "mesh_068",
+        "mesh_069",
+        "mesh_070"
+      ]
+    },
+    {
+      "id": "49",
+      "seq": "49",
+      "code": "01.09.0308",
+      "name": "推雪板反光片固定板-镀锌",
+      "specification": "",
+      "quantity": 1,
+      "weight": 0.19,
+      "material": "",
+      "mesh_ids": [
+        "mesh_073",
+        "mesh_074"
+      ]
+    },
+    {
+      "id": "48",
+      "seq": "48",
+      "code": "02.03.0378",
+      "name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+      "specification": "",
+      "quantity": 1,
+      "weight": 0.12,
+      "material": "",
+      "mesh_ids": [
+        "mesh_080",
+        "mesh_082",
+        "mesh_084",
+        "mesh_086",
+        "mesh_088",
+        "mesh_090",
+        "mesh_092",
+        "mesh_094",
+        "mesh_096",
+        "mesh_098",
+        "mesh_100",
+        "mesh_102"
+      ]
+    },
+    {
+      "id": "47",
+      "seq": "47",
+      "code": "02.03.0147",
+      "name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+      "specification": "",
+      "quantity": 1,
+      "weight": 1.5,
+      "material": "",
+      "mesh_ids": [
+        "mesh_104",
+        "mesh_107",
+        "mesh_110",
+        "mesh_113",
+        "mesh_117",
+        "mesh_118",
+        "mesh_223",
+        "mesh_224",
+        "mesh_225",
+        "mesh_226",
+        "mesh_227",
+        "mesh_228"
+      ]
+    },
+    {
+      "id": "46",
+      "seq": "46",
+      "code": "01.09.0304",
+      "name": "推雪板大垫圈-镀锌",
+      "specification": "",
+      "quantity": 1,
+      "weight": 2.0,
+      "material": "",
+      "mesh_ids": [
+        "mesh_103",
+        "mesh_106",
+        "mesh_109",
+        "mesh_112",
+        "mesh_116",
+        "mesh_119"
+      ]
+    },
+    {
+      "id": "45",
+      "seq": "45",
+      "code": "02.03.0458",
+      "name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+      "specification": "",
+      "quantity": 1,
+      "weight": 0.18,
+      "material": "",
+      "mesh_ids": [
+        "mesh_105",
+        "mesh_108",
+        "mesh_111",
+        "mesh_114",
+        "mesh_115",
+        "mesh_120"
+      ]
+    },
+    {
+      "id": "44",
+      "seq": "44",
+      "code": "02.03.0379",
+      "name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+      "specification": "",
+      "quantity": 1,
+      "weight": 0.08,
+      "material": "",
+      "mesh_ids": [
+        "mesh_121",
+        "mesh_123",
+        "mesh_125",
+        "mesh_127",
+        "mesh_129",
+        "mesh_131",
+        "mesh_133",
+        "mesh_135"
+      ]
+    },
+    {
+      "id": "43",
+      "seq": "43",
+      "code": "02.03.0019",
+      "name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+      "specification": "",
+      "quantity": 1,
+      "weight": 0.56,
+      "material": "",
+      "mesh_ids": [
+        "mesh_003",
+        "mesh_014",
+        "mesh_015",
+        "mesh_016",
+        "mesh_017",
+        "mesh_018",
+        "mesh_022",
+        "mesh_033",
+        "mesh_034",
+        "mesh_035",
+        "mesh_036",
+        "mesh_037",
+        "mesh_138",
+        "mesh_140"
+      ]
+    },
+    {
+      "id": "42",
+      "seq": "42",
+      "code": "02.03.0072",
+      "name": "平垫圈8.8级GB/T95-2002",
+      "specification": "",
+      "quantity": 1,
+      "weight": 0.14,
+      "material": "",
+      "mesh_ids": [
+        "mesh_002",
+        "mesh_009",
+        "mesh_010",
+        "mesh_011",
+        "mesh_012",
+        "mesh_013",
+        "mesh_021",
+        "mesh_028",
+        "mesh_029",
+        "mesh_030",
+        "mesh_031",
+        "mesh_032",
+        "mesh_137",
+        "mesh_141"
+      ]
+    },
+    {
+      "id": "41",
+      "seq": "41",
+      "code": "02.03.1035",
+      "name": "内六角平圆头螺钉8.8级GB/T70.2-2015",
+      "specification": "",
+      "quantity": 1,
+      "weight": 0.0,
+      "material": "",
+      "mesh_ids": [
+        "mesh_001",
+        "mesh_004",
+        "mesh_005",
+        "mesh_006",
+        "mesh_007",
+        "mesh_008",
+        "mesh_020",
+        "mesh_023",
+        "mesh_024",
+        "mesh_025",
+        "mesh_026",
+        "mesh_027",
+        "mesh_139",
+        "mesh_142"
+      ]
+    },
+    {
+      "id": "40",
+      "seq": "40",
+      "code": "02.03.0012",
+      "name": "安全销DIN 11023",
+      "specification": "",
+      "quantity": 1,
+      "weight": 0.03,
+      "material": "",
+      "mesh_ids": [
+        "mesh_145"
+      ]
+    },
+    {
+      "id": "39",
+      "seq": "39",
+      "code": "02.03.0102",
+      "name": "六角头螺栓8.8级GB/T 5782-2016",
+      "specification": "",
+      "quantity": 1,
+      "weight": 0.01,
+      "material": "",
+      "mesh_ids": [
+        "mesh_147"
+      ]
+    },
+    {
+      "id": "38",
+      "seq": "38",
+      "code": "02.03.0383",
+      "name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+      "specification": "",
+      "quantity": 1,
+      "weight": 0.02,
+      "material": "",
+      "mesh_ids": [
+        "mesh_076",
+        "mesh_149"
+      ]
+    },
+    {
+      "id": "37",
+      "seq": "37",
+      "code": "02.04.0029",
+      "name": "推雪板反光片",
+      "specification": "",
+      "quantity": 1,
+      "weight": 0.04,
+      "material": "",
+      "mesh_ids": [
+        "mesh_150",
+        "mesh_151"
+      ]
+    },
+    {
+      "id": "36",
+      "seq": "36",
+      "code": "02.08.03.0236",
+      "name": "电磁阀组",
+      "specification": "",
+      "quantity": 1,
+      "weight": 3.33,
+      "material": "",
+      "mesh_ids": [
+        "mesh_152"
+      ]
+    },
+    {
+      "id": "35",
+      "seq": "35",
+      "code": "02.03.0001",
+      "name": "安全销DIN 11023",
+      "specification": "",
+      "quantity": 1,
+      "weight": 0.12,
+      "material": "",
+      "mesh_ids": [
+        "mesh_165",
+        "mesh_166",
+        "mesh_167",
+        "mesh_168"
+      ]
+    },
+    {
+      "id": "34",
+      "seq": "34",
+      "code": "02.08.05.0004",
+      "name": "直通式压注油杯JB/T7940.1-1995",
+      "specification": "",
+      "quantity": 1,
+      "weight": 0.18,
+      "material": "",
+      "mesh_ids": [
+        "mesh_077",
+        "mesh_078",
+        "mesh_122",
+        "mesh_124",
+        "mesh_126",
+        "mesh_128",
+        "mesh_130",
+        "mesh_132",
+        "mesh_134",
+        "mesh_136",
+        "mesh_146",
+        "mesh_153",
+        "mesh_155",
+        "mesh_157",
+        "mesh_159",
+        "mesh_161",
+        "mesh_163",
+        "mesh_169",
+        "mesh_171",
+        "mesh_173",
+        "mesh_175",
+        "mesh_177",
+        "mesh_193"
+      ]
+    },
+    {
+      "id": "33",
+      "seq": "33",
+      "code": "02.03.0028",
+      "name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+      "specification": "",
+      "quantity": 1,
+      "weight": 0.23,
+      "material": "",
+      "mesh_ids": []
+    },
+    {
+      "id": "32",
+      "seq": "32",
+      "code": "02.03.0398",
+      "name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+      "specification": "",
+      "quantity": 1,
+      "weight": 0.12,
+      "material": "",
+      "mesh_ids": [
+        "mesh_154",
+        "mesh_156",
+        "mesh_158",
+        "mesh_160",
+        "mesh_162",
+        "mesh_164",
+        "mesh_170",
+        "mesh_172",
+        "mesh_174",
+        "mesh_176",
+        "mesh_178",
+        "mesh_194"
+      ]
+    },
+    {
+      "id": "31",
+      "seq": "31",
+      "code": "02.03.0381",
+      "name": "平垫圈8.8级GB/T95-2002",
+      "specification": "",
+      "quantity": 1,
+      "weight": 0.26,
+      "material": "",
+      "mesh_ids": [
+        "mesh_040",
+        "mesh_041",
+        "mesh_042",
+        "mesh_043",
+        "mesh_044",
+        "mesh_045",
+        "mesh_046",
+        "mesh_047",
+        "mesh_048",
+        "mesh_049",
+        "mesh_050",
+        "mesh_051",
+        "mesh_052",
+        "mesh_053",
+        "mesh_054",
+        "mesh_055",
+        "mesh_056",
+        "mesh_057",
+        "mesh_058",
+        "mesh_059",
+        "mesh_060",
+        "mesh_061",
+        "mesh_062",
+        "mesh_063",
+        "mesh_198",
+        "mesh_200"
+      ]
+    },
+    {
+      "id": "30",
+      "seq": "30",
+      "code": "02.03.0146",
+      "name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+      "specification": "",
+      "quantity": 1,
+      "weight": 0.16,
+      "material": "",
+      "mesh_ids": [
+        "mesh_075",
+        "mesh_079",
+        "mesh_081",
+        "mesh_083",
+        "mesh_085",
+        "mesh_087",
+        "mesh_089",
+        "mesh_091",
+        "mesh_093",
+        "mesh_095",
+        "mesh_097",
+        "mesh_099",
+        "mesh_101",
+        "mesh_148",
+        "mesh_197",
+        "mesh_201"
+      ]
+    },
+    {
+      "id": "29",
+      "seq": "29",
+      "code": "02.03.0442",
+      "name": "内六角圆柱头螺钉8.8级GB/T70.1-2008",
+      "specification": "",
+      "quantity": 1,
+      "weight": 0.16,
+      "material": "",
+      "mesh_ids": [
+        "mesh_199",
+        "mesh_202"
+      ]
+    },
+    {
+      "id": "28",
+      "seq": "28",
+      "code": "01.09.2566",
+      "name": "圆钢-机加-镀锌",
+      "specification": "",
+      "quantity": 1,
+      "weight": 0.12,
+      "material": "",
+      "mesh_ids": [
+        "mesh_196",
+        "mesh_203"
+      ]
+    },
+    {
+      "id": "27",
+      "seq": "27",
+      "code": "01.09.2565",
+      "name": "自制螺栓-镀锌",
+      "specification": "",
+      "quantity": 1,
+      "weight": 0.7,
+      "material": "",
+      "mesh_ids": [
+        "mesh_205",
+        "mesh_206"
+      ]
+    },
+    {
+      "id": "26",
+      "seq": "26",
+      "code": "02.03.0612",
+      "name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+      "specification": "",
+      "quantity": 1,
+      "weight": 0.14,
+      "material": "",
+      "mesh_ids": [
+        "mesh_204",
+        "mesh_207"
+      ]
+    },
+    {
+      "id": "25",
+      "seq": "25",
+      "code": "02.16.0142",
+      "name": "实心橡胶轮",
+      "specification": "",
+      "quantity": 1,
+      "weight": 2.95,
+      "material": "",
+      "mesh_ids": [
+        "mesh_208",
+        "mesh_209"
+      ]
+    },
+    {
+      "id": "24",
+      "seq": "24",
+      "code": "01.09.0999",
+      "name": "V型推雪板轴套-镀锌",
+      "specification": "",
+      "quantity": 1,
+      "weight": 0.17,
+      "material": "",
+      "mesh_ids": [
+        "mesh_210"
+      ]
+    },
+    {
+      "id": "23",
+      "seq": "23",
+      "code": "01.09.0503",
+      "name": "插销-镀锌",
+      "specification": "",
+      "quantity": 1,
+      "weight": 0.1,
+      "material": "",
+      "mesh_ids": [
+        "mesh_211"
+      ]
+    },
+    {
+      "id": "22",
+      "seq": "22",
+      "code": "02.03.0006",
+      "name": "平垫圈8.8级GB/T95-2002",
+      "specification": "",
+      "quantity": 1,
+      "weight": 0.06,
+      "material": "",
+      "mesh_ids": [
+        "mesh_212",
+        "mesh_213",
+        "mesh_214",
+        "mesh_215",
+        "mesh_216",
+        "mesh_217"
+      ]
+    },
+    {
+      "id": "21",
+      "seq": "21",
+      "code": "01.09.0995",
+      "name": "V型推雪板销轴-镀锌",
+      "specification": "",
+      "quantity": 1,
+      "weight": 3.22,
+      "material": "",
+      "mesh_ids": [
+        "mesh_218",
+        "mesh_219",
+        "mesh_220",
+        "mesh_221",
+        "mesh_222"
+      ]
+    },
+    {
+      "id": "20",
+      "seq": "20",
+      "code": "02.03.0148",
+      "name": "1型六角螺母8.8级GB/T 6170-2015",
+      "specification": "",
+      "quantity": 1,
+      "weight": 1.2,
+      "material": "",
+      "mesh_ids": []
+    },
+    {
+      "id": "19",
+      "seq": "19",
+      "code": "01.09.2564",
+      "name": "把手组件-镀锌",
+      "specification": "",
+      "quantity": 1,
+      "weight": 1.58,
+      "material": "",
+      "mesh_ids": []
+    },
+    {
+      "id": "18",
+      "seq": "18",
+      "code": "02.08.01.0338",
+      "name": "油缸",
+      "specification": "",
+      "quantity": 1,
+      "weight": 17.1,
+      "material": "",
+      "mesh_ids": []
+    },
+    {
+      "id": "17",
+      "seq": "17",
+      "code": "02.09.0103",
+      "name": "压缩弹簧",
+      "specification": "",
+      "quantity": 1,
+      "weight": 5.56,
+      "material": "",
+      "mesh_ids": [
+        "mesh_237",
+        "mesh_238",
+        "mesh_239",
+        "mesh_240",
+        "mesh_241",
+        "mesh_242"
+      ]
+    },
+    {
+      "id": "16",
+      "seq": "16",
+      "code": "01.09.2563",
+      "name": "销轴-镀锌",
+      "specification": "",
+      "quantity": 1,
+      "weight": 2.26,
+      "material": "",
+      "mesh_ids": [
+        "mesh_248",
+        "mesh_249",
+        "mesh_250",
+        "mesh_251"
+      ]
+    },
+    {
+      "id": "15",
+      "seq": "15",
+      "code": "01.09.2562",
+      "name": "销轴-镀锌",
+      "specification": "",
+      "quantity": 1,
+      "weight": 3.72,
+      "material": "",
+      "mesh_ids": [
+        "mesh_243",
+        "mesh_244",
+        "mesh_245",
+        "mesh_246",
+        "mesh_247",
+        "mesh_252"
+      ]
+    },
+    {
+      "id": "14",
+      "seq": "14",
+      "code": "01.09.2561",
+      "name": "销轴-镀锌",
+      "specification": "",
+      "quantity": 1,
+      "weight": 3.89,
+      "material": "",
+      "mesh_ids": [
+        "mesh_253"
+      ]
+    },
+    {
+      "id": "13",
+      "seq": "13",
+      "code": "01.09.2555",
+      "name": "方形板-机加-镀锌",
+      "specification": "",
+      "quantity": 1,
+      "weight": 3.65,
+      "material": "",
+      "mesh_ids": [
+        "mesh_254"
+      ]
+    },
+    {
+      "id": "12",
+      "seq": "12",
+      "code": "01.02.07.0071",
+      "name": "橡胶挡板",
+      "specification": "",
+      "quantity": 1,
+      "weight": 2.33,
+      "material": "",
+      "mesh_ids": [
+        "mesh_255"
+      ]
+    },
+    {
+      "id": "11",
+      "seq": "11",
+      "code": "01.02.07.0239",
+      "name": "橡胶刀板",
+      "specification": "",
+      "quantity": 1,
+      "weight": 27.56,
+      "material": "",
+      "mesh_ids": [
+        "mesh_256",
+        "mesh_257"
+      ]
+    },
+    {
+      "id": "10",
+      "seq": "10",
+      "code": "01.09.2560",
+      "name": "后座支撑架组件-漆后",
+      "specification": "",
+      "quantity": 1,
+      "weight": 2.49,
+      "material": "",
+      "mesh_ids": []
+    },
+    {
+      "id": "9",
+      "seq": "9",
+      "code": "01.09.2559",
+      "name": "推雪板弹簧导柱组件-镀锌",
+      "specification": "",
+      "quantity": 1,
+      "weight": 15.85,
+      "material": "",
+      "mesh_ids": []
+    },
+    {
+      "id": "8",
+      "seq": "8",
+      "code": "01.09.2558",
+      "name": "轮胎架内臂组件-镀锌",
+      "specification": "",
+      "quantity": 1,
+      "weight": 9.38,
+      "material": "",
+      "mesh_ids": []
+    },
+    {
+      "id": "7",
+      "seq": "7",
+      "code": "01.09.2557",
+      "name": "轮胎架外臂组件-漆后",
+      "specification": "",
+      "quantity": 1,
+      "weight": 11.34,
+      "material": "",
+      "mesh_ids": []
+    },
+    {
+      "id": "6",
+      "seq": "6",
+      "code": "01.09.2553",
+      "name": "右刀板后座组件-漆后",
+      "specification": "",
+      "quantity": 1,
+      "weight": 11.17,
+      "material": "",
+      "mesh_ids": [
+        "mesh_315"
+      ]
+    },
+    {
+      "id": "5",
+      "seq": "5",
+      "code": "01.09.2554",
+      "name": "左刀板后座组件-漆后",
+      "specification": "",
+      "quantity": 1,
+      "weight": 11.17,
+      "material": "",
+      "mesh_ids": [
+        "mesh_325"
+      ]
+    },
+    {
+      "id": "4",
+      "seq": "4",
+      "code": "01.09.2552",
+      "name": "右铲雪板组件-漆后",
+      "specification": "",
+      "quantity": 1,
+      "weight": 60.68,
+      "material": "",
+      "mesh_ids": [
+        "mesh_351"
+      ]
+    },
+    {
+      "id": "3",
+      "seq": "3",
+      "code": "01.09.2551",
+      "name": "左铲雪板组件-漆后",
+      "specification": "",
+      "quantity": 1,
+      "weight": 60.69,
+      "material": "",
+      "mesh_ids": [
+        "mesh_377"
+      ]
+    },
+    {
+      "id": "2",
+      "seq": "2",
+      "code": "01.09.2550",
+      "name": "后座连接架组件-漆后",
+      "specification": "",
+      "quantity": 1,
+      "weight": 59.64,
+      "material": "",
+      "mesh_ids": []
+    },
+    {
+      "id": "1",
+      "seq": "1",
+      "code": "01.09.2549",
+      "name": "连接器后座组件-漆后",
+      "specification": "",
+      "quantity": 1,
+      "weight": 77.27,
+      "material": "",
+      "mesh_ids": []
+    },
+    {
+      "id": "9",
+      "seq": "9",
+      "code": "01.01.01.17678",
+      "name": "加强筋 2",
+      "specification": "",
+      "quantity": 1,
+      "weight": 1.2,
+      "material": "",
+      "mesh_ids": [
+        "mesh_396",
+        "mesh_397"
+      ]
+    },
+    {
+      "id": "8",
+      "seq": "8",
+      "code": "01.01.03.2720",
+      "name": "矩形管 1",
+      "specification": "",
+      "quantity": 1,
+      "weight": 12.61,
+      "material": "",
+      "mesh_ids": [
+        "mesh_398",
+        "mesh_401",
+        "mesh_402",
+        "mesh_414"
+      ]
+    },
+    {
+      "id": "7",
+      "seq": "7",
+      "code": "01.01.01.16608",
+      "name": "封板 2",
+      "specification": "",
+      "quantity": 1,
+      "weight": 5.12,
+      "material": "",
+      "mesh_ids": [
+        "mesh_399",
+        "mesh_400"
+      ]
+    },
+    {
+      "id": "6",
+      "seq": "6",
+      "code": "01.01.03.2719",
+      "name": "矩形管 2",
+      "specification": "",
+      "quantity": 1,
+      "weight": 8.71,
+      "material": "",
+      "mesh_ids": []
+    },
+    {
+      "id": "5",
+      "seq": "5",
+      "code": "01.05.0019",
+      "name": "左挂件虚拟组件 1",
+      "specification": "",
+      "quantity": 1,
+      "weight": 6.53,
+      "material": "",
+      "mesh_ids": []
+    },
+    {
+      "id": "4",
+      "seq": "4",
+      "code": "01.05.0018",
+      "name": "右挂件虚拟组件 1",
+      "specification": "",
+      "quantity": 1,
+      "weight": 6.53,
+      "material": "",
+      "mesh_ids": []
+    },
+    {
+      "id": "3",
+      "seq": "3",
+      "code": "01.01.01.6589",
+      "name": "方形板-机加 4",
+      "specification": "",
+      "quantity": 1,
+      "weight": 0.64,
+      "material": "",
+      "mesh_ids": [
+        "mesh_409",
+        "mesh_410",
+        "mesh_411",
+        "mesh_412"
+      ]
+    },
+    {
+      "id": "2",
+      "seq": "2",
+      "code": "01.01.01.11509",
+      "name": "连接板 1",
+      "specification": "",
+      "quantity": 1,
+      "weight": 21.36,
+      "material": "",
+      "mesh_ids": [
+        "mesh_413"
+      ]
+    },
+    {
+      "id": "1",
+      "seq": "1",
+      "code": "01.01.03.2718",
+      "name": "矩形管 1",
+      "specification": "",
+      "quantity": 1,
+      "weight": 14.56,
+      "material": "",
+      "mesh_ids": []
+    },
+    {
+      "id": "10",
+      "seq": "10",
+      "code": "01.01.02.0337",
+      "name": "后座轴套 1",
+      "specification": "",
+      "quantity": 1,
+      "weight": 0.3,
+      "material": "",
+      "mesh_ids": [
+        "mesh_378"
+      ]
+    },
+    {
+      "id": "9",
+      "seq": "9",
+      "code": "01.02.02.0490",
+      "name": "后座轴套 1",
+      "specification": "",
+      "quantity": 1,
+      "weight": 2.29,
+      "material": "",
+      "mesh_ids": [
+        "mesh_381"
+      ]
+    },
+    {
+      "id": "8",
+      "seq": "8",
+      "code": "01.01.02.1221",
+      "name": "轴套 1",
+      "specification": "",
+      "quantity": 1,
+      "weight": 0.35,
+      "material": "",
+      "mesh_ids": [
+        "mesh_382"
+      ]
+    },
+    {
+      "id": "7",
+      "seq": "7",
+      "code": "01.01.04.0592",
+      "name": "角钢-机加 1",
+      "specification": "",
+      "quantity": 1,
+      "weight": 0.63,
+      "material": "",
+      "mesh_ids": [
+        "mesh_383"
+      ]
+    },
+    {
+      "id": "6",
+      "seq": "6",
+      "code": "01.01.01.11516",
+      "name": "加强板 4",
+      "specification": "",
+      "quantity": 1,
+      "weight": 1.41,
+      "material": "",
+      "mesh_ids": []
+    },
+    {
+      "id": "5",
+      "seq": "5",
+      "code": "01.01.01.11515",
+      "name": "油缸固定板 4",
+      "specification": "",
+      "quantity": 1,
+      "weight": 2.1,
+      "material": "",
+      "mesh_ids": []
+    },
+    {
+      "id": "4",
+      "seq": "4",
+      "code": "01.01.01.11514",
+      "name": "折弯板 1",
+      "specification": "",
+      "quantity": 1,
+      "weight": 0.49,
+      "material": "",
+      "mesh_ids": []
+    },
+    {
+      "id": "3",
+      "seq": "3",
+      "code": "01.01.01.11513",
+      "name": "侧连接板 2",
+      "specification": "",
+      "quantity": 1,
+      "weight": 24.97,
+      "material": "",
+      "mesh_ids": []
+    },
+    {
+      "id": "2",
+      "seq": "2",
+      "code": "01.01.01.11512",
+      "name": "上连接板 2",
+      "specification": "",
+      "quantity": 1,
+      "weight": 11.35,
+      "material": "",
+      "mesh_ids": []
+    },
+    {
+      "id": "1",
+      "seq": "1",
+      "code": "01.01.01.11511",
+      "name": "方形板-机加 1",
+      "specification": "",
+      "quantity": 1,
+      "weight": 15.79,
+      "material": "",
+      "mesh_ids": [
+        "mesh_395"
+      ]
+    },
+    {
+      "id": "15",
+      "seq": "15",
+      "code": "01.02.01.4983",
+      "name": "左铲雪板加强板 2",
+      "specification": "",
+      "quantity": 1,
+      "weight": 1.48,
+      "material": "",
+      "mesh_ids": []
+    },
+    {
+      "id": "14",
+      "seq": "14",
+      "code": "01.01.01.11529",
+      "name": "方形板 3",
+      "specification": "",
+      "quantity": 1,
+      "weight": 1.38,
+      "material": "",
+      "mesh_ids": [
+        "mesh_328",
+        "mesh_329",
+        "mesh_330",
+        "mesh_354",
+        "mesh_355",
+        "mesh_356"
+      ]
+    },
+    {
+      "id": "13",
+      "seq": "13",
+      "code": "01.01.01.11528",
+      "name": "方形板 1",
+      "specification": "",
+      "quantity": 1,
+      "weight": 1.16,
+      "material": "",
+      "mesh_ids": []
+    },
+    {
+      "id": "12",
+      "seq": "12",
+      "code": "01.01.02.1222",
+      "name": "轴套 2",
+      "specification": "",
+      "quantity": 1,
+      "weight": 1.46,
+      "material": "",
+      "mesh_ids": []
+    },
+    {
+      "id": "11",
+      "seq": "11",
+      "code": "01.01.01.11527",
+      "name": "反光片安装板 1",
+      "specification": "",
+      "quantity": 1,
+      "weight": 0.18,
+      "material": "",
+      "mesh_ids": []
+    },
+    {
+      "id": "10",
+      "seq": "10",
+      "code": "01.01.01.11526",
+      "name": "轴套加强板 2",
+      "specification": "",
+      "quantity": 1,
+      "weight": 0.83,
+      "material": "",
+      "mesh_ids": []
+    },
+    {
+      "id": "9",
+      "seq": "9",
+      "code": "01.01.01.11525",
+      "name": "支撑固定板 1",
+      "specification": "",
+      "quantity": 1,
+      "weight": 0.66,
+      "material": "",
+      "mesh_ids": []
+    },
+    {
+      "id": "8",
+      "seq": "8",
+      "code": "01.01.01.11524",
+      "name": "后弹簧固定板 2",
+      "specification": "",
+      "quantity": 1,
+      "weight": 0.82,
+      "material": "",
+      "mesh_ids": []
+    },
+    {
+      "id": "7",
+      "seq": "7",
+      "code": "01.01.01.11523",
+      "name": "前弹簧固定板 1",
+      "specification": "",
+      "quantity": 1,
+      "weight": 0.89,
+      "material": "",
+      "mesh_ids": []
+    },
+    {
+      "id": "6",
+      "seq": "6",
+      "code": "01.01.01.11522",
+      "name": "前油缸固定板 2",
+      "specification": "",
+      "quantity": 1,
+      "weight": 2.41,
+      "material": "",
+      "mesh_ids": []
+    },
+    {
+      "id": "5",
+      "seq": "5",
+      "code": "01.01.01.11521",
+      "name": "底部连接板 6",
+      "specification": "",
+      "quantity": 1,
+      "weight": 3.47,
+      "material": "",
+      "mesh_ids": []
+    },
+    {
+      "id": "4",
+      "seq": "4",
+      "code": "01.01.01.18600",
+      "name": "前加强板 1",
+      "specification": "",
+      "quantity": 1,
+      "weight": 3.34,
+      "material": "",
+      "mesh_ids": []
+    },
+    {
+      "id": "3",
+      "seq": "3",
+      "code": "01.01.01.11519",
+      "name": "后加强板 1",
+      "specification": "",
+      "quantity": 1,
+      "weight": 2.56,
+      "material": "",
+      "mesh_ids": []
+    },
+    {
+      "id": "2",
+      "seq": "2",
+      "code": "01.01.01.18599",
+      "name": "方形板-机加 1",
+      "specification": "",
+      "quantity": 1,
+      "weight": 11.69,
+      "material": "",
+      "mesh_ids": []
+    },
+    {
+      "id": "1",
+      "seq": "1",
+      "code": "01.01.01.18598",
+      "name": "左铲板 1",
+      "specification": "",
+      "quantity": 1,
+      "weight": 28.38,
+      "material": "",
+      "mesh_ids": []
+    }
+  ],
+  "assembly_steps": [
+    {
+      "step_number": 1,
+      "title": "安装底部加强筋基准件",
+      "description": "将底部加强筋作为基准件放置在工作平台上，确保水平位置正确",
+      "estimated_time_minutes": 15,
+      "parts_used": [
+        {
+          "bom_seq": "1",
+          "bom_code": "01.01.017678",
+          "bom_name": "加强筋",
+          "qty": 1
+        }
+      ],
+      "tools_required": [
+        "水平仪",
+        "卷尺",
+        "焊接设备"
+      ],
+      "operation_steps": [
+        "1. 将加强筋平放在工作平台上，确保放置平稳",
+        "2. 使用水平仪检查加强筋的水平度，调整至完全水平",
+        "3. 用卷尺测量加强筋两端到平台边缘的距离，确保居中放置"
+      ],
+      "key_points": [
+        "加强筋是整个装配的基准，必须保证水平放置",
+        "检查平台表面是否平整，避免基准件变形"
+      ],
+      "warnings": [
+        "⚠️ 确保工作平台承重能力足够，防止变形",
+        "⚠️ 搬运时注意安全，避免砸伤"
+      ],
+      "quality_checks": [
+        {
+          "item": "水平度检查",
+          "method": "用水平仪在加强筋长度方向检查三点",
+          "standard": "水平仪气泡居中，误差不超过1mm"
+        },
+        {
+          "item": "位置检查",
+          "method": "测量加强筋两端到平台边缘距离",
+          "standard": "两端距离差不超过2mm"
+        }
+      ],
+      "3d_highlight": [],
+      "camera_angle": "front",
+      "explosion_offset": [
+        0,
+        0.0,
+        0
+      ]
+    },
+    {
+      "step_number": 2,
+      "title": "安装左右侧框架",
+      "description": "同步安装左侧框架和右侧框架，确保对称性和垂直度",
+      "estimated_time_minutes": 30,
+      "parts_used": [
+        {
+          "bom_seq": "3",
+          "bom_code": "01.01.011660",
+          "bom_name": "左侧框架",
+          "qty": 1
+        },
+        {
+          "bom_seq": "4",
+          "bom_code": "01.01.011515",
+          "bom_name": "右侧框架",
+          "qty": 1
+        }
+      ],
+      "tools_required": [
+        "角尺",
+        "水平仪",
+        "焊接设备",
+        "卷尺"
+      ],
+      "operation_steps": [
+        "1. 将左侧框架垂直放置在加强筋左侧，与加强筋对齐",
+        "2. 将右侧框架垂直放置在加强筋右侧，与加强筋对齐",
+        "3. 用角尺检查左右框架与加强筋的垂直度",
+        "4. 用卷尺测量左右框架之间的距离，确保对称",
+        "5. 进行6mm角焊焊接，先点焊固定，再满焊"
+      ],
+      "key_points": [
+        "左右框架要同步安装，保证对称性",
+        "焊接时先点焊固定，检查无误后再满焊",
+        "注意焊接顺序，避免热变形"
+      ],
+      "warnings": [
+        "⚠️ 焊接时戴好防护面罩和手套",
+        "⚠️ 注意框架垂直度，防止倾斜"
+      ],
+      "quality_checks": [
+        {
+          "item": "垂直度检查",
+          "method": "用角尺检查框架与加强筋的垂直度",
+          "standard": "角尺贴合无间隙，垂直度误差不超过1°"
+        },
+        {
+          "item": "对称性检查",
+          "method": "测量左右框架到中心线的距离",
+          "standard": "左右距离差不超过3mm"
+        }
+      ],
+      "3d_highlight": [],
+      "camera_angle": "isometric",
+      "explosion_offset": [
+        0,
+        0.8,
+        0
+      ]
+    },
+    {
+      "step_number": 3,
+      "title": "安装顶部封板",
+      "description": "安装顶部封板，连接左右框架和加强筋，形成完整框架结构",
+      "estimated_time_minutes": 20,
+      "parts_used": [
+        {
+          "bom_seq": "2",
+          "bom_code": "01.01.012720",
+          "bom_name": "封板",
+          "qty": 1
+        }
+      ],
+      "tools_required": [
+        "水平仪",
+        "焊接设备",
+        "卷尺"
+      ],
+      "operation_steps": [
+        "1. 将封板放置在左右框架顶部，与框架上边缘对齐",
+        "2. 用水平仪检查封板的水平度",
+        "3. 检查封板与左右框架的贴合情况",
+        "4. 进行6mm角焊焊接，连接封板与左右框架及加强筋"
+      ],
+      "key_points": [
+        "封板要完全覆盖在加强筋之上",
+        "确保封板与左右框架紧密贴合",
+        "焊接时注意控制焊接变形"
+      ],
+      "warnings": [
+        "⚠️ 焊接时注意通风，避免烟尘吸入",
+        "⚠️ 检查封板放置是否平稳"
+      ],
+      "quality_checks": [
+        {
+          "item": "水平度检查",
+          "method": "用水平仪检查封板表面",
+          "standard": "水平仪气泡居中，整体水平度误差不超过2mm"
+        },
+        {
+          "item": "贴合度检查",
+          "method": "检查封板与框架的贴合间隙",
+          "standard": "最大间隙不超过1mm"
+        }
+      ],
+      "3d_highlight": [],
+      "camera_angle": "isometric",
+      "explosion_offset": [
+        0,
+        1.6,
+        0
+      ]
+    },
+    {
+      "step_number": 4,
+      "title": "安装左右中部连接件",
+      "description": "安装左侧中部连接件和右侧中部连接件，增强框架结构强度",
+      "estimated_time_minutes": 25,
+      "parts_used": [
+        {
+          "bom_seq": "7",
+          "bom_code": "01.01.0111512",
+          "bom_name": "右侧中部连接件",
+          "qty": 1
+        },
+        {
+          "bom_seq": "8",
+          "bom_code": "01.01.0111511",
+          "bom_name": "左侧中部连接件",
+          "qty": 1
+        },
+        {
+          "bom_seq": "螺栓",
+          "bom_code": "02.03.0012",
+          "bom_name": "M16×85螺栓",
+          "qty": 4
+        }
+      ],
+      "tools_required": [
+        "扭力扳手",
+        "开口扳手",
+        "水平尺"
+      ],
+      "operation_steps": [
+        "1. 将右侧中部连接件水平放置在右侧框架中部",
+        "2. 将左侧中部连接件水平放置在左侧框架中部",
+        "3. 对齐螺栓孔位，每侧安装2个M16×85螺栓",
+        "4. 用扭力扳手按对角顺序拧紧螺栓，力矩120N·m",
+        "5. 检查连接件水平度"
+      ],
+      "key_points": [
+        "螺栓要按对角顺序拧紧，保证受力均匀",
+        "注意连接件的水平安装位置",
+        "力矩要达到规定值120N·m"
+      ],
+      "warnings": [
+        "⚠️ 拧紧螺栓时注意扳手打滑",
+        "⚠️ 检查螺栓长度是否合适"
+      ],
+      "quality_checks": [
+        {
+          "item": "螺栓力矩检查",
+          "method": "用扭力扳手抽查螺栓力矩",
+          "standard": "力矩120N·m，误差±10%"
+        },
+        {
+          "item": "水平度检查",
+          "method": "用水平尺检查连接件安装水平度",
+          "standard": "水平尺气泡居中"
+        }
+      ],
+      "3d_highlight": [
+        "mesh_145"
+      ],
+      "camera_angle": "isometric",
+      "explosion_offset": [
+        0,
+        2.4000000000000004,
+        0
+      ]
+    },
+    {
+      "step_number": 5,
+      "title": "安装角部组件",
+      "description": "安装右上角组件和左下角组件，完成框架四角结构",
+      "estimated_time_minutes": 30,
+      "parts_used": [
+        {
+          "bom_seq": "5",
+          "bom_code": "01.01.010018",
+          "bom_name": "右上角组件",
+          "qty": 1
+        },
+        {
+          "bom_seq": "6",
+          "bom_code": "01.01.016589",
+          "bom_name": "左下角组件",
+          "qty": 1
+        },
+        {
+          "bom_seq": "螺栓",
+          "bom_code": "02.03.0012",
+          "bom_name": "M16×85螺栓",
+          "qty": 4
+        }
+      ],
+      "tools_required": [
+        "角度尺",
+        "扭力扳手",
+        "卷尺"
+      ],
+      "operation_steps": [
+        "1. 将右上角组件以50°倾斜角安装在右侧框架上部",
+        "2. 将左下角组件以28°倾斜角安装在左侧框架下部",
+        "3. 对齐螺栓孔位，每个组件安装2个M16×85螺栓",
+        "4. 用角度尺检查安装角度是否正确",
+        "5. 用扭力扳手拧紧螺栓，力矩120N·m"
+      ],
+      "key_points": [
+        "注意右上角组件50°倾斜角和左下角组件28°倾斜角",
+        "确保角部组件与框架紧密贴合",
+        "螺栓拧紧要均匀受力"
+      ],
+      "warnings": [
+        "⚠️ 安装角度组件时注意安全防护",
+        "⚠️ 检查倾斜角度是否正确"
+      ],
+      "quality_checks": [
+        {
+          "item": "安装角度检查",
+          "method": "用角度尺测量组件安装角度",
+          "standard": "右上角50°±1°，左下角28°±1°"
+        },
+        {
+          "item": "螺栓紧固检查",
+          "method": "检查螺栓是否完全拧紧",
+          "standard": "螺栓头与工件贴合无间隙"
+        }
+      ],
+      "3d_highlight": [
+        "mesh_145"
+      ],
+      "camera_angle": "isometric",
+      "explosion_offset": [
+        0,
+        3.2,
+        0
+      ]
+    },
+    {
+      "step_number": 6,
+      "title": "安装轮胎架组件",
+      "description": "安装轮胎架内外臂组件，为轮胎安装做准备",
+      "estimated_time_minutes": 40,
+      "parts_used": [
+        {
+          "bom_seq": "7",
+          "bom_code": "01.09.2557",
+          "bom_name": "轮胎架外臂组件",
+          "qty": 2
+        },
+        {
+          "bom_seq": "8",
+          "bom_code": "01.09.2558",
+          "bom_name": "轮胎架内臂组件",
+          "qty": 2
+        },
+        {
+          "bom_seq": "16",
+          "bom_code": "01.09.2563",
+          "bom_name": "销轴-镀锌",
+          "qty": 4
+        }
+      ],
+      "tools_required": [
+        "橡胶锤",
+        "开口扳手",
+        "卷尺"
+      ],
+      "operation_steps": [
+        "1. 将轮胎架内臂组件安装在框架相应位置",
+        "2. 将轮胎架外臂组件与内臂组件对接",
+        "3. 使用销轴连接内外臂组件，共4处",
+        "4. 用橡胶锤轻轻敲击销轴到位",
+        "5. 检查轮胎架活动是否灵活"
+      ],
+      "key_points": [
+        "销轴安装要到位，确保连接可靠",
+        "检查轮胎架活动范围是否正常",
+        "注意左右对称安装"
+      ],
+      "warnings": [
+        "⚠️ 敲击销轴时戴好防护眼镜",
+        "⚠️ 检查销轴安装是否到位"
+      ],
+      "quality_checks": [
+        {
+          "item": "销轴安装检查",
+          "method": "检查销轴是否安装到位",
+          "standard": "销轴端面与工件平齐，无突出"
+        },
+        {
+          "item": "活动性检查",
+          "method": "手动检查轮胎架活动是否顺畅",
+          "standard": "转动灵活，无卡滞现象"
+        }
+      ],
+      "3d_highlight": [
+        "mesh_249",
+        "mesh_248",
+        "mesh_250",
+        "mesh_251"
+      ],
+      "camera_angle": "isometric",
+      "explosion_offset": [
+        0,
+        4.0,
+        0
+      ]
+    },
+    {
+      "step_number": 7,
+      "title": "安装推雪板功能组件",
+      "description": "安装推雪板弹簧导柱、橡胶刀板等关键功能部件",
+      "estimated_time_minutes": 35,
+      "parts_used": [
+        {
+          "bom_seq": "9",
+          "bom_code": "01.09.2559",
+          "bom_name": "推雪板弹簧导柱组件",
+          "qty": 6
+        },
+        {
+          "bom_seq": "11",
+          "bom_code": "01.02.07.0239",
+          "bom_name": "橡胶刀板",
+          "qty": 2
+        },
+        {
+          "bom_seq": "15",
+          "bom_code": "01.09.2562",
+          "bom_name": "销轴-镀锌",
+          "qty": 6
+        }
+      ],
+      "tools_required": [
+        "扭力扳手",
+        "橡胶锤",
+        "卷尺"
+      ],
+      "operation_steps": [
+        "1. 安装6个推雪板弹簧导柱组件到指定位置",
+        "2. 使用6个销轴固定弹簧导柱，确保安装牢固",
+        "3. 安装2个橡胶刀板到推雪板底部",
+        "4. 检查橡胶刀板与地面的贴合情况",
+        "5. 测试弹簧导柱的伸缩功能"
+      ],
+      "key_points": [
+        "弹簧导柱要均匀分布安装",
+        "橡胶刀板要保证与地面良好贴合",
+        "检查所有销轴安装是否可靠"
+      ],
+      "warnings": [
+        "⚠️ 安装弹簧组件时注意弹力释放",
+        "⚠️ 橡胶刀板较重，搬运时注意安全"
+      ],
+      "quality_checks": [
+        {
+          "item": "橡胶刀板贴合检查",
+          "method": "检查橡胶刀板底部与模拟地面的贴合",
+          "standard": "刀板全长与地面间隙不超过2mm"
+        },
+        {
+          "item": "弹簧功能测试",
+          "method": "手动测试弹簧导柱伸缩",
+          "standard": "伸缩顺畅，无卡滞，回弹有力"
+        }
+      ],
+      "3d_highlight": [
+        "mesh_243",
+        "mesh_252",
+        "mesh_246",
+        "mesh_247",
+        "mesh_244",
+        "mesh_245",
+        "mesh_256",
+        "mesh_257"
+      ],
+      "camera_angle": "isometric",
+      "explosion_offset": [
+        0,
+        4.800000000000001,
+        0
+      ]
+    },
+    {
+      "step_number": 8,
+      "title": "最终检查与调整",
+      "description": "对完成的推雪板进行最终全面检查和质量确认",
+      "estimated_time_minutes": 20,
+      "parts_used": [],
+      "tools_required": [
+        "水平仪",
+        "卷尺",
+        "扭力扳手",
+        "角度尺"
+      ],
+      "operation_steps": [
+        "1. 用水平仪全面检查框架水平度",
+        "2. 测量关键尺寸，确认符合图纸要求",
+        "3. 抽查重要螺栓的拧紧力矩",
+        "4. 检查所有焊接部位质量",
+        "5. 测试各活动部件的灵活性",
+        "6. 清理工件表面，去除焊渣和油污"
+      ],
+      "key_points": [
+        "全面检查是保证质量的关键步骤",
+        "重点检查活动部件的灵活性",
+        "确保所有连接可靠无松动"
+      ],
+      "warnings": [
+        "⚠️ 检查时注意活动部件，避免夹伤",
+        "⚠️ 清理时戴好手套，防止划伤"
+      ],
+      "quality_checks": [
+        {
+          "item": "整体水平度检查",
+          "method": "用水平仪检查框架多个位置",
+          "standard": "整体水平度误差不超过3mm"
+        },
+        {
+          "item": "关键尺寸检查",
+          "method": "测量框架对角线尺寸",
+          "standard": "对角线长度差不超过5mm"
+        },
+        {
+          "item": "活动部件检查",
+          "method": "检查所有销轴连接部位",
+          "standard": "转动灵活，无异常响声"
+        }
+      ],
+      "3d_highlight": [],
+      "camera_angle": "isometric",
+      "explosion_offset": [
+        0,
+        5.6000000000000005,
+        0
+      ]
+    }
+  ],
+  "welding_requirements": [
+    {
+      "requirement_id": "WR-001",
+      "welding_location": "左右侧框架与底部加强筋的连接处",
+      "welding_type": "角焊",
+      "welding_method": "手工电弧焊",
+      "weld_size": "焊脚高度6mm",
+      "quality_requirement": "焊缝表面平整，无气孔、夹渣等缺陷",
+      "worker_instruction": "使用直径3.2mm的E4303焊条，采用平焊位置施焊。焊接时注意控制电流，避免焊缝过高或过低。",
+      "inspection_method": "目视检查焊缝外观，并用磁粉探伤检测内部缺陷",
+      "importance": "关键"
+    },
+    {
+      "requirement_id": "WR-002",
+      "welding_location": "顶部封板与两侧框架的连接处",
+      "welding_type": "角焊",
+      "welding_method": "气保焊（MAG焊）",
+      "welding_size": "焊脚高度8mm",
+      "quality_requirement": "焊缝成型良好，无裂纹、未熔合等严重缺陷",
+      "worker_instruction": "使用CO2气体保护，采用平焊位置施焊。焊接前清理焊缝区域的油污和锈迹，确保焊接质量。",
+      "inspection_method": "目视检查焊缝外观，并进行X射线探伤检测",
+      "importance": "重要"
+    },
+    {
+      "requirement_id": "WR-003",
+      "welding_location": "铲板与框架的连接部位",
+      "welding_type": "对接焊",
+      "welding_method": "手工电弧焊",
+      "welding_size": "焊缝宽度10mm",
+      "quality_requirement": "焊缝必须完全熔透，无未焊透、未熔合等缺陷",
+      "worker_instruction": "采用多层多道焊工艺，先打底焊再填充焊。焊接过程中注意控制层间温度，防止产生裂纹。",
+      "inspection_method": "超声波探伤检测焊缝内部质量",
+      "importance": "关键"
+    },
+    {
+      "requirement_id": "WR-001",
+      "welding_location": "顶部封板与侧框架连接处",
+      "welding_type": "角焊",
+      "welding_method": "气保焊（MAG焊）",
+      "weld_size": "焊脚高度6mm",
+      "quality_requirement": "焊缝表面光滑，无裂纹、气孔等缺陷",
+      "worker_instruction": "使用气保焊焊接顶部封板与侧框架的连接处，焊脚高度控制在6mm。焊接时注意保护焊缝表面，避免产生裂纹或气孔。",
+      "inspection_method": "目视检查焊缝外观，并用渗透检测验证焊缝内部质量",
+      "importance": "关键"
+    },
+    {
+      "requirement_id": "WR-002",
+      "welding_location": "底部加强筋与侧框架连接处",
+      "welding_type": "角焊",
+      "welding_method": "手工电弧焊",
+      "weld_size": "焊脚高度8mm",
+      "quality_requirement": "焊缝必须饱满，无夹渣、未熔合等缺陷",
+      "worker_instruction": "在底部加强筋与侧框架的连接处进行手工电弧焊，焊脚高度为8mm。焊接时要确保焊缝饱满，避免出现夹渣或未熔合现象。",
+      "inspection_method": "目视检查焊缝外观，并用超声波检测验证焊缝内部质量",
+      "importance": "重要"
+    },
+    {
+      "requirement_id": "WR-003",
+      "welding_location": "顶部封板与底部加强筋连接处",
+      "welding_type": "对接焊",
+      "welding_method": "气保焊（MAG焊）",
+      "weld_size": "焊缝宽度10mm",
+      "quality_requirement": "焊缝必须完全熔透，无未熔合、裂纹等缺陷",
+      "worker_instruction": "在顶部封板与底部加强筋的连接处进行气保焊对接焊接，焊缝宽度为10mm。焊接时要确保焊缝完全熔透，避免出现未熔合或裂纹。",
+      "inspection_method": "目视检查焊缝外观，并用X射线检测验证焊缝内部质量",
+      "importance": "关键"
+    },
+    {
+      "requirement_id": "WR-001",
+      "welding_location": "左右侧框架与底部加强筋的连接处",
+      "welding_type": "角焊",
+      "welding_method": "手工电弧焊（SMAW）",
+      "weld_size": "焊脚高度6mm",
+      "quality_requirement": "焊缝表面平整，无气孔、裂纹等缺陷",
+      "worker_instruction": "使用直径3.2mm的E7018焊条，焊接电流120-140A。焊接时注意控制熔池形状，确保焊脚高度达到6mm。",
+      "inspection_method": "目视检查+焊缝尺测量",
+      "importance": "关键"
+    },
+    {
+      "requirement_id": "WR-002",
+      "welding_location": "顶部封板与两侧框架的连接处",
+      "welding_type": "对接焊",
+      "welding_method": "气保焊（MIG/MAG）",
+      "weld_size": "焊缝宽度10mm",
+      "quality_requirement": "焊缝必须完全熔透，无未熔合现象",
+      "worker_instruction": "采用CO2气体保护，焊接电流180-200A，焊接速度保持均匀。焊接前清理干净母材表面油污和锈迹。",
+      "inspection_method": "X射线探伤+超声波检测",
+      "importance": "关键"
+    },
+    {
+      "requirement_id": "WR-003",
+      "welding_location": "矩形板与机加件的连接处",
+      "welding_type": "角焊",
+      "welding_method": "手工电弧焊（SMAW）",
+      "weld_size": "焊脚高度5mm",
+      "quality_requirement": "焊缝咬边深度≤0.5mm",
+      "worker_instruction": "使用直径3.2mm的E6013焊条，焊接电流110-130A。焊接时注意控制电弧长度，避免咬边。",
+      "inspection_method": "目视检查+焊缝尺测量",
+      "importance": "重要"
+    },
+    {
+      "requirement_id": "WR-001",
+      "welding_location": "油缸固定板与油缸及左右铲雪板组件的配合焊接处",
+      "welding_type": "角焊",
+      "welding_method": "手工电弧焊（111）",
+      "weld_size": "焊脚高度6mm",
+      "quality_requirement": "焊缝表面平整，无气孔、夹渣等缺陷",
+      "worker_instruction": "使用直径3.2mm的焊条，采用平焊位置施焊。焊接时注意控制电流，避免焊穿。焊接完成后清理焊渣。",
+      "inspection_method": "目视检查+焊缝尺寸测量",
+      "importance": "关键"
+    },
+    {
+      "requirement_id": "WR-002",
+      "welding_location": "后座连接组件的侧面加强筋与主体结构的焊接处",
+      "welding_type": "角焊",
+      "welding_method": "气保焊（135）",
+      "weld_size": "焊脚高度8mm",
+      "quality_requirement": "焊缝连续均匀，无裂纹、未熔合等缺陷",
+      "worker_instruction": "使用CO2气体保护，采用立焊位置施焊。焊接前清理焊接区域的油污和锈迹。焊接过程中保持焊枪角度稳定。",
+      "inspection_method": "目视检查+渗透检测",
+      "importance": "重要"
+    },
+    {
+      "requirement_id": "WR-003",
+      "welding_location": "后座连接组件的底部加强筋与主体结构的焊接处",
+      "welding_type": "角焊",
+      "welding_method": "手工电弧焊（111）",
+      "weld_size": "焊脚高度6mm",
+      "quality_requirement": "焊缝外观整齐，无咬边、焊瘤等现象",
+      "worker_instruction": "采用平焊位置施焊，注意控制焊接速度。焊接完成后敲掉焊渣并打磨平整。",
+      "inspection_method": "目视检查+焊缝尺寸测量",
+      "importance": "一般"
+    },
+    {
+      "requirement_id": "WR-001",
+      "welding_location": "底部加强筋与侧框架的连接处",
+      "welding_type": "角焊",
+      "welding_method": "手工电弧焊",
+      "weld_size": "焊脚高度6mm",
+      "quality_requirement": "焊缝表面平整，无气孔、裂纹等缺陷",
+      "worker_instruction": "使用直径3.2mm的E4303焊条，采用平焊位置施焊。焊接时注意控制电流，避免焊穿。焊接完成后清理焊渣。",
+      "inspection_method": "目视检查+渗透检测",
+      "importance": "关键"
+    },
+    {
+      "requirement_id": "WR-002",
+      "welding_location": "顶部封板与侧框架的连接处",
+      "welding_type": "角焊",
+      "welding_method": "气保焊（MAG焊）",
+      "weld_size": "焊脚高度8mm",
+      "quality_requirement": "焊缝饱满，无咬边、未熔合等缺陷",
+      "worker_instruction": "使用CO2气体保护，采用平焊位置施焊。焊接前清理焊接区域的油污和锈迹。焊接过程中保持焊枪角度稳定。",
+      "inspection_method": "目视检查+超声波检测",
+      "importance": "重要"
+    },
+    {
+      "requirement_id": "WR-003",
+      "welding_location": "折弯板与侧连接板的连接处",
+      "welding_type": "对接焊",
+      "welding_method": "手工电弧焊",
+      "weld_size": "焊缝宽度10mm",
+      "quality_requirement": "焊缝根部熔透，无夹渣、未焊透等缺陷",
+      "worker_instruction": "采用V型坡口，使用直径4.0mm的E5015焊条。焊接前预热至150℃以上。焊接时分层施焊，每层焊后锤击消除应力。",
+      "inspection_method": "X射线检测+硬度测试",
+      "importance": "关键"
+    },
+    {
+      "requirement_id": "WR-001",
+      "welding_location": "铲板与框架连接处",
+      "welding_type": "角焊",
+      "welding_method": "手工电弧焊",
+      "weld_size": "6mm",
+      "quality_requirement": "焊缝表面平整，无气孔、夹渣等缺陷",
+      "worker_instruction": "使用直径3.2mm的E4303焊条，焊接电流120-150A。焊接时注意控制焊接速度，确保焊缝成型良好。",
+      "inspection_method": "目视检查+渗透检测",
+      "importance": "关键"
+    },
+    {
+      "requirement_id": "WR-002",
+      "welding_location": "顶部封板拼接处",
+      "welding_type": "对接焊",
+      "welding_method": "气保焊",
+      "weld_size": "8mm",
+      "quality_requirement": "焊缝熔深≥80%板厚，无裂纹、未熔合等缺陷",
+      "worker_instruction": "采用CO2气体保护焊，焊接电流180-220A，焊接速度15-20cm/min。焊接前清理坡口处油污和锈迹。",
+      "inspection_method": "X射线探伤+超声波检测",
+      "importance": "关键"
+    },
+    {
+      "requirement_id": "WR-003",
+      "welding_location": "左右侧框架与底部加强筋连接处",
+      "welding_type": "角焊",
+      "welding_method": "手工电弧焊",
+      "weld_size": "5mm",
+      "quality_requirement": "焊脚高度均匀，焊缝宽度一致",
+      "worker_instruction": "使用直径2.5mm的E4303焊条，焊接电流100-130A。焊接时注意保持焊枪角度稳定，避免咬边。",
+      "inspection_method": "目视检查+焊缝规测量",
+      "importance": "重要"
+    },
+    {
+      "requirement_id": "WR-004",
+      "welding_location": "油缸固定板与铲雪板连接处",
+      "welding_type": "角焊",
+      "welding_method": "手工电弧焊",
+      "weld_size": "6mm",
+      "quality_requirement": "焊缝连续饱满，无虚焊现象",
+      "worker_instruction": "焊接前预热至100℃以上，焊接电流120-150A。焊接完成后自然冷却。",
+      "inspection_method": "目视检查+敲击检查",
+      "importance": "重要"
+    },
+    {
+      "requirement_id": "WR-005",
+      "welding_location": "后座连接架与铲雪板组件配合焊接处",
+      "welding_type": "角焊",
+      "welding_method": "手工电弧焊",
+      "weld_size": "5mm",
+      "quality_requirement": "焊缝外观整齐，无明显缺陷",
+      "worker_instruction": "焊接电流100-130A，焊接速度适中。焊接时注意观察熔池状态，及时调整参数。",
+      "inspection_method": "目视检查+焊缝规测量",
+      "importance": "一般"
+    },
+    {
+      "requirement_id": "WR-001",
+      "welding_location": "左铲雪板加强筋与框架连接处",
+      "welding_type": "角焊",
+      "welding_method": "手工电弧焊",
+      "weld_size": "焊脚高度6mm",
+      "quality_requirement": "焊缝表面平整，无气孔、夹渣等缺陷",
+      "worker_instruction": "使用直径3.2mm的E4303焊条，采用单面焊接双面成型工艺。焊接时注意控制电流，避免咬边和未熔合。",
+      "inspection_method": "目视检查+渗透检测",
+      "importance": "关键"
+    },
+    {
+      "requirement_id": "WR-002",
+      "welding_location": "前加强板与后加强板连接处",
+      "welding_type": "对接焊",
+      "welding_method": "气保焊",
+      "weld_size": "焊缝宽度8mm",
+      "quality_requirement": "焊缝必须完全熔透，无裂纹、未熔合等缺陷",
+      "worker_instruction": "采用CO2气体保护焊，使用直径1.2mm的ER50-6焊丝。焊接前清理干净坡口处的油污和锈迹，焊接时保持焊枪角度稳定。",
+      "inspection_method": "X射线探伤+超声波检测",
+      "importance": "关键"
+    },
+    {
+      "requirement_id": "WR-003",
+      "welding_location": "支撑固定板与框架连接处",
+      "welding_type": "角焊",
+      "welding_method": "手工电弧焊",
+      "weld_size": "焊脚高度5mm",
+      "quality_requirement": "焊缝外观整齐，无咬边、焊瘤等现象",
+      "worker_instruction": "使用直径2.5mm的E5015焊条，采用多层多道焊工艺。焊接时注意控制层间温度，防止产生冷裂纹。",
+      "inspection_method": "目视检查+磁粉探伤",
+      "importance": "重要"
+    },
+    {
+      "requirement_id": "WR-004",
+      "welding_location": "反光片安装板与框架连接处",
+      "welding_type": "塞焊",
+      "welding_method": "手工电弧焊",
+      "weld_size": "焊孔直径φ10mm",
+      "quality_requirement": "焊孔内填充饱满，无气孔、夹渣",
+      "worker_instruction": "先在安装板上钻出φ10mm的孔，然后使用直径3.2mm的E4303焊条进行塞焊。焊接时注意控制熔池大小，确保焊缝质量。",
+      "inspection_method": "目视检查+渗透检测",
+      "importance": "一般"
+    }
+  ],
+  "quality_checkpoints": [
+    {
+      "checkpoint_id": "QC-001",
+      "checkpoint_name": "底板平面度检验",
+      "inspection_item": "底板平面度",
+      "inspection_method": "使用平板和塞尺测量底板与平板之间的最大间隙",
+      "measurement_tool": "平板、塞尺",
+      "acceptance_criteria": "平面度误差≤0.1mm",
+      "inspection_timing": "装配前",
+      "importance": "关键",
+      "related_parts": "底板组件"
+    },
+    {
+      "checkpoint_id": "QC-002",
+      "checkpoint_name": "左右侧框架对称性检验",
+      "inspection_item": "左右侧框架相对位置",
+      "inspection_method": "使用卷尺测量两侧框架中心线到基准线的距离差",
+      "measurement_tool": "卷尺",
+      "acceptance_criteria": "距离差≤0.5mm",
+      "inspection_timing": "装配中",
+      "importance": "重要",
+      "related_parts": "左侧框架, 右侧框架"
+    },
+    {
+      "checkpoint_id": "QC-003",
+      "checkpoint_name": "顶部封板安装孔距检验",
+      "inspection_item": "顶部封板安装孔间距",
+      "inspection_method": "使用游标卡尺测量相邻安装孔中心距",
+      "measurement_tool": "游标卡尺",
+      "acceptance_criteria": "孔间距公差±0.1mm",
+      "inspection_timing": "装配中",
+      "importance": "重要",
+      "related_parts": "顶部封板"
+    },
+    {
+      "checkpoint_id": "QC-004",
+      "checkpoint_name": "铲板角度检验",
+      "inspection_item": "铲板倾斜角度",
+      "inspection_method": "使用角度规测量铲板与水平面的夹角",
+      "measurement_tool": "角度规",
+      "acceptance_criteria": "角度50°±1°",
+      "inspection_timing": "装配后",
+      "importance": "一般",
+      "related_parts": "铲板组件"
+    },
+    {
+      "checkpoint_id": "QC-005",
+      "checkpoint_name": "整体宽度检验",
+      "inspection_item": "产品整体宽度",
+      "inspection_method": "使用卷尺测量产品最外侧两点间的距离",
+      "measurement_tool": "卷尺",
+      "acceptance_criteria": "宽度1804mm±1mm",
+      "inspection_timing": "装配后",
+      "importance": "一般",
+      "related_parts": "整机"
+    },
+    {
+      "checkpoint_id": "QC-001",
+      "checkpoint_name": "底部加强筋基准件安装定位",
+      "inspection_item": "底部加强筋基准件位置度",
+      "inspection_method": "使用游标卡尺测量基准件与侧框架的相对位置，确保其在装配基准面上的位置偏差不超过±0.1mm",
+      "measurement_tool": "游标卡尺",
+      "acceptance_criteria": "位置偏差 ≤ ±0.1mm",
+      "inspection_timing": "装配前",
+      "importance": "关键",
+      "related_parts": "底部加强筋基准件"
+    },
+    {
+      "checkpoint_id": "QC-002",
+      "checkpoint_name": "左右侧框架对称性检查",
+      "inspection_item": "左右侧框架对称度",
+      "inspection_method": "使用激光测距仪测量两侧框架中心线到产品中心线的距离，确保两侧距离差≤0.2mm",
+      "measurement_tool": "激光测距仪",
+      "acceptance_criteria": "两侧距离差 ≤ 0.2mm",
+      "inspection_timing": "装配中",
+      "importance": "重要",
+      "related_parts": "左侧框架, 右侧框架"
+    },
+    {
+      "checkpoint_id": "QC-003",
+      "checkpoint_name": "顶部封板平面度",
+      "inspection_item": "顶部封板平面度",
+      "inspection_method": "使用平板和塞尺测量封板表面的最大凹凸值，确保平面度≤0.1mm",
+      "measurement_tool": "平板、塞尺",
+      "acceptance_criteria": "平面度 ≤ 0.1mm",
+      "inspection_timing": "装配后",
+      "importance": "重要",
+      "related_parts": "顶部封板"
+    },
+    {
+      "checkpoint_id": "QC-004",
+      "checkpoint_name": "螺栓孔位置精度",
+      "inspection_item": "螺栓孔位置度",
+      "inspection_method": "使用三坐标测量仪检测螺栓孔相对于基准面的位置偏差，确保偏差≤0.15mm",
+      "measurement_tool": "三坐标测量仪",
+      "acceptance_criteria": "位置偏差 ≤ 0.15mm",
+      "inspection_timing": "装配前",
+      "importance": "关键",
+      "related_parts": "底部加强筋基准件, 左右侧框架"
+    },
+    {
+      "checkpoint_id": "QC-005",
+      "checkpoint_name": "焊接接头质量",
+      "inspection_item": "焊接接头外观及尺寸",
+      "inspection_method": "目视检查焊缝外观，使用焊缝规测量焊缝宽度和高度，确保焊缝宽度≥6mm，高度≥4mm",
+      "measurement_tool": "焊缝规",
+      "acceptance_criteria": "焊缝宽度 ≥ 6mm，焊缝高度 ≥ 4mm",
+      "inspection_timing": "装配中",
+      "importance": "重要",
+      "related_parts": "所有焊接部位"
+    },
+    {
+      "checkpoint_id": "QC-006",
+      "checkpoint_name": "弹簧组件安装间隙",
+      "inspection_item": "弹簧组件安装间隙",
+      "inspection_method": "使用塞尺测量弹簧与导轨之间的间隙，确保间隙为0.2-0.5mm",
+      "measurement_tool": "塞尺",
+      "acceptance_criteria": "间隙 = 0.2-0.5mm",
+      "inspection_timing": "装配中",
+      "importance": "一般",
+      "related_parts": "弹簧组件"
+    },
+    {
+      "checkpoint_id": "QC-001",
+      "checkpoint_name": "底板平面度检测",
+      "inspection_item": "底板平面度",
+      "inspection_method": "使用水平仪或平板检查底板表面平整度，沿长度和宽度方向测量",
+      "measurement_tool": "水平仪/平板",
+      "acceptance_criteria": "平面度误差≤0.1mm",
+      "inspection_timing": "装配前",
+      "importance": "关键",
+      "related_parts": "加强筋"
+    },
+    {
+      "checkpoint_id": "QC-002",
+      "checkpoint_name": "框架垂直度检测",
+      "inspection_item": "左侧框架与底板垂直度",
+      "inspection_method": "使用直角尺或激光测距仪测量框架与底板的夹角",
+      "measurement_tool": "直角尺/激光测距仪",
+      "acceptance_criteria": "垂直度误差≤0.2mm",
+      "inspection_timing": "装配中",
+      "importance": "重要",
+      "related_parts": "加强筋, 左侧框架"
+    },
+    {
+      "checkpoint_id": "QC-003",
+      "checkpoint_name": "封板安装孔位精度",
+      "inspection_item": "顶部封板螺栓孔位置",
+      "inspection_method": "使用游标卡尺测量孔中心距，与图纸尺寸对比",
+      "measurement_tool": "游标卡尺",
+      "acceptance_criteria": "孔中心距公差±0.1mm",
+      "inspection_timing": "装配中",
+      "importance": "重要",
+      "related_parts": "封板"
+    },
+    {
+      "checkpoint_id": "QC-004",
+      "checkpoint_name": "矩形板尺寸检测",
+      "inspection_item": "矩形板长度",
+      "inspection_method": "使用钢卷尺测量矩形板两端点距离",
+      "measurement_tool": "钢卷尺",
+      "acceptance_criteria": "长度尺寸600mm±0.5mm",
+      "inspection_timing": "装配前",
+      "importance": "一般",
+      "related_parts": "矩形板"
+    },
+    {
+      "checkpoint_id": "QC-005",
+      "checkpoint_name": "焊接件焊缝质量",
+      "inspection_item": "焊接件焊缝外观及尺寸",
+      "inspection_method": "目视检查焊缝外观，使用焊缝规测量焊缝高度",
+      "measurement_tool": "焊缝规/目视",
+      "acceptance_criteria": "焊缝高度≥6mm，无裂纹、气孔等缺陷",
+      "inspection_timing": "装配后",
+      "importance": "关键",
+      "related_parts": "所有焊接件"
+    },
+    {
+      "checkpoint_id": "QC-001",
+      "checkpoint_name": "底板平面度检测",
+      "inspection_item": "底板平面度",
+      "inspection_method": "使用平板和塞尺测量底板与平板之间的最大间隙",
+      "measurement_tool": "平板、塞尺",
+      "acceptance_criteria": "平面度误差≤0.1mm",
+      "inspection_timing": "装配前",
+      "importance": "关键",
+      "related_parts": "底板组件"
+    },
+    {
+      "checkpoint_id": "QC-002",
+      "checkpoint_name": "孔距尺寸检测",
+      "inspection_item": "孔间距",
+      "inspection_method": "使用游标卡尺测量两孔中心线之间的距离",
+      "measurement_tool": "游标卡尺",
+      "acceptance_criteria": "孔间距公差±0.1mm",
+      "inspection_timing": "装配前",
+      "importance": "重要",
+      "related_parts": "底板组件"
+    },
+    {
+      "checkpoint_id": "QC-003",
+      "checkpoint_name": "垂直度检测",
+      "inspection_item": "侧板与底板垂直度",
+      "inspection_method": "使用直角尺和塞尺测量侧板与底板之间的垂直偏差",
+      "measurement_tool": "直角尺、塞尺",
+      "acceptance_criteria": "垂直度误差≤0.2mm",
+      "inspection_timing": "装配中",
+      "importance": "重要",
+      "related_parts": "侧板组件"
+    },
+    {
+      "checkpoint_id": "QC-004",
+      "checkpoint_name": "孔轴向同轴度检测",
+      "inspection_item": "孔轴向同轴度",
+      "inspection_method": "使用专用检具或三坐标测量仪检测孔的同轴度",
+      "measurement_tool": "专用检具/三坐标测量仪",
+      "acceptance_criteria": "同轴度误差≤0.15mm",
+      "inspection_timing": "装配前",
+      "importance": "关键",
+      "related_parts": "连接件组件"
+    },
+    {
+      "checkpoint_id": "QC-005",
+      "checkpoint_name": "焊接部位尺寸检测",
+      "inspection_item": "焊接后整体尺寸",
+      "inspection_method": "使用卷尺测量总长度、宽度和高度",
+      "measurement_tool": "卷尺",
+      "acceptance_criteria": "总尺寸公差±1mm",
+      "inspection_timing": "装配后",
+      "importance": "一般",
+      "related_parts": "整体装配件"
+    },
+    {
+      "checkpoint_id": "QC-001",
+      "checkpoint_name": "底板平面度检测",
+      "inspection_item": "底板平面度",
+      "inspection_method": "使用平板和塞尺测量底板与平板之间的最大间隙",
+      "measurement_tool": "平板、塞尺",
+      "acceptance_criteria": "≤0.1mm",
+      "inspection_timing": "装配前",
+      "importance": "关键",
+      "related_parts": "底板组件"
+    },
+    {
+      "checkpoint_id": "QC-002",
+      "checkpoint_name": "侧框架垂直度检测",
+      "inspection_item": "侧框架垂直度",
+      "inspection_method": "使用直角尺和塞尺测量侧框架与底板的垂直偏差",
+      "measurement_tool": "直角尺、塞尺",
+      "acceptance_criteria": "≤0.2mm/100mm",
+      "inspection_timing": "装配中",
+      "importance": "重要",
+      "related_parts": "侧框架组件"
+    },
+    {
+      "checkpoint_id": "QC-003",
+      "checkpoint_name": "顶部封板水平度检测",
+      "inspection_item": "顶部封板水平度",
+      "inspection_method": "使用水平仪测量顶部封板的水平偏差",
+      "measurement_tool": "水平仪",
+      "acceptance_criteria": "≤0.1mm/100mm",
+      "inspection_timing": "装配后",
+      "importance": "重要",
+      "related_parts": "顶部封板组件"
+    },
+    {
+      "checkpoint_id": "QC-004",
+      "checkpoint_name": "孔距尺寸检测",
+      "inspection_item": "孔距尺寸",
+      "inspection_method": "使用游标卡尺测量相邻孔中心距",
+      "measurement_tool": "游标卡尺",
+      "acceptance_criteria": "±0.1mm",
+      "inspection_timing": "装配前",
+      "importance": "一般",
+      "related_parts": "底板组件"
+    },
+    {
+      "checkpoint_id": "QC-005",
+      "checkpoint_name": "圆柱销配合检测",
+      "inspection_item": "圆柱销与销孔配合",
+      "inspection_method": "目视检查圆柱销插入销孔的松紧程度，确保无晃动",
+      "measurement_tool": "目视",
+      "acceptance_criteria": "配合紧密，无明显晃动",
+      "inspection_timing": "装配中",
+      "importance": "一般",
+      "related_parts": "圆柱销组件"
+    },
+    {
+      "checkpoint_id": "QC-001",
+      "checkpoint_name": "底部加强筋基准件安装定位",
+      "inspection_item": "基准件位置度",
+      "inspection_method": "使用三坐标测量仪检测基准件相对于底板的X、Y方向位置偏差",
+      "measurement_tool": "三坐标测量仪",
+      "acceptance_criteria": "X方向偏差≤0.1mm，Y方向偏差≤0.1mm",
+      "inspection_timing": "装配前",
+      "importance": "关键",
+      "related_parts": "底部加强筋基准件"
+    },
+    {
+      "checkpoint_id": "QC-002",
+      "checkpoint_name": "左右侧框架安装垂直度",
+      "inspection_method": "使用直角尺和塞尺检查框架与底板的垂直度",
+      "measurement_tool": "直角尺、塞尺",
+      "acceptance_criteria": "垂直度误差≤0.2mm/100mm",
+      "inspection_timing": "装配中",
+      "importance": "重要",
+      "related_parts": "左侧框架, 右侧框架"
+    },
+    {
+      "checkpoint_id": "QC-003",
+      "checkpoint_name": "顶部封板安装平面度",
+      "inspection_method": "使用平板和指示表检测封板表面平面度",
+      "measurement_tool": "平板、指示表",
+      "acceptance_criteria": "平面度误差≤0.1mm",
+      "inspection_timing": "装配后",
+      "importance": "重要",
+      "related_parts": "顶部封板"
+    },
+    {
+      "checkpoint_id": "QC-004",
+      "checkpoint_name": "油缸固定板与铲雪板配合尺寸",
+      "inspection_method": "使用游标卡尺测量油缸固定板与铲雪板之间的配合间隙",
+      "measurement_tool": "游标卡尺",
+      "acceptance_criteria": "配合间隙为0.05-0.15mm",
+      "inspection_timing": "装配中",
+      "importance": "一般",
+      "related_parts": "油缸固定板, 左右铲雪板"
+    },
+    {
+      "checkpoint_id": "QC-005",
+      "checkpoint_name": "焊接部位焊缝高度",
+      "inspection_method": "目视检查并使用焊缝规测量焊缝高度",
+      "measurement_tool": "焊缝规",
+      "acceptance_criteria": "焊缝高度≥6mm",
+      "inspection_timing": "装配后",
+      "importance": "重要",
+      "related_parts": "各焊接部位"
+    },
+    {
+      "checkpoint_id": "QC-006",
+      "checkpoint_name": "整体宽度尺寸",
+      "inspection_method": "使用钢卷尺测量产品整体宽度",
+      "measurement_tool": "钢卷尺",
+      "acceptance_criteria": "宽度尺寸为188±0.5mm",
+      "inspection_timing": "装配后",
+      "importance": "一般",
+      "related_parts": "整机"
+    },
+    {
+      "checkpoint_id": "QC-007",
+      "checkpoint_name": "前后端面距离",
+      "inspection_method": "使用深度游标卡尺测量前后端面之间的距离",
+      "measurement_tool": "深度游标卡尺",
+      "acceptance_criteria": "距离为423±0.3mm",
+      "inspection_timing": "装配后",
+      "importance": "一般",
+      "related_parts": "整机"
+    },
+    {
+      "checkpoint_id": "QC-001",
+      "checkpoint_name": "左铲雪板加强筋平面度",
+      "inspection_item": "平面度",
+      "inspection_method": "使用平板和塞尺测量最大间隙",
+      "measurement_tool": "平板、塞尺",
+      "acceptance_criteria": "≤0.1mm",
+      "inspection_timing": "装配前",
+      "importance": "关键",
+      "related_parts": "T-U2500-02-12-Q345"
+    },
+    {
+      "checkpoint_id": "QC-002",
+      "checkpoint_name": "左右侧框架安装孔距",
+      "inspection_item": "孔距",
+      "inspection_method": "使用游标卡尺测量相邻孔中心距离",
+      "measurement_tool": "游标卡尺",
+      "acceptance_criteria": "±0.1mm",
+      "inspection_timing": "装配前",
+      "importance": "重要",
+      "related_parts": "T-SPV250-Z602-03-11-Q235"
+    },
+    {
+      "checkpoint_id": "QC-003",
+      "checkpoint_name": "顶部封板与侧框架垂直度",
+      "inspection_item": "垂直度",
+      "inspection_method": "使用直角尺和塞尺测量偏差",
+      "measurement_tool": "直角尺、塞尺",
+      "acceptance_criteria": "≤0.2mm/100mm",
+      "inspection_timing": "装配中",
+      "importance": "重要",
+      "related_parts": "T-SPV250-Z602-03-11-Q235, T-SPV1830-EURO-03-03-Q355B"
+    },
+    {
+      "checkpoint_id": "QC-004",
+      "checkpoint_name": "加强筋与底板焊接处平整度",
+      "inspection_item": "平整度",
+      "inspection_method": "目视检查并用塞尺测量最大间隙",
+      "measurement_tool": "塞尺",
+      "acceptance_criteria": "≤0.15mm",
+      "inspection_timing": "装配后",
+      "importance": "一般",
+      "related_parts": "T-U2500-02-12-Q345"
+    },
+    {
+      "checkpoint_id": "QC-005",
+      "checkpoint_name": "轴套安装孔直径",
+      "inspection_item": "孔径",
+      "inspection_method": "使用内径千分尺测量孔的直径",
+      "measurement_tool": "内径千分尺",
+      "acceptance_criteria": "φ35±0.02mm",
+      "inspection_timing": "装配前",
+      "importance": "重要",
+      "related_parts": "T-SPV250-Z602-03-10-Q235"
+    }
+  ],
+  "safety_warnings": [
+    {
+      "warning_type": "危险",
+      "title": "⚠️ 焊接作业防护",
+      "description": "焊接时产生强烈电弧光会灼伤眼睛，焊渣飞溅会烫伤皮肤",
+      "protective_measures": "必须佩戴焊接面罩、防护手套、长袖工作服，确保通风良好",
+      "severity": "高"
+    },
+    {
+      "warning_type": "危险",
+      "title": "⚠️ 高空作业坠落",
+      "description": "安装顶部封板和角部组件时，可能从高处坠落",
+      "protective_measures": "使用稳固的工作平台，必要时系好安全带，禁止单独作业",
+      "severity": "高"
+    },
+    {
+      "warning_type": "警告",
+      "title": "⚠️ 重物搬运砸伤",
+      "description": "搬运加强筋、框架等重物时容易砸伤手脚",
+      "protective_measures": "两人配合搬运，戴好安全帽和安全鞋，保持搬运路径畅通",
+      "severity": "高"
+    },
+    {
+      "warning_type": "警告",
+      "title": "⚠️ 螺栓拧紧安全",
+      "description": "使用扭力扳手拧紧螺栓时可能打滑伤手",
+      "protective_measures": "戴好防护手套，站稳扶稳，按对角顺序均匀拧紧",
+      "severity": "中"
+    },
+    {
+      "warning_type": "警告",
+      "title": "⚠️ 弹簧组件弹力",
+      "description": "安装推雪板弹簧导柱时可能突然弹开伤人",
+      "protective_measures": "戴好防护眼镜，缓慢释放弹簧压力，避免正对弹簧方向",
+      "severity": "中"
+    },
+    {
+      "warning_type": "注意",
+      "title": "⚠️ 销轴敲击防护",
+      "description": "用橡胶锤敲击销轴时可能敲偏伤手",
+      "protective_measures": "戴好防护眼镜，扶稳销轴，轻敲慢打",
+      "severity": "中"
+    },
+    {
+      "warning_type": "注意",
+      "title": "⚠️ 焊渣清理防护",
+      "description": "清理焊渣时容易划伤手部",
+      "protective_measures": "戴好防护手套，使用专用工具清理，避免直接用手接触",
+      "severity": "低"
+    }
+  ],
+  "faq_items": [
+    {
+      "question": "先装底座还是先装支架？",
+      "answer": "先装底部加强筋作为基准件，再装左右侧框架，最后装顶部封板。顺序不能错，否则会影响整体结构稳定性。",
+      "category": "装配顺序",
+      "related_step": "1,2,3"
+    },
+    {
+      "question": "用什么扳手拧M16螺栓？力矩多少？",
+      "answer": "用24号开口扳手或套筒扳手，扭力扳手设定120N·m。按对角顺序拧紧，确保受力均匀。",
+      "category": "工具使用",
+      "related_step": "4,5"
+    },
+    {
+      "question": "螺栓孔对不上怎么办？",
+      "answer": "1.检查零件是否放正 2.用橡皮锤轻敲调整位置 3.检查零件是否变形 4.如仍对不上，报告质检员检查零件尺寸",
+      "category": "故障排除",
+      "related_step": "4,5"
+    },
+    {
+      "question": "焊接时要注意什么？",
+      "answer": "1.戴好焊接面罩和手套 2.确保通风良好 3.先点焊固定，检查位置正确后再满焊 4.控制焊接顺序，避免热变形",
+      "category": "安全问题",
+      "related_step": "2,3"
+    },
+    {
+      "question": "框架装歪了怎么调整？",
+      "answer": "1.松开螺栓连接 2.用水平仪重新找平 3.用橡皮锤轻敲调整 4.重新拧紧螺栓，检查垂直度和对称性",
+      "category": "质量问题",
+      "related_step": "2,8"
+    },
+    {
+      "question": "销轴敲不进去怎么办？",
+      "answer": "1.检查销轴和孔尺寸是否匹配 2.清理孔内毛刺 3.涂抹少量润滑油 4.用橡胶锤从不同角度轻敲，不要用铁锤猛敲",
+      "category": "故障排除",
+      "related_step": "6"
+    },
+    {
+      "question": "橡胶刀板与地面间隙大怎么办？",
+      "answer": "1.检查安装位置是否正确 2.调整刀板固定螺栓 3.如间隙仍大，检查刀板是否变形 4.报告质检员处理",
+      "category": "质量问题",
+      "related_step": "7"
+    },
+    {
+      "question": "焊接出现气孔怎么办？",
+      "answer": "1.立即停止焊接 2.清理焊缝区域油污和锈迹 3.调整焊接电流和速度 4.重新焊接，注意保护气体流量",
+      "category": "质量问题",
+      "related_step": "2,3"
+    }
+  ],
+  "technical_drawings": [],
+  "3d_model": {
+    "glb_path": "test_output_three_agents/model.glb",
+    "total_meshes": 257,
+    "camera_angles": {
+      "front": {
+        "position": [
+          0,
+          0,
+          10
+        ],
+        "target": [
+          0,
+          0,
+          0
+        ]
+      },
+      "top": {
+        "position": [
+          0,
+          10,
+          0
+        ],
+        "target": [
+          0,
+          0,
+          0
+        ]
+      },
+      "side": {
+        "position": [
+          10,
+          0,
+          0
+        ],
+        "target": [
+          0,
+          0,
+          0
+        ]
+      },
+      "isometric": {
+        "position": [
+          7,
+          7,
+          7
+        ],
+        "target": [
+          0,
+          0,
+          0
+        ]
+      }
+    }
+  },
+  "metadata": {
+    "generated_at": "2025-10-02T21:28:08.407872",
+    "generator_version": "1.0",
+    "data_sources": {
+      "vision_analysis": "Qwen-VL",
+      "assembly_planning": "DeepSeek",
+      "welding_translation": "DeepSeek",
+      "quality_control": "DeepSeek",
+      "safety_faq": "DeepSeek"
+    }
+  }
+}

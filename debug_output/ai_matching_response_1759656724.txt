@@ -1,0 +1,38 @@
+```json
+{
+  "cot_analysis": {
+    "total_unmatched_bom": 1,
+    "total_unmatched_3d": 26,
+    "analysis_steps": [
+      {
+        "bom_code": "01.01.02.1222",
+        "bom_name": "轴套 2",
+        "bom_product_code": "ZT-φ60/φ35-50-Q235",
+        "step1_extract": "产品代号: ZT-φ60/φ35-50-Q235, 零件名称: 轴套, 规格: φ60/φ35-50, 材料: Q235",
+        "step2_candidates": [
+          "NAUO21: ZT-¦Ӷ0-¦ӳ5-50-Q235ס͗_1",
+          "NAUO20: ZT-¦Ӷ0-¦ӳ5-50-Q235ס͗",
+          "NAUO17: T-SPV250-Z602-03-10-Q235ס͗¼ԇ¿°"
+        ],
+        "step3_comparison": "对比NAUO21和NAUO20：它们的geometry_name都以'ZT-'开头，且包含'50-Q235'。中间的乱码'¦Ӷ0-¦ӳ5'很可能对应BOM中的'φ60/φ35'，而乱码'ס͗'对应'轴套'。产品代号结构和材料完全一致。对比NAUO17：虽然名称中有'ס͗'（轴套），但产品代号前缀是'T-SPV250-Z602-03-10-'，与BOM的'ZT-'不符，排除。NAUO21和NAUO20是完全匹配。",
+        "step4_confidence": 0.92,
+        "step5_decision": "NAUO21和NAUO20的产品代号与BOM的ZT-φ60/φ35-50-Q235结构一致，乱码部分与规格和名称吻合。选择NAUO21和NAUO20进行匹配。"
+      }
+    ]
+  },
+  "ai_matched_pairs": [
+    {
+      "node_name": "NAUO21",
+      "bom_code": "01.01.02.1222",
+      "confidence": 0.92,
+      "reasoning": "产品代号ZT-φ60/φ35-50-Q235完全匹配（乱码对应规格和名称）"
+    },
+    {
+      "node_name": "NAUO20",
+      "bom_code": "01.01.02.1222",
+      "confidence": 0.92,
+      "reasoning": "产品代号ZT-φ60/φ35-50-Q235完全匹配（乱码对应规格和名称）"
+    }
+  ]
+}
+```

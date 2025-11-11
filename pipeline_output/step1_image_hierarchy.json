@@ -1,0 +1,19 @@
+{
+  "product_images": [
+    "pipeline_output\\pdf_images\\page_001.png",
+    "pipeline_output\\pdf_images\\page_002.png"
+  ],
+  "component_images": {
+    "1": [
+      "pipeline_output\\pdf_images\\1\\page_001.png"
+    ],
+    "2": [
+      "pipeline_output\\pdf_images\\2\\page_001.png",
+      "pipeline_output\\pdf_images\\2\\page_002.png"
+    ],
+    "3": [
+      "pipeline_output\\pdf_images\\3\\page_001.png",
+      "pipeline_output\\pdf_images\\3\\page_002.png"
+    ]
+  }
+}

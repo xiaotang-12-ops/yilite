@@ -1,0 +1,966 @@
+```json
+{
+  "cot_analysis": {
+    "total_unmatched_bom": 53,
+    "total_unmatched_3d": 414,
+    "analysis_steps": [
+      {
+        "bom_code": "01.09.2556",
+        "bom_name": "方形板-机加-镀锌",
+        "bom_product_code": "T-SPV1830-EURO-09-Q235",
+        "step1_extract": "产品代号: T-SPV1830-EURO-09-Q235",
+        "step2_candidates": [
+          "NAUO269 | T-SPV1830-EURO-09-Q235·½ÐÎ°å-»ú¼Ó"
+        ],
+        "step3_comparison": "NAUO269的geometry_name包含产品代号T-SPV1830-EURO-09-Q235，名称匹配度高（乱码部分可忽略）",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配NAUO269（产品代号完全匹配）"
+      },
+      {
+        "bom_code": "01.09.1240",
+        "bom_name": "电磁阀保护罩组件-漆后",
+        "bom_product_code": "T-SWB1400-SMS-C-LK-04",
+        "step1_extract": "产品代号: T-SWB1400-SMS-C-LK-04",
+        "step2_candidates": [
+          "NAUO272 | T-SWB1400-SMS-C-LK-04-02-Q235·½ÐÎ°å-»ú¼Ó",
+          "NAUO271 | T-SWB1400-SMS-C-LK-04-01-Q235±£»¤֖׷°"
+        ],
+        "step3_comparison": "NAUO271和NAUO272都包含T-SWB1400-SMS-C-LK-04，是组件的子零件。NAUO271名称为'保护罩'，匹配度更高。",
+        "step4_confidence": 0.92,
+        "step5_decision": "匹配NAUO271（产品代号匹配，且名称为保护罩）"
+      },
+      {
+        "bom_code": "01.09.0308",
+        "bom_name": "推雪板反光片固定板-镀锌",
+        "bom_product_code": "SPE1.83-LD-10-Q235",
+        "step1_extract": "产品代号: SPE1.83-LD-10-Q235",
+        "step2_candidates": [
+          "NAUO274_1 | SPE1.83-LD-10-Q235Άѩ°巴¹ㆬ¹̶¨°_1",
+          "NAUO274 | SPE1.83-LD-10-Q235Άѩ°巴¹ㆬ¹̶¨°"
+        ],
+        "step3_comparison": "NAUO274和NAUO274_1产品代号完全匹配SPE1.83-LD-10-Q235",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配NAUO274（产品代号完全匹配）"
+      },
+      {
+        "bom_code": "01.09.0304",
+        "bom_name": "推雪板大垫圈-镀锌",
+        "bom_product_code": "SPE1.83-LD-06-45#",
+        "step1_extract": "产品代号: SPE1.83-LD-06-45#",
+        "step2_candidates": [
+          "NAUO275_5 | SPE1.83-LD-06-45#Άѩ°嵳µ爦_5",
+          "NAUO275_4 | SPE1.83-LD-06-45#Άѩ°嵳µ爦_4",
+          "NAUO275 | SPE1.83-LD-06-45#Άѩ°嵳µ爦"
+        ],
+        "step3_comparison": "NAUO275系列产品代号完全匹配SPE1.83-LD-06-45#",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配NAUO275（产品代号完全匹配）"
+      },
+      {
+        "bom_code": "01.09.0999",
+        "bom_name": "V型推雪板轴套-镀锌",
+        "bom_product_code": "T-U2500-16-45#",
+        "step1_extract": "产品代号: T-U2500-16-45#",
+        "step2_candidates": [
+          "NAUO278 | T-U2500-16-45#VэΆѩ°旡͗"
+        ],
+        "step3_comparison": "NAUO278产品代号完全匹配T-U2500-16-45#",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配NAUO278（产品代号完全匹配）"
+      },
+      {
+        "bom_code": "01.09.0503",
+        "bom_name": "插销-镀锌",
+        "bom_product_code": "CX-φ12-150-45#",
+        "step1_extract": "产品代号: CX-φ12-150-45#",
+        "step2_candidates": [
+          "NAUO279 | CX-¦ӱ2-150-45#²携"
+        ],
+        "step3_comparison": "NAUO279产品代号CX-¦ӱ2-150-45#与BOM的CX-φ12-150-45#高度相似（乱码¦ӱ2应为φ12）",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配NAUO279（产品代号高度匹配）"
+      },
+      {
+        "bom_code": "01.09.0995",
+        "bom_name": "V型推雪板销轴-镀锌",
+        "bom_product_code": "T-U2500-11-45#",
+        "step1_extract": "产品代号: T-U2500-11-45#",
+        "step2_candidates": [
+          "NAUO280 | T-U2500-11-45#VэΆѩ°携ס",
+          "NAUO280_1 | T-U2500-11-45#VэΆѩ°携ס_1"
+        ],
+        "step3_comparison": "NAUO280系列产品代号完全匹配T-U2500-11-45#",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配NAUO280（产品代号完全匹配）"
+      },
+      {
+        "bom_code": "01.09.2566",
+        "bom_name": "圆钢-机加-镀锌",
+        "bom_product_code": "ML-CA1200-Avant300-500-11-Q235",
+        "step1_extract": "产品代号: ML-CA1200-Avant300-500-11-Q235",
+        "step2_candidates": [
+          "NAUO276_1 | ML-CA1200-Avant300-500-11-Q235Ô²¸Ö-»ú¼Ó_1",
+          "NAUO276 | ML-CA1200-Avant300-500-11-Q235Ô²¸Ö-»ú¼Ó"
+        ],
+        "step3_comparison": "NAUO276系列产品代号完全匹配ML-CA1200-Avant300-500-11-Q235",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配NAUO276（产品代号完全匹配）"
+      },
+      {
+        "bom_code": "01.09.2565",
+        "bom_name": "自制螺栓-镀锌",
+        "bom_product_code": "ML-CA1200-Avant300-500-08-45#",
+        "step1_extract": "产品代号: ML-CA1200-Avant300-500-08-45#",
+        "step2_candidates": [
+          "NAUO277_1 | ML-CA1200-Avant300-500-08-45#ؔ׆Ý˨_1",
+          "NAUO277 | ML-CA1200-Avant300-500-08-45#ؔ׆Ý˨"
+        ],
+        "step3_comparison": "NAUO277系列产品代号完全匹配ML-CA1200-Avant300-500-08-45#",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配NAUO277（产品代号完全匹配）"
+      },
+      {
+        "bom_code": "01.09.2563",
+        "bom_name": "销轴-镀锌",
+        "bom_product_code": "XZ-φ40*10-φ30*87-φ10*10-45#",
+        "step1_extract": "产品代号: XZ-φ40*10-φ30*87-φ10*10-45#",
+        "step2_candidates": [
+          "NAUO286_3 | XZ-¦Õ40¡Á10-¦Õ30¡Á87-¦Õ10¡Á10-45#ÏúÖá_3",
+          "NAUO286_2 | XZ-¦Õ40¡Á10-¦Õ30¡Á87-¦Õ10¡Á10-45#ÏúÖá_2",
+          "NAUO286 | XZ-¦Õ40¡Á10-¦Õ30¡Á87-¦Õ10¡Á10-45#ÏúÖá"
+        ],
+        "step3_comparison": "NAUO286系列产品代号高度相似（乱码¦Õ应为φ, ¡Á应为*）。XZ-φ40*10-φ30*87-φ10*10-45#",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配NAUO286（产品代号高度匹配）"
+      },
+      {
+        "bom_code": "01.09.2562",
+        "bom_name": "销轴-镀锌",
+        "bom_product_code": "XZ-φ35*10-φ25*145-φ10*10-45#",
+        "step1_extract": "产品代号: XZ-φ35*10-φ25*145-φ10*10-45#",
+        "step2_candidates": [
+          "NAUO287_5 | XZ-¦Õ35¡Á10-¦Õ25¡Á145-¦Õ10¡Á10-45#ÏúÖá_5",
+          "NAUO287_1 | XZ-¦Õ35¡Á10-¦Õ25¡Á145-¦Õ10¡Á10-45#ÏúÖá_1",
+          "NAUO287 | XZ-¦Õ35¡Á10-¦Õ25¡Á145-¦Õ10¡Á10-45#ÏúÖá"
+        ],
+        "step3_comparison": "NAUO287系列产品代号高度相似（乱码¦Õ应为φ, ¡Á应为*）。XZ-φ35*10-φ25*145-φ10*10-45#",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配NAUO287（产品代号高度匹配）"
+      },
+      {
+        "bom_code": "01.09.2561",
+        "bom_name": "销轴-镀锌",
+        "bom_product_code": "XZ-φ50*15-φ35*485-φ10*10-45#",
+        "step1_extract": "产品代号: XZ-φ50*15-φ35*485-φ10*10-45#",
+        "step2_candidates": [
+          "NAUO288 | XZ-¦Õ50¡Á15-¦Õ35¡Á485-¦Õ10¡Á10-45#ÏúÖá"
+        ],
+        "step3_comparison": "NAUO288产品代号高度相似（乱码¦Õ应为φ, ¡Á应为*）。XZ-φ50*15-φ35*485-φ10*10-45#",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配NAUO288（产品代号高度匹配）"
+      },
+      {
+        "bom_code": "01.09.2555",
+        "bom_name": "方形板-机加-镀锌",
+        "bom_product_code": "T-SPV1830-EURO-08-Q235",
+        "step1_extract": "产品代号: T-SPV1830-EURO-08-Q235",
+        "step2_candidates": [
+          "NAUO289 | T-SPV1830-EURO-08-Q235·½ÐÎ°å-»ú¼Ó"
+        ],
+        "step3_comparison": "NAUO289产品代号完全匹配T-SPV1830-EURO-08-Q235",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配NAUO289（产品代号完全匹配）"
+      },
+      {
+        "bom_code": "01.02.07.0071",
+        "bom_name": "橡胶挡板",
+        "bom_product_code": "T-SPV250-Z602-12",
+        "step1_extract": "产品代号: T-SPV250-Z602-12",
+        "step2_candidates": [
+          "NAUO20 | T-SPV250-Z602-12а½ºµ²°"
+        ],
+        "step3_comparison": "NAUO20产品代号完全匹配T-SPV250-Z602-12",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配NAUO20（产品代号完全匹配）"
+      },
+      {
+        "bom_code": "01.02.07.0239",
+        "bom_name": "橡胶刀板",
+        "bom_product_code": "T-SPV1830-EURO-07",
+        "step1_extract": "产品代号: T-SPV1830-EURO-07",
+        "step2_candidates": [
+          "NAUO19 | T-SPV1830-EURO-07а½ºµ¶°_1",
+          "NAUO18 | T-SPV1830-EURO-07а½ºµ¶°"
+        ],
+        "step3_comparison": "NAUO18和NAUO19产品代号完全匹配T-SPV1830-EURO-07",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配NAUO18（产品代号完全匹配）"
+      },
+      {
+        "bom_code": "01.09.2560",
+        "bom_name": "后座支撑架组件-漆后",
+        "bom_product_code": "T-SPV250-Z602-09",
+        "step1_extract": "产品代号: T-SPV250-Z602-09",
+        "step2_candidates": [
+          "NAUO291 | T-SPV250-Z602-09-01-Q235l½ӹ"
+        ],
+        "step3_comparison": "NAUO291是组件的子零件，产品代号T-SPV250-Z602-09匹配",
+        "step4_confidence": 0.92,
+        "step5_decision": "匹配NAUO291（产品代号匹配）"
+      },
+      {
+        "bom_code": "01.09.2559",
+        "bom_name": "推雪板弹簧导柱组件-镀锌",
+        "bom_product_code": "T-SPV250-Z602-08",
+        "step1_extract": "产品代号: T-SPV250-Z602-08",
+        "step2_candidates": [
+          "NAUO296 | T-SPV250-Z602-08-01-45#µ¯»ɵ¼׹",
+          "NAUO296_1 | T-SPV250-Z602-08-01-45#µ¯»ɵ¼׹_1"
+        ],
+        "step3_comparison": "NAUO296系列是组件的子零件，产品代号T-SPV250-Z602-08匹配",
+        "step4_confidence": 0.92,
+        "step5_decision": "匹配NAUO296（产品代号匹配）"
+      },
+      {
+        "bom_code": "01.09.2557",
+        "bom_name": "轮胎架外臂组件-漆后",
+        "bom_product_code": "T-SPV250-Z602-06",
+        "step1_extract": "产品代号: T-SPV250-Z602-06",
+        "step2_candidates": [
+          "NAUO310_1 | T-SPV250-Z602-06-01-Q355B·½¹Ü-»ú¼Ó_1",
+          "NAUO310 | T-SPV250-Z602-06-01-Q355B·½¹Ü-»ú¼Ó"
+        ],
+        "step3_comparison": "NAUO310系列是组件的子零件，产品代号T-SPV250-Z602-06匹配",
+        "step4_confidence": 0.92,
+        "step5_decision": "匹配NAUO310（产品代号匹配）"
+      },
+      {
+        "bom_code": "01.09.2553",
+        "bom_name": "右刀板后座组件-漆后",
+        "bom_product_code": "T-SPV1830-EURO-05",
+        "step1_extract": "产品代号: T-SPV1830-EURO-05",
+        "step2_candidates": [
+          "NAUO315 | T-SPV1830-EURO-05-01-Q235ºó×ù¹Ì¶¨°å"
+        ],
+        "step3_comparison": "NAUO315是组件的子零件，产品代号T-SPV1830-EURO-05匹配",
+        "step4_confidence": 0.92,
+        "step5_decision": "匹配NAUO315（产品代号匹配）"
+      },
+      {
+        "bom_code": "01.09.2554",
+        "bom_name": "左刀板后座组件-漆后",
+        "bom_product_code": "T-SPV1830-EURO-06",
+        "step1_extract": "产品代号: T-SPV1830-EURO-06",
+        "step2_candidates": [
+          "NAUO326 | T-SPV1830-EURO-06-01-Q235ºó×ù¹Ì¶¨°å"
+        ],
+        "step3_comparison": "NAUO326是组件的子零件，产品代号T-SPV1830-EURO-06匹配",
+        "step4_confidence": 0.92,
+        "step5_decision": "匹配NAUO326（产品代号匹配）"
+      },
+      {
+        "bom_code": "01.09.2552",
+        "bom_name": "右铲雪板组件-漆后",
+        "bom_product_code": "T-SPV1830-EURO-04",
+        "step1_extract": "产品代号: T-SPV1830-EURO-04",
+        "step2_candidates": [
+          "NAUO337 | T-SPV1830-EURO-04-01-Q235ÓÒ²ù°å"
+        ],
+        "step3_comparison": "NAUO337是组件的子零件，产品代号T-SPV1830-EURO-04匹配",
+        "step4_confidence": 0.92,
+        "step5_decision": "匹配NAUO337（产品代号匹配）"
+      },
+      {
+        "bom_code": "01.09.2551",
+        "bom_name": "左铲雪板组件-漆后",
+        "bom_product_code": "T-SPV1830-EURO-03",
+        "step1_extract": "产品代号: T-SPV1830-EURO-03",
+        "step2_candidates": [
+          "NAUO367 | T-SPV1830-EURO-03-03-Q355Bǰ¼ԇ¿°",
+          "NAUO365 | T-SPV1830-EURO-03-02-Q235·½ÐÎ°å-»ú¼Ó",
+          "NAUO364 | T-SPV1830-EURO-03-01-Q235×ó²ù°å"
+        ],
+        "step3_comparison": "NAUO364, NAUO365, NAUO367都是组件的子零件，产品代号T-SPV1830-EURO-03匹配",
+        "step4_confidence": 0.92,
+        "step5_decision": "匹配NAUO364（产品代号匹配）"
+      },
+      {
+        "bom_code": "01.09.2550",
+        "bom_name": "后座连接架组件-漆后",
+        "bom_product_code": "T-SPV1830-EURO-02",
+        "step1_extract": "产品代号: T-SPV1830-EURO-02",
+        "step2_candidates": [
+          "NAUO429 | T-EURO-02-Q355BÖý¼þÅ·Ê½Á¬½ÓÆ÷ÏÂ¹Ò¹³",
+          "NAUO426 | T-EURO-02-Q355BÖý¼þÅ·Ê½Á¬½ÓÆ÷ÏÂ¹Ò¹³_1"
+        ],
+        "step3_comparison": "T-EURO-02是T-SPV1830-EURO-02组件的子零件，代号匹配度高",
+        "step4_confidence": 0.88,
+        "step5_decision": "匹配NAUO429（产品代号匹配）"
+      },
+      {
+        "bom_code": "01.09.2549",
+        "bom_name": "连接器后座组件-漆后",
+        "bom_product_code": "T-SPV1830-EURO-01",
+        "step1_extract": "产品代号: T-SPV1830-EURO-01",
+        "step2_candidates": [
+          "NAUO428 | T-EURO-01-Q355BÖý¼þÅ·Ê½Á¬½ÓÆ÷ÉÏ¹Ò¹³",
+          "NAUO425 | T-EURO-01-Q355BÖý¼þÅ·Ê½Á¬½ÓÆ÷ÉÏ¹Ò¹³_1"
+        ],
+        "step3_comparison": "T-EURO-01是T-SPV1830-EURO-01组件的子零件，代号匹配度高",
+        "step4_confidence": 0.88,
+        "step5_decision": "匹配NAUO428（产品代号匹配）"
+      },
+      {
+        "bom_code": "02.03.0088",
+        "bom_name": "六角头螺栓8.8级GB/T5782-2016",
+        "bom_product_code": "M8*80",
+        "step1_extract": "标准: GB/T5782, 规格: M8*80, 类型: 六角头螺栓",
+        "step2_candidates": [
+          "NAUO231 | GB£¯T 5780-2000Áù½ÇÍ·ÂÝË¨ C¼¶M8¡Á80(3£®6¼¶)_1",
+          "NAUO230 | GB£¯T 5780-2000Áù½ÇÍ·ÂÝË¨ C¼¶M8¡Á80(3£®6¼¶)"
+        ],
+        "step3_comparison": "GB/T 5780/5782系列螺栓，规格M8*80一致，忽略年份和强度等级差异",
+        "step4_confidence": 0.85,
+        "step5_decision": "匹配NAUO230（规格M8*80匹配）"
+      },
+      {
+        "bom_code": "02.03.0610",
+        "bom_name": "平垫圈 倒角型 A级(钢)GB／T 97．2-1985",
+        "bom_product_code": "20*3",
+        "step1_extract": "标准: GB/T 97.2, 规格: 20*3, 类型: 平垫圈",
+        "step2_candidates": [
+          "NAUO204 | GB£¯T 97£®2-1985Æ½µæÈ¦ µ¹½ÇÐÍ A¼¶20¡Á3(¸Ö)_3",
+          "NAUO203 | GB£¯T 97£®2-1985Æ½µæÈ¦ µ¹½ÇÐÍ A¼¶20¡Á3(¸Ö)_2"
+        ],
+        "step3_comparison": "NAUO204和NAUO203标准号和规格20*3完全匹配",
+        "step4_confidence": 0.90,
+        "step5_decision": "匹配NAUO204（标准号+规格匹配）"
+      },
+      {
+        "bom_code": "02.03.0378",
+        "bom_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+        "bom_product_code": "M6*20",
+        "step1_extract": "标准: GB/T5783, 规格: M6*20, 类型: 六角头螺栓",
+        "step2_candidates": [
+          "NAUO169 | GB£¯T 5781-2000Áù½ÇÍ·ÂÝË¨È«ÂÝÎÆ C¼¶M6¡Á20(3£®6¼¶)",
+          "NAUO171 | GB£¯T 5781-2000Áù½ÇÍ·ÂÝË¨È«ÂÝÎÆ C¼¶M6¡Á20(3£®6¼¶)_1"
+        ],
+        "step3_comparison": "GB/T 5781/5783系列螺栓，规格M6*20一致，忽略年份和强度等级差异",
+        "step4_confidence": 0.85,
+        "step5_decision": "匹配NAUO169（规格M6*20匹配）"
+      },
+      {
+        "bom_code": "02.03.0147",
+        "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+        "bom_product_code": "M30",
+        "step1_extract": "标准: GB/T889.1, 规格: M30, 类型: 锁紧螺母",
+        "step2_candidates": [
+          "NAUO153 | GB£¯T889£®1-20001ÐÍ·Ç½ðÊôÇ¶¼þÁù½ÇËø½ôÂÝÄ¸M30",
+          "NAUO154 | GB£¯T889£®1-20001ÐÍ·Ç½ðÊôÇ¶¼þÁù½ÇËø½ôÂÝÄ¸M30_1"
+        ],
+        "step3_comparison": "NAUO153系列标准号GB/T889.1和规格M30完全匹配",
+        "step4_confidence": 0.90,
+        "step5_decision": "匹配NAUO153（标准号+规格匹配）"
+      },
+      {
+        "bom_code": "02.03.0458",
+        "bom_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+        "bom_product_code": "M30*60",
+        "step1_extract": "标准: GB/T5783, 规格: M30*60, 类型: 六角头螺栓",
+        "step2_candidates": [
+          "NAUO151 | GB£¯T5781-2000Áù½ÇÍ·ÂÝË¨È«ÂÝÎÆC¼¶M30¡Á60",
+          "NAUO156 | GB£¯T5781-2000Áù½ÇÍ·ÂÝË¨È«ÂÝÎÆC¼¶M30¡Á60_1"
+        ],
+        "step3_comparison": "GB/T 5781/5783系列螺栓，规格M30*60一致，忽略年份和强度等级差异",
+        "step4_confidence": 0.85,
+        "step5_decision": "匹配NAUO151（规格M30*60匹配）"
+      },
+      {
+        "bom_code": "02.03.0379",
+        "bom_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+        "bom_product_code": "M8*20",
+        "step1_extract": "标准: GB/T5783, 规格: M8*20, 类型: 六角头螺栓",
+        "step2_candidates": [
+          "NAUO136 | GB£¯T5781-2000Áù½ÇÍ·ÂÝË¨È«ÂÝÎÆ8.8¼¶M8¡Á20",
+          "NAUO138 | GB£¯T5781-2000Áù½ÇÍ·ÂÝË¨È«ÂÝÎÆ8.8¼¶M8¡Á20_1"
+        ],
+        "step3_comparison": "GB/T 5781/5783系列螺栓，规格M8*20一致，强度等级8.8一致，匹配度高",
+        "step4_confidence": 0.90,
+        "step5_decision": "匹配NAUO136（规格M8*20匹配）"
+      },
+      {
+        "bom_code": "02.03.0019",
+        "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+        "bom_product_code": "M16",
+        "step1_extract": "标准: GB/T889.1, 规格: M16, 类型: 锁紧螺母",
+        "step2_candidates": [
+          "NAUO131 | GB£¯T889.1-20001ÐÍ·Ç½ðÊôÇ¶¼þÁù½ÇËø½ôÂÝÄ¸M16",
+          "NAUO133 | GB£¯T889.1-20001ÐÍ·Ç½ðÊôÇ¶¼þÁù½ÇËø½ôÂÝÄ¸M16_1"
+        ],
+        "step3_comparison": "NAUO131系列标准号GB/T889.1和规格M16完全匹配",
+        "step4_confidence": 0.90,
+        "step5_decision": "匹配NAUO131（标准号+规格匹配）"
+      },
+      {
+        "bom_code": "02.03.0072",
+        "bom_name": "平垫圈8.8级GB/T95-2002",
+        "bom_product_code": "16*3",
+        "step1_extract": "标准: GB/T95, 规格: 16*3, 类型: 平垫圈",
+        "step2_candidates": [
+          "NAUO130 | GB£¯T95-2002Æ½µæÈ¦C¼¶16¡Á3",
+          "NAUO134 | GB£¯T95-2002Æ½µæÈ¦C¼¶16¡Á3_1"
+        ],
+        "step3_comparison": "NAUO130系列标准号GB/T95-2002和规格16*3完全匹配",
+        "step4_confidence": 0.90,
+        "step5_decision": "匹配NAUO130（标准号+规格匹配）"
+      },
+      {
+        "bom_code": "02.03.1035",
+        "bom_name": "内六角平圆头螺钉8.8级GB/T70.2-2015",
+        "bom_product_code": "M16*85",
+        "step1_extract": "标准: GB/T70.2, 规格: M16*85, 类型: 内六角平圆头螺钉",
+        "step2_candidates": [
+          "NAUO129 | GB£¯T 70£®2-2000ÄÚÁù½ÇÆ½Ô²Í·ÂÝ¶¤M16¡Á85(8£®8¼¶)",
+          "NAUO132 | GB£¯T 70£®2-2000ÄÚÁù½ÇÆ½Ô²Í·ÂÝ¶¤M16¡Á85(8£®8¼¶)_1"
+        ],
+        "step3_comparison": "NAUO129系列标准号GB/T70.2和规格M16*85完全匹配",
+        "step4_confidence": 0.90,
+        "step5_decision": "匹配NAUO129（标准号+规格匹配）"
+      },
+      {
+        "bom_code": "02.03.0012",
+        "bom_name": "安全销DIN 11023",
+        "bom_product_code": "Φ4.5*40",
+        "step1_extract": "标准: DIN 11023, 规格: Φ4.5*40, 类型: 安全销",
+        "step2_candidates": [
+          "NAUO126 | ¦Ӵ.5°²ȫк"
+        ],
+        "step3_comparison": "NAUO126名称乱码，但规格和类型（安全销）匹配度高。此BOM项规格为Φ4.5*40，但3D零件中没有明确的Φ4.5*40的安全销。先跳过，看是否有其他规格的安全销。",
+        "step4_confidence": 0.70,
+        "step5_decision": "跳过，继续寻找更明确的匹配"
+      },
+      {
+        "bom_code": "02.03.0102",
+        "bom_name": "六角头螺栓8.8级GB/T 5782-2016",
+        "bom_product_code": "M8*65",
+        "step1_extract": "标准: GB/T 5782, 规格: M8*65, 类型: 六角头螺栓",
+        "step2_candidates": [
+          "NAUO124 | GB£¯T 5780-2000Áù½ÇÍ·ÂÝË¨ C¼¶M8¡Á65"
+        ],
+        "step3_comparison": "GB/T 5780/5782系列螺栓，规格M8*65一致，忽略年份和强度等级差异",
+        "step4_confidence": 0.85,
+        "step5_decision": "匹配NAUO124（规格M8*65匹配）"
+      },
+      {
+        "bom_code": "02.03.0383",
+        "bom_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+        "bom_product_code": "M6*16",
+        "step1_extract": "标准: GB/T5783, 规格: M6*16, 类型: 六角头螺栓",
+        "step2_candidates": [
+          "NAUO122 | GB£¯T 5781-2000Áù½ÇÍ·ÂÝË¨È«ÂÝÎÆ C¼¶M6¡Á16(3£®6¼¶)",
+          "NAUO195 | GB£¯T 5781-2000Áù½ÇÍ·ÂÝË¨È«ÂÝÎÆ C¼¶M6¡Á16(3£®6¼¶)_1"
+        ],
+        "step3_comparison": "GB/T 5781/5783系列螺栓，规格M6*16一致，忽略年份和强度等级差异",
+        "step4_confidence": 0.85,
+        "step5_decision": "匹配NAUO122（规格M6*16匹配）"
+      },
+      {
+        "bom_code": "02.04.0029",
+        "bom_name": "推雪板反光片",
+        "bom_product_code": "SPE1.83-LD-09",
+        "step1_extract": "产品代号: SPE1.83-LD-09",
+        "step2_candidates": [
+          "NAUO121 | SPE1.83-LD-09·´¹ㆬ_1",
+          "NAUO120 | SPE1.83-LD-09·´¹ㆬ"
+        ],
+        "step3_comparison": "NAUO120和NAUO121产品代号完全匹配SPE1.83-LD-09",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配NAUO120（产品代号完全匹配）"
+      },
+      {
+        "bom_code": "02.08.03.0236",
+        "bom_name": "电磁阀组",
+        "bom_product_code": "A181-014",
+        "step1_extract": "产品代号: A181-014",
+        "step2_candidates": [
+          "NAUO119 | A181-014µ絅·§ة"
+        ],
+        "step3_comparison": "NAUO119产品代号完全匹配A181-014",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配NAUO119（产品代号完全匹配）"
+      },
+      {
+        "bom_code": "02.03.0001",
+        "bom_name": "安全销DIN 11023",
+        "bom_product_code": "φ8*45",
+        "step1_extract": "标准: DIN 11023, 规格: φ8*45, 类型: 安全销",
+        "step2_candidates": [
+          "NAUO103 | DIN 11023 ¦µ8°²ȫк",
+          "NAUO104 | DIN 11023 ¦µ8°²ȫк_1"
+        ],
+        "step3_comparison": "NAUO103系列标准号DIN 11023和规格φ8匹配，乱码¦µ8应为φ8",
+        "step4_confidence": 0.88,
+        "step5_decision": "匹配NAUO103（标准号+规格匹配）"
+      },
+      {
+        "bom_code": "02.08.05.0004",
+        "bom_name": "直通式压注油杯JB/T7940.1-1995",
+        "bom_product_code": "M8",
+        "step1_extract": "标准: JB/T7940.1, 规格: M8, 类型: 压注油杯",
+        "step2_candidates": [
+          "NAUO79 | JB£¯T 7940£®1-1995ֱͨʽѹ注ԍ±­8(³ʆ·)",
+          "NAUO80 | JB£¯T 7940£®1-1995ֱͨʽѹ注ԍ±­8(³ʆ·)_1"
+        ],
+        "step3_comparison": "NAUO79系列标准号JB/T7940.1和规格M8完全匹配",
+        "step4_confidence": 0.90,
+        "step5_decision": "匹配NAUO79（标准号+规格匹配）"
+      },
+      {
+        "bom_code": "02.03.0028",
+        "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+        "bom_product_code": "M8",
+        "step1_extract": "标准: GB/T889.1, 规格: M8, 类型: 锁紧螺母",
+        "step2_candidates": [
+          "NAUO78 | GB£¯T889£®1-20001ÐÍ·Ç½ðÊôÇ¶¼þÁù½ÇËø½ôÂÝÄ¸M8",
+          "NAUO94 | GB£¯T889£®1-20001ÐÍ·Ç½ðÊôÇ¶¼þÁù½ÇËø½ôÂÝÄ¸M8_1"
+        ],
+        "step3_comparison": "NAUO78系列标准号GB/T889.1和规格M8完全匹配",
+        "step4_confidence": 0.90,
+        "step5_decision": "匹配NAUO78（标准号+规格匹配）"
+      },
+      {
+        "bom_code": "02.03.0398",
+        "bom_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+        "bom_product_code": "M8*40",
+        "step1_extract": "标准: GB/T5783, 规格: M8*40, 类型: 六角头螺栓",
+        "step2_candidates": [
+          "NAUO77 | GB£¯T 5781-2000Áù½ÇÍ·ÂÝË¨È«ÂÝÎÆ C¼¶M8¡Á40",
+          "NAUO93 | GB£¯T 5781-2000Áù½ÇÍ·ÂÝË¨È«ÂÝÎÆ C¼¶M8¡Á40_1"
+        ],
+        "step3_comparison": "GB/T 5781/5783系列螺栓，规格M8*40一致，忽略年份和强度等级差异",
+        "step4_confidence": 0.85,
+        "step5_decision": "匹配NAUO77（规格M8*40匹配）"
+      },
+      {
+        "bom_code": "02.03.0381",
+        "bom_name": "平垫圈8.8级GB/T95-2002",
+        "bom_product_code": "6*1.6",
+        "step1_extract": "标准: GB/T95, 规格: 6*1.6, 类型: 平垫圈",
+        "step2_candidates": [
+          "NAUO71 | GB£¯T 97£®2-1985Æ½µæÈ¦ µ¹½ÇÐÍ A¼¶6¡Á1£®6(¸Ö)",
+          "NAUO73 | GB£¯T 97£®2-1985Æ½µæÈ¦ µ¹½ÇÐÍ A¼¶6¡Á1£®6(¸Ö)_1"
+        ],
+        "step3_comparison": "BOM规格6*1.6，3D零件为GB/T 97.2-1985，规格6*1.6。标准号略有不同（95 vs 97.2），但规格一致，且都是平垫圈。",
+        "step4_confidence": 0.80,
+        "step5_decision": "匹配NAUO71（规格6*1.6匹配）"
+      },
+      {
+        "bom_code": "02.03.0146",
+        "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+        "bom_product_code": "M6",
+        "step1_extract": "标准: GB/T889.1, 规格: M6, 类型: 锁紧螺母",
+        "step2_candidates": [
+          "NAUO70 | GB£¯T 889£®1-20001ÐÍ·Ç½ðÊôÇ¶¼þÁù½ÇËø½ôÂÝÄ¸M6(¸Ö)",
+          "NAUO74 | GB£¯T 889£®1-20001ÐÍ·Ç½ðÊôÇ¶¼þÁù½ÇËø½ôÂÝÄ¸M6(¸Ö)_1"
+        ],
+        "step3_comparison": "NAUO70系列标准号GB/T889.1和规格M6完全匹配",
+        "step4_confidence": 0.90,
+        "step5_decision": "匹配NAUO70（标准号+规格匹配）"
+      },
+      {
+        "bom_code": "02.03.0442",
+        "bom_name": "内六角圆柱头螺钉8.8级GB/T70.1-2008",
+        "bom_product_code": "M6*40",
+        "step1_extract": "标准: GB/T70.1, 规格: M6*40, 类型: 内六角圆柱头螺钉",
+        "step2_candidates": [
+          "NAUO69 | GB£¯T 70£®1-2000ÄÚÁù½ÇÔ²ÖùÍ·ÂÝ¶¤M6¡Á40(8£®8¼¶)",
+          "NAUO72 | GB£¯T 70£®1-2000ÄÚÁù½ÇÔ²ÖùÍ·ÂÝ¶¤M6¡Á40(8£®8¼¶)_1"
+        ],
+        "step3_comparison": "NAUO69系列标准号GB/T70.1和规格M6*40完全匹配",
+        "step4_confidence": 0.90,
+        "step5_decision": "匹配NAUO69（标准号+规格匹配）"
+      },
+      {
+        "bom_code": "02.03.0612",
+        "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+        "bom_product_code": "M20",
+        "step1_extract": "标准: GB/T889.1, 规格: M20, 类型: 锁紧螺母",
+        "step2_candidates": [
+          "NAUO64 | GB£¯T 889£®1-20001ÐÍ·Ç½ðÊôÇ¶¼þÁù½ÇËø½ôÂÝÄ¸M20(¸Ö)",
+          "NAUO67 | GB£¯T 889£®1-20001ÐÍ·Ç½ðÊôÇ¶¼þÁù½ÇËø½ôÂÝÄ¸M20(¸Ö)_1"
+        ],
+        "step3_comparison": "NAUO64系列标准号GB/T889.1和规格M20完全匹配",
+        "step4_confidence": 0.90,
+        "step5_decision": "匹配NAUO64（标准号+规格匹配）"
+      },
+      {
+        "bom_code": "02.16.0142",
+        "bom_name": "实心橡胶轮",
+        "bom_product_code": "轮胎外径φ200，轮胎面宽50，轴孔φ20，轴长50",
+        "step1_extract": "规格: 200*50, 类型: 实心橡胶轮",
+        "step2_candidates": [
+          "NAUO62 | 200¡Á55ÊµÐÄÏð½ºÂÖ",
+          "NAUO63 | 200¡Á55ÊµÐÄÏð½ºÂÖ_1"
+        ],
+        "step3_comparison": "NAUO62系列名称为'200x55实心橡胶轮'，与BOM的200x50规格接近，类型一致",
+        "step4_confidence": 0.80,
+        "step5_decision": "匹配NAUO62（规格接近，类型一致）"
+      },
+      {
+        "bom_code": "02.03.0006",
+        "bom_name": "平垫圈8.8级GB/T95-2002",
+        "bom_product_code": "30*4",
+        "step1_extract": "标准: GB/T95, 规格: 30*4, 类型: 平垫圈",
+        "step2_candidates": [
+          "NAUO54 | GB¨uT 95-2002ƽµ爦C¼¶30x4",
+          "NAUO55 | GB¨uT 95-2002ƽµ爦C¼¶30x4_1"
+        ],
+        "step3_comparison": "NAUO54系列标准号GB/T95-2002和规格30x4完全匹配",
+        "step4_confidence": 0.90,
+        "step5_decision": "匹配NAUO54（标准号+规格匹配）"
+      },
+      {
+        "bom_code": "02.03.0148",
+        "bom_name": "1型六角螺母8.8级GB/T 6170-2015",
+        "bom_product_code": "M30",
+        "step1_extract": "标准: GB/T 6170, 规格: M30, 类型: 六角螺母",
+        "step2_candidates": [
+          "NAUO43 | GB£¯T41-20001э¹½Ȃބ¸C¼¶M30",
+          "NAUO44 | GB£¯T41-20001э¹½Ȃބ¸C¼¶M30_1"
+        ],
+        "step3_comparison": "NAUO43系列为GB/T41-2000，规格M30，与BOM的GB/T 6170-2015 M30标准不同但功能相似，都是六角螺母M30。GB/T 41是旧标准，GB/T 6170是新标准，可视为匹配。",
+        "step4_confidence": 0.80,
+        "step5_decision": "匹配NAUO43（规格M30，类型一致）"
+      },
+      {
+        "bom_code": "02.09.0103",
+        "bom_name": "压缩弹簧",
+        "bom_product_code": "TH-φ10*16*φ56*260-YS",
+        "step1_extract": "产品代号: TH-φ10*16*φ56*260-YS",
+        "step2_candidates": [
+          "NAUO33 | TH-¦Õ10¡Á16¡Á¦Õ56¡Á260-YSµ¯»É",
+          "NAUO34 | TH-¦Õ10¡Á16¡Á¦Õ56¡Á260-YSµ¯»É_1"
+        ],
+        "step3_comparison": "NAUO33系列产品代号高度相似（乱码¦Õ应为φ, ¡Á应为*）。TH-φ10*16*φ56*260-YS",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配NAUO33（产品代号高度匹配）"
+      },
+      {
+        "bom_code": "02.08.01.0338",
+        "bom_name": "油缸",
+        "bom_product_code": "EHYG-φ63/φ35-428-251-Ⅱ",
+        "step1_extract": "产品代号: EHYG-φ63/φ35-428-251-Ⅱ",
+        "step2_candidates": [
+          "NAUO284 | EHYG-¦Ӷ3-¦ӳ5-428-251-¢𫮱ԍ¸،",
+          "NAUO285 | EHYG-¦Ӷ3-¦ӳ5-428-251-¢𫮲»¸"
+        ],
+        "step3_comparison": "NAUO284和NAUO285产品代号EHYG-φ63/φ35-428-251高度相似（乱码¦Ӷ3-¦ӳ5应为φ63-φ35）",
+        "step4_confidence": 0.90,
+        "step5_decision": "匹配NAUO284（产品代号高度匹配）"
+      }
+    ]
+  },
+  "ai_matched_pairs": [
+    {
+      "node_name": "NAUO269",
+      "bom_code": "01.09.2556",
+      "confidence": 0.95,
+      "reasoning": "产品代号T-SPV1830-EURO-09-Q235完全匹配"
+    },
+    {
+      "node_name": "NAUO271",
+      "bom_code": "01.09.1240",
+      "confidence": 0.92,
+      "reasoning": "产品代号T-SWB1400-SMS-C-LK-04匹配，且名称为保护罩"
+    },
+    {
+      "node_name": "NAUO274",
+      "bom_code": "01.09.0308",
+      "confidence": 0.98,
+      "reasoning": "产品代号SPE1.83-LD-10-Q235完全匹配"
+    },
+    {
+      "node_name": "NAUO275",
+      "bom_code": "01.09.0304",
+      "confidence": 0.98,
+      "reasoning": "产品代号SPE1.83-LD-06-45#完全匹配"
+    },
+    {
+      "node_name": "NAUO278",
+      "bom_code": "01.09.0999",
+      "confidence": 0.98,
+      "reasoning": "产品代号T-U2500-16-45#完全匹配"
+    },
+    {
+      "node_name": "NAUO279",
+      "bom_code": "01.09.0503",
+      "confidence": 0.95,
+      "reasoning": "产品代号CX-φ12-150-45#高度匹配"
+    },
+    {
+      "node_name": "NAUO280",
+      "bom_code": "01.09.0995",
+      "confidence": 0.98,
+      "reasoning": "产品代号T-U2500-11-45#完全匹配"
+    },
+    {
+      "node_name": "NAUO276",
+      "bom_code": "01.09.2566",
+      "confidence": 0.98,
+      "reasoning": "产品代号ML-CA1200-Avant300-500-11-Q235完全匹配"
+    },
+    {
+      "node_name": "NAUO277",
+      "bom_code": "01.09.2565",
+      "confidence": 0.98,
+      "reasoning": "产品代号ML-CA1200-Avant300-500-08-45#完全匹配"
+    },
+    {
+      "node_name": "NAUO286",
+      "bom_code": "01.09.2563",
+      "confidence": 0.95,
+      "reasoning": "产品代号XZ-φ40*10-φ30*87-φ10*10-45#高度匹配"
+    },
+    {
+      "node_name": "NAUO287",
+      "bom_code": "01.09.2562",
+      "confidence": 0.95,
+      "reasoning": "产品代号XZ-φ35*10-φ25*145-φ10*10-45#高度匹配"
+    },
+    {
+      "node_name": "NAUO288",
+      "bom_code": "01.09.2561",
+      "confidence": 0.95,
+      "reasoning": "产品代号XZ-φ50*15-φ35*485-φ10*10-45#高度匹配"
+    },
+    {
+      "node_name": "NAUO289",
+      "bom_code": "01.09.2555",
+      "confidence": 0.98,
+      "reasoning": "产品代号T-SPV1830-EURO-08-Q235完全匹配"
+    },
+    {
+      "node_name": "NAUO20",
+      "bom_code": "01.02.07.0071",
+      "confidence": 0.98,
+      "reasoning": "产品代号T-SPV250-Z602-12完全匹配"
+    },
+    {
+      "node_name": "NAUO18",
+      "bom_code": "01.02.07.0239",
+      "confidence": 0.98,
+      "reasoning": "产品代号T-SPV1830-EURO-07完全匹配"
+    },
+    {
+      "node_name": "NAUO291",
+      "bom_code": "01.09.2560",
+      "confidence": 0.92,
+      "reasoning": "产品代号T-SPV250-Z602-09匹配"
+    },
+    {
+      "node_name": "NAUO296",
+      "bom_code": "01.09.2559",
+      "confidence": 0.92,
+      "reasoning": "产品代号T-SPV250-Z602-08匹配"
+    },
+    {
+      "node_name": "NAUO310",
+      "bom_code": "01.09.2557",
+      "confidence": 0.92,
+      "reasoning": "产品代号T-SPV250-Z602-06匹配"
+    },
+    {
+      "node_name": "NAUO315",
+      "bom_code": "01.09.2553",
+      "confidence": 0.92,
+      "reasoning": "产品代号T-SPV1830-EURO-05匹配"
+    },
+    {
+      "node_name": "NAUO326",
+      "bom_code": "01.09.2554",
+      "confidence": 0.92,
+      "reasoning": "产品代号T-SPV1830-EURO-06匹配"
+    },
+    {
+      "node_name": "NAUO337",
+      "bom_code": "01.09.2552",
+      "confidence": 0.92,
+      "reasoning": "产品代号T-SPV1830-EURO-04匹配"
+    },
+    {
+      "node_name": "NAUO364",
+      "bom_code": "01.09.2551",
+      "confidence": 0.92,
+      "reasoning": "产品代号T-SPV1830-EURO-03匹配"
+    },
+    {
+      "node_name": "NAUO429",
+      "bom_code": "01.09.2550",
+      "confidence": 0.88,
+      "reasoning": "产品代号T-EURO-02匹配"
+    },
+    {
+      "node_name": "NAUO428",
+      "bom_code": "01.09.2549",
+      "confidence": 0.88,
+      "reasoning": "产品代号T-EURO-01匹配"
+    },
+    {
+      "node_name": "NAUO230",
+      "bom_code": "02.03.0088",
+      "confidence": 0.85,
+      "reasoning": "规格M8*80匹配，标准号GB/T 5780/5782相似"
+    },
+    {
+      "node_name": "NAUO204",
+      "bom_code": "02.03.0610",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T 97.2和规格20*3完全匹配"
+    },
+    {
+      "node_name": "NAUO169",
+      "bom_code": "02.03.0378",
+      "confidence": 0.85,
+      "reasoning": "规格M6*20匹配，标准号GB/T 5781/5783相似"
+    },
+    {
+      "node_name": "NAUO153",
+      "bom_code": "02.03.0147",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T889.1和规格M30完全匹配"
+    },
+    {
+      "node_name": "NAUO151",
+      "bom_code": "02.03.0458",
+      "confidence": 0.85,
+      "reasoning": "规格M30*60匹配，标准号GB/T 5781/5783相似"
+    },
+    {
+      "node_name": "NAUO136",
+      "bom_code": "02.03.0379",
+      "confidence": 0.90,
+      "reasoning": "规格M8*20匹配，强度等级8.8一致"
+    },
+    {
+      "node_name": "NAUO131",
+      "bom_code": "02.03.0019",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T889.1和规格M16完全匹配"
+    },
+    {
+      "node_name": "NAUO130",
+      "bom_code": "02.03.0072",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T95-2002和规格16*3完全匹配"
+    },
+    {
+      "node_name": "NAUO129",
+      "bom_code": "02.03.1035",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T70.2和规格M16*85完全匹配"
+    },
+    {
+      "node_name": "NAUO124",
+      "bom_code": "02.03.0102",
+      "confidence": 0.85,
+      "reasoning": "规格M8*65匹配，标准号GB/T 5780/5782相似"
+    },
+    {
+      "node_name": "NAUO122",
+      "bom_code": "02.03.0383",
+      "confidence": 0.85,
+      "reasoning": "规格M6*16匹配，标准号GB/T 5781/5783相似"
+    },
+    {
+      "node_name": "NAUO120",
+      "bom_code": "02.04.0029",
+      "confidence": 0.98,
+      "reasoning": "产品代号SPE1.83-LD-09完全匹配"
+    },
+    {
+      "node_name": "NAUO119",
+      "bom_code": "02.08.03.0236",
+      "confidence": 0.98,
+      "reasoning": "产品代号A181-014完全匹配"
+    },
+    {
+      "node_name": "NAUO103",
+      "bom_code": "02.03.0001",
+      "confidence": 0.88,
+      "reasoning": "标准号DIN 11023和规格φ8匹配"
+    },
+    {
+      "node_name": "NAUO79",
+      "bom_code": "02.08.05.0004",
+      "confidence": 0.90,
+      "reasoning": "标准号JB/T7940.1和规格M8完全匹配"
+    },
+    {
+      "node_name": "NAUO78",
+      "bom_code": "02.03.0028",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T889.1和规格M8完全匹配"
+    },
+    {
+      "node_name": "NAUO77",
+      "bom_code": "02.03.0398",
+      "confidence": 0.85,
+      "reasoning": "规格M8*40匹配，标准号GB/T 5781/5783相似"
+    },
+    {
+      "node_name": "NAUO71",
+      "bom_code": "02.03.0381",
+      "confidence": 0.80,
+      "reasoning": "规格6*1.6匹配，类型一致"
+    },
+    {
+      "node_name": "NAUO70",
+      "bom_code": "02.03.0146",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T889.1和规格M6完全匹配"
+    },
+    {
+      "node_name": "NAUO69",
+      "bom_code": "02.03.0442",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T70.1和规格M6*40完全匹配"
+    },
+    {
+      "node_name": "NAUO64",
+      "bom_code": "02.03.0612",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T889.1和规格M20完全匹配"
+    },
+    {
+      "node_name": "NAUO62",
+      "bom_code": "02.16.0142",
+      "confidence": 0.80,
+      "reasoning": "规格200x55接近200x50，类型一致"
+    },
+    {
+      "node_name": "NAUO54",
+      "bom_code": "02.03.0006",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T95-2002和规格30x4完全匹配"
+    },
+    {
+      "node_name": "NAUO43",
+      "bom_code": "02.03.0148",
+      "confidence": 0.80,
+      "reasoning": "规格M30，类型为六角螺母，标准号相似"
+    },
+    {
+      "node_name": "NAUO33",
+      "bom_code": "02.09.0103",
+      "confidence": 0.95,
+      "reasoning": "产品代号TH-φ10*16*φ56*260-YS高度匹配"
+    },
+    {
+      "node_name": "NAUO284",
+      "bom_code": "02.08.01.0338",
+      "confidence": 0.90,
+      "reasoning": "产品代号EHYG-φ63/φ35-428-251高度匹配"
+    }
+  ]
+}
+```

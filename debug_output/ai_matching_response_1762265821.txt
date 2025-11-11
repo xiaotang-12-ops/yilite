@@ -1,0 +1,227 @@
+```json
+{
+  "cot_analysis": {
+    "total_unmatched_bom": 9,
+    "total_unmatched_3d": 16,
+    "analysis_steps": [
+      {
+        "bom_code": "01.02.01.3870",
+        "bom_name": "右悬挂臂板",
+        "bom_product_code": "S-RB1830-02-01-Q345",
+        "step1_extract": "产品代号: S-RB1830-02-01-Q345, 名称: 右悬挂臂板, 材料: Q345",
+        "step2_candidates": [
+          "NAUO1: S-RB1830-02-01-Q345ԒѼ±۰䒱0",
+          "NAUO2: S-RB1830-02-02-Q345سѼ±۰䒱0",
+          "NAUO3: S-RB1830-02-03-Q345·½¹Ü-»ú¼ÓT5x80x80-1865"
+        ],
+        "step3_comparison": "NAUO1的geometry_name包含产品代号S-RB1830-02-01-Q345，且名称乱码部分（ԒѼ±۰䒱0）推测为'右悬挂臂板'或类似结构件名称。",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配NAUO1，产品代号完全一致。"
+      },
+      {
+        "bom_code": "01.02.01.3871",
+        "bom_name": "左悬挂臂板",
+        "bom_product_code": "S-RB1830-02-02-Q345",
+        "step1_extract": "产品代号: S-RB1830-02-02-Q345, 名称: 左悬挂臂板, 材料: Q345",
+        "step2_candidates": [
+          "NAUO2: S-RB1830-02-02-Q345سѼ±۰䒱0",
+          "NAUO1: S-RB1830-02-01-Q345ԒѼ±۰䒱0"
+        ],
+        "step3_comparison": "NAUO2的geometry_name包含产品代号S-RB1830-02-02-Q345，且名称乱码部分（سѼ±۰䒱0）推测为'左悬挂臂板'或类似结构件名称。",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配NAUO2，产品代号完全一致。"
+      },
+      {
+        "bom_code": "01.02.03.0206",
+        "bom_name": "方管-机加",
+        "bom_product_code": "S-RB1830-02-03-Q345",
+        "step1_extract": "产品代号: S-RB1830-02-03-Q345, 名称: 方管-机加, 材料: Q345",
+        "step2_candidates": [
+          "NAUO3: S-RB1830-02-03-Q345·½¹Ü-»ú¼ÓT5x80x80-1865",
+          "NAUO5: S-RB1830-02-05-Q345·½¹Ü-»ú¼ÓT5x65x65-60"
+        ],
+        "step3_comparison": "NAUO3的geometry_name包含产品代号S-RB1830-02-03-Q345，且名称包含'方管-机加'（·½¹Ü-»ú¼Ó）。",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配NAUO3，产品代号完全一致且名称吻合。"
+      },
+      {
+        "bom_code": "01.02.04.0084",
+        "bom_name": "角钢",
+        "bom_product_code": "S-RB1830-02-04-Q235",
+        "step1_extract": "产品代号: S-RB1830-02-04-Q235, 名称: 角钢, 材料: Q235",
+        "step2_candidates": [
+          "NAUO4: S-RB1830-02-04-Q235½ǸՔ3x3#-40",
+          "NAUO12: S-RB1830-02-04-Q235½ǸՔ3x3#-40_1",
+          "NAUO16: S-RB1830-02-04-Q235½ǸՔ3x3#-40_4"
+        ],
+        "step3_comparison": "NAUO4、NAUO12、NAUO16等多个零件的geometry_name均包含产品代号S-RB1830-02-04-Q235，且名称乱码（½ǸՔ3x3#-40）推测为角钢规格。",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配NAUO4，产品代号完全一致。由于BOM数量未知，将多个3D零件匹配到同一BOM项。"
+      },
+      {
+        "bom_code": "01.02.03.0207",
+        "bom_name": "方管-机加",
+        "bom_product_code": "S-RB1830-02-05-Q345",
+        "step1_extract": "产品代号: S-RB1830-02-05-Q345, 名称: 方管-机加, 材料: Q345",
+        "step2_candidates": [
+          "NAUO5: S-RB1830-02-05-Q345·½¹Ü-»ú¼ÓT5x65x65-60",
+          "NAUO8: S-RB1830-02-05-Q345·½¹Ü-»ú¼ÓT5x65x65-60_1"
+        ],
+        "step3_comparison": "NAUO5和NAUO8的geometry_name均包含产品代号S-RB1830-02-05-Q345，且名称包含'方管-机加'（·½¹Ü-»ú¼Ó）。",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配NAUO5，产品代号完全一致且名称吻合。"
+      },
+      {
+        "bom_code": "01.01.01.4776",
+        "bom_name": "方形板",
+        "bom_product_code": "FXB-T8*158*65-Q345",
+        "step1_extract": "产品代号: FXB-T8*158*65-Q345, 名称: 方形板, 材料: Q345",
+        "step2_candidates": [
+          "NAUO6: FXB-T8x65x158-Q345·½ю°",
+          "NAUO7: FXB-T8x65x158-Q345·½ю°_1"
+        ],
+        "step3_comparison": "NAUO6和NAUO7的geometry_name包含FXB-T8x65x158-Q345，与BOM的FXB-T8*158*65-Q345规格一致（忽略尺寸顺序和符号差异* vs x）。名称乱码（·½ю°）推测为方形板。",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配NAUO6，产品代号和规格一致（忽略顺序和符号）。"
+      },
+      {
+        "bom_code": "01.02.01.3872",
+        "bom_name": "旋转弧板",
+        "bom_product_code": "S-RB1830-02-06-Q345",
+        "step1_extract": "产品代号: S-RB1830-02-06-Q345, 名称: 旋转弧板, 材料: Q345",
+        "step2_candidates": [
+          "NAUO9: S-RB1830-02-06-Q345ѽ转»¡°䒱0",
+          "NAUO10: S-RB1830-02-06-Q345ѽ转»¡°䒱0_1"
+        ],
+        "step3_comparison": "NAUO9和NAUO10的geometry_name均包含产品代号S-RB1830-02-06-Q345，且名称乱码（ѽ转»¡°䒱0）推测为'旋转弧板'。",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配NAUO9，产品代号完全一致。"
+      },
+      {
+        "bom_code": "01.02.05.0334",
+        "bom_name": "固定套",
+        "bom_product_code": "S-RB1830-02-07-Q345",
+        "step1_extract": "产品代号: S-RB1830-02-07-Q345, 名称: 固定套, 材料: Q345",
+        "step2_candidates": [
+          "NAUO11: S-RB1830-02-07-Q345ס͗",
+          "NAUO14: S-RB1830-02-08-Q235ס͗"
+        ],
+        "step3_comparison": "NAUO11的geometry_name包含产品代号S-RB1830-02-07-Q345，名称乱码（ס͗）推测为'固定套'。",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配NAUO11，产品代号完全一致。"
+      },
+      {
+        "bom_code": "01.02.04.0447",
+        "bom_name": "轴套",
+        "bom_product_code": "S-RB1830-02-08-Q235",
+        "step1_extract": "产品代号: S-RB1830-02-08-Q235, 名称: 轴套, 材料: Q235",
+        "step2_candidates": [
+          "NAUO14: S-RB1830-02-08-Q235ס͗",
+          "NAUO11: S-RB1830-02-07-Q345ס͗"
+        ],
+        "step3_comparison": "NAUO14的geometry_name包含产品代号S-RB1830-02-08-Q235，名称乱码（ס͗）推测为'轴套'。",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配NAUO14，产品代号完全一致。"
+      }
+    ]
+  },
+  "ai_matched_pairs": [
+    {
+      "node_name": "NAUO1",
+      "bom_code": "01.02.01.3870",
+      "confidence": 0.95,
+      "reasoning": "产品代号S-RB1830-02-01-Q345完全匹配"
+    },
+    {
+      "node_name": "NAUO2",
+      "bom_code": "01.02.01.3871",
+      "confidence": 0.95,
+      "reasoning": "产品代号S-RB1830-02-02-Q345完全匹配"
+    },
+    {
+      "node_name": "NAUO3",
+      "bom_code": "01.02.03.0206",
+      "confidence": 0.98,
+      "reasoning": "产品代号S-RB1830-02-03-Q345完全匹配"
+    },
+    {
+      "node_name": "NAUO4",
+      "bom_code": "01.02.04.0084",
+      "confidence": 0.95,
+      "reasoning": "产品代号S-RB1830-02-04-Q235完全匹配"
+    },
+    {
+      "node_name": "NAUO12",
+      "bom_code": "01.02.04.0084",
+      "confidence": 0.95,
+      "reasoning": "产品代号S-RB1830-02-04-Q235完全匹配（多实例）"
+    },
+    {
+      "node_name": "NAUO13",
+      "bom_code": "01.02.04.0084",
+      "confidence": 0.95,
+      "reasoning": "产品代号S-RB1830-02-04-Q235完全匹配（多实例）"
+    },
+    {
+      "node_name": "NAUO15",
+      "bom_code": "01.02.04.0084",
+      "confidence": 0.95,
+      "reasoning": "产品代号S-RB1830-02-04-Q235完全匹配（多实例）"
+    },
+    {
+      "node_name": "NAUO16",
+      "bom_code": "01.02.04.0084",
+      "confidence": 0.95,
+      "reasoning": "产品代号S-RB1830-02-04-Q235完全匹配（多实例）"
+    },
+    {
+      "node_name": "NAUO5",
+      "bom_code": "01.02.03.0207",
+      "confidence": 0.98,
+      "reasoning": "产品代号S-RB1830-02-05-Q345完全匹配"
+    },
+    {
+      "node_name": "NAUO8",
+      "bom_code": "01.02.03.0207",
+      "confidence": 0.98,
+      "reasoning": "产品代号S-RB1830-02-05-Q345完全匹配（多实例）"
+    },
+    {
+      "node_name": "NAUO6",
+      "bom_code": "01.01.01.4776",
+      "confidence": 0.95,
+      "reasoning": "产品代号FXB-T8*158*65-Q345规格匹配（忽略顺序/符号）"
+    },
+    {
+      "node_name": "NAUO7",
+      "bom_code": "01.01.01.4776",
+      "confidence": 0.95,
+      "reasoning": "产品代号FXB-T8*158*65-Q345规格匹配（忽略顺序/符号）"
+    },
+    {
+      "node_name": "NAUO9",
+      "bom_code": "01.02.01.3872",
+      "confidence": 0.95,
+      "reasoning": "产品代号S-RB1830-02-06-Q345完全匹配"
+    },
+    {
+      "node_name": "NAUO10",
+      "bom_code": "01.02.01.3872",
+      "confidence": 0.95,
+      "reasoning": "产品代号S-RB1830-02-06-Q345完全匹配（多实例）"
+    },
+    {
+      "node_name": "NAUO11",
+      "bom_code": "01.02.05.0334",
+      "confidence": 0.95,
+      "reasoning": "产品代号S-RB1830-02-07-Q345完全匹配"
+    },
+    {
+      "node_name": "NAUO14",
+      "bom_code": "01.02.04.0447",
+      "confidence": 0.95,
+      "reasoning": "产品代号S-RB1830-02-08-Q235完全匹配"
+    }
+  ]
+}
+```

@@ -1,0 +1,304 @@
+{
+  "agent_name": "Agent6_FAQ",
+  "model": "google/gemini-2.5-flash-preview-09-2025",
+  "timestamp": "20251005_020836",
+  "image_count": 0,
+  "temperature": 0.2,
+  "system_prompt": "你是安全工程师李师傅，拥有20年安全管理经验。\n\n你的任务：为每个装配步骤添加安全警告（如果该步骤有安全风险）。\n\n## 核心原则\n\n1. **安全第一**：识别所有潜在的安全风险\n2. **嵌入警告**：为有风险的步骤添加safety_warnings字段\n3. **工人友好**：使用通俗语言，避免专业术语\n\n## 输出格式\n\n严格按照以下JSON格式输出（返回增强后的装配步骤）：\n\n```json\n{\n  \"enhanced_steps\": [\n    {\n      \"step_number\": 1,\n      \"title\": \"步骤标题\",\n      \"parts_used\": [...],\n      \"tools_required\": [...],\n      \"operation\": \"操作说明\",\n      \"quality_check\": \"质量检查\",\n      \"estimated_time_minutes\": 10,\n      \"welding\": {...},\n      \"safety_warnings\": [\n        \"佩戴安全帽和防护眼镜\",\n        \"确保工件固定牢固\",\n        \"注意防止烫伤\"\n      ]\n    }\n  ]\n}\n```\n\n**⚠️ 重要**：\n- 如果步骤没有安全风险，不要添加safety_warnings字段\n- 如果步骤有安全风险，safety_warnings必须是字符串数组\n- 保持原有步骤的所有字段不变，只添加safety_warnings字段\n\n## 重要提醒\n\n- **只输出JSON，不要输出其他内容**\n- **安全警告要具体**：说明具体的风险和预防措施\n- **使用通俗语言**：工人能看懂的语言\n",
+  "user_query": "请为以下装配步骤添加安全警告（如果有安全风险）。\n\n## 装配步骤\n\n[\n  {\n    \"step_number\": 1,\n    \"title\": \"安装主体矩形管\",\n    \"parts_used\": [\n      {\n        \"bom_code\": \"01.01.01.11509\",\n        \"bom_name\": \"连接板 1\",\n        \"quantity\": 1,\n        \"drawing_number\": \"2\",\n        \"mesh_id\": [\n          \"mesh_018\"\n        ]\n      },\n      {\n        \"bom_code\": \"01.01.03.2718\",\n        \"bom_name\": \"矩形管 1\",\n        \"quantity\": 1,\n        \"drawing_number\": \"1\"\n      },\n      {\n        \"bom_code\": \"01.01.03.2719\",\n        \"bom_name\": \"矩形管 2\",\n        \"quantity\": 2,\n        \"drawing_number\": \"6\"\n      }\n    ],\n    \"tools_required\": [\n      \"焊接工装夹具\",\n      \"焊机\",\n      \"角尺\"\n    ],\n    \"operation\": \"将图纸2号连接板（基准件）放置在焊接平台上。将图纸1号矩形管（14.56kg）和两根图纸6号矩形管（4.36kg）根据图纸尺寸和位置要求，垂直定位在连接板2的相应位置上。使用工装夹具临时固定，并进行点焊。\",\n    \"quality_check\": \"检查矩形管与连接板的垂直度，确保角度偏差小于0.5度。检查定位尺寸是否符合图纸要求。\",\n    \"estimated_time_minutes\": 15,\n    \"welding\": {\n      \"required\": true,\n      \"welding_type\": \"角焊（点焊）\",\n      \"welding_method\": \"CO2气保焊\",\n      \"weld_size\": \"点焊，焊点长度约10-15mm\",\n      \"welding_position\": \"连接板（图2）与三根矩形管（图1和图6）的底部连接处\",\n      \"quality_requirements\": \"焊点牢固，能承受后续装配应力，不影响最终焊缝质量。\",\n      \"safety_notes\": \"点焊时注意佩戴防护眼镜和手套，防止飞溅烫伤。确保工件夹紧，防止点焊时位移。\"\n    }\n  },\n  {\n    \"step_number\": 2,\n    \"title\": \"安装左右挂件\",\n    \"parts_used\": [\n      {\n        \"bom_code\": \"01.05.0019\",\n        \"bom_name\": \"左挂件虚拟组件 1\",\n        \"quantity\": 1,\n        \"drawing_number\": \"5\",\n        \"mesh_id\": [\n          \"mesh_008\",\n          \"mesh_009\",\n          \"mesh_010\"\n        ]\n      },\n      {\n        \"bom_code\": \"01.05.0018\",\n        \"bom_name\": \"右挂件虚拟组件 1\",\n        \"quantity\": 1,\n        \"drawing_number\": \"4\",\n        \"mesh_id\": [\n          \"mesh_011\",\n          \"mesh_012\",\n          \"mesh_013\"\n        ]\n      }\n    ],\n    \"tools_required\": [\n      \"焊接工装夹具\",\n      \"焊机\"\n    ],\n    \"operation\": \"将图纸5号左挂件虚拟组件和图纸4号右挂件虚拟组件，分别定位并点焊到步骤1中装配好的矩形管（图纸1和6）的外侧端部。注意挂件的方向和高度，确保挂件的孔位与主体结构对齐。\",\n    \"quality_check\": \"检查挂件的安装方向是否正确，挂件的中心线与主体结构是否平行。检查挂件与矩形管的贴合度。\",\n    \"estimated_time_minutes\": 10,\n    \"welding\": {\n      \"required\": true,\n      \"welding_type\": \"角焊（点焊）\",\n      \"welding_method\": \"CO2气保焊\",\n      \"weld_size\": \"点焊，焊点长度约10mm\",\n      \"welding_position\": \"挂件（图4和图5）与矩形管（图1和图6）的接触面\",\n      \"quality_requirements\": \"定位准确，焊点均匀分布，保证挂件在后续操作中不晃动。\",\n      \"safety_notes\": \"使用合适的电流和电压，避免烧穿薄壁挂件。点焊后检查挂件是否牢固。\"\n    }\n  },\n  {\n    \"step_number\": 3,\n    \"title\": \"安装顶部矩形管\",\n    \"parts_used\": [\n      {\n        \"bom_code\": \"01.01.03.2720\",\n        \"bom_name\": \"矩形管 1\",\n        \"quantity\": 1,\n        \"drawing_number\": \"8\",\n        \"mesh_id\": [\n          \"mesh_003\",\n          \"mesh_006\",\n          \"mesh_007\",\n          \"mesh_019\"\n        ]\n      }\n    ],\n    \"tools_required\": [\n      \"焊机\",\n      \"卷尺\"\n    ],\n    \"operation\": \"将图纸8号矩形管（12.61kg）放置在主体框架的顶部，与图纸1号和6号矩形管的上端面齐平，并进行点焊固定。该矩形管作为组件的顶部横梁。\",\n    \"quality_check\": \"检查顶部矩形管的水平度，确保其与连接板（图纸2）平行。检查焊接接缝是否均匀。\",\n    \"estimated_time_minutes\": 8,\n    \"welding\": {\n      \"required\": true,\n      \"welding_type\": \"角焊（点焊）\",\n      \"welding_method\": \"CO2气保焊\",\n      \"weld_size\": \"点焊，焊点长度约15mm\",\n      \"welding_position\": \"顶部矩形管（图8）与三根立柱矩形管（图1和图6）的连接处\",\n      \"quality_requirements\": \"确保顶部横梁与立柱端面齐平，点焊位置对称，防止装配变形。\",\n      \"safety_notes\": \"高处作业注意防坠落，焊接时注意烟尘，保持良好通风。\"\n    }\n  },\n  {\n    \"step_number\": 4,\n    \"title\": \"安装封板\",\n    \"parts_used\": [\n      {\n        \"bom_code\": \"01.01.01.16608\",\n        \"bom_name\": \"封板 2\",\n        \"quantity\": 2,\n        \"drawing_number\": \"7\",\n        \"mesh_id\": [\n          \"mesh_004\",\n          \"mesh_005\"\n        ]\n      }\n    ],\n    \"tools_required\": [\n      \"焊机\"\n    ],\n    \"operation\": \"将两块图纸7号封板（2.56kg）分别定位并点焊到主体框架的两侧，用于封闭矩形管之间的空间。确保封板边缘与周围结构件贴合紧密。\",\n    \"quality_check\": \"检查封板是否完全覆盖侧面开口，边缘无明显缝隙。检查点焊位置是否牢固。\",\n    \"estimated_time_minutes\": 12,\n    \"welding\": {\n      \"required\": true,\n      \"welding_type\": \"角焊（点焊）\",\n      \"welding_method\": \"CO2气保焊\",\n      \"weld_size\": \"点焊，焊点长度约8mm\",\n      \"welding_position\": \"封板（图7）的四周边缘与矩形管的接触面\",\n      \"quality_requirements\": \"封板与框架贴合紧密，点焊均匀，防止封板翘曲。\",\n      \"safety_notes\": \"封板较薄，焊接时注意控制热输入，避免烧穿或严重变形。\"\n    }\n  },\n  {\n    \"step_number\": 5,\n    \"title\": \"安装加强筋\",\n    \"parts_used\": [\n      {\n        \"bom_code\": \"01.01.01.17678\",\n        \"bom_name\": \"加强筋 2\",\n        \"quantity\": 2,\n        \"drawing_number\": \"9\",\n        \"mesh_id\": [\n          \"mesh_001\",\n          \"mesh_002\"\n        ]\n      }\n    ],\n    \"tools_required\": [\n      \"焊机\",\n      \"定位尺\"\n    ],\n    \"operation\": \"将两块图纸9号加强筋（0.60kg）根据图纸所示角度和位置，分别安装在主体框架内部，用于增强结构刚度。加强筋通常呈斜角，需确保其与连接件的接触面完全贴合。\",\n    \"quality_check\": \"检查加强筋的安装角度和位置是否符合图纸要求，确保其起到支撑作用。\",\n    \"estimated_time_minutes\": 10,\n    \"welding\": {\n      \"required\": true,\n      \"welding_type\": \"角焊（点焊）\",\n      \"welding_method\": \"CO2气保焊\",\n      \"weld_size\": \"点焊，焊点长度约10mm\",\n      \"welding_position\": \"加强筋（图9）与矩形管（图1、图6、图8）的接触面\",\n      \"quality_requirements\": \"加强筋必须紧密贴合，点焊位置应在受力方向上，保证结构强度。\",\n      \"safety_notes\": \"加强筋安装在内部，操作空间小，注意焊枪角度，防止烫伤周围结构。\"\n    }\n  },\n  {\n    \"step_number\": 6,\n    \"title\": \"安装方形板-机加\",\n    \"parts_used\": [\n      {\n        \"bom_code\": \"01.01.01.6589\",\n        \"bom_name\": \"方形板-机加 4\",\n        \"quantity\": 4,\n        \"drawing_number\": \"3\",\n        \"mesh_id\": [\n          \"mesh_014\",\n          \"mesh_015\",\n          \"mesh_016\",\n          \"mesh_017\"\n        ]\n      }\n    ],\n    \"tools_required\": [\n      \"焊机\"\n    ],\n    \"operation\": \"将四块图纸3号方形板-机加（0.16kg）分别定位并点焊到图纸4号和5号挂件虚拟组件的连接点上，用于加强挂件的强度和连接刚度。\",\n    \"quality_check\": \"检查方形板的安装位置是否居中，确保其覆盖在挂件的受力区域。\",\n    \"estimated_time_minutes\": 8,\n    \"welding\": {\n      \"required\": true,\n      \"welding_type\": \"角焊（点焊）\",\n      \"welding_method\": \"CO2气保焊\",\n      \"weld_size\": \"点焊，焊点长度约5mm\",\n      \"welding_position\": \"方形板（图3）与挂件（图4和图5）的接触面\",\n      \"quality_requirements\": \"方形板定位准确，点焊牢固，为后续全面焊接做准备。\",\n      \"safety_notes\": \"方形板较小，焊接时注意定位，防止焊偏。使用小电流，避免烧穿。\"\n    }\n  },\n  {\n    \"step_number\": 7,\n    \"title\": \"全面焊接\",\n    \"parts_used\": [],\n    \"tools_required\": [\n      \"焊机\",\n      \"焊条/焊丝\",\n      \"清渣工具\"\n    ],\n    \"operation\": \"对所有已点焊的零件连接处进行全面焊接。焊接时应遵循图纸上的技术要求（如焊缝类型、焊缝大小），并采用对称、分段、跳焊等方式，以减少焊接变形。焊接完成后，进行焊渣清理。\",\n    \"quality_check\": \"检查所有焊缝是否饱满、均匀、无虚焊、漏焊、裂纹等缺陷。检查焊接后的整体尺寸和形位公差。\",\n    \"estimated_time_minutes\": 40,\n    \"welding\": {\n      \"required\": true,\n      \"welding_type\": \"角焊/塞焊（根据图纸要求）\",\n      \"welding_method\": \"CO2气保焊\",\n      \"weld_size\": \"焊脚高度通常为板厚较小者，如6mm或8mm（具体按图纸要求）\",\n      \"welding_position\": \"所有零件的连接处，包括矩形管与连接板、挂件与矩形管、封板边缘、加强筋连接面\",\n      \"quality_requirements\": \"焊缝必须连续、饱满、成型美观，不得有气孔、夹渣、裂纹等缺陷。焊缝高度和长度必须符合图纸要求。\",\n      \"safety_notes\": \"进行全面焊接时，必须佩戴全套防护用品（面罩、手套、防护服）。注意控制焊接变形，采用合理的焊接顺序（如跳焊、分段焊），避免结构扭曲。焊接区域必须保持通风良好。\"\n    }\n  },\n  {\n    \"step_number\": 8,\n    \"title\": \"倒钝与校正\",\n    \"parts_used\": [],\n    \"tools_required\": [\n      \"砂轮机\",\n      \"锉刀\",\n      \"校正平台\"\n    ],\n    \"operation\": \"根据技术要求，对所有锐边、锐角和尖角进行倒钝处理。如果焊接过程中发生变形，需在校正平台上进行校正，确保组件的整体平整度和尺寸精度。\",\n    \"quality_check\": \"检查所有锐边是否已倒钝，无毛刺。使用量具检查关键尺寸（如600mm, 850mm, 1130mm等）是否在公差范围内。\",\n    \"estimated_time_minutes\": 15\n  }\n]\n\n## 要求\n\n1. **识别风险步骤**：判断哪些步骤有安全风险（吊装、焊接、高空作业、重物搬运等）\n2. **添加安全警告**：为有风险的步骤添加safety_warnings字段\n3. **保持原有字段**：不要修改或删除原有的字段（step_number、title、welding等）\n4. **使用通俗语言**：工人能看懂的语言\n5. **警告要具体**：说明具体的风险和预防措施\n\n## 自检清单\n\n- [ ] 所有有风险的步骤都添加了safety_warnings字段\n- [ ] safety_warnings是字符串数组，每条警告简洁明了\n- [ ] 原有步骤的所有字段都保持不变\n- [ ] 没有风险的步骤没有添加safety_warnings字段\n\n现在开始为装配步骤添加安全警告！\n",
+  "raw_response": "```json\n{\n  \"enhanced_steps\": [\n    {\n      \"step_number\": 1,\n      \"title\": \"安装主体矩形管\",\n      \"parts_used\": [\n        {\n          \"bom_code\": \"01.01.01.11509\",\n          \"bom_name\": \"连接板 1\",\n          \"quantity\": 1,\n          \"drawing_number\": \"2\",\n          \"mesh_id\": [\n            \"mesh_018\"\n          ]\n        },\n        {\n          \"bom_code\": \"01.01.03.2718\",\n          \"bom_name\": \"矩形管 1\",\n          \"quantity\": 1,\n          \"drawing_number\": \"1\"\n        },\n        {\n          \"bom_code\": \"01.01.03.2719\",\n          \"bom_name\": \"矩形管 2\",\n          \"quantity\": 2,\n          \"drawing_number\": \"6\"\n        }\n      ],\n      \"tools_required\": [\n        \"焊接工装夹具\",\n        \"焊机\",\n        \"角尺\"\n      ],\n      \"operation\": \"将图纸2号连接板（基准件）放置在焊接平台上。将图纸1号矩形管（14.56kg）和两根图纸6号矩形管（4.36kg）根据图纸尺寸和位置要求，垂直定位在连接板2的相应位置上。使用工装夹具临时固定，并进行点焊。\",\n      \"quality_check\": \"检查矩形管与连接板的垂直度，确保角度偏差小于0.5度。检查定位尺寸是否符合图纸要求。\",\n      \"estimated_time_minutes\": 15,\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊（点焊）\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"点焊，焊点长度约10-15mm\",\n        \"welding_position\": \"连接板（图2）与三根矩形管（图1和图6）的底部连接处\",\n        \"quality_requirements\": \"焊点牢固，能承受后续装配应力，不影响最终焊缝质量。\",\n        \"safety_notes\": \"点焊时注意佩戴防护眼镜和手套，防止飞溅烫伤。确保工件夹紧，防止点焊时位移。\"\n      },\n      \"safety_warnings\": [\n        \"搬运14.56kg的矩形管时，注意使用正确的搬运姿势或借助吊具，防止扭伤腰部。\",\n        \"进行点焊作业时，必须佩戴焊接面罩、防护手套和防护服，防止电弧光伤害眼睛和皮肤烫伤。\",\n        \"确保所有工件在焊接前用夹具固定牢固，防止工件倾倒或移动伤人。\"\n      ]\n    },\n    {\n      \"step_number\": 2,\n      \"title\": \"安装左右挂件\",\n      \"parts_used\": [\n        {\n          \"bom_code\": \"01.05.0019\",\n          \"bom_name\": \"左挂件虚拟组件 1\",\n          \"quantity\": 1,\n          \"drawing_number\": \"5\",\n          \"mesh_id\": [\n            \"mesh_008\",\n            \"mesh_009\",\n            \"mesh_010\"\n          ]\n        },\n        {\n          \"bom_code\": \"01.05.0018\",\n          \"bom_name\": \"右挂件虚拟组件 1\",\n          \"quantity\": 1,\n          \"drawing_number\": \"4\",\n          \"mesh_id\": [\n            \"mesh_011\",\n            \"mesh_012\",\n            \"mesh_013\"\n          ]\n        }\n      ],\n      \"tools_required\": [\n        \"焊接工装夹具\",\n        \"焊机\"\n      ],\n      \"operation\": \"将图纸5号左挂件虚拟组件和图纸4号右挂件虚拟组件，分别定位并点焊到步骤1中装配好的矩形管（图纸1和6）的外侧端部。注意挂件的方向和高度，确保挂件的孔位与主体结构对齐。\",\n      \"quality_check\": \"检查挂件的安装方向是否正确，挂件的中心线与主体结构是否平行。检查挂件与矩形管的贴合度。\",\n      \"estimated_time_minutes\": 10,\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊（点焊）\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"点焊，焊点长度约10mm\",\n        \"welding_position\": \"挂件（图4和图5）与矩形管（图1和图6）的接触面\",\n        \"quality_requirements\": \"定位准确，焊点均匀分布，保证挂件在后续操作中不晃动。\",\n        \"safety_notes\": \"使用合适的电流和电压，避免烧穿薄壁挂件。点焊后检查挂件是否牢固。\"\n      },\n      \"safety_warnings\": [\n        \"点焊时注意控制焊接飞溅，防止火花溅射到周围易燃物或操作人员身上。\",\n        \"佩戴好焊接防护用品，防止电弧光和高温烫伤。\"\n      ]\n    },\n    {\n      \"step_number\": 3,\n      \"title\": \"安装顶部矩形管\",\n      \"parts_used\": [\n        {\n          \"bom_code\": \"01.01.03.2720\",\n          \"bom_name\": \"矩形管 1\",\n          \"quantity\": 1,\n          \"drawing_number\": \"8\",\n          \"mesh_id\": [\n            \"mesh_003\",\n            \"mesh_006\",\n            \"mesh_007\",\n            \"mesh_019\"\n          ]\n        }\n      ],\n      \"tools_required\": [\n        \"焊机\",\n        \"卷尺\"\n      ],\n      \"operation\": \"将图纸8号矩形管（12.61kg）放置在主体框架的顶部，与图纸1号和6号矩形管的上端面齐平，并进行点焊固定。该矩形管作为组件的顶部横梁。\",\n      \"quality_check\": \"检查顶部矩形管的水平度，确保其与连接板（图纸2）平行。检查焊接接缝是否均匀。\",\n      \"estimated_time_minutes\": 8,\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊（点焊）\",\n        \"welwing_method\": \"CO2气保焊\",\n        \"weld_size\": \"点焊，焊点长度约15mm\",\n        \"welding_position\": \"顶部矩形管（图8）与三根立柱矩形管（图1和图6）的连接处\",\n        \"quality_requirements\": \"确保顶部横梁与立柱端面齐平，点焊位置对称，防止装配变形。\",\n        \"safety_notes\": \"高处作业注意防坠落，焊接时注意烟尘，保持良好通风。\"\n      },\n      \"safety_warnings\": [\n        \"搬运12.61kg的矩形管到顶部时，必须使用合适的吊装工具或两人协作，防止重物坠落或砸伤。\",\n        \"由于是在框架顶部作业，属于高处作业，必须站在稳固的平台上或使用安全梯，并确保框架主体稳定，防止倾倒。\",\n        \"焊接时注意通风，避免吸入有害烟尘。\"\n      ]\n    },\n    {\n      \"step_number\": 4,\n      \"title\": \"安装封板\",\n      \"parts_used\": [\n        {\n          \"bom_code\": \"01.01.01.16608\",\n          \"bom_name\": \"封板 2\",\n          \"quantity\": 2,\n          \"drawing_number\": \"7\",\n          \"mesh_id\": [\n            \"mesh_004\",\n            \"mesh_005\"\n          ]\n        }\n      ],\n      \"tools_required\": [\n        \"焊机\"\n      ],\n      \"operation\": \"将两块图纸7号封板（2.56kg）分别定位并点焊到主体框架的两侧，用于封闭矩形管之间的空间。确保封板边缘与周围结构件贴合紧密。\",\n      \"quality_check\": \"检查封板是否完全覆盖侧面开口，边缘无明显缝隙。检查点焊位置是否牢固。\",\n      \"estimated_time_minutes\": 12,\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊（点焊）\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"点焊，焊点长度约8mm\",\n        \"welding_position\": \"封板（图7）的四周边缘与矩形管的接触面\",\n        \"quality_requirements\": \"封板与框架贴合紧密，点焊均匀，防止封板翘曲。\",\n        \"safety_notes\": \"封板较薄，焊接时注意控制热输入，避免烧穿或严重变形。\"\n      },\n      \"safety_warnings\": [\n        \"封板边缘可能锋利，搬运和定位时必须佩戴防割手套，防止割伤。\",\n        \"焊接薄板时，要快速点焊，避免烧穿，同时注意防止高温烫伤。\"\n      ]\n    },\n    {\n      \"step_number\": 5,\n      \"title\": \"安装加强筋\",\n      \"parts_used\": [\n        {\n          \"bom_code\": \"01.01.01.17678\",\n          \"bom_name\": \"加强筋 2\",\n          \"quantity\": 2,\n          \"drawing_number\": \"9\",\n          \"mesh_id\": [\n            \"mesh_001\",\n            \"mesh_002\"\n          ]\n        }\n      ],\n      \"tools_required\": [\n        \"焊机\",\n        \"定位尺\"\n      ],\n      \"operation\": \"将两块图纸9号加强筋（0.60kg）根据图纸所示角度和位置，分别安装在主体框架内部，用于增强结构刚度。加强筋通常呈斜角，需确保其与连接件的接触面完全贴合。\",\n      \"quality_check\": \"检查加强筋的安装角度和位置是否符合图纸要求，确保其起到支撑作用。\",\n      \"estimated_time_minutes\": 10,\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊（点焊）\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"点焊，焊点长度约10mm\",\n        \"welding_position\": \"加强筋（图9）与矩形管（图1、图6、图8）的接触面\",\n        \"quality_requirements\": \"加强筋必须紧密贴合，点焊位置应在受力方向上，保证结构强度。\",\n        \"safety_notes\": \"加强筋安装在内部，操作空间小，注意焊枪角度，防止烫伤周围结构。\"\n      },\n      \"safety_warnings\": [\n        \"在狭小空间内进行焊接作业时，要特别注意焊枪和高温工件，防止身体部位接触烫伤。\",\n        \"确保焊接区域的通风，防止烟雾在内部积聚。\"\n      ]\n    },\n    {\n      \"step_number\": 6,\n      \"title\": \"安装方形板-机加\",\n      \"parts_used\": [\n        {\n          \"bom_code\": \"01.01.01.6589\",\n          \"bom_name\": \"方形板-机加 4\",\n          \"quantity\": 4,\n          \"drawing_number\": \"3\",\n          \"mesh_id\": [\n            \"mesh_014\",\n            \"mesh_015\",\n            \"mesh_016\",\n            \"mesh_017\"\n          ]\n        }\n      ],\n      \"tools_required\": [\n        \"焊机\"\n      ],\n      \"operation\": \"将四块图纸3号方形板-机加（0.16kg）分别定位并点焊到图纸4号和5号挂件虚拟组件的连接点上，用于加强挂件的强度和连接刚度。\",\n      \"quality_check\": \"检查方形板的安装位置是否居中，确保其覆盖在挂件的受力区域。\",\n      \"estimated_time_minutes\": 8,\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊（点焊）\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"点焊，焊点长度约5mm\",\n        \"welding_position\": \"方形板（图3）与挂件（图4和图5）的接触面\",\n        \"quality_requirements\": \"方形板定位准确，点焊牢固，为后续全面焊接做准备。\",\n        \"safety_notes\": \"方形板较小，焊接时注意定位，防止焊偏。使用小电流，避免烧穿。\"\n      },\n      \"safety_warnings\": [\n        \"小零件焊接时，容易产生飞溅，必须佩戴防护眼镜和面罩，保护面部和眼睛。\",\n        \"注意防止焊枪或高温焊点接触到身体，避免烫伤。\"\n      ]\n    },\n    {\n      \"step_number\": 7,\n      \"title\": \"全面焊接\",\n      \"parts_used\": [],\n      \"tools_required\": [\n        \"焊机\",\n        \"焊条/焊丝\",\n        \"清渣工具\"\n      ],\n      \"operation\": \"对所有已点焊的零件连接处进行全面焊接。焊接时应遵循图纸上的技术要求（如焊缝类型、焊缝大小），并采用对称、分段、跳焊等方式，以减少焊接变形。焊接完成后，进行焊渣清理。\",\n      \"quality_check\": \"检查所有焊缝是否饱满、均匀、无虚焊、漏焊、裂纹等缺陷。检查焊接后的整体尺寸和形位公差。\",\n      \"estimated_time_minutes\": 40,\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊/塞焊（根据图纸要求）\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"焊脚高度通常为板厚较小者，如6mm或8mm（具体按图纸要求）\",\n        \"welding_position\": \"所有零件的连接处，包括矩形管与连接板、挂件与矩形管、封板边缘、加强筋连接面\",\n        \"quality_requirements\": \"焊缝必须连续、饱满、成型美观，不得有气孔、夹渣、裂纹等缺陷。焊缝高度和长度必须符合图纸要求。\",\n        \"safety_notes\": \"进行全面焊接时，必须佩戴全套防护用品（面罩、手套、防护服）。注意控制焊接变形，采用合理的焊接顺序（如跳焊、分段焊），避免结构扭曲。焊接区域必须保持通风良好。\"\n      },\n      \"safety_warnings\": [\n        \"全面焊接时，必须佩戴全套合格的焊接防护用品（包括自动变光面罩、防火服、绝缘手套），防止电弧光和高温伤害。\",\n        \"确保工作区域通风良好，使用排烟设备，防止吸入大量焊接烟尘和有害气体。\",\n        \"清理焊渣时，必须佩戴防护眼镜，防止焊渣飞溅伤眼。\",\n        \"注意检查焊机电缆和接地线是否完好，防止触电事故。\"\n      ]\n    },\n    {\n      \"step_number\": 8,\n      \"title\": \"倒钝与校正\",\n      \"parts_used\": [],\n      \"tools_required\": [\n        \"砂轮机\",\n        \"锉刀\",\n        \"校正平台\"\n      ],\n      \"operation\": \"根据技术要求，对所有锐边、锐角和尖角进行倒钝处理。如果焊接过程中发生变形，需在校正平台上进行校正，确保组件的整体平整度和尺寸精度。\",\n      \"quality_check\": \"检查所有锐边是否已倒钝，无毛刺。使用量具检查关键尺寸（如600mm, 850mm, 1130mm等）是否在公差范围内。\",\n      \"estimated_time_minutes\": 15,\n      \"safety_warnings\": [\n        \"使用砂轮机倒钝时，必须佩戴防护眼镜和防尘面罩，防止金属碎屑和火花飞溅伤人。\",\n        \"操作砂轮机时，要确保砂轮片安装牢固，并站在侧面操作，防止砂轮片破裂伤人。\",\n        \"进行校正作业时，如果需要使用重锤或液压设备，必须确保工件放置平稳，防止工件倾倒或反弹伤人。\"\n      ]\n    }\n  ]\n}\n```",
+  "parsed_result": {
+    "enhanced_steps": [
+      {
+        "step_number": 1,
+        "title": "安装主体矩形管",
+        "parts_used": [
+          {
+            "bom_code": "01.01.01.11509",
+            "bom_name": "连接板 1",
+            "quantity": 1,
+            "drawing_number": "2",
+            "mesh_id": [
+              "mesh_018"
+            ]
+          },
+          {
+            "bom_code": "01.01.03.2718",
+            "bom_name": "矩形管 1",
+            "quantity": 1,
+            "drawing_number": "1"
+          },
+          {
+            "bom_code": "01.01.03.2719",
+            "bom_name": "矩形管 2",
+            "quantity": 2,
+            "drawing_number": "6"
+          }
+        ],
+        "tools_required": [
+          "焊接工装夹具",
+          "焊机",
+          "角尺"
+        ],
+        "operation": "将图纸2号连接板（基准件）放置在焊接平台上。将图纸1号矩形管（14.56kg）和两根图纸6号矩形管（4.36kg）根据图纸尺寸和位置要求，垂直定位在连接板2的相应位置上。使用工装夹具临时固定，并进行点焊。",
+        "quality_check": "检查矩形管与连接板的垂直度，确保角度偏差小于0.5度。检查定位尺寸是否符合图纸要求。",
+        "estimated_time_minutes": 15,
+        "welding": {
+          "required": true,
+          "welding_type": "角焊（点焊）",
+          "welding_method": "CO2气保焊",
+          "weld_size": "点焊，焊点长度约10-15mm",
+          "welding_position": "连接板（图2）与三根矩形管（图1和图6）的底部连接处",
+          "quality_requirements": "焊点牢固，能承受后续装配应力，不影响最终焊缝质量。",
+          "safety_notes": "点焊时注意佩戴防护眼镜和手套，防止飞溅烫伤。确保工件夹紧，防止点焊时位移。"
+        },
+        "safety_warnings": [
+          "搬运14.56kg的矩形管时，注意使用正确的搬运姿势或借助吊具，防止扭伤腰部。",
+          "进行点焊作业时，必须佩戴焊接面罩、防护手套和防护服，防止电弧光伤害眼睛和皮肤烫伤。",
+          "确保所有工件在焊接前用夹具固定牢固，防止工件倾倒或移动伤人。"
+        ]
+      },
+      {
+        "step_number": 2,
+        "title": "安装左右挂件",
+        "parts_used": [
+          {
+            "bom_code": "01.05.0019",
+            "bom_name": "左挂件虚拟组件 1",
+            "quantity": 1,
+            "drawing_number": "5",
+            "mesh_id": [
+              "mesh_008",
+              "mesh_009",
+              "mesh_010"
+            ]
+          },
+          {
+            "bom_code": "01.05.0018",
+            "bom_name": "右挂件虚拟组件 1",
+            "quantity": 1,
+            "drawing_number": "4",
+            "mesh_id": [
+              "mesh_011",
+              "mesh_012",
+              "mesh_013"
+            ]
+          }
+        ],
+        "tools_required": [
+          "焊接工装夹具",
+          "焊机"
+        ],
+        "operation": "将图纸5号左挂件虚拟组件和图纸4号右挂件虚拟组件，分别定位并点焊到步骤1中装配好的矩形管（图纸1和6）的外侧端部。注意挂件的方向和高度，确保挂件的孔位与主体结构对齐。",
+        "quality_check": "检查挂件的安装方向是否正确，挂件的中心线与主体结构是否平行。检查挂件与矩形管的贴合度。",
+        "estimated_time_minutes": 10,
+        "welding": {
+          "required": true,
+          "welding_type": "角焊（点焊）",
+          "welding_method": "CO2气保焊",
+          "weld_size": "点焊，焊点长度约10mm",
+          "welding_position": "挂件（图4和图5）与矩形管（图1和图6）的接触面",
+          "quality_requirements": "定位准确，焊点均匀分布，保证挂件在后续操作中不晃动。",
+          "safety_notes": "使用合适的电流和电压，避免烧穿薄壁挂件。点焊后检查挂件是否牢固。"
+        },
+        "safety_warnings": [
+          "点焊时注意控制焊接飞溅，防止火花溅射到周围易燃物或操作人员身上。",
+          "佩戴好焊接防护用品，防止电弧光和高温烫伤。"
+        ]
+      },
+      {
+        "step_number": 3,
+        "title": "安装顶部矩形管",
+        "parts_used": [
+          {
+            "bom_code": "01.01.03.2720",
+            "bom_name": "矩形管 1",
+            "quantity": 1,
+            "drawing_number": "8",
+            "mesh_id": [
+              "mesh_003",
+              "mesh_006",
+              "mesh_007",
+              "mesh_019"
+            ]
+          }
+        ],
+        "tools_required": [
+          "焊机",
+          "卷尺"
+        ],
+        "operation": "将图纸8号矩形管（12.61kg）放置在主体框架的顶部，与图纸1号和6号矩形管的上端面齐平，并进行点焊固定。该矩形管作为组件的顶部横梁。",
+        "quality_check": "检查顶部矩形管的水平度，确保其与连接板（图纸2）平行。检查焊接接缝是否均匀。",
+        "estimated_time_minutes": 8,
+        "welding": {
+          "required": true,
+          "welding_type": "角焊（点焊）",
+          "welwing_method": "CO2气保焊",
+          "weld_size": "点焊，焊点长度约15mm",
+          "welding_position": "顶部矩形管（图8）与三根立柱矩形管（图1和图6）的连接处",
+          "quality_requirements": "确保顶部横梁与立柱端面齐平，点焊位置对称，防止装配变形。",
+          "safety_notes": "高处作业注意防坠落，焊接时注意烟尘，保持良好通风。"
+        },
+        "safety_warnings": [
+          "搬运12.61kg的矩形管到顶部时，必须使用合适的吊装工具或两人协作，防止重物坠落或砸伤。",
+          "由于是在框架顶部作业，属于高处作业，必须站在稳固的平台上或使用安全梯，并确保框架主体稳定，防止倾倒。",
+          "焊接时注意通风，避免吸入有害烟尘。"
+        ]
+      },
+      {
+        "step_number": 4,
+        "title": "安装封板",
+        "parts_used": [
+          {
+            "bom_code": "01.01.01.16608",
+            "bom_name": "封板 2",
+            "quantity": 2,
+            "drawing_number": "7",
+            "mesh_id": [
+              "mesh_004",
+              "mesh_005"
+            ]
+          }
+        ],
+        "tools_required": [
+          "焊机"
+        ],
+        "operation": "将两块图纸7号封板（2.56kg）分别定位并点焊到主体框架的两侧，用于封闭矩形管之间的空间。确保封板边缘与周围结构件贴合紧密。",
+        "quality_check": "检查封板是否完全覆盖侧面开口，边缘无明显缝隙。检查点焊位置是否牢固。",
+        "estimated_time_minutes": 12,
+        "welding": {
+          "required": true,
+          "welding_type": "角焊（点焊）",
+          "welding_method": "CO2气保焊",
+          "weld_size": "点焊，焊点长度约8mm",
+          "welding_position": "封板（图7）的四周边缘与矩形管的接触面",
+          "quality_requirements": "封板与框架贴合紧密，点焊均匀，防止封板翘曲。",
+          "safety_notes": "封板较薄，焊接时注意控制热输入，避免烧穿或严重变形。"
+        },
+        "safety_warnings": [
+          "封板边缘可能锋利，搬运和定位时必须佩戴防割手套，防止割伤。",
+          "焊接薄板时，要快速点焊，避免烧穿，同时注意防止高温烫伤。"
+        ]
+      },
+      {
+        "step_number": 5,
+        "title": "安装加强筋",
+        "parts_used": [
+          {
+            "bom_code": "01.01.01.17678",
+            "bom_name": "加强筋 2",
+            "quantity": 2,
+            "drawing_number": "9",
+            "mesh_id": [
+              "mesh_001",
+              "mesh_002"
+            ]
+          }
+        ],
+        "tools_required": [
+          "焊机",
+          "定位尺"
+        ],
+        "operation": "将两块图纸9号加强筋（0.60kg）根据图纸所示角度和位置，分别安装在主体框架内部，用于增强结构刚度。加强筋通常呈斜角，需确保其与连接件的接触面完全贴合。",
+        "quality_check": "检查加强筋的安装角度和位置是否符合图纸要求，确保其起到支撑作用。",
+        "estimated_time_minutes": 10,
+        "welding": {
+          "required": true,
+          "welding_type": "角焊（点焊）",
+          "welding_method": "CO2气保焊",
+          "weld_size": "点焊，焊点长度约10mm",
+          "welding_position": "加强筋（图9）与矩形管（图1、图6、图8）的接触面",
+          "quality_requirements": "加强筋必须紧密贴合，点焊位置应在受力方向上，保证结构强度。",
+          "safety_notes": "加强筋安装在内部，操作空间小，注意焊枪角度，防止烫伤周围结构。"
+        },
+        "safety_warnings": [
+          "在狭小空间内进行焊接作业时，要特别注意焊枪和高温工件，防止身体部位接触烫伤。",
+          "确保焊接区域的通风，防止烟雾在内部积聚。"
+        ]
+      },
+      {
+        "step_number": 6,
+        "title": "安装方形板-机加",
+        "parts_used": [
+          {
+            "bom_code": "01.01.01.6589",
+            "bom_name": "方形板-机加 4",
+            "quantity": 4,
+            "drawing_number": "3",
+            "mesh_id": [
+              "mesh_014",
+              "mesh_015",
+              "mesh_016",
+              "mesh_017"
+            ]
+          }
+        ],
+        "tools_required": [
+          "焊机"
+        ],
+        "operation": "将四块图纸3号方形板-机加（0.16kg）分别定位并点焊到图纸4号和5号挂件虚拟组件的连接点上，用于加强挂件的强度和连接刚度。",
+        "quality_check": "检查方形板的安装位置是否居中，确保其覆盖在挂件的受力区域。",
+        "estimated_time_minutes": 8,
+        "welding": {
+          "required": true,
+          "welding_type": "角焊（点焊）",
+          "welding_method": "CO2气保焊",
+          "weld_size": "点焊，焊点长度约5mm",
+          "welding_position": "方形板（图3）与挂件（图4和图5）的接触面",
+          "quality_requirements": "方形板定位准确，点焊牢固，为后续全面焊接做准备。",
+          "safety_notes": "方形板较小，焊接时注意定位，防止焊偏。使用小电流，避免烧穿。"
+        },
+        "safety_warnings": [
+          "小零件焊接时，容易产生飞溅，必须佩戴防护眼镜和面罩，保护面部和眼睛。",
+          "注意防止焊枪或高温焊点接触到身体，避免烫伤。"
+        ]
+      },
+      {
+        "step_number": 7,
+        "title": "全面焊接",
+        "parts_used": [],
+        "tools_required": [
+          "焊机",
+          "焊条/焊丝",
+          "清渣工具"
+        ],
+        "operation": "对所有已点焊的零件连接处进行全面焊接。焊接时应遵循图纸上的技术要求（如焊缝类型、焊缝大小），并采用对称、分段、跳焊等方式，以减少焊接变形。焊接完成后，进行焊渣清理。",
+        "quality_check": "检查所有焊缝是否饱满、均匀、无虚焊、漏焊、裂纹等缺陷。检查焊接后的整体尺寸和形位公差。",
+        "estimated_time_minutes": 40,
+        "welding": {
+          "required": true,
+          "welding_type": "角焊/塞焊（根据图纸要求）",
+          "welding_method": "CO2气保焊",
+          "weld_size": "焊脚高度通常为板厚较小者，如6mm或8mm（具体按图纸要求）",
+          "welding_position": "所有零件的连接处，包括矩形管与连接板、挂件与矩形管、封板边缘、加强筋连接面",
+          "quality_requirements": "焊缝必须连续、饱满、成型美观，不得有气孔、夹渣、裂纹等缺陷。焊缝高度和长度必须符合图纸要求。",
+          "safety_notes": "进行全面焊接时，必须佩戴全套防护用品（面罩、手套、防护服）。注意控制焊接变形，采用合理的焊接顺序（如跳焊、分段焊），避免结构扭曲。焊接区域必须保持通风良好。"
+        },
+        "safety_warnings": [
+          "全面焊接时，必须佩戴全套合格的焊接防护用品（包括自动变光面罩、防火服、绝缘手套），防止电弧光和高温伤害。",
+          "确保工作区域通风良好，使用排烟设备，防止吸入大量焊接烟尘和有害气体。",
+          "清理焊渣时，必须佩戴防护眼镜，防止焊渣飞溅伤眼。",
+          "注意检查焊机电缆和接地线是否完好，防止触电事故。"
+        ]
+      },
+      {
+        "step_number": 8,
+        "title": "倒钝与校正",
+        "parts_used": [],
+        "tools_required": [
+          "砂轮机",
+          "锉刀",
+          "校正平台"
+        ],
+        "operation": "根据技术要求，对所有锐边、锐角和尖角进行倒钝处理。如果焊接过程中发生变形，需在校正平台上进行校正，确保组件的整体平整度和尺寸精度。",
+        "quality_check": "检查所有锐边是否已倒钝，无毛刺。使用量具检查关键尺寸（如600mm, 850mm, 1130mm等）是否在公差范围内。",
+        "estimated_time_minutes": 15,
+        "safety_warnings": [
+          "使用砂轮机倒钝时，必须佩戴防护眼镜和防尘面罩，防止金属碎屑和火花飞溅伤人。",
+          "操作砂轮机时，要确保砂轮片安装牢固，并站在侧面操作，防止砂轮片破裂伤人。",
+          "进行校正作业时，如果需要使用重锤或液压设备，必须确保工件放置平稳，防止工件倾倒或反弹伤人。"
+        ]
+      }
+    ]
+  }
+}

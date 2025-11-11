@@ -1,0 +1,93 @@
+{
+  "source_pdf": "E:\\装配\\测试-pdf\\组件图1.pdf",
+  "items": [
+    {
+      "name": "CS-ST1070(42IN)-MP910-LDY100D-01-03-Q355B 加强筋",
+      "partNumber": "01.01.01.17678",
+      "quantity": 2,
+      "weight": 1.2,
+      "source": "E:\\装配\\测试-pdf\\组件图1.pdf",
+      "raw": "9 01.01.01.17678 CS-ST1070(42IN)-MP910-LDY100D-01-03-Q355B 加强筋 2 0.60 1.20"
+    },
+    {
+      "name": "JXG-T6*100*50-970-Q355B 矩形管",
+      "partNumber": "01.01.03.2720",
+      "quantity": 1,
+      "weight": 12.61,
+      "source": "E:\\装配\\测试-pdf\\组件图1.pdf",
+      "raw": "8 01.01.03.2720 JXG-T6*100*50-970-Q355B 矩形管 1 12.61 12.61"
+    },
+    {
+      "name": "S-SBE2130(84IN)-MP1220-01-01-Q355B 封板",
+      "partNumber": "01.01.01.16608",
+      "quantity": 2,
+      "weight": 5.12,
+      "source": "E:\\装配\\测试-pdf\\组件图1.pdf",
+      "raw": "7 01.01.01.16608 S-SBE2130(84IN)-MP1220-01-01-Q355B 封板 2 2.56 5.12"
+    },
+    {
+      "name": "JXG-T6*100*50-335-Q355B 矩形管",
+      "partNumber": "01.01.03.2719",
+      "quantity": 2,
+      "weight": 8.71,
+      "source": "E:\\装配\\测试-pdf\\组件图1.pdf",
+      "raw": "6 01.01.03.2719 JXG-T6*100*50-335-Q355B 矩形管 2 4.36 8.71"
+    },
+    {
+      "name": "T-EURO-00 左挂件虚拟组件",
+      "partNumber": "01.05.0019",
+      "quantity": 1,
+      "weight": 6.53,
+      "source": "E:\\装配\\测试-pdf\\组件图1.pdf",
+      "raw": "5 01.05.0019 T-EURO-00 左挂件虚拟组件 1 6.53 6.53"
+    },
+    {
+      "name": "T-EURO-00 右挂件虚拟组件",
+      "partNumber": "01.05.0018",
+      "quantity": 1,
+      "weight": 6.53,
+      "source": "E:\\装配\\测试-pdf\\组件图1.pdf",
+      "raw": "4 01.05.0018 T-EURO-00 右挂件虚拟组件 1 6.53 6.53"
+    },
+    {
+      "name": "T-SPE-FL-01-SMS-01-Q235 方形板-机加",
+      "partNumber": "01.01.01.6589",
+      "quantity": 4,
+      "weight": 0.64,
+      "source": "E:\\装配\\测试-pdf\\组件图1.pdf",
+      "raw": "3 01.01.01.6589 T-SPE-FL-01-SMS-01-Q235 方形板-机加 4 0.16 0.64"
+    },
+    {
+      "name": "T-SPV250-Z602-01-01-Q355B 连接板",
+      "partNumber": "01.01.01.11509",
+      "quantity": 1,
+      "weight": 21.36,
+      "source": "E:\\装配\\测试-pdf\\组件图1.pdf",
+      "raw": "2 01.01.01.11509 T-SPV250-Z602-01-01-Q355B 连接板 1 21.36 21.36"
+    },
+    {
+      "name": "JXG-T6*100*50-1120-Q355B 矩形管",
+      "partNumber": "01.01.03.2718",
+      "quantity": 1,
+      "weight": 14.56,
+      "source": "E:\\装配\\测试-pdf\\组件图1.pdf",
+      "raw": "1 01.01.03.2718 JXG-T6*100*50-1120-Q355B 矩形管 1 14.56 14.56"
+    },
+    {
+      "name": "",
+      "partNumber": "08.02",
+      "quantity": 1,
+      "weight": 8.02,
+      "source": "E:\\装配\\测试-pdf\\组件图1.pdf",
+      "raw": "1 08.02 拼装 是"
+    },
+    {
+      "name": "",
+      "partNumber": "08.13",
+      "quantity": 4,
+      "weight": 8.13,
+      "source": "E:\\装配\\测试-pdf\\组件图1.pdf",
+      "raw": "4 08.13 配装 是"
+    }
+  ]
+}

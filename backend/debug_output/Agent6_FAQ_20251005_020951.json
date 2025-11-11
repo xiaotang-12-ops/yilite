@@ -1,0 +1,679 @@
+{
+  "agent_name": "Agent6_FAQ",
+  "model": "google/gemini-2.5-flash-preview-09-2025",
+  "timestamp": "20251005_020951",
+  "image_count": 0,
+  "temperature": 0.2,
+  "system_prompt": "你是安全工程师李师傅，拥有20年安全管理经验。\n\n你的任务：为每个装配步骤添加安全警告（如果该步骤有安全风险）。\n\n## 核心原则\n\n1. **安全第一**：识别所有潜在的安全风险\n2. **嵌入警告**：为有风险的步骤添加safety_warnings字段\n3. **工人友好**：使用通俗语言，避免专业术语\n\n## 输出格式\n\n严格按照以下JSON格式输出（返回增强后的装配步骤）：\n\n```json\n{\n  \"enhanced_steps\": [\n    {\n      \"step_number\": 1,\n      \"title\": \"步骤标题\",\n      \"parts_used\": [...],\n      \"tools_required\": [...],\n      \"operation\": \"操作说明\",\n      \"quality_check\": \"质量检查\",\n      \"estimated_time_minutes\": 10,\n      \"welding\": {...},\n      \"safety_warnings\": [\n        \"佩戴安全帽和防护眼镜\",\n        \"确保工件固定牢固\",\n        \"注意防止烫伤\"\n      ]\n    }\n  ]\n}\n```\n\n**⚠️ 重要**：\n- 如果步骤没有安全风险，不要添加safety_warnings字段\n- 如果步骤有安全风险，safety_warnings必须是字符串数组\n- 保持原有步骤的所有字段不变，只添加safety_warnings字段\n\n## 重要提醒\n\n- **只输出JSON，不要输出其他内容**\n- **安全警告要具体**：说明具体的风险和预防措施\n- **使用通俗语言**：工人能看懂的语言\n",
+  "user_query": "请为以下装配步骤添加安全警告（如果有安全风险）。\n\n## 装配步骤\n\n[\n  {\n    \"step_number\": 1,\n    \"title\": \"安装后座连接架\",\n    \"component_code\": \"01.09.2550\",\n    \"component_name\": \"后座连接架组件-漆后\",\n    \"drawing_number\": \"④\",\n    \"connection_type\": \"螺栓连接\",\n    \"position_description\": \"将④号后座连接架组件安装在①号连接器后座组件的后方，通过预留的安装孔连接。\",\n    \"components\": [\n      {\n        \"bom_code\": \"01.09.2550\",\n        \"bom_name\": \"后座连接架组件-漆后\",\n        \"quantity\": 1\n      }\n    ],\n    \"fasteners\": [\n      {\n        \"bom_code\": \"02.03.0398\",\n        \"bom_name\": \"六角头螺栓全螺纹8.8级\",\n        \"spec\": \"M8*40\",\n        \"quantity\": 12,\n        \"torque\": \"25N·m\"\n      },\n      {\n        \"bom_code\": \"02.03.0028\",\n        \"bom_name\": \"1型非金属嵌件六角锁紧螺母8.8级\",\n        \"spec\": \"M8\",\n        \"quantity\": 12,\n        \"torque\": \"25N·m\"\n      }\n    ],\n    \"operation\": \"将④号后座连接架组件（01.09.2550）对准①号连接器后座组件（01.09.2549）的安装孔。使用12套M8*40螺栓（02.03.0398）和M8锁紧螺母（02.03.0028）固定。按对角线顺序拧紧至25N·m。\",\n    \"quality_check\": \"检查连接架与后座组件是否紧密贴合，无间隙。所有螺栓达到规定扭矩。\",\n    \"estimated_time_minutes\": 10\n  },\n  {\n    \"step_number\": 2,\n    \"title\": \"安装左右铲雪板\",\n    \"component_code\": \"01.09.2551/01.09.2552\",\n    \"component_name\": \"左/右铲雪板组件-漆后\",\n    \"drawing_number\": \"②, ③\",\n    \"connection_type\": \"销轴连接\",\n    \"position_description\": \"将②号左铲雪板组件和③号右铲雪板组件通过销轴连接到①号连接器后座组件上。\",\n    \"components\": [\n      {\n        \"bom_code\": \"01.09.2551\",\n        \"bom_name\": \"左铲雪板组件-漆后\",\n        \"quantity\": 1\n      },\n      {\n        \"bom_code\": \"01.09.2552\",\n        \"bom_name\": \"右铲雪板组件-漆后\",\n        \"quantity\": 1\n      }\n    ],\n    \"fasteners\": [\n      {\n        \"bom_code\": \"01.09.2561\",\n        \"bom_name\": \"销轴-镀锌\",\n        \"spec\": \"XZ-φ50*15-φ35*485-φ10*10-45#\",\n        \"quantity\": 1,\n        \"torque\": \"\"\n      },\n      {\n        \"bom_code\": \"02.03.0001\",\n        \"bom_name\": \"安全销\",\n        \"spec\": \"φ8*45\",\n        \"quantity\": 1,\n        \"torque\": \"\"\n      },\n      {\n        \"bom_code\": \"02.08.05.0004\",\n        \"bom_name\": \"直通式压注油杯\",\n        \"spec\": \"M8\",\n        \"quantity\": 2,\n        \"torque\": \"\"\n      }\n    ],\n    \"operation\": \"将②号和③号铲雪板组件对齐①号后座组件的连接孔。插入销轴（01.09.2561），并使用安全销（02.03.0001）固定。在销轴两端安装M8直通式压注油杯（02.08.05.0004）。\",\n    \"quality_check\": \"检查铲雪板转动是否灵活，销轴是否完全插入并被安全销锁紧。油杯安装到位。\",\n    \"estimated_time_minutes\": 15\n  },\n  {\n    \"step_number\": 3,\n    \"title\": \"安装油缸\",\n    \"component_code\": \"02.08.01.0338\",\n    \"component_name\": \"油缸\",\n    \"drawing_number\": \"18\",\n    \"connection_type\": \"销轴连接\",\n    \"position_description\": \"将18号油缸安装在①号连接器后座组件和②/③号铲雪板组件的连接耳上。\",\n    \"components\": [\n      {\n        \"bom_code\": \"02.08.01.0338\",\n        \"bom_name\": \"油缸\",\n        \"quantity\": 2\n      }\n    ],\n    \"fasteners\": [\n      {\n        \"bom_code\": \"01.09.2562\",\n        \"bom_name\": \"销轴-镀锌\",\n        \"spec\": \"XZ-φ35*10-φ25*145-φ10*10-45#\",\n        \"quantity\": 2,\n        \"torque\": \"\"\n      },\n      {\n        \"bom_code\": \"01.09.2563\",\n        \"bom_name\": \"销轴-镀锌\",\n        \"spec\": \"XZ-φ40*10-φ30*87-φ10*10-45#\",\n        \"quantity\": 2,\n        \"torque\": \"\"\n      },\n      {\n        \"bom_code\": \"02.03.0001\",\n        \"bom_name\": \"安全销\",\n        \"spec\": \"φ8*45\",\n        \"quantity\": 4,\n        \"torque\": \"\"\n      }\n    ],\n    \"operation\": \"将油缸（02.08.01.0338）的缸体端（大端）通过销轴（01.09.2563）连接到①号后座组件上，活塞杆端（小端）通过销轴（01.09.2562）连接到②/③号铲雪板组件上。每个销轴使用一个安全销（02.03.0001）固定。\",\n    \"quality_check\": \"检查油缸安装方向是否正确，销轴是否完全插入并被安全销锁紧。\",\n    \"estimated_time_minutes\": 20\n  },\n  {\n    \"step_number\": 4,\n    \"title\": \"安装电磁阀组及保护罩\",\n    \"component_code\": \"02.08.03.0236\",\n    \"component_name\": \"电磁阀组\",\n    \"drawing_number\": \"37, 50\",\n    \"connection_type\": \"螺栓连接\",\n    \"position_description\": \"将37号电磁阀组安装在①号连接器后座组件的预留安装位上，并安装50号电磁阀保护罩组件。\",\n    \"components\": [\n      {\n        \"bom_code\": \"02.08.03.0236\",\n        \"bom_name\": \"电磁阀组\",\n        \"quantity\": 1\n      },\n      {\n        \"bom_code\": \"01.09.1240\",\n        \"bom_name\": \"电磁阀保护罩组件-漆后\",\n        \"quantity\": 1\n      }\n    ],\n    \"fasteners\": [\n      {\n        \"bom_code\": \"02.03.0379\",\n        \"bom_name\": \"六角头螺栓全螺纹8.8级\",\n        \"spec\": \"M8*20\",\n        \"quantity\": 4,\n        \"torque\": \"25N·m\"\n      },\n      {\n        \"bom_code\": \"02.03.0028\",\n        \"bom_name\": \"1型非金属嵌件六角锁紧螺母8.8级\",\n        \"spec\": \"M8\",\n        \"quantity\": 4,\n        \"torque\": \"25N·m\"\n      }\n    ],\n    \"operation\": \"将37号电磁阀组（02.08.03.0236）安装在①号组件上，使用4套M8*20螺栓（02.03.0379）和M8锁紧螺母（02.03.0028）固定。然后将50号电磁阀保护罩组件（01.09.1240）盖在电磁阀组上方，并用相同的紧固件固定。\",\n    \"quality_check\": \"检查电磁阀组安装牢固，保护罩安装到位，无干涉。\",\n    \"estimated_time_minutes\": 15\n  },\n  {\n    \"step_number\": 5,\n    \"title\": \"安装左右刀板后座\",\n    \"component_code\": \"01.09.2554/01.09.2553\",\n    \"component_name\": \"左/右刀板后座组件-漆后\",\n    \"drawing_number\": \"5, 6\",\n    \"connection_type\": \"螺栓连接\",\n    \"position_description\": \"将5号左刀板后座组件和6号右刀板后座组件安装在②号和③号铲雪板组件的底部。\",\n    \"components\": [\n      {\n        \"bom_code\": \"01.09.2554\",\n        \"bom_name\": \"左刀板后座组件-漆后\",\n        \"quantity\": 1\n      },\n      {\n        \"bom_code\": \"01.09.2553\",\n        \"bom_name\": \"右刀板后座组件-漆后\",\n        \"quantity\": 1\n      }\n    ],\n    \"fasteners\": [\n      {\n        \"bom_code\": \"02.03.0088\",\n        \"bom_name\": \"六角头螺栓8.8级\",\n        \"spec\": \"M8*80\",\n        \"quantity\": 12,\n        \"torque\": \"25N·m\"\n      },\n      {\n        \"bom_code\": \"02.03.0028\",\n        \"bom_name\": \"1型非金属嵌件六角锁紧螺母8.8级\",\n        \"spec\": \"M8\",\n        \"quantity\": 12,\n        \"torque\": \"25N·m\"\n      }\n    ],\n    \"operation\": \"将5号和6号刀板后座组件（01.09.2554/01.09.2553）分别对齐②号和③号铲雪板组件底部的安装孔。使用12套M8*80螺栓（02.03.0088）和M8锁紧螺母（02.03.0028）固定。均匀拧紧至25N·m。\",\n    \"quality_check\": \"检查刀板后座与铲雪板底部贴合紧密，螺栓均匀受力。\",\n    \"estimated_time_minutes\": 15\n  },\n  {\n    \"step_number\": 6,\n    \"title\": \"安装橡胶刀板\",\n    \"component_code\": \"01.02.07.0239\",\n    \"component_name\": \"橡胶刀板\",\n    \"drawing_number\": \"11\",\n    \"connection_type\": \"螺栓连接\",\n    \"position_description\": \"将11号橡胶刀板安装在5号和6号刀板后座组件的底部。\",\n    \"components\": [\n      {\n        \"bom_code\": \"01.02.07.0239\",\n        \"bom_name\": \"橡胶刀板\",\n        \"quantity\": 2\n      }\n    ],\n    \"fasteners\": [\n      {\n        \"bom_code\": \"02.03.0378\",\n        \"bom_name\": \"六角头螺栓全螺纹8.8级\",\n        \"spec\": \"M6*20\",\n        \"quantity\": 24,\n        \"torque\": \"10N·m\"\n      },\n      {\n        \"bom_code\": \"02.03.0381\",\n        \"bom_name\": \"平垫圈8.8级\",\n        \"spec\": \"6*1.6\",\n        \"quantity\": 24,\n        \"torque\": \"\"\n      },\n      {\n        \"bom_code\": \"02.03.0146\",\n        \"bom_name\": \"1型非金属嵌件六角锁紧螺母8.8级\",\n        \"spec\": \"M6\",\n        \"quantity\": 24,\n        \"torque\": \"10N·m\"\n      }\n    ],\n    \"operation\": \"将橡胶刀板（01.02.07.0239）对齐刀板后座的安装孔。使用24套M6*20螺栓（02.03.0378）、平垫圈（02.03.0381）和M6锁紧螺母（02.03.0146）固定。拧紧至10N·m。\",\n    \"quality_check\": \"检查橡胶刀板安装平整，无扭曲。\",\n    \"estimated_time_minutes\": 20\n  },\n  {\n    \"step_number\": 7,\n    \"title\": \"安装推雪板弹簧导柱\",\n    \"component_code\": \"01.09.2559\",\n    \"component_name\": \"推雪板弹簧导柱组件-镀锌\",\n    \"drawing_number\": \"8\",\n    \"connection_type\": \"螺栓连接\",\n    \"position_description\": \"将8号推雪板弹簧导柱组件安装在②号和③号铲雪板组件的上方。\",\n    \"components\": [\n      {\n        \"bom_code\": \"01.09.2559\",\n        \"bom_name\": \"推雪板弹簧导柱组件-镀锌\",\n        \"quantity\": 2\n      }\n    ],\n    \"fasteners\": [\n      {\n        \"bom_code\": \"02.03.0379\",\n        \"bom_name\": \"六角头螺栓全螺纹8.8级\",\n        \"spec\": \"M8*20\",\n        \"quantity\": 8,\n        \"torque\": \"25N·m\"\n      },\n      {\n        \"bom_code\": \"02.03.0028\",\n        \"bom_name\": \"1型非金属嵌件六角锁紧螺母8.8级\",\n        \"spec\": \"M8\",\n        \"quantity\": 8,\n        \"torque\": \"25N·m\"\n      }\n    ],\n    \"operation\": \"将两套8号推雪板弹簧导柱组件（01.09.2559）分别安装在左右铲雪板组件上。使用8套M8*20螺栓（02.03.0379）和M8锁紧螺母（02.03.0028）固定。\",\n    \"quality_check\": \"检查导柱安装垂直，螺栓拧紧到位。\",\n    \"estimated_time_minutes\": 10\n  },\n  {\n    \"step_number\": 8,\n    \"title\": \"安装弹簧和方形板\",\n    \"component_code\": \"02.09.0103\",\n    \"component_name\": \"压缩弹簧\",\n    \"drawing_number\": \"19, 49\",\n    \"connection_type\": \"螺栓/弹簧连接\",\n    \"position_description\": \"将19号压缩弹簧安装在8号导柱上，并用49号方形板固定。\",\n    \"components\": [\n      {\n        \"bom_code\": \"02.09.0103\",\n        \"bom_name\": \"压缩弹簧\",\n        \"quantity\": 4\n      },\n      {\n        \"bom_code\": \"01.09.2556\",\n        \"bom_name\": \"方形板-机加-镀锌\",\n        \"quantity\": 4\n      }\n    ],\n    \"fasteners\": [\n      {\n        \"bom_code\": \"02.03.0442\",\n        \"bom_name\": \"内六角圆柱头螺钉8.8级\",\n        \"spec\": \"M6*40\",\n        \"quantity\": 8,\n        \"torque\": \"10N·m\"\n      },\n      {\n        \"bom_code\": \"02.03.0383\",\n        \"bom_name\": \"六角头螺栓全螺纹8.8级\",\n        \"spec\": \"M6*16\",\n        \"quantity\": 8,\n        \"torque\": \"10N·m\"\n      },\n      {\n        \"bom_code\": \"02.03.0146\",\n        \"bom_name\": \"1型非金属嵌件六角锁紧螺母8.8级\",\n        \"spec\": \"M6\",\n        \"quantity\": 8,\n        \"torque\": \"10N·m\"\n      }\n    ],\n    \"operation\": \"将4个19号压缩弹簧（02.09.0103）套在8号导柱上。将49号方形板（01.09.2556）安装在弹簧上方，通过M6*40内六角螺钉（02.03.0442）和M6*16螺栓（02.03.0383）及M6锁紧螺母（02.03.0146）固定，以预紧弹簧。\",\n    \"quality_check\": \"检查弹簧预紧力一致，方形板安装牢固。\",\n    \"estimated_time_minutes\": 20\n  },\n  {\n    \"step_number\": 9,\n    \"title\": \"安装后座支撑架\",\n    \"component_code\": \"01.09.2560\",\n    \"component_name\": \"后座支撑架组件-漆后\",\n    \"drawing_number\": \"7\",\n    \"connection_type\": \"螺栓连接\",\n    \"position_description\": \"将7号后座支撑架组件安装在④号后座连接架组件的后部。\",\n    \"components\": [\n      {\n        \"bom_code\": \"01.09.2560\",\n        \"bom_name\": \"后座支撑架组件-漆后\",\n        \"quantity\": 1\n      }\n    ],\n    \"fasteners\": [\n      {\n        \"bom_code\": \"02.03.0398\",\n        \"bom_name\": \"六角头螺栓全螺纹8.8级\",\n        \"spec\": \"M8*40\",\n        \"quantity\": 4,\n        \"torque\": \"25N·m\"\n      },\n      {\n        \"bom_code\": \"02.03.0028\",\n        \"bom_name\": \"1型非金属嵌件六角锁紧螺母8.8级\",\n        \"spec\": \"M8\",\n        \"quantity\": 4,\n        \"torque\": \"25N·m\"\n      }\n    ],\n    \"operation\": \"将7号后座支撑架组件（01.09.2560）对齐④号连接架的安装孔。使用4套M8*40螺栓（02.03.0398）和M8锁紧螺母（02.03.0028）固定。\",\n    \"quality_check\": \"检查支撑架安装牢固，与连接架垂直。\",\n    \"estimated_time_minutes\": 5\n  },\n  {\n    \"step_number\": 10,\n    \"title\": \"安装轮胎架外臂\",\n    \"component_code\": \"01.09.2557\",\n    \"component_name\": \"轮胎架外臂组件-漆后\",\n    \"drawing_number\": \"9\",\n    \"connection_type\": \"螺栓连接\",\n    \"position_description\": \"将9号轮胎架外臂组件安装在7号后座支撑架组件的侧面。\",\n    \"components\": [\n      {\n        \"bom_code\": \"01.09.2557\",\n        \"bom_name\": \"轮胎架外臂组件-漆后\",\n        \"quantity\": 2\n      }\n    ],\n    \"fasteners\": [\n      {\n        \"bom_code\": \"02.03.1035\",\n        \"bom_name\": \"内六角平圆头螺钉8.8级\",\n        \"spec\": \"M16*85\",\n        \"quantity\": 4,\n        \"torque\": \"150N·m\"\n      },\n      {\n        \"bom_code\": \"02.03.0072\",\n        \"bom_name\": \"平垫圈8.8级\",\n        \"spec\": \"16*3\",\n        \"quantity\": 4,\n        \"torque\": \"\"\n      },\n      {\n        \"bom_code\": \"02.03.0019\",\n        \"bom_name\": \"1型非金属嵌件六角锁紧螺母8.8级\",\n        \"spec\": \"M16\",\n        \"quantity\": 4,\n        \"torque\": \"150N·m\"\n      }\n    ],\n    \"operation\": \"将两套9号轮胎架外臂组件（01.09.2557）分别安装在7号支撑架组件两侧的连接耳上。使用4套M16*85内六角平圆头螺钉（02.03.1035）、M16平垫圈（02.03.0072）和M16锁紧螺母（02.03.0019）固定。拧紧至150N·m。\",\n    \"quality_check\": \"检查外臂安装角度正确，螺栓达到规定扭矩。\",\n    \"estimated_time_minutes\": 10\n  },\n  {\n    \"step_number\": 11,\n    \"title\": \"安装轮胎架内臂\",\n    \"component_code\": \"01.09.2558\",\n    \"component_name\": \"轮胎架内臂组件-镀锌\",\n    \"drawing_number\": \"10\",\n    \"connection_type\": \"销轴连接\",\n    \"position_description\": \"将10号轮胎架内臂组件通过销轴连接到9号轮胎架外臂组件上。\",\n    \"components\": [\n      {\n        \"bom_code\": \"01.09.2558\",\n        \"bom_name\": \"轮胎架内臂组件-镀锌\",\n        \"quantity\": 2\n      }\n    ],\n    \"fasteners\": [\n      {\n        \"bom_code\": \"01.09.0995\",\n        \"bom_name\": \"V型推雪板销轴-镀锌\",\n        \"quantity\": 2,\n        \"torque\": \"\"\n      },\n      {\n        \"bom_code\": \"01.09.0999\",\n        \"bom_name\": \"V型推雪板轴套-镀锌\",\n        \"quantity\": 2,\n        \"torque\": \"\"\n      },\n      {\n        \"bom_code\": \"02.03.0006\",\n        \"bom_name\": \"平垫圈8.8级\",\n        \"spec\": \"30*4\",\n        \"quantity\": 4,\n        \"torque\": \"\"\n      },\n      {\n        \"bom_code\": \"02.03.0147\",\n        \"bom_name\": \"1型非金属嵌件六角锁紧螺母8.8级\",\n        \"spec\": \"M30\",\n        \"quantity\": 2,\n        \"torque\": \"400N·m\"\n      }\n    ],\n    \"operation\": \"将两套10号轮胎架内臂组件（01.09.2558）插入9号外臂组件的连接孔。插入销轴（01.09.0995），并在销轴上套入轴套（01.09.0999）和两个30*4平垫圈（02.03.0006）。最后使用M30锁紧螺母（02.03.0147）固定，拧紧至400N·m。\",\n    \"quality_check\": \"检查内臂转动灵活，销轴固定可靠，螺母达到规定扭矩。\",\n    \"estimated_time_minutes\": 15\n  },\n  {\n    \"step_number\": 12,\n    \"title\": \"安装轮胎\",\n    \"component_code\": \"02.16.0142\",\n    \"component_name\": \"实心橡胶轮\",\n    \"drawing_number\": \"26\",\n    \"connection_type\": \"螺栓连接\",\n    \"position_description\": \"将26号实心橡胶轮安装在10号轮胎架内臂组件的末端。\",\n    \"components\": [\n      {\n        \"bom_code\": \"02.16.0142\",\n        \"bom_name\": \"实心橡胶轮\",\n        \"quantity\": 2\n      }\n    ],\n    \"fasteners\": [\n      {\n        \"bom_code\": \"01.09.2565\",\n        \"bom_name\": \"自制螺栓-镀锌\",\n        \"quantity\": 2,\n        \"torque\": \"\"\n      },\n      {\n        \"bom_code\": \"01.09.2566\",\n        \"bom_name\": \"圆钢-机加-镀锌\",\n        \"quantity\": 2,\n        \"torque\": \"\"\n      },\n      {\n        \"bom_code\": \"02.03.0612\",\n        \"bom_name\": \"1型非金属嵌件六角锁紧螺母8.8级\",\n        \"spec\": \"M20\",\n        \"quantity\": 2,\n        \"torque\": \"200N·m\"\n      }\n    ],\n    \"operation\": \"将26号实心橡胶轮（02.16.0142）安装到10号内臂组件的轴孔上。使用自制螺栓（01.09.2565）穿过轮轴，并在另一端套上圆钢（01.09.2566），最后用M20锁紧螺母（02.03.0612）固定。拧紧至200N·m。\",\n    \"quality_check\": \"检查轮胎转动灵活，轴向间隙合适，螺母达到规定扭矩。\",\n    \"estimated_time_minutes\": 10,\n    \"welding\": {\n      \"required\": true,\n      \"welding_type\": \"塞焊/角焊\",\n      \"welding_method\": \"CO2气保焊\",\n      \"weld_size\": \"焊脚高度4mm，塞焊孔填满\",\n      \"welding_position\": \"自制螺栓（01.09.2565）与圆钢（01.09.2566）的连接处，确保螺栓头与圆钢固定牢固，防止松动。\",\n      \"quality_requirements\": \"焊缝连续，无咬边、气孔，焊后清理焊渣。\",\n      \"safety_notes\": \"焊接前检查接地线，确保工作区域无易燃物。佩戴防护手套和面罩。\"\n    }\n  },\n  {\n    \"step_number\": 13,\n    \"title\": \"安装把手组件\",\n    \"component_code\": \"01.09.2564\",\n    \"component_name\": \"把手组件-镀锌\",\n    \"drawing_number\": \"17\",\n    \"connection_type\": \"螺栓连接\",\n    \"position_description\": \"将17号把手组件安装在10号轮胎架内臂组件的上方。\",\n    \"components\": [\n      {\n        \"bom_code\": \"01.09.2564\",\n        \"bom_name\": \"把手组件-镀锌\",\n        \"quantity\": 2\n      }\n    ],\n    \"fasteners\": [\n      {\n        \"bom_code\": \"02.03.0102\",\n        \"bom_name\": \"六角头螺栓8.8级\",\n        \"spec\": \"M8*65\",\n        \"quantity\": 2,\n        \"torque\": \"25N·m\"\n      },\n      {\n        \"bom_code\": \"02.03.0028\",\n        \"bom_name\": \"1型非金属嵌件六角锁紧螺母8.8级\",\n        \"spec\": \"M8\",\n        \"quantity\": 2,\n        \"torque\": \"25N·m\"\n      }\n    ],\n    \"operation\": \"将两套17号把手组件（01.09.2564）分别安装在左右10号内臂组件上。使用2套M8*65螺栓（02.03.0102）和M8锁紧螺母（02.03.0028）固定。\",\n    \"quality_check\": \"检查把手安装牢固，方向正确。\",\n    \"estimated_time_minutes\": 5\n  },\n  {\n    \"step_number\": 14,\n    \"title\": \"安装橡胶挡板和反光片\",\n    \"component_code\": \"01.02.07.0071\",\n    \"component_name\": \"橡胶挡板\",\n    \"drawing_number\": \"12, 22\",\n    \"connection_type\": \"螺栓连接\",\n    \"position_description\": \"将12号橡胶挡板和22号反光片安装在铲雪板组件的顶部。\",\n    \"components\": [\n      {\n        \"bom_code\": \"01.02.07.0071\",\n        \"bom_name\": \"橡胶挡板\",\n        \"quantity\": 1\n      },\n      {\n        \"bom_code\": \"02.04.0029\",\n        \"bom_name\": \"推雪板反光片\",\n        \"quantity\": 2\n      },\n      {\n        \"bom_code\": \"01.09.0308\",\n        \"bom_name\": \"推雪板反光片固定板-镀锌\",\n        \"quantity\": 2\n      }\n    ],\n    \"fasteners\": [\n      {\n        \"bom_code\": \"02.03.0379\",\n        \"bom_name\": \"六角头螺栓全螺纹8.8级\",\n        \"spec\": \"M8*20\",\n        \"quantity\": 10,\n        \"torque\": \"25N·m\"\n      },\n      {\n        \"bom_code\": \"02.03.0028\",\n        \"bom_name\": \"1型非金属嵌件六角锁紧螺母8.8级\",\n        \"spec\": \"M8\",\n        \"quantity\": 10,\n        \"torque\": \"25N·m\"\n      }\n    ],\n    \"operation\": \"将12号橡胶挡板（01.02.07.0071）安装在铲雪板顶部，使用6套M8*20螺栓（02.03.0379）和M8锁紧螺母（02.03.0028）固定。然后将22号反光片（02.04.0029）和固定板（01.09.0308）安装在铲雪板两侧，使用4套M8*20螺栓和M8锁紧螺母固定。\",\n    \"quality_check\": \"检查橡胶挡板安装平直，反光片方向正确。\",\n    \"estimated_time_minutes\": 15\n  },\n  {\n    \"step_number\": 15,\n    \"title\": \"安装限位插销和垫圈\",\n    \"component_code\": \"01.09.0503\",\n    \"component_name\": \"插销-镀锌\",\n    \"drawing_number\": \"20, 21, 48\",\n    \"connection_type\": \"销钉连接\",\n    \"position_description\": \"安装限位插销、大垫圈和安全销，用于调节铲雪板角度。\",\n    \"components\": [\n      {\n        \"bom_code\": \"01.09.0503\",\n        \"bom_name\": \"插销-镀锌\",\n        \"quantity\": 2\n      }\n    ],\n    \"fasteners\": [\n      {\n        \"bom_code\": \"01.09.0304\",\n        \"bom_name\": \"推雪板大垫圈-镀锌\",\n        \"quantity\": 2,\n        \"torque\": \"\"\n      },\n      {\n        \"bom_code\": \"02.03.0012\",\n        \"bom_name\": \"安全销\",\n        \"spec\": \"Φ4.5*40\",\n        \"quantity\": 2,\n        \"torque\": \"\"\n      },\n      {\n        \"bom_code\": \"02.03.0458\",\n        \"bom_name\": \"六角头螺栓全螺纹8.8级\",\n        \"spec\": \"M30*60\",\n        \"quantity\": 2,\n        \"torque\": \"400N·m\"\n      },\n      {\n        \"bom_code\": \"02.03.0006\",\n        \"bom_name\": \"平垫圈8.8级\",\n        \"spec\": \"30*4\",\n        \"quantity\": 2,\n        \"torque\": \"\"\n      },\n      {\n        \"bom_code\": \"02.03.0148\",\n        \"bom_name\": \"1型六角螺母8.8级\",\n        \"spec\": \"M30\",\n        \"quantity\": 2,\n        \"torque\": \"400N·m\"\n      }\n    ],\n    \"operation\": \"在铲雪板连接处，根据需要插入插销（01.09.0503）进行角度限位，并使用安全销（02.03.0012）固定。在铲雪板连接销轴处，安装推雪板大垫圈（01.09.0304）。最后，在铲雪板连接销轴的另一端，使用M30*60螺栓（02.03.0458）、30*4平垫圈（02.03.0006）和M30六角螺母（02.03.0148）进行最终固定，拧紧至400N·m。\",\n    \"quality_check\": \"检查所有限位插销和安全销安装到位，M30螺栓达到规定扭矩。\",\n    \"estimated_time_minutes\": 10\n  }\n]\n\n## 要求\n\n1. **识别风险步骤**：判断哪些步骤有安全风险（吊装、焊接、高空作业、重物搬运等）\n2. **添加安全警告**：为有风险的步骤添加safety_warnings字段\n3. **保持原有字段**：不要修改或删除原有的字段（step_number、title、welding等）\n4. **使用通俗语言**：工人能看懂的语言\n5. **警告要具体**：说明具体的风险和预防措施\n\n## 自检清单\n\n- [ ] 所有有风险的步骤都添加了safety_warnings字段\n- [ ] safety_warnings是字符串数组，每条警告简洁明了\n- [ ] 原有步骤的所有字段都保持不变\n- [ ] 没有风险的步骤没有添加safety_warnings字段\n\n现在开始为装配步骤添加安全警告！\n",
+  "raw_response": "```json\n{\n  \"enhanced_steps\": [\n    {\n      \"step_number\": 1,\n      \"title\": \"安装后座连接架\",\n      \"component_code\": \"01.09.2550\",\n      \"component_name\": \"后座连接架组件-漆后\",\n      \"drawing_number\": \"④\",\n      \"connection_type\": \"螺栓连接\",\n      \"position_description\": \"将④号后座连接架组件安装在①号连接器后座组件的后方，通过预留的安装孔连接。\",\n      \"components\": [\n        {\n          \"bom_code\": \"01.09.2550\",\n          \"bom_name\": \"后座连接架组件-漆后\",\n          \"quantity\": 1\n        }\n      ],\n      \"fasteners\": [\n        {\n          \"bom_code\": \"02.03.0398\",\n          \"bom_name\": \"六角头螺栓全螺纹8.8级\",\n          \"spec\": \"M8*40\",\n          \"quantity\": 12,\n          \"torque\": \"25N·m\"\n        },\n        {\n          \"bom_code\": \"02.03.0028\",\n          \"bom_name\": \"1型非金属嵌件六角锁紧螺母8.8级\",\n          \"spec\": \"M8\",\n          \"quantity\": 12,\n          \"torque\": \"25N·m\"\n        }\n      ],\n      \"operation\": \"将④号后座连接架组件（01.09.2550）对准①号连接器后座组件（01.09.2549）的安装孔。使用12套M8*40螺栓（02.03.0398）和M8锁紧螺母（02.03.0028）固定。按对角线顺序拧紧至25N·m。\",\n      \"quality_check\": \"检查连接架与后座组件是否紧密贴合，无间隙。所有螺栓达到规定扭矩。\",\n      \"estimated_time_minutes\": 10\n    },\n    {\n      \"step_number\": 2,\n      \"title\": \"安装左右铲雪板\",\n      \"component_code\": \"01.09.2551/01.09.2552\",\n      \"component_name\": \"左/右铲雪板组件-漆后\",\n      \"drawing_number\": \"②, ③\",\n      \"connection_type\": \"销轴连接\",\n      \"position_description\": \"将②号左铲雪板组件和③号右铲雪板组件通过销轴连接到①号连接器后座组件上。\",\n      \"components\": [\n        {\n          \"bom_code\": \"01.09.2551\",\n          \"bom_name\": \"左铲雪板组件-漆后\",\n          \"quantity\": 1\n        },\n        {\n          \"bom_code\": \"01.09.2552\",\n          \"bom_name\": \"右铲雪板组件-漆后\",\n          \"quantity\": 1\n        }\n      ],\n      \"fasteners\": [\n        {\n          \"bom_code\": \"01.09.2561\",\n          \"bom_name\": \"销轴-镀锌\",\n          \"spec\": \"XZ-φ50*15-φ35*485-φ10*10-45#\",\n          \"quantity\": 1,\n          \"torque\": \"\"\n        },\n        {\n          \"bom_code\": \"02.03.0001\",\n          \"bom_name\": \"安全销\",\n          \"spec\": \"φ8*45\",\n          \"quantity\": 1,\n          \"torque\": \"\"\n        },\n        {\n          \"bom_code\": \"02.08.05.0004\",\n          \"bom_name\": \"直通式压注油杯\",\n          \"spec\": \"M8\",\n          \"quantity\": 2,\n          \"torque\": \"\"\n        }\n      ],\n      \"operation\": \"将②号和③号铲雪板组件对齐①号后座组件的连接孔。插入销轴（01.09.2561），并使用安全销（02.03.0001）固定。在销轴两端安装M8直通式压注油杯（02.08.05.0004）。\",\n      \"quality_check\": \"检查铲雪板转动是否灵活，销轴是否完全插入并被安全销锁紧。油杯安装到位。\",\n      \"estimated_time_minutes\": 15,\n      \"safety_warnings\": [\n        \"铲雪板组件体积较大且重，搬运和安装时必须使用合适的吊装工具或两人协作，防止砸伤。\",\n        \"对齐销轴孔时，注意手部安全，避免挤压伤。\",\n        \"确保工件放置平稳，防止倾倒。\"\n      ]\n    },\n    {\n      \"step_number\": 3,\n      \"title\": \"安装油缸\",\n      \"component_code\": \"02.08.01.0338\",\n      \"component_name\": \"油缸\",\n      \"drawing_number\": \"18\",\n      \"connection_type\": \"销轴连接\",\n      \"position_description\": \"将18号油缸安装在①号连接器后座组件和②/③号铲雪板组件的连接耳上。\",\n      \"components\": [\n        {\n          \"bom_code\": \"02.08.01.0338\",\n          \"bom_name\": \"油缸\",\n          \"quantity\": 2\n        }\n      ],\n      \"fasteners\": [\n        {\n          \"bom_code\": \"01.09.2562\",\n          \"bom_name\": \"销轴-镀锌\",\n          \"spec\": \"XZ-φ35*10-φ25*145-φ10*10-45#\",\n          \"quantity\": 2,\n          \"torque\": \"\"\n        },\n        {\n          \"bom_code\": \"01.09.2563\",\n          \"bom_name\": \"销轴-镀锌\",\n          \"spec\": \"XZ-φ40*10-φ30*87-φ10*10-45#\",\n          \"quantity\": 2,\n          \"torque\": \"\"\n        },\n        {\n          \"bom_code\": \"02.03.0001\",\n          \"bom_name\": \"安全销\",\n          \"spec\": \"φ8*45\",\n          \"quantity\": 4,\n          \"torque\": \"\"\n        }\n      ],\n      \"operation\": \"将油缸（02.08.01.0338）的缸体端（大端）通过销轴（01.09.2563）连接到①号后座组件上，活塞杆端（小端）通过销轴（01.09.2562）连接到②/③号铲雪板组件上。每个销轴使用一个安全销（02.03.0001）固定。\",\n      \"quality_check\": \"检查油缸安装方向是否正确，销轴是否完全插入并被安全销锁紧。\",\n      \"estimated_time_minutes\": 20,\n      \"safety_warnings\": [\n        \"油缸属于精密部件，搬运时轻拿轻放，避免磕碰。\",\n        \"安装时注意油缸重量，防止脱手砸伤脚部或手部。\"\n      ]\n    },\n    {\n      \"step_number\": 4,\n      \"title\": \"安装电磁阀组及保护罩\",\n      \"component_code\": \"02.08.03.0236\",\n      \"component_name\": \"电磁阀组\",\n      \"drawing_number\": \"37, 50\",\n      \"connection_type\": \"螺栓连接\",\n      \"position_description\": \"将37号电磁阀组安装在①号连接器后座组件的预留安装位上，并安装50号电磁阀保护罩组件。\",\n      \"components\": [\n        {\n          \"bom_code\": \"02.08.03.0236\",\n          \"bom_name\": \"电磁阀组\",\n          \"quantity\": 1\n        },\n        {\n          \"bom_code\": \"01.09.1240\",\n          \"bom_name\": \"电磁阀保护罩组件-漆后\",\n          \"quantity\": 1\n        }\n      ],\n      \"fasteners\": [\n        {\n          \"bom_code\": \"02.03.0379\",\n          \"bom_name\": \"六角头螺栓全螺纹8.8级\",\n          \"spec\": \"M8*20\",\n          \"quantity\": 4,\n          \"torque\": \"25N·m\"\n        },\n        {\n          \"bom_code\": \"02.03.0028\",\n          \"bom_name\": \"1型非金属嵌件六角锁紧螺母8.8级\",\n          \"spec\": \"M8\",\n          \"quantity\": 4,\n          \"torque\": \"25N·m\"\n        }\n      ],\n      \"operation\": \"将37号电磁阀组（02.08.03.0236）安装在①号组件上，使用4套M8*20螺栓（02.03.0379）和M8锁紧螺母（02.03.0028）固定。然后将50号电磁阀保护罩组件（01.09.1240）盖在电磁阀组上方，并用相同的紧固件固定。\",\n      \"quality_check\": \"检查电磁阀组安装牢固，保护罩安装到位，无干涉。\",\n      \"estimated_time_minutes\": 15\n    },\n    {\n      \"step_number\": 5,\n      \"title\": \"安装左右刀板后座\",\n      \"component_code\": \"01.09.2554/01.09.2553\",\n      \"component_name\": \"左/右刀板后座组件-漆后\",\n      \"drawing_number\": \"5, 6\",\n      \"connection_type\": \"螺栓连接\",\n      \"position_description\": \"将5号左刀板后座组件和6号右刀板后座组件安装在②号和③号铲雪板组件的底部。\",\n      \"components\": [\n        {\n          \"bom_code\": \"01.09.2554\",\n          \"bom_name\": \"左刀板后座组件-漆后\",\n          \"quantity\": 1\n        },\n        {\n          \"bom_code\": \"01.09.2553\",\n          \"bom_name\": \"右刀板后座组件-漆后\",\n          \"quantity\": 1\n        }\n      ],\n      \"fasteners\": [\n        {\n          \"bom_code\": \"02.03.0088\",\n          \"bom_name\": \"六角头螺栓8.8级\",\n          \"spec\": \"M8*80\",\n          \"quantity\": 12,\n          \"torque\": \"25N·m\"\n        },\n        {\n          \"bom_code\": \"02.03.0028\",\n          \"bom_name\": \"1型非金属嵌件六角锁紧螺母8.8级\",\n          \"spec\": \"M8\",\n          \"quantity\": 12,\n          \"torque\": \"25N·m\"\n        }\n      ],\n      \"operation\": \"将5号和6号刀板后座组件（01.09.2554/01.09.2553）分别对齐②号和③号铲雪板组件底部的安装孔。使用12套M8*80螺栓（02.03.0088）和M8锁紧螺母（02.03.0028）固定。均匀拧紧至25N·m。\",\n      \"quality_check\": \"检查刀板后座与铲雪板底部贴合紧密，螺栓均匀受力。\",\n      \"estimated_time_minutes\": 15\n    },\n    {\n      \"step_number\": 6,\n      \"title\": \"安装橡胶刀板\",\n      \"component_code\": \"01.02.07.0239\",\n      \"component_name\": \"橡胶刀板\",\n      \"drawing_number\": \"11\",\n      \"connection_type\": \"螺栓连接\",\n      \"position_description\": \"将11号橡胶刀板安装在5号和6号刀板后座组件的底部。\",\n      \"components\": [\n        {\n          \"bom_code\": \"01.02.07.0239\",\n          \"bom_name\": \"橡胶刀板\",\n          \"quantity\": 2\n        }\n      ],\n      \"fasteners\": [\n        {\n          \"bom_code\": \"02.03.0378\",\n          \"bom_name\": \"六角头螺栓全螺纹8.8级\",\n          \"spec\": \"M6*20\",\n          \"quantity\": 24,\n          \"torque\": \"10N·m\"\n        },\n        {\n          \"bom_code\": \"02.03.0381\",\n          \"bom_name\": \"平垫圈8.8级\",\n          \"spec\": \"6*1.6\",\n          \"quantity\": 24,\n          \"torque\": \"\"\n        },\n        {\n          \"bom_code\": \"02.03.0146\",\n          \"bom_name\": \"1型非金属嵌件六角锁紧螺母8.8级\",\n          \"spec\": \"M6\",\n          \"quantity\": 24,\n          \"torque\": \"10N·m\"\n        }\n      ],\n      \"operation\": \"将橡胶刀板（01.02.07.0239）对齐刀板后座的安装孔。使用24套M6*20螺栓（02.03.0378）、平垫圈（02.03.0381）和M6锁紧螺母（02.03.0146）固定。拧紧至10N·m。\",\n      \"quality_check\": \"检查橡胶刀板安装平整，无扭曲。\",\n      \"estimated_time_minutes\": 20\n    },\n    {\n      \"step_number\": 7,\n      \"title\": \"安装推雪板弹簧导柱\",\n      \"component_code\": \"01.09.2559\",\n      \"component_name\": \"推雪板弹簧导柱组件-镀锌\",\n      \"drawing_number\": \"8\",\n      \"connection_type\": \"螺栓连接\",\n      \"position_description\": \"将8号推雪板弹簧导柱组件安装在②号和③号铲雪板组件的上方。\",\n      \"components\": [\n        {\n          \"bom_code\": \"01.09.2559\",\n          \"bom_name\": \"推雪板弹簧导柱组件-镀锌\",\n          \"quantity\": 2\n        }\n      ],\n      \"fasteners\": [\n        {\n          \"bom_code\": \"02.03.0379\",\n          \"bom_name\": \"六角头螺栓全螺纹8.8级\",\n          \"spec\": \"M8*20\",\n          \"quantity\": 8,\n          \"torque\": \"25N·m\"\n        },\n        {\n          \"bom_code\": \"02.03.0028\",\n          \"bom_name\": \"1型非金属嵌件六角锁紧螺母8.8级\",\n          \"spec\": \"M8\",\n          \"quantity\": 8,\n          \"torque\": \"25N·m\"\n        }\n      ],\n      \"operation\": \"将两套8号推雪板弹簧导柱组件（01.09.2559）分别安装在左右铲雪板组件上。使用8套M8*20螺栓（02.03.0379）和M8锁紧螺母（02.03.0028）固定。\",\n      \"quality_check\": \"检查导柱安装垂直，螺栓拧紧到位。\",\n      \"estimated_time_minutes\": 10\n    },\n    {\n      \"step_number\": 8,\n      \"title\": \"安装弹簧和方形板\",\n      \"component_code\": \"02.09.0103\",\n      \"component_name\": \"压缩弹簧\",\n      \"drawing_number\": \"19, 49\",\n      \"connection_type\": \"螺栓/弹簧连接\",\n      \"position_description\": \"将19号压缩弹簧安装在8号导柱上，并用49号方形板固定。\",\n      \"components\": [\n        {\n          \"bom_code\": \"02.09.0103\",\n          \"bom_name\": \"压缩弹簧\",\n          \"quantity\": 4\n        },\n        {\n          \"bom_code\": \"01.09.2556\",\n          \"bom_name\": \"方形板-机加-镀锌\",\n          \"quantity\": 4\n        }\n      ],\n      \"fasteners\": [\n        {\n          \"bom_code\": \"02.03.0442\",\n          \"bom_name\": \"内六角圆柱头螺钉8.8级\",\n          \"spec\": \"M6*40\",\n          \"quantity\": 8,\n          \"torque\": \"10N·m\"\n        },\n        {\n          \"bom_code\": \"02.03.0383\",\n          \"bom_name\": \"六角头螺栓全螺纹8.8级\",\n          \"spec\": \"M6*16\",\n          \"quantity\": 8,\n          \"torque\": \"10N·m\"\n        },\n        {\n          \"bom_code\": \"02.03.0146\",\n          \"bom_name\": \"1型非金属嵌件六角锁紧螺母8.8级\",\n          \"spec\": \"M6\",\n          \"quantity\": 8,\n          \"torque\": \"10N·m\"\n        }\n      ],\n      \"operation\": \"将4个19号压缩弹簧（02.09.0103）套在8号导柱上。将49号方形板（01.09.2556）安装在弹簧上方，通过M6*40内六角螺钉（02.03.0442）和M6*16螺栓（02.03.0383）及M6锁紧螺母（02.03.0146）固定，以预紧弹簧。\",\n      \"quality_check\": \"检查弹簧预紧力一致，方形板安装牢固。\",\n      \"estimated_time_minutes\": 20,\n      \"safety_warnings\": [\n        \"压缩弹簧具有较大预紧力，安装时必须小心操作，使用专用工具或缓慢均匀拧紧，防止弹簧突然弹出伤人。\",\n        \"拧紧螺栓时，注意保持身体平衡，避免因用力过猛导致工具脱手。\"\n      ]\n    },\n    {\n      \"step_number\": 9,\n      \"title\": \"安装后座支撑架\",\n      \"component_code\": \"01.09.2560\",\n      \"component_name\": \"后座支撑架组件-漆后\",\n      \"drawing_number\": \"7\",\n      \"connection_type\": \"螺栓连接\",\n      \"position_description\": \"将7号后座支撑架组件安装在④号后座连接架组件的后部。\",\n      \"components\": [\n        {\n          \"bom_code\": \"01.09.2560\",\n          \"bom_name\": \"后座支撑架组件-漆后\",\n          \"quantity\": 1\n        }\n      ],\n      \"fasteners\": [\n        {\n          \"bom_code\": \"02.03.0398\",\n          \"bom_name\": \"六角头螺栓全螺纹8.8级\",\n          \"spec\": \"M8*40\",\n          \"quantity\": 4,\n          \"torque\": \"25N·m\"\n        },\n        {\n          \"bom_code\": \"02.03.0028\",\n          \"bom_name\": \"1型非金属嵌件六角锁紧螺母8.8级\",\n          \"spec\": \"M8\",\n          \"quantity\": 4,\n          \"torque\": \"25N·m\"\n        }\n      ],\n      \"operation\": \"将7号后座支撑架组件（01.09.2560）对齐④号连接架的安装孔。使用4套M8*40螺栓（02.03.0398）和M8锁紧螺母（02.03.0028）固定。\",\n      \"quality_check\": \"检查支撑架安装牢固，与连接架垂直。\",\n      \"estimated_time_minutes\": 5\n    },\n    {\n      \"step_number\": 10,\n      \"title\": \"安装轮胎架外臂\",\n      \"component_code\": \"01.09.2557\",\n      \"component_name\": \"轮胎架外臂组件-漆后\",\n      \"drawing_number\": \"9\",\n      \"connection_type\": \"螺栓连接\",\n      \"position_description\": \"将9号轮胎架外臂组件安装在7号后座支撑架组件的侧面。\",\n      \"components\": [\n        {\n          \"bom_code\": \"01.09.2557\",\n          \"bom_name\": \"轮胎架外臂组件-漆后\",\n          \"quantity\": 2\n        }\n      ],\n      \"fasteners\": [\n        {\n          \"bom_code\": \"02.03.1035\",\n          \"bom_name\": \"内六角平圆头螺钉8.8级\",\n          \"spec\": \"M16*85\",\n          \"quantity\": 4,\n          \"torque\": \"150N·m\"\n        },\n        {\n          \"bom_code\": \"02.03.0072\",\n          \"bom_name\": \"平垫圈8.8级\",\n          \"spec\": \"16*3\",\n          \"quantity\": 4,\n          \"torque\": \"\"\n        },\n        {\n          \"bom_code\": \"02.03.0019\",\n          \"bom_name\": \"1型非金属嵌件六角锁紧螺母8.8级\",\n          \"spec\": \"M16\",\n          \"quantity\": 4,\n          \"torque\": \"150N·m\"\n        }\n      ],\n      \"operation\": \"将两套9号轮胎架外臂组件（01.09.2557）分别安装在7号支撑架组件两侧的连接耳上。使用4套M16*85内六角平圆头螺钉（02.03.1035）、M16平垫圈（02.03.0072）和M16锁紧螺母（02.03.0019）固定。拧紧至150N·m。\",\n      \"quality_check\": \"检查外臂安装角度正确，螺栓达到规定扭矩。\",\n      \"estimated_time_minutes\": 10,\n      \"safety_warnings\": [\n        \"使用扭矩扳手拧紧M16螺栓时（150N·m），注意站稳，防止因用力过大导致身体失衡或工具滑脱。\"\n      ]\n    },\n    {\n      \"step_number\": 11,\n      \"title\": \"安装轮胎架内臂\",\n      \"component_code\": \"01.09.2558\",\n      \"component_name\": \"轮胎架内臂组件-镀锌\",\n      \"drawing_number\": \"10\",\n      \"connection_type\": \"销轴连接\",\n      \"position_description\": \"将10号轮胎架内臂组件通过销轴连接到9号轮胎架外臂组件上。\",\n      \"components\": [\n        {\n          \"bom_code\": \"01.09.2558\",\n          \"bom_name\": \"轮胎架内臂组件-镀锌\",\n          \"quantity\": 2\n        }\n      ],\n      \"fasteners\": [\n        {\n          \"bom_code\": \"01.09.0995\",\n          \"bom_name\": \"V型推雪板销轴-镀锌\",\n          \"quantity\": 2,\n          \"torque\": \"\"\n        },\n        {\n          \"bom_code\": \"01.09.0999\",\n          \"bom_name\": \"V型推雪板轴套-镀锌\",\n          \"quantity\": 2,\n          \"torque\": \"\"\n        },\n        {\n          \"bom_code\": \"02.03.0006\",\n          \"bom_name\": \"平垫圈8.8级\",\n          \"spec\": \"30*4\",\n          \"quantity\": 4,\n          \"torque\": \"\"\n        },\n        {\n          \"bom_code\": \"02.03.0147\",\n          \"bom_name\": \"1型非金属嵌件六角锁紧螺母8.8级\",\n          \"spec\": \"M30\",\n          \"quantity\": 2,\n          \"torque\": \"400N·m\"\n        }\n      ],\n      \"operation\": \"将两套10号轮胎架内臂组件（01.09.2558）插入9号外臂组件的连接孔。插入销轴（01.09.0995），并在销轴上套入轴套（01.09.0999）和两个30*4平垫圈（02.03.0006）。最后使用M30锁紧螺母（02.03.0147）固定，拧紧至400N·m。\",\n      \"quality_check\": \"检查内臂转动灵活，销轴固定可靠，螺母达到规定扭矩。\",\n      \"estimated_time_minutes\": 15,\n      \"safety_warnings\": [\n        \"M30螺母扭矩高达400N·m，必须使用加长力臂的扭矩扳手或液压工具。\",\n        \"操作高扭矩工具时，确保身体姿势稳定，防止工具反弹或滑脱造成伤害。\"\n      ]\n    },\n    {\n      \"step_number\": 12,\n      \"title\": \"安装轮胎\",\n      \"component_code\": \"02.16.0142\",\n      \"component_name\": \"实心橡胶轮\",\n      \"drawing_number\": \"26\",\n      \"connection_type\": \"螺栓连接\",\n      \"position_description\": \"将26号实心橡胶轮安装在10号轮胎架内臂组件的末端。\",\n      \"components\": [\n        {\n          \"bom_code\": \"02.16.0142\",\n          \"bom_name\": \"实心橡胶轮\",\n          \"quantity\": 2\n        }\n      ],\n      \"fasteners\": [\n        {\n          \"bom_code\": \"01.09.2565\",\n          \"bom_name\": \"自制螺栓-镀锌\",\n          \"quantity\": 2,\n          \"torque\": \"\"\n        },\n        {\n          \"bom_code\": \"01.09.2566\",\n          \"bom_name\": \"圆钢-机加-镀锌\",\n          \"quantity\": 2,\n          \"torque\": \"\"\n        },\n        {\n          \"bom_code\": \"02.03.0612\",\n          \"bom_name\": \"1型非金属嵌件六角锁紧螺母8.8级\",\n          \"spec\": \"M20\",\n          \"quantity\": 2,\n          \"torque\": \"200N·m\"\n        }\n      ],\n      \"operation\": \"将26号实心橡胶轮（02.16.0142）安装到10号内臂组件的轴孔上。使用自制螺栓（01.09.2565）穿过轮轴，并在另一端套上圆钢（01.09.2566），最后用M20锁紧螺母（02.03.0612）固定。拧紧至200N·m。\",\n      \"quality_check\": \"检查轮胎转动灵活，轴向间隙合适，螺母达到规定扭矩。\",\n      \"estimated_time_minutes\": 10,\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"塞焊/角焊\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"焊脚高度4mm，塞焊孔填满\",\n        \"welding_position\": \"自制螺栓（01.09.2565）与圆钢（01.09.2566）的连接处，确保螺栓头与圆钢固定牢固，防止松动。\",\n        \"quality_requirements\": \"焊缝连续，无咬边、气孔，焊后清理焊渣。\",\n        \"safety_notes\": \"焊接前检查接地线，确保工作区域无易燃物。佩戴防护手套和面罩。\"\n      },\n      \"safety_warnings\": [\n        \"焊接作业必须佩戴专业的焊接面罩、防护手套和阻燃服，防止电弧光和高温飞溅物灼伤。\",\n        \"确保焊接区域通风良好，防止吸入有害烟尘。\",\n        \"焊接完成后，焊件温度高，清理焊渣时要使用专用工具，注意防止烫伤。\"\n      ]\n    },\n    {\n      \"step_number\": 13,\n      \"title\": \"安装把手组件\",\n      \"component_code\": \"01.09.2564\",\n      \"component_name\": \"把手组件-镀锌\",\n      \"drawing_number\": \"17\",\n      \"connection_type\": \"螺栓连接\",\n      \"position_description\": \"将17号把手组件安装在10号轮胎架内臂组件的上方。\",\n      \"components\": [\n        {\n          \"bom_code\": \"01.09.2564\",\n          \"bom_name\": \"把手组件-镀锌\",\n          \"quantity\": 2\n        }\n      ],\n      \"fasteners\": [\n        {\n          \"bom_code\": \"02.03.0102\",\n          \"bom_name\": \"六角头螺栓8.8级\",\n          \"spec\": \"M8*65\",\n          \"quantity\": 2,\n          \"torque\": \"25N·m\"\n        },\n        {\n          \"bom_code\": \"02.03.0028\",\n          \"bom_name\": \"1型非金属嵌件六角锁紧螺母8.8级\",\n          \"spec\": \"M8\",\n          \"quantity\": 2,\n          \"torque\": \"25N·m\"\n        }\n      ],\n      \"operation\": \"将两套17号把手组件（01.09.2564）分别安装在左右10号内臂组件上。使用2套M8*65螺栓（02.03.0102）和M8锁紧螺母（02.03.0028）固定。\",\n      \"quality_check\": \"检查把手安装牢固，方向正确。\",\n      \"estimated_time_minutes\": 5\n    },\n    {\n      \"step_number\": 14,\n      \"title\": \"安装橡胶挡板和反光片\",\n      \"component_code\": \"01.02.07.0071\",\n      \"component_name\": \"橡胶挡板\",\n      \"drawing_number\": \"12, 22\",\n      \"connection_type\": \"螺栓连接\",\n      \"position_description\": \"将12号橡胶挡板和22号反光片安装在铲雪板组件的顶部。\",\n      \"components\": [\n        {\n          \"bom_code\": \"01.02.07.0071\",\n          \"bom_name\": \"橡胶挡板\",\n          \"quantity\": 1\n        },\n        {\n          \"bom_code\": \"02.04.0029\",\n          \"bom_name\": \"推雪板反光片\",\n          \"quantity\": 2\n        },\n        {\n          \"bom_code\": \"01.09.0308\",\n          \"bom_name\": \"推雪板反光片固定板-镀锌\",\n          \"quantity\": 2\n        }\n      ],\n      \"fasteners\": [\n        {\n          \"bom_code\": \"02.03.0379\",\n          \"bom_name\": \"六角头螺栓全螺纹8.8级\",\n          \"spec\": \"M8*20\",\n          \"quantity\": 10,\n          \"torque\": \"25N·m\"\n        },\n        {\n          \"bom_code\": \"02.03.0028\",\n          \"bom_name\": \"1型非金属嵌件六角锁紧螺母8.8级\",\n          \"spec\": \"M8\",\n          \"quantity\": 10,\n          \"torque\": \"25N·m\"\n        }\n      ],\n      \"operation\": \"将12号橡胶挡板（01.02.07.0071）安装在铲雪板顶部，使用6套M8*20螺栓（02.03.0379）和M8锁紧螺母（02.03.0028）固定。然后将22号反光片（02.04.0029）和固定板（01.09.0308）安装在铲雪板两侧，使用4套M8*20螺栓和M8锁紧螺母固定。\",\n      \"quality_check\": \"检查橡胶挡板安装平直，反光片方向正确。\",\n      \"estimated_time_minutes\": 15\n    },\n    {\n      \"step_number\": 15,\n      \"title\": \"安装限位插销和垫圈\",\n      \"component_code\": \"01.09.0503\",\n      \"component_name\": \"插销-镀锌\",\n      \"drawing_number\": \"20, 21, 48\",\n      \"connection_type\": \"销钉连接\",\n      \"position_description\": \"安装限位插销、大垫圈和安全销，用于调节铲雪板角度。\",\n      \"components\": [\n        {\n          \"bom_code\": \"01.09.0503\",\n          \"bom_name\": \"插销-镀锌\",\n          \"quantity\": 2\n        }\n      ],\n      \"fasteners\": [\n        {\n          \"bom_code\": \"01.09.0304\",\n          \"bom_name\": \"推雪板大垫圈-镀锌\",\n          \"quantity\": 2,\n          \"torque\": \"\"\n        },\n        {\n          \"bom_code\": \"02.03.0012\",\n          \"bom_name\": \"安全销\",\n          \"spec\": \"Φ4.5*40\",\n          \"quantity\": 2,\n          \"torque\": \"\"\n        },\n        {\n          \"bom_code\": \"02.03.0458\",\n          \"bom_name\": \"六角头螺栓全螺纹8.8级\",\n          \"spec\": \"M30*60\",\n          \"quantity\": 2,\n          \"torque\": \"400N·m\"\n        },\n        {\n          \"bom_code\": \"02.03.0006\",\n          \"bom_name\": \"平垫圈8.8级\",\n          \"spec\": \"30*4\",\n          \"quantity\": 2,\n          \"torque\": \"\"\n        },\n        {\n          \"bom_code\": \"02.03.0148\",\n          \"bom_name\": \"1型六角螺母8.8级\",\n          \"spec\": \"M30\",\n          \"quantity\": 2,\n          \"torque\": \"400N·m\"\n        }\n      ],\n      \"operation\": \"在铲雪板连接处，根据需要插入插销（01.09.0503）进行角度限位，并使用安全销（02.03.0012）固定。在铲雪板连接销轴处，安装推雪板大垫圈（01.09.0304）。最后，在铲雪板连接销轴的另一端，使用M30*60螺栓（02.03.0458）、30*4平垫圈（02.03.0006）和M30六角螺母（02.03.0148）进行最终固定，拧紧至400N·m。\",\n      \"quality_check\": \"检查所有限位插销和安全销安装到位，M30螺栓达到规定扭矩。\",\n      \"estimated_time_minutes\": 10,\n      \"safety_warnings\": [\n        \"M30螺母扭矩高达400N·m，必须使用加长力臂的扭矩扳手或液压工具。\",\n        \"操作高扭矩工具时，确保身体姿势稳定，防止工具反弹或滑脱造成伤害。\"\n      ]\n    }\n  ]\n}\n```",
+  "parsed_result": {
+    "enhanced_steps": [
+      {
+        "step_number": 1,
+        "title": "安装后座连接架",
+        "component_code": "01.09.2550",
+        "component_name": "后座连接架组件-漆后",
+        "drawing_number": "④",
+        "connection_type": "螺栓连接",
+        "position_description": "将④号后座连接架组件安装在①号连接器后座组件的后方，通过预留的安装孔连接。",
+        "components": [
+          {
+            "bom_code": "01.09.2550",
+            "bom_name": "后座连接架组件-漆后",
+            "quantity": 1
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_code": "02.03.0398",
+            "bom_name": "六角头螺栓全螺纹8.8级",
+            "spec": "M8*40",
+            "quantity": 12,
+            "torque": "25N·m"
+          },
+          {
+            "bom_code": "02.03.0028",
+            "bom_name": "1型非金属嵌件六角锁紧螺母8.8级",
+            "spec": "M8",
+            "quantity": 12,
+            "torque": "25N·m"
+          }
+        ],
+        "operation": "将④号后座连接架组件（01.09.2550）对准①号连接器后座组件（01.09.2549）的安装孔。使用12套M8*40螺栓（02.03.0398）和M8锁紧螺母（02.03.0028）固定。按对角线顺序拧紧至25N·m。",
+        "quality_check": "检查连接架与后座组件是否紧密贴合，无间隙。所有螺栓达到规定扭矩。",
+        "estimated_time_minutes": 10
+      },
+      {
+        "step_number": 2,
+        "title": "安装左右铲雪板",
+        "component_code": "01.09.2551/01.09.2552",
+        "component_name": "左/右铲雪板组件-漆后",
+        "drawing_number": "②, ③",
+        "connection_type": "销轴连接",
+        "position_description": "将②号左铲雪板组件和③号右铲雪板组件通过销轴连接到①号连接器后座组件上。",
+        "components": [
+          {
+            "bom_code": "01.09.2551",
+            "bom_name": "左铲雪板组件-漆后",
+            "quantity": 1
+          },
+          {
+            "bom_code": "01.09.2552",
+            "bom_name": "右铲雪板组件-漆后",
+            "quantity": 1
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_code": "01.09.2561",
+            "bom_name": "销轴-镀锌",
+            "spec": "XZ-φ50*15-φ35*485-φ10*10-45#",
+            "quantity": 1,
+            "torque": ""
+          },
+          {
+            "bom_code": "02.03.0001",
+            "bom_name": "安全销",
+            "spec": "φ8*45",
+            "quantity": 1,
+            "torque": ""
+          },
+          {
+            "bom_code": "02.08.05.0004",
+            "bom_name": "直通式压注油杯",
+            "spec": "M8",
+            "quantity": 2,
+            "torque": ""
+          }
+        ],
+        "operation": "将②号和③号铲雪板组件对齐①号后座组件的连接孔。插入销轴（01.09.2561），并使用安全销（02.03.0001）固定。在销轴两端安装M8直通式压注油杯（02.08.05.0004）。",
+        "quality_check": "检查铲雪板转动是否灵活，销轴是否完全插入并被安全销锁紧。油杯安装到位。",
+        "estimated_time_minutes": 15,
+        "safety_warnings": [
+          "铲雪板组件体积较大且重，搬运和安装时必须使用合适的吊装工具或两人协作，防止砸伤。",
+          "对齐销轴孔时，注意手部安全，避免挤压伤。",
+          "确保工件放置平稳，防止倾倒。"
+        ]
+      },
+      {
+        "step_number": 3,
+        "title": "安装油缸",
+        "component_code": "02.08.01.0338",
+        "component_name": "油缸",
+        "drawing_number": "18",
+        "connection_type": "销轴连接",
+        "position_description": "将18号油缸安装在①号连接器后座组件和②/③号铲雪板组件的连接耳上。",
+        "components": [
+          {
+            "bom_code": "02.08.01.0338",
+            "bom_name": "油缸",
+            "quantity": 2
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_code": "01.09.2562",
+            "bom_name": "销轴-镀锌",
+            "spec": "XZ-φ35*10-φ25*145-φ10*10-45#",
+            "quantity": 2,
+            "torque": ""
+          },
+          {
+            "bom_code": "01.09.2563",
+            "bom_name": "销轴-镀锌",
+            "spec": "XZ-φ40*10-φ30*87-φ10*10-45#",
+            "quantity": 2,
+            "torque": ""
+          },
+          {
+            "bom_code": "02.03.0001",
+            "bom_name": "安全销",
+            "spec": "φ8*45",
+            "quantity": 4,
+            "torque": ""
+          }
+        ],
+        "operation": "将油缸（02.08.01.0338）的缸体端（大端）通过销轴（01.09.2563）连接到①号后座组件上，活塞杆端（小端）通过销轴（01.09.2562）连接到②/③号铲雪板组件上。每个销轴使用一个安全销（02.03.0001）固定。",
+        "quality_check": "检查油缸安装方向是否正确，销轴是否完全插入并被安全销锁紧。",
+        "estimated_time_minutes": 20,
+        "safety_warnings": [
+          "油缸属于精密部件，搬运时轻拿轻放，避免磕碰。",
+          "安装时注意油缸重量，防止脱手砸伤脚部或手部。"
+        ]
+      },
+      {
+        "step_number": 4,
+        "title": "安装电磁阀组及保护罩",
+        "component_code": "02.08.03.0236",
+        "component_name": "电磁阀组",
+        "drawing_number": "37, 50",
+        "connection_type": "螺栓连接",
+        "position_description": "将37号电磁阀组安装在①号连接器后座组件的预留安装位上，并安装50号电磁阀保护罩组件。",
+        "components": [
+          {
+            "bom_code": "02.08.03.0236",
+            "bom_name": "电磁阀组",
+            "quantity": 1
+          },
+          {
+            "bom_code": "01.09.1240",
+            "bom_name": "电磁阀保护罩组件-漆后",
+            "quantity": 1
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_code": "02.03.0379",
+            "bom_name": "六角头螺栓全螺纹8.8级",
+            "spec": "M8*20",
+            "quantity": 4,
+            "torque": "25N·m"
+          },
+          {
+            "bom_code": "02.03.0028",
+            "bom_name": "1型非金属嵌件六角锁紧螺母8.8级",
+            "spec": "M8",
+            "quantity": 4,
+            "torque": "25N·m"
+          }
+        ],
+        "operation": "将37号电磁阀组（02.08.03.0236）安装在①号组件上，使用4套M8*20螺栓（02.03.0379）和M8锁紧螺母（02.03.0028）固定。然后将50号电磁阀保护罩组件（01.09.1240）盖在电磁阀组上方，并用相同的紧固件固定。",
+        "quality_check": "检查电磁阀组安装牢固，保护罩安装到位，无干涉。",
+        "estimated_time_minutes": 15
+      },
+      {
+        "step_number": 5,
+        "title": "安装左右刀板后座",
+        "component_code": "01.09.2554/01.09.2553",
+        "component_name": "左/右刀板后座组件-漆后",
+        "drawing_number": "5, 6",
+        "connection_type": "螺栓连接",
+        "position_description": "将5号左刀板后座组件和6号右刀板后座组件安装在②号和③号铲雪板组件的底部。",
+        "components": [
+          {
+            "bom_code": "01.09.2554",
+            "bom_name": "左刀板后座组件-漆后",
+            "quantity": 1
+          },
+          {
+            "bom_code": "01.09.2553",
+            "bom_name": "右刀板后座组件-漆后",
+            "quantity": 1
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_code": "02.03.0088",
+            "bom_name": "六角头螺栓8.8级",
+            "spec": "M8*80",
+            "quantity": 12,
+            "torque": "25N·m"
+          },
+          {
+            "bom_code": "02.03.0028",
+            "bom_name": "1型非金属嵌件六角锁紧螺母8.8级",
+            "spec": "M8",
+            "quantity": 12,
+            "torque": "25N·m"
+          }
+        ],
+        "operation": "将5号和6号刀板后座组件（01.09.2554/01.09.2553）分别对齐②号和③号铲雪板组件底部的安装孔。使用12套M8*80螺栓（02.03.0088）和M8锁紧螺母（02.03.0028）固定。均匀拧紧至25N·m。",
+        "quality_check": "检查刀板后座与铲雪板底部贴合紧密，螺栓均匀受力。",
+        "estimated_time_minutes": 15
+      },
+      {
+        "step_number": 6,
+        "title": "安装橡胶刀板",
+        "component_code": "01.02.07.0239",
+        "component_name": "橡胶刀板",
+        "drawing_number": "11",
+        "connection_type": "螺栓连接",
+        "position_description": "将11号橡胶刀板安装在5号和6号刀板后座组件的底部。",
+        "components": [
+          {
+            "bom_code": "01.02.07.0239",
+            "bom_name": "橡胶刀板",
+            "quantity": 2
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_code": "02.03.0378",
+            "bom_name": "六角头螺栓全螺纹8.8级",
+            "spec": "M6*20",
+            "quantity": 24,
+            "torque": "10N·m"
+          },
+          {
+            "bom_code": "02.03.0381",
+            "bom_name": "平垫圈8.8级",
+            "spec": "6*1.6",
+            "quantity": 24,
+            "torque": ""
+          },
+          {
+            "bom_code": "02.03.0146",
+            "bom_name": "1型非金属嵌件六角锁紧螺母8.8级",
+            "spec": "M6",
+            "quantity": 24,
+            "torque": "10N·m"
+          }
+        ],
+        "operation": "将橡胶刀板（01.02.07.0239）对齐刀板后座的安装孔。使用24套M6*20螺栓（02.03.0378）、平垫圈（02.03.0381）和M6锁紧螺母（02.03.0146）固定。拧紧至10N·m。",
+        "quality_check": "检查橡胶刀板安装平整，无扭曲。",
+        "estimated_time_minutes": 20
+      },
+      {
+        "step_number": 7,
+        "title": "安装推雪板弹簧导柱",
+        "component_code": "01.09.2559",
+        "component_name": "推雪板弹簧导柱组件-镀锌",
+        "drawing_number": "8",
+        "connection_type": "螺栓连接",
+        "position_description": "将8号推雪板弹簧导柱组件安装在②号和③号铲雪板组件的上方。",
+        "components": [
+          {
+            "bom_code": "01.09.2559",
+            "bom_name": "推雪板弹簧导柱组件-镀锌",
+            "quantity": 2
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_code": "02.03.0379",
+            "bom_name": "六角头螺栓全螺纹8.8级",
+            "spec": "M8*20",
+            "quantity": 8,
+            "torque": "25N·m"
+          },
+          {
+            "bom_code": "02.03.0028",
+            "bom_name": "1型非金属嵌件六角锁紧螺母8.8级",
+            "spec": "M8",
+            "quantity": 8,
+            "torque": "25N·m"
+          }
+        ],
+        "operation": "将两套8号推雪板弹簧导柱组件（01.09.2559）分别安装在左右铲雪板组件上。使用8套M8*20螺栓（02.03.0379）和M8锁紧螺母（02.03.0028）固定。",
+        "quality_check": "检查导柱安装垂直，螺栓拧紧到位。",
+        "estimated_time_minutes": 10
+      },
+      {
+        "step_number": 8,
+        "title": "安装弹簧和方形板",
+        "component_code": "02.09.0103",
+        "component_name": "压缩弹簧",
+        "drawing_number": "19, 49",
+        "connection_type": "螺栓/弹簧连接",
+        "position_description": "将19号压缩弹簧安装在8号导柱上，并用49号方形板固定。",
+        "components": [
+          {
+            "bom_code": "02.09.0103",
+            "bom_name": "压缩弹簧",
+            "quantity": 4
+          },
+          {
+            "bom_code": "01.09.2556",
+            "bom_name": "方形板-机加-镀锌",
+            "quantity": 4
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_code": "02.03.0442",
+            "bom_name": "内六角圆柱头螺钉8.8级",
+            "spec": "M6*40",
+            "quantity": 8,
+            "torque": "10N·m"
+          },
+          {
+            "bom_code": "02.03.0383",
+            "bom_name": "六角头螺栓全螺纹8.8级",
+            "spec": "M6*16",
+            "quantity": 8,
+            "torque": "10N·m"
+          },
+          {
+            "bom_code": "02.03.0146",
+            "bom_name": "1型非金属嵌件六角锁紧螺母8.8级",
+            "spec": "M6",
+            "quantity": 8,
+            "torque": "10N·m"
+          }
+        ],
+        "operation": "将4个19号压缩弹簧（02.09.0103）套在8号导柱上。将49号方形板（01.09.2556）安装在弹簧上方，通过M6*40内六角螺钉（02.03.0442）和M6*16螺栓（02.03.0383）及M6锁紧螺母（02.03.0146）固定，以预紧弹簧。",
+        "quality_check": "检查弹簧预紧力一致，方形板安装牢固。",
+        "estimated_time_minutes": 20,
+        "safety_warnings": [
+          "压缩弹簧具有较大预紧力，安装时必须小心操作，使用专用工具或缓慢均匀拧紧，防止弹簧突然弹出伤人。",
+          "拧紧螺栓时，注意保持身体平衡，避免因用力过猛导致工具脱手。"
+        ]
+      },
+      {
+        "step_number": 9,
+        "title": "安装后座支撑架",
+        "component_code": "01.09.2560",
+        "component_name": "后座支撑架组件-漆后",
+        "drawing_number": "7",
+        "connection_type": "螺栓连接",
+        "position_description": "将7号后座支撑架组件安装在④号后座连接架组件的后部。",
+        "components": [
+          {
+            "bom_code": "01.09.2560",
+            "bom_name": "后座支撑架组件-漆后",
+            "quantity": 1
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_code": "02.03.0398",
+            "bom_name": "六角头螺栓全螺纹8.8级",
+            "spec": "M8*40",
+            "quantity": 4,
+            "torque": "25N·m"
+          },
+          {
+            "bom_code": "02.03.0028",
+            "bom_name": "1型非金属嵌件六角锁紧螺母8.8级",
+            "spec": "M8",
+            "quantity": 4,
+            "torque": "25N·m"
+          }
+        ],
+        "operation": "将7号后座支撑架组件（01.09.2560）对齐④号连接架的安装孔。使用4套M8*40螺栓（02.03.0398）和M8锁紧螺母（02.03.0028）固定。",
+        "quality_check": "检查支撑架安装牢固，与连接架垂直。",
+        "estimated_time_minutes": 5
+      },
+      {
+        "step_number": 10,
+        "title": "安装轮胎架外臂",
+        "component_code": "01.09.2557",
+        "component_name": "轮胎架外臂组件-漆后",
+        "drawing_number": "9",
+        "connection_type": "螺栓连接",
+        "position_description": "将9号轮胎架外臂组件安装在7号后座支撑架组件的侧面。",
+        "components": [
+          {
+            "bom_code": "01.09.2557",
+            "bom_name": "轮胎架外臂组件-漆后",
+            "quantity": 2
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_code": "02.03.1035",
+            "bom_name": "内六角平圆头螺钉8.8级",
+            "spec": "M16*85",
+            "quantity": 4,
+            "torque": "150N·m"
+          },
+          {
+            "bom_code": "02.03.0072",
+            "bom_name": "平垫圈8.8级",
+            "spec": "16*3",
+            "quantity": 4,
+            "torque": ""
+          },
+          {
+            "bom_code": "02.03.0019",
+            "bom_name": "1型非金属嵌件六角锁紧螺母8.8级",
+            "spec": "M16",
+            "quantity": 4,
+            "torque": "150N·m"
+          }
+        ],
+        "operation": "将两套9号轮胎架外臂组件（01.09.2557）分别安装在7号支撑架组件两侧的连接耳上。使用4套M16*85内六角平圆头螺钉（02.03.1035）、M16平垫圈（02.03.0072）和M16锁紧螺母（02.03.0019）固定。拧紧至150N·m。",
+        "quality_check": "检查外臂安装角度正确，螺栓达到规定扭矩。",
+        "estimated_time_minutes": 10,
+        "safety_warnings": [
+          "使用扭矩扳手拧紧M16螺栓时（150N·m），注意站稳，防止因用力过大导致身体失衡或工具滑脱。"
+        ]
+      },
+      {
+        "step_number": 11,
+        "title": "安装轮胎架内臂",
+        "component_code": "01.09.2558",
+        "component_name": "轮胎架内臂组件-镀锌",
+        "drawing_number": "10",
+        "connection_type": "销轴连接",
+        "position_description": "将10号轮胎架内臂组件通过销轴连接到9号轮胎架外臂组件上。",
+        "components": [
+          {
+            "bom_code": "01.09.2558",
+            "bom_name": "轮胎架内臂组件-镀锌",
+            "quantity": 2
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_code": "01.09.0995",
+            "bom_name": "V型推雪板销轴-镀锌",
+            "quantity": 2,
+            "torque": ""
+          },
+          {
+            "bom_code": "01.09.0999",
+            "bom_name": "V型推雪板轴套-镀锌",
+            "quantity": 2,
+            "torque": ""
+          },
+          {
+            "bom_code": "02.03.0006",
+            "bom_name": "平垫圈8.8级",
+            "spec": "30*4",
+            "quantity": 4,
+            "torque": ""
+          },
+          {
+            "bom_code": "02.03.0147",
+            "bom_name": "1型非金属嵌件六角锁紧螺母8.8级",
+            "spec": "M30",
+            "quantity": 2,
+            "torque": "400N·m"
+          }
+        ],
+        "operation": "将两套10号轮胎架内臂组件（01.09.2558）插入9号外臂组件的连接孔。插入销轴（01.09.0995），并在销轴上套入轴套（01.09.0999）和两个30*4平垫圈（02.03.0006）。最后使用M30锁紧螺母（02.03.0147）固定，拧紧至400N·m。",
+        "quality_check": "检查内臂转动灵活，销轴固定可靠，螺母达到规定扭矩。",
+        "estimated_time_minutes": 15,
+        "safety_warnings": [
+          "M30螺母扭矩高达400N·m，必须使用加长力臂的扭矩扳手或液压工具。",
+          "操作高扭矩工具时，确保身体姿势稳定，防止工具反弹或滑脱造成伤害。"
+        ]
+      },
+      {
+        "step_number": 12,
+        "title": "安装轮胎",
+        "component_code": "02.16.0142",
+        "component_name": "实心橡胶轮",
+        "drawing_number": "26",
+        "connection_type": "螺栓连接",
+        "position_description": "将26号实心橡胶轮安装在10号轮胎架内臂组件的末端。",
+        "components": [
+          {
+            "bom_code": "02.16.0142",
+            "bom_name": "实心橡胶轮",
+            "quantity": 2
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_code": "01.09.2565",
+            "bom_name": "自制螺栓-镀锌",
+            "quantity": 2,
+            "torque": ""
+          },
+          {
+            "bom_code": "01.09.2566",
+            "bom_name": "圆钢-机加-镀锌",
+            "quantity": 2,
+            "torque": ""
+          },
+          {
+            "bom_code": "02.03.0612",
+            "bom_name": "1型非金属嵌件六角锁紧螺母8.8级",
+            "spec": "M20",
+            "quantity": 2,
+            "torque": "200N·m"
+          }
+        ],
+        "operation": "将26号实心橡胶轮（02.16.0142）安装到10号内臂组件的轴孔上。使用自制螺栓（01.09.2565）穿过轮轴，并在另一端套上圆钢（01.09.2566），最后用M20锁紧螺母（02.03.0612）固定。拧紧至200N·m。",
+        "quality_check": "检查轮胎转动灵活，轴向间隙合适，螺母达到规定扭矩。",
+        "estimated_time_minutes": 10,
+        "welding": {
+          "required": true,
+          "welding_type": "塞焊/角焊",
+          "welding_method": "CO2气保焊",
+          "weld_size": "焊脚高度4mm，塞焊孔填满",
+          "welding_position": "自制螺栓（01.09.2565）与圆钢（01.09.2566）的连接处，确保螺栓头与圆钢固定牢固，防止松动。",
+          "quality_requirements": "焊缝连续，无咬边、气孔，焊后清理焊渣。",
+          "safety_notes": "焊接前检查接地线，确保工作区域无易燃物。佩戴防护手套和面罩。"
+        },
+        "safety_warnings": [
+          "焊接作业必须佩戴专业的焊接面罩、防护手套和阻燃服，防止电弧光和高温飞溅物灼伤。",
+          "确保焊接区域通风良好，防止吸入有害烟尘。",
+          "焊接完成后，焊件温度高，清理焊渣时要使用专用工具，注意防止烫伤。"
+        ]
+      },
+      {
+        "step_number": 13,
+        "title": "安装把手组件",
+        "component_code": "01.09.2564",
+        "component_name": "把手组件-镀锌",
+        "drawing_number": "17",
+        "connection_type": "螺栓连接",
+        "position_description": "将17号把手组件安装在10号轮胎架内臂组件的上方。",
+        "components": [
+          {
+            "bom_code": "01.09.2564",
+            "bom_name": "把手组件-镀锌",
+            "quantity": 2
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_code": "02.03.0102",
+            "bom_name": "六角头螺栓8.8级",
+            "spec": "M8*65",
+            "quantity": 2,
+            "torque": "25N·m"
+          },
+          {
+            "bom_code": "02.03.0028",
+            "bom_name": "1型非金属嵌件六角锁紧螺母8.8级",
+            "spec": "M8",
+            "quantity": 2,
+            "torque": "25N·m"
+          }
+        ],
+        "operation": "将两套17号把手组件（01.09.2564）分别安装在左右10号内臂组件上。使用2套M8*65螺栓（02.03.0102）和M8锁紧螺母（02.03.0028）固定。",
+        "quality_check": "检查把手安装牢固，方向正确。",
+        "estimated_time_minutes": 5
+      },
+      {
+        "step_number": 14,
+        "title": "安装橡胶挡板和反光片",
+        "component_code": "01.02.07.0071",
+        "component_name": "橡胶挡板",
+        "drawing_number": "12, 22",
+        "connection_type": "螺栓连接",
+        "position_description": "将12号橡胶挡板和22号反光片安装在铲雪板组件的顶部。",
+        "components": [
+          {
+            "bom_code": "01.02.07.0071",
+            "bom_name": "橡胶挡板",
+            "quantity": 1
+          },
+          {
+            "bom_code": "02.04.0029",
+            "bom_name": "推雪板反光片",
+            "quantity": 2
+          },
+          {
+            "bom_code": "01.09.0308",
+            "bom_name": "推雪板反光片固定板-镀锌",
+            "quantity": 2
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_code": "02.03.0379",
+            "bom_name": "六角头螺栓全螺纹8.8级",
+            "spec": "M8*20",
+            "quantity": 10,
+            "torque": "25N·m"
+          },
+          {
+            "bom_code": "02.03.0028",
+            "bom_name": "1型非金属嵌件六角锁紧螺母8.8级",
+            "spec": "M8",
+            "quantity": 10,
+            "torque": "25N·m"
+          }
+        ],
+        "operation": "将12号橡胶挡板（01.02.07.0071）安装在铲雪板顶部，使用6套M8*20螺栓（02.03.0379）和M8锁紧螺母（02.03.0028）固定。然后将22号反光片（02.04.0029）和固定板（01.09.0308）安装在铲雪板两侧，使用4套M8*20螺栓和M8锁紧螺母固定。",
+        "quality_check": "检查橡胶挡板安装平直，反光片方向正确。",
+        "estimated_time_minutes": 15
+      },
+      {
+        "step_number": 15,
+        "title": "安装限位插销和垫圈",
+        "component_code": "01.09.0503",
+        "component_name": "插销-镀锌",
+        "drawing_number": "20, 21, 48",
+        "connection_type": "销钉连接",
+        "position_description": "安装限位插销、大垫圈和安全销，用于调节铲雪板角度。",
+        "components": [
+          {
+            "bom_code": "01.09.0503",
+            "bom_name": "插销-镀锌",
+            "quantity": 2
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_code": "01.09.0304",
+            "bom_name": "推雪板大垫圈-镀锌",
+            "quantity": 2,
+            "torque": ""
+          },
+          {
+            "bom_code": "02.03.0012",
+            "bom_name": "安全销",
+            "spec": "Φ4.5*40",
+            "quantity": 2,
+            "torque": ""
+          },
+          {
+            "bom_code": "02.03.0458",
+            "bom_name": "六角头螺栓全螺纹8.8级",
+            "spec": "M30*60",
+            "quantity": 2,
+            "torque": "400N·m"
+          },
+          {
+            "bom_code": "02.03.0006",
+            "bom_name": "平垫圈8.8级",
+            "spec": "30*4",
+            "quantity": 2,
+            "torque": ""
+          },
+          {
+            "bom_code": "02.03.0148",
+            "bom_name": "1型六角螺母8.8级",
+            "spec": "M30",
+            "quantity": 2,
+            "torque": "400N·m"
+          }
+        ],
+        "operation": "在铲雪板连接处，根据需要插入插销（01.09.0503）进行角度限位，并使用安全销（02.03.0012）固定。在铲雪板连接销轴处，安装推雪板大垫圈（01.09.0304）。最后，在铲雪板连接销轴的另一端，使用M30*60螺栓（02.03.0458）、30*4平垫圈（02.03.0006）和M30六角螺母（02.03.0148）进行最终固定，拧紧至400N·m。",
+        "quality_check": "检查所有限位插销和安全销安装到位，M30螺栓达到规定扭矩。",
+        "estimated_time_minutes": 10,
+        "safety_warnings": [
+          "M30螺母扭矩高达400N·m，必须使用加长力臂的扭矩扳手或液压工具。",
+          "操作高扭矩工具时，确保身体姿势稳定，防止工具反弹或滑脱造成伤害。"
+        ]
+      }
+    ]
+  }
+}

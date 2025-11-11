@@ -1,0 +1,30 @@
+```json
+{
+  "cot_analysis": {
+    "total_unmatched_bom": 1,
+    "total_unmatched_3d": 1,
+    "analysis_steps": [
+      {
+        "bom_code": "01.01.02.1221",
+        "bom_name": "轴套 1",
+        "bom_product_code": "ZT-φ55/φ37-35-Q235",
+        "step1_extract": "产品代号=ZT-φ55/φ37-35-Q235, 规格=φ55/φ37-35, 材料=Q235, 类型=轴套",
+        "step2_candidates": [
+          "mesh_005: ZT-¦ӵ5-¦ӳ7-35-Q235ס͗"
+        ],
+        "step3_comparison": "mesh_005: 3D零件名称存在乱码，但其结构与BOM产品代号高度相似。BOM代号为ZT-φ55/φ37-35-Q235，3D零件名称为ZT-¦ӵ5-¦ӳ7-35-Q235ס͗。推测乱码'¦ӵ5'对应'φ55'，'¦ӳ7'对应'φ37'，'ס͗'对应'轴套'。产品代号前缀ZT-，规格-35-，材料-Q235完全一致。",
+        "step4_confidence": 0.92,
+        "step5_decision": "匹配mesh_005（产品代号结构和关键参数完全一致，乱码推测为轴套）"
+      }
+    ]
+  },
+  "ai_matched_pairs": [
+    {
+      "mesh_id": "mesh_005",
+      "bom_code": "01.01.02.1221",
+      "confidence": 0.92,
+      "reasoning": "产品代号ZT-φ55/φ37-35-Q235与3D零件名称乱码结构高度一致"
+    }
+  ]
+}
+```

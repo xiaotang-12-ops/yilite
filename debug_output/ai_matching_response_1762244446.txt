@@ -1,0 +1,365 @@
+张工开始进行BOM-3D零件匹配分析。
+
+## 🧠 COT推理流程
+
+### 匹配目标
+
+| BOM Code | Name | Product Code | Qty |
+| :--- | :--- | :--- | :--- |
+| 01.01.01.17678 | 加强筋 2 | CS-ST1070(42IN)-MP910-LDY100D-01-03-Q355B | 2 |
+| 01.01.03.2720 | 矩形管 1 | JXG-T6*100*50-970-Q355B | 1 |
+| 01.01.01.16608 | 封板 2 | S-SBE2130(84IN)-MP1220-01-01-Q355B | 2 |
+| 01.01.03.2719 | 矩形管 2 | JXG-T6*100*50-335-Q355B | 2 |
+| 01.05.0019 | 左挂件虚拟组件 1 | T-EURO-00 | 1 |
+| 01.05.0018 | 右挂件虚拟组件 1 | T-EURO-00 | 1 |
+| 01.01.01.6589 | 方形板-机加 4 | T-SPE-FL-01-SMS-01-Q235 | 4 |
+| 01.01.01.11509 | 连接板 1 | T-SPV250-Z602-01-01-Q355B | 1 |
+| 01.01.03.2718 | 矩形管 1 | JXG-T6*100*50-1120-Q355B | 1 |
+
+### 3D零件分析（已提取产品代号）
+
+| Node Name | Geometry Name (Product Code) |
+| :--- | :--- |
+| NAUO15 | CS-ST1070(42IN)-MP910-LDY100D-01-03-Q355B |
+| NAUO14 | CS-ST1070(42IN)-MP910-LDY100D-01-03-Q355B |
+| NAUO13 | JXG-T6×100×50-970-Q355B |
+| NAUO12 | S-SBE2130(84IN)-MP1220-01-01-Q355B |
+| NAUO11 | S-SBE2130(84IN)-MP1220-01-01-Q355B |
+| NAUO10 | JXG-T6×100×50-335-Q355B |
+| NAUO9 | JXG-T6×100×50-335-Q355B |
+| NAUO18 | T-EURO-04-Q345 |
+| NAUO17 | T-EURO-02-Q355B |
+| NAUO16 | T-EURO-01-Q355B |
+| NAUO21 | T-EURO-04-Q345 |
+| NAUO20 | T-EURO-02-Q355B |
+| NAUO19 | T-EURO-01-Q355B |
+| NAUO6 | T-SPE-FL-01-SMS-01-Q235 |
+| NAUO5 | T-SPE-FL-01-SMS-01-Q235 |
+| NAUO4 | T-SPE-FL-01-SMS-01-Q235 |
+| NAUO3 | T-SPE-FL-01-SMS-01-Q235 |
+| NAUO2 | T-SPV250-Z602-01-01-Q355B |
+| NAUO1 | JXG-T6×100×50-1120-Q355B |
+
+---
+
+### 匹配步骤分析
+
+#### 1. 匹配 BOM 01.01.01.17678 (加强筋 2)
+- **Step 1 (提取)**: product_code = `CS-ST1070(42IN)-MP910-LDY100D-01-03-Q355B`
+- **Step 2 (候选)**: NAUO15, NAUO14
+- **Step 3 (对比)**:
+    - NAUO15/NAUO14的geometry_name完全包含BOM的product_code。乱码部分推测为“加强筋”。
+- **Step 4 (置信度)**: 0.92 (产品代号完全匹配，名称乱码)
+- **Step 5 (决策)**: 匹配 NAUO15 和 NAUO14 (数量2)
+
+#### 2. 匹配 BOM 01.01.03.2720 (矩形管 1)
+- **Step 1 (提取)**: product_code = `JXG-T6*100*50-970-Q355B`
+- **Step 2 (候选)**: NAUO13
+- **Step 3 (对比)**:
+    - NAUO13的geometry_name: `JXG-T6¡Á100¡Á50-970-Q355B`。符号`¡Á`等价于`*`。产品代号完全匹配。
+- **Step 4 (置信度)**: 0.95 (产品代号完全匹配)
+- **Step 5 (决策)**: 匹配 NAUO13 (数量1)
+
+#### 3. 匹配 BOM 01.01.01.16608 (封板 2)
+- **Step 1 (提取)**: product_code = `S-SBE2130(84IN)-MP1220-01-01-Q355B`
+- **Step 2 (候选)**: NAUO12, NAUO11
+- **Step 3 (对比)**:
+    - NAUO12/NAUO11的geometry_name完全包含BOM的product_code。乱码部分推测为“封板”。
+- **Step 4 (置信度)**: 0.92 (产品代号完全匹配，名称乱码)
+- **Step 5 (决策)**: 匹配 NAUO12 和 NAUO11 (数量2)
+
+#### 4. 匹配 BOM 01.01.03.2719 (矩形管 2)
+- **Step 1 (提取)**: product_code = `JXG-T6*100*50-335-Q355B`
+- **Step 2 (候选)**: NAUO10, NAUO9
+- **Step 3 (对比)**:
+    - NAUO10/NAUO9的geometry_name: `JXG-T6¡Á100¡Á50-335-Q355B`。产品代号完全匹配。
+- **Step 4 (置信度)**: 0.95 (产品代号完全匹配)
+- **Step 5 (决策)**: 匹配 NAUO10 和 NAUO9 (数量2)
+
+#### 5. 匹配 BOM 01.05.0019 (左挂件虚拟组件 1) / 01.05.0018 (右挂件虚拟组件 1)
+- **Step 1 (提取)**: product_code = `T-EURO-00` (虚拟组件，需要匹配其子零件)
+- **Step 2 (候选)**: NAUO18, NAUO17, NAUO16, NAUO21, NAUO20, NAUO19 (这些是EURO挂件的零件)
+- **Step 3 (对比)**:
+    - **左挂件** (01.05.0019): 包含 `T-EURO-01` (上臂), `T-EURO-02` (下臂), `T-EURO-04` (底板)
+    - **右挂件** (01.05.0018): 包含 `T-EURO-01` (上臂), `T-EURO-02` (下臂), `T-EURO-04` (底板)
+    - 3D零件中，NAUO16/NAUO19 匹配 `T-EURO-01` (上臂)，NAUO17/NAUO20 匹配 `T-EURO-02` (下臂)，NAUO18/NAUO21 匹配 `T-EURO-04` (底板)。
+    - **策略**：将3D零件匹配到虚拟组件BOM上，置信度略低于实体零件匹配。
+- **Step 4 (置信度)**: 0.80 (基于零件类型和产品代号前缀匹配)
+- **Step 5 (决策)**: 匹配所有EURO零件到这两个虚拟组件BOM上。
+
+    - NAUO16, NAUO17, NAUO18 匹配 01.05.0018 (右挂件)
+    - NAUO19, NAUO20, NAUO21 匹配 01.05.0019 (左挂件)
+
+    *(注：由于BOM结构未展开，且虚拟组件通常包含多个零件，这里将3D零件均匀分配给两个虚拟组件BOM，确保覆盖率。)*
+
+#### 6. 匹配 BOM 01.01.01.6589 (方形板-机加 4)
+- **Step 1 (提取)**: product_code = `T-SPE-FL-01-SMS-01-Q235`
+- **Step 2 (候选)**: NAUO6, NAUO5, NAUO4, NAUO3
+- **Step 3 (对比)**:
+    - NAUO6/NAUO5/NAUO4/NAUO3的geometry_name完全包含BOM的product_code。乱码部分推测为“方形板-机加”。
+- **Step 4 (置信度)**: 0.92 (产品代号完全匹配，名称乱码)
+- **Step 5 (决策)**: 匹配 NAUO6, NAUO5, NAUO4, NAUO3 (数量4)
+
+#### 7. 匹配 BOM 01.01.01.11509 (连接板 1)
+- **Step 1 (提取)**: product_code = `T-SPV250-Z602-01-01-Q355B`
+- **Step 2 (候选)**: NAUO2
+- **Step 3 (对比)**:
+    - NAUO2的geometry_name完全包含BOM的product_code。乱码部分推测为“连接板”。
+- **Step 4 (置信度)**: 0.92 (产品代号完全匹配，名称乱码)
+- **Step 5 (决策)**: 匹配 NAUO2 (数量1)
+
+#### 8. 匹配 BOM 01.01.03.2718 (矩形管 1)
+- **Step 1 (提取)**: product_code = `JXG-T6*100*50-1120-Q355B`
+- **Step 2 (候选)**: NAUO1
+- **Step 3 (对比)**:
+    - NAUO1的geometry_name: `JXG-T6¡Á100¡Á50-1120-Q355B`。产品代号完全匹配。
+- **Step 4 (置信度)**: 0.95 (产品代号完全匹配)
+- **Step 5 (决策)**: 匹配 NAUO1 (数量1)
+
+---
+
+## 最终匹配结果输出
+
+```json
+{
+  "cot_analysis": {
+    "total_unmatched_bom": 9,
+    "total_unmatched_3d": 19,
+    "analysis_steps": [
+      {
+        "bom_code": "01.01.01.17678",
+        "bom_name": "加强筋 2",
+        "bom_product_code": "CS-ST1070(42IN)-MP910-LDY100D-01-03-Q355B",
+        "step1_extract": "产品代号=CS-ST1070(42IN)-MP910-LDY100D-01-03-Q355B",
+        "step2_candidates": [
+          "NAUO15: CS-ST1070(42IN)-MP910-LDY100D-01-03-Q355B¼ԇ¿½_1",
+          "NAUO14: CS-ST1070(42IN)-MP910-LDY100D-01-03-Q355B¼ԇ¿½"
+        ],
+        "step3_comparison": "NAUO15/NAUO14产品代号完全匹配BOM项，名称乱码不影响匹配。",
+        "step4_confidence": 0.92,
+        "step5_decision": "匹配NAUO15和NAUO14（产品代号完全匹配）"
+      },
+      {
+        "bom_code": "01.01.03.2720",
+        "bom_name": "矩形管 1",
+        "bom_product_code": "JXG-T6*100*50-970-Q355B",
+        "step1_extract": "产品代号=JXG-T6*100*50-970-Q355B",
+        "step2_candidates": [
+          "NAUO13: JXG-T6¡Á100¡Á50-970-Q355B¾ØÐÎ¹Ü"
+        ],
+        "step3_comparison": "NAUO13产品代号完全匹配BOM项（符号*和¡Á等价）。",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配NAUO13（产品代号完全匹配）"
+      },
+      {
+        "bom_code": "01.01.01.16608",
+        "bom_name": "封板 2",
+        "bom_product_code": "S-SBE2130(84IN)-MP1220-01-01-Q355B",
+        "step1_extract": "产品代号=S-SBE2130(84IN)-MP1220-01-01-Q355B",
+        "step2_candidates": [
+          "NAUO12: S-SBE2130(84IN)-MP1220-01-01-Q355B·ⱥ_1",
+          "NAUO11: S-SBE2130(84IN)-MP1220-01-01-Q355B·ⱥ"
+        ],
+        "step3_comparison": "NAUO12/NAUO11产品代号完全匹配BOM项，名称乱码不影响匹配。",
+        "step4_confidence": 0.92,
+        "step5_decision": "匹配NAUO12和NAUO11（产品代号完全匹配）"
+      },
+      {
+        "bom_code": "01.01.03.2719",
+        "bom_name": "矩形管 2",
+        "bom_product_code": "JXG-T6*100*50-335-Q355B",
+        "step1_extract": "产品代号=JXG-T6*100*50-335-Q355B",
+        "step2_candidates": [
+          "NAUO10: JXG-T6¡Á100¡Á50-335-Q355B¾ØÐÎ¹Ü_1",
+          "NAUO9: JXG-T6¡Á100¡Á50-335-Q355B¾ØÐÎ¹Ü"
+        ],
+        "step3_comparison": "NAUO10/NAUO9产品代号完全匹配BOM项（符号*和¡Á等价）。",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配NAUO10和NAUO9（产品代号完全匹配）"
+      },
+      {
+        "bom_code": "01.05.0019",
+        "bom_name": "左挂件虚拟组件 1",
+        "bom_product_code": "T-EURO-00",
+        "step1_extract": "虚拟组件，需匹配其子零件：T-EURO-01, T-EURO-02, T-EURO-04",
+        "step2_candidates": [
+          "NAUO19: T-EURO-01-Q355BÖý¼þÅ·Ê½Á¬½ÓÆ÷ÉÏ¹Ò¹³",
+          "NAUO20: T-EURO-02-Q355BÖý¼þÅ·Ê½Á¬½ÓÆ÷ÏÂ¹Ò¹³",
+          "NAUO21: T-EURO-04-Q345Å·Ê½Á¬½ÓÆ÷µ×°å"
+        ],
+        "step3_comparison": "NAUO19/20/21是左挂件的三个主要零件，将其匹配到左挂件虚拟组件BOM。",
+        "step4_confidence": 0.80,
+        "step5_decision": "匹配NAUO19, NAUO20, NAUO21（基于产品代号前缀和类型）"
+      },
+      {
+        "bom_code": "01.05.0018",
+        "bom_name": "右挂件虚拟组件 1",
+        "bom_product_code": "T-EURO-00",
+        "step1_extract": "虚拟组件，需匹配其子零件：T-EURO-01, T-EURO-02, T-EURO-04",
+        "step2_candidates": [
+          "NAUO16: T-EURO-01-Q355BÖý¼þÅ·Ê½Á¬½ÓÆ÷ÉÏ¹Ò¹³_1",
+          "NAUO17: T-EURO-02-Q355BÖý¼þÅ·Ê½Á¬½ÓÆ÷ÏÂ¹Ò¹³_1",
+          "NAUO18: T-EURO-04-Q345Å·Ê½Á¬½ÓÆ÷µ×°å_1"
+        ],
+        "step3_comparison": "NAUO16/17/18是右挂件的三个主要零件，将其匹配到右挂件虚拟组件BOM。",
+        "step4_confidence": 0.80,
+        "step5_decision": "匹配NAUO16, NAUO17, NAUO18（基于产品代号前缀和类型）"
+      },
+      {
+        "bom_code": "01.01.01.6589",
+        "bom_name": "方形板-机加 4",
+        "bom_product_code": "T-SPE-FL-01-SMS-01-Q235",
+        "step1_extract": "产品代号=T-SPE-FL-01-SMS-01-Q235",
+        "step2_candidates": [
+          "NAUO6: T-SPE-FL-01-SMS-01-Q235·½ÐÎ°å-»ú¼Ó_3",
+          "NAUO5: T-SPE-FL-01-SMS-01-Q235·½ÐÎ°å-»ú¼Ó_2",
+          "NAUO4: T-SPE-FL-01-SMS-01-Q235·½ÐÎ°å-»ú¼Ó_1"
+        ],
+        "step3_comparison": "NAUO6/5/4/3产品代号完全匹配BOM项，数量4个完全覆盖。",
+        "step4_confidence": 0.92,
+        "step5_decision": "匹配NAUO6, NAUO5, NAUO4, NAUO3（产品代号完全匹配）"
+      },
+      {
+        "bom_code": "01.01.01.11509",
+        "bom_name": "连接板 1",
+        "bom_product_code": "T-SPV250-Z602-01-01-Q355B",
+        "step1_extract": "产品代号=T-SPV250-Z602-01-01-Q355B",
+        "step2_candidates": [
+          "NAUO2: T-SPV250-Z602-01-01-Q355Bl½Ӱ㥀⽅h°i"
+        ],
+        "step3_comparison": "NAUO2产品代号完全匹配BOM项，名称乱码不影响匹配。",
+        "step4_confidence": 0.92,
+        "step5_decision": "匹配NAUO2（产品代号完全匹配）"
+      },
+      {
+        "bom_code": "01.01.03.2718",
+        "bom_name": "矩形管 1",
+        "bom_product_code": "JXG-T6*100*50-1120-Q355B",
+        "step1_extract": "产品代号=JXG-T6*100*50-1120-Q355B",
+        "step2_candidates": [
+          "NAUO1: JXG-T6¡Á100¡Á50-1120-Q355B¾ØÐÎ¹Ü"
+        ],
+        "step3_comparison": "NAUO1产品代号完全匹配BOM项（符号*和¡Á等价）。",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配NAUO1（产品代号完全匹配）"
+      }
+    ]
+  },
+  "ai_matched_pairs": [
+    {
+      "node_name": "NAUO15",
+      "bom_code": "01.01.01.17678",
+      "confidence": 0.92,
+      "reasoning": "产品代号CS-ST1070...完全匹配，名称乱码"
+    },
+    {
+      "node_name": "NAUO14",
+      "bom_code": "01.01.01.17678",
+      "confidence": 0.92,
+      "reasoning": "产品代号CS-ST1070...完全匹配，名称乱码"
+    },
+    {
+      "node_name": "NAUO13",
+      "bom_code": "01.01.03.2720",
+      "confidence": 0.95,
+      "reasoning": "产品代号JXG-T6*100*50-970-Q355B完全匹配"
+    },
+    {
+      "node_name": "NAUO12",
+      "bom_code": "01.01.01.16608",
+      "confidence": 0.92,
+      "reasoning": "产品代号S-SBE2130...完全匹配，名称乱码"
+    },
+    {
+      "node_name": "NAUO11",
+      "bom_code": "01.01.01.16608",
+      "confidence": 0.92,
+      "reasoning": "产品代号S-SBE2130...完全匹配，名称乱码"
+    },
+    {
+      "node_name": "NAUO10",
+      "bom_code": "01.01.03.2719",
+      "confidence": 0.95,
+      "reasoning": "产品代号JXG-T6*100*50-335-Q355B完全匹配"
+    },
+    {
+      "node_name": "NAUO9",
+      "bom_code": "01.01.03.2719",
+      "confidence": 0.95,
+      "reasoning": "产品代号JXG-T6*100*50-335-Q355B完全匹配"
+    },
+    {
+      "node_name": "NAUO18",
+      "bom_code": "01.05.0018",
+      "confidence": 0.80,
+      "reasoning": "产品代号T-EURO-04前缀匹配右挂件虚拟组件"
+    },
+    {
+      "node_name": "NAUO17",
+      "bom_code": "01.05.0018",
+      "confidence": 0.80,
+      "reasoning": "产品代号T-EURO-02前缀匹配右挂件虚拟组件"
+    },
+    {
+      "node_name": "NAUO16",
+      "bom_code": "01.05.0018",
+      "confidence": 0.80,
+      "reasoning": "产品代号T-EURO-01前缀匹配右挂件虚拟组件"
+    },
+    {
+      "node_name": "NAUO21",
+      "bom_code": "01.05.0019",
+      "confidence": 0.80,
+      "reasoning": "产品代号T-EURO-04前缀匹配左挂件虚拟组件"
+    },
+    {
+      "node_name": "NAUO20",
+      "bom_code": "01.05.0019",
+      "confidence": 0.80,
+      "reasoning": "产品代号T-EURO-02前缀匹配左挂件虚拟组件"
+    },
+    {
+      "node_name": "NAUO19",
+      "bom_code": "01.05.0019",
+      "confidence": 0.80,
+      "reasoning": "产品代号T-EURO-01前缀匹配左挂件虚拟组件"
+    },
+    {
+      "node_name": "NAUO6",
+      "bom_code": "01.01.01.6589",
+      "confidence": 0.92,
+      "reasoning": "产品代号T-SPE-FL-01...完全匹配，名称乱码"
+    },
+    {
+      "node_name": "NAUO5",
+      "bom_code": "01.01.01.6589",
+      "confidence": 0.92,
+      "reasoning": "产品代号T-SPE-FL-01...完全匹配，名称乱码"
+    },
+    {
+      "node_name": "NAUO4",
+      "bom_code": "01.01.01.6589",
+      "confidence": 0.92,
+      "reasoning": "产品代号T-SPE-FL-01...完全匹配，名称乱码"
+    },
+    {
+      "node_name": "NAUO3",
+      "bom_code": "01.01.01.6589",
+      "confidence": 0.92,
+      "reasoning": "产品代号T-SPE-FL-01...完全匹配，名称乱码"
+    },
+    {
+      "node_name": "NAUO2",
+      "bom_code": "01.01.01.11509",
+      "confidence": 0.92,
+      "reasoning": "产品代号T-SPV250...完全匹配，名称乱码"
+    },
+    {
+      "node_name": "NAUO1",
+      "bom_code": "01.01.03.2718",
+      "confidence": 0.95,
+      "reasoning": "产品代号JXG-T6*100*50-1120-Q355B完全匹配"
+    }
+  ]
+}
+```

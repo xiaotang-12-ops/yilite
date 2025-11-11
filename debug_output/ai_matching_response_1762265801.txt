@@ -1,0 +1,453 @@
+作为张工，我将严格按照COT推理流程，对所有未匹配的BOM项和3D零件进行产品代号和规格匹配。
+
+## 🧠 COT推理流程
+
+### 步骤1：信息提取与匹配
+
+我将优先使用**产品代号精确匹配**（置信度0.90-0.98），并注意处理3D零件名称中的乱码（如`·;¬°㥀1yX6XNa`、`·½ÐÎ°å`）。
+
+**BOM项列表（13项）：**
+
+| # | BOM Code | Name | Product Code | Qty |
+|---|---|---|---|---|
+| 1 | 01.01.03.0692 | 方管 | FG-T5*80*80-1134-Q345 | 2 |
+| 2 | 01.01.03.0693 | 方管 | FG-T5*80*80-318-Q345 | 2 |
+| 3 | 01.01.4792 | 中侧板 | S-RB1830-03-02-Q345 | 2 |
+| 4 | 01.02.01.3875 | 中连接板 | S-RB1830-03-03-Q345 | 2 |
+| 5 | 01.02.02.0446 | 轴套 | S-RB1830-03-07-Q235 | 1 |
+| 6 | 01.01.01.1589 | 左连接器板 | S-LP1730(68IN)-MP1140-LT-01-06-Q460 | 1 |
+| 7 | 01.01.01.1590 | 上挂板 | S-LP1730(68IN)-MP1140-LT-01-07-Q460 | 1 |
+| 8 | 01.01.01.1593 | 方形板-机加 | S-LP1730(68IN)-MP1140-LT-01-10-Q460 | 2 |
+| 9 | 01.01.01.1591 | 右连接器板 | S-LP1730(68IN)-MP1140-LT-01-08-Q460 | 1 |
+| 10 | 01.01.01.1626 | 三角板 | SJB-T8*64*37-Q355B | 4 |
+| 11 | 01.01.01.3941 | 方形板 | FXB-T6*75*75-Q235 | 4 |
+| 12 | 01.01.01.0517 | 防滑板 | S-EDGP1630-DR-01-10-Q235 | 2 |
+| 13 | 01.01.01.0517 | 防滑板 | S-EDGP1630-DR-01-10-Q235 | 2 |
+
+---
+
+### 分析步骤1：BOM 01.01.03.0692 (方管 FG-T5*80*80-1134-Q345)
+
+- **Step1_extract**: 产品代号=FG-T5*80*80-1134-Q345。
+- **Step2_candidates**: NAUO1, NAUO2 (名称包含1134)。
+- **Step3_comparison**:
+    - NAUO1: `FG-T5x80x80-1134-Q345·½¹`。产品代号`FG-T5x80x80-1134-Q345`与BOM的`FG-T5*80*80-1134-Q345`完全匹配（符号*和x等价）。
+    - NAUO2: `FG-T5x80x80-1134-Q345·½¹_1`。产品代号完全匹配。
+- **Step4_confidence**: 0.98 (产品代号完全匹配)。
+- **Step5_decision**: 匹配NAUO1和NAUO2。
+
+### 分析步骤2：BOM 01.01.03.0693 (方管 FG-T5*80*80-318-Q345)
+
+- **Step1_extract**: 产品代号=FG-T5*80*80-318-Q345。
+- **Step2_candidates**: NAUO3, NAUO4 (名称包含318)。
+- **Step3_comparison**:
+    - NAUO3: `FG-T5x80x80-318-Q345·½¹`。产品代号`FG-T5x80x80-318-Q345`与BOM完全匹配。
+    - NAUO4: `FG-T5x80x80-318-Q345·½¹_1`。产品代号完全匹配。
+- **Step4_confidence**: 0.98 (产品代号完全匹配)。
+- **Step5_decision**: 匹配NAUO3和NAUO4。
+
+### 分析步骤3：BOM 01.01.4792 (中侧板 S-RB1830-03-02-Q345)
+
+- **Step1_extract**: 产品代号=S-RB1830-03-02-Q345。
+- **Step2_candidates**: NAUO5, NAUO6 (名称包含S-RB1830-03-02)。
+- **Step3_comparison**:
+    - NAUO5: `S-RB1830-03-02-Q345א²౥T10`。产品代号`S-RB1830-03-02-Q345`完全匹配。
+    - NAUO6: `S-RB1830-03-02-Q345א²౥T10_1`。产品代号完全匹配。
+- **Step4_confidence**: 0.95 (产品代号完全匹配，名称乱码)。
+- **Step5_decision**: 匹配NAUO5和NAUO6。
+
+### 分析步骤4：BOM 01.02.01.3875 (中连接板 S-RB1830-03-03-Q345)
+
+- **Step1_extract**: 产品代号=S-RB1830-03-03-Q345。
+- **Step2_candidates**: NAUO7, NAUO8 (名称包含S-RB1830-03-03)。
+- **Step3_comparison**:
+    - NAUO7: `S-RB1830-03-03-Q345אl½Ӱ蒸2`。产品代号`S-RB1830-03-03-Q345`完全匹配。
+    - NAUO8: `S-RB1830-03-03-Q345אl½Ӱ蒸2_1`。产品代号完全匹配。
+- **Step4_confidence**: 0.95 (产品代号完全匹配，名称乱码)。
+- **Step5_decision**: 匹配NAUO7和NAUO8。
+
+### 分析步骤5：BOM 01.02.02.0446 (轴套 S-RB1830-03-07-Q235)
+
+- **Step1_extract**: 产品代号=S-RB1830-03-07-Q235。
+- **Step2_candidates**: NAUO10 (名称包含S-RB1830-03-07)。
+- **Step3_comparison**:
+    - NAUO10: `S-RB1830-03-07-Q235ס͗`。产品代号`S-RB1830-03-07-Q235`完全匹配。
+- **Step4_confidence**: 0.95 (产品代号完全匹配，名称乱码)。
+- **Step5_decision**: 匹配NAUO10。
+
+### 分析步骤6：BOM 01.01.01.1589 (左连接器板 S-LP1730(68IN)-MP1140-LT-01-06-Q460)
+
+- **Step1_extract**: 产品代号=S-LP1730(68IN)-MP1140-LT-01-06-Q460。
+- **Step2_candidates**: NAUO11 (名称包含S-LP1730...-01-06)。
+- **Step3_comparison**:
+    - NAUO11: `S-LP1730(68IN)-MP1140-LT-01-06-Q460×óÁ¬½ÓÆ÷°å`。产品代号完全匹配。
+- **Step4_confidence**: 0.98 (产品代号完全匹配，名称可识别)。
+- **Step5_decision**: 匹配NAUO11。
+
+### 分析步骤7：BOM 01.01.01.1590 (上挂板 S-LP1730(68IN)-MP1140-LT-01-07-Q460)
+
+- **Step1_extract**: 产品代号=S-LP1730(68IN)-MP1140-LT-01-07-Q460。
+- **Step2_candidates**: NAUO12 (名称包含S-LP1730...-01-07)。
+- **Step3_comparison**:
+    - NAUO12: `S-LP1730(68IN)-MP1140-LT-01-07-Q460ʏ¹Ұ㥀`。产品代号完全匹配。
+- **Step4_confidence**: 0.95 (产品代号完全匹配，名称乱码)。
+- **Step5_decision**: 匹配NAUO12。
+
+### 分析步骤8：BOM 01.01.01.1593 (方形板-机加 S-LP1730(68IN)-MP1140-LT-01-10-Q460)
+
+- **Step1_extract**: 产品代号=S-LP1730(68IN)-MP1140-LT-01-10-Q460。
+- **Step2_candidates**: NAUO13, NAUO15 (名称包含S-LP1730...-01-10)。
+- **Step3_comparison**:
+    - NAUO13: `S-LP1730(68IN)-MP1140-LT-01-10-Q460·½ÐÎ°å-»ú¼Ó`。产品代号完全匹配。
+    - NAUO15: `S-LP1730(68IN)-MP1140-LT-01-10-Q460·½ÐÎ°å-»ú¼Ó_1`。产品代号完全匹配。
+- **Step4_confidence**: 0.98 (产品代号完全匹配，名称可识别)。
+- **Step5_decision**: 匹配NAUO13和NAUO15。
+
+### 分析步骤9：BOM 01.01.01.1591 (右连接器板 S-LP1730(68IN)-MP1140-LT-01-08-Q460)
+
+- **Step1_extract**: 产品代号=S-LP1730(68IN)-MP1140-LT-01-08-Q460。
+- **Step2_candidates**: NAUO14 (名称包含S-LP1730...-01-08)。
+- **Step3_comparison**:
+    - NAUO14: `S-LP1730(68IN)-MP1140-LT-01-08-Q460ÓÒÁ¬½ÓÆ÷°å`。产品代号完全匹配。
+- **Step4_confidence**: 0.98 (产品代号完全匹配，名称可识别)。
+- **Step5_decision**: 匹配NAUO14。
+
+### 分析步骤10：BOM 01.01.01.1626 (三角板 SJB-T8*64*37-Q355B)
+
+- **Step1_extract**: 产品代号=SJB-T8*64*37-Q355B。
+- **Step2_candidates**: NAUO16, NAUO17, NAUO18, NAUO19 (名称包含SJB-T8)。
+- **Step3_comparison**:
+    - NAUO16-NAUO19: `SJB-T8¡Á64¡Á37-Q355BÈý½Ç°å`。产品代号`SJB-T8x64x37-Q355B`与BOM完全匹配（符号*和¡Á等价）。
+- **Step4_confidence**: 0.98 (产品代号完全匹配，名称可识别)。
+- **Step5_decision**: 匹配NAUO16, NAUO17, NAUO18, NAUO19。
+
+### 分析步骤11：BOM 01.01.01.3941 (方形板 FXB-T6*75*75-Q235)
+
+- **Step1_extract**: 产品代号=FXB-T6*75*75-Q235。
+- **Step2_candidates**: NAUO20, NAUO21, NAUO22, NAUO23 (名称包含FXB-T6)。
+- **Step3_comparison**:
+    - NAUO20-NAUO23: `FXB-T6¡Á75¡Á75-Q235·½ÐÎ°å`。产品代号`FXB-T6x75x75-Q235`与BOM完全匹配。
+- **Step4_confidence**: 0.98 (产品代号完全匹配，名称可识别)。
+- **Step5_decision**: 匹配NAUO20, NAUO21, NAUO22, NAUO23。
+
+### 分析步骤12 & 13：BOM 01.01.01.0517 (防滑板 S-EDGP1630-DR-01-10-Q235)
+
+- **Step1_extract**: 产品代号=S-EDGP1630-DR-01-10-Q235。
+- **Step2_candidates**: NAUO24, NAUO25 (名称包含S-EDGP1630-DR-01-10)。
+- **Step3_comparison**:
+    - NAUO24: `S-EDGP1630-DR-01-10-Q235·;¬°㥀1yX6XNa`。产品代号完全匹配。
+    - NAUO25: `S-EDGP1630-DR-01-10-Q235·;¬°㥀1yX6XNa _1`。产品代号完全匹配。
+- **Step4_confidence**: 0.95 (产品代号完全匹配，名称乱码)。
+- **Step5_decision**: 匹配NAUO24和NAUO25，覆盖两个BOM项。
+
+---
+## 匹配结果输出
+
+```json
+{
+  "cot_analysis": {
+    "total_unmatched_bom": 13,
+    "total_unmatched_3d": 25,
+    "analysis_steps": [
+      {
+        "bom_code": "01.01.03.0692",
+        "bom_name": "方管",
+        "bom_product_code": "FG-T5*80*80-1134-Q345",
+        "step1_extract": "产品代号=FG-T5*80*80-1134-Q345",
+        "step2_candidates": [
+          "NAUO1: FG-T5x80x80-1134-Q345·½¹",
+          "NAUO2: FG-T5x80x80-1134-Q345·½¹_1"
+        ],
+        "step3_comparison": "NAUO1/NAUO2的产品代号与BOM完全一致(符号标准化)",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配NAUO1和NAUO2"
+      },
+      {
+        "bom_code": "01.01.03.0693",
+        "bom_name": "方管",
+        "bom_product_code": "FG-T5*80*80-318-Q345",
+        "step1_extract": "产品代号=FG-T5*80*80-318-Q345",
+        "step2_candidates": [
+          "NAUO3: FG-T5x80x80-318-Q345·½¹",
+          "NAUO4: FG-T5x80x80-318-Q345·½¹_1"
+        ],
+        "step3_comparison": "NAUO3/NAUO4的产品代号与BOM完全一致(符号标准化)",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配NAUO3和NAUO4"
+      },
+      {
+        "bom_code": "01.01.4792",
+        "bom_name": "中侧板",
+        "bom_product_code": "S-RB1830-03-02-Q345",
+        "step1_extract": "产品代号=S-RB1830-03-02-Q345",
+        "step2_candidates": [
+          "NAUO5: S-RB1830-03-02-Q345א²౥T10",
+          "NAUO6: S-RB1830-03-02-Q345א²౥T10_1"
+        ],
+        "step3_comparison": "NAUO5/NAUO6的产品代号完全匹配",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配NAUO5和NAUO6"
+      },
+      {
+        "bom_code": "01.02.01.3875",
+        "bom_name": "中连接板",
+        "bom_product_code": "S-RB1830-03-03-Q345",
+        "step1_extract": "产品代号=S-RB1830-03-03-Q345",
+        "step2_candidates": [
+          "NAUO7: S-RB1830-03-03-Q345אl½Ӱ蒸2",
+          "NAUO8: S-RB1830-03-03-Q345אl½Ӱ蒸2_1"
+        ],
+        "step3_comparison": "NAUO7/NAUO8的产品代号完全匹配",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配NAUO7和NAUO8"
+      },
+      {
+        "bom_code": "01.02.02.0446",
+        "bom_name": "轴套",
+        "bom_product_code": "S-RB1830-03-07-Q235",
+        "step1_extract": "产品代号=S-RB1830-03-07-Q235",
+        "step2_candidates": [
+          "NAUO10: S-RB1830-03-07-Q235ס͗"
+        ],
+        "step3_comparison": "NAUO10的产品代号完全匹配",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配NAUO10"
+      },
+      {
+        "bom_code": "01.01.01.1589",
+        "bom_name": "左连接器板",
+        "bom_product_code": "S-LP1730(68IN)-MP1140-LT-01-06-Q460",
+        "step1_extract": "产品代号=S-LP1730(68IN)-MP1140-LT-01-06-Q460",
+        "step2_candidates": [
+          "NAUO11: S-LP1730(68IN)-MP1140-LT-01-06-Q460×óÁ¬½ÓÆ÷°å"
+        ],
+        "step3_comparison": "NAUO11的产品代号完全匹配",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配NAUO11"
+      },
+      {
+        "bom_code": "01.01.01.1590",
+        "bom_name": "上挂板",
+        "bom_product_code": "S-LP1730(68IN)-MP1140-LT-01-07-Q460",
+        "step1_extract": "产品代号=S-LP1730(68IN)-MP1140-LT-01-07-Q460",
+        "step2_candidates": [
+          "NAUO12: S-LP1730(68IN)-MP1140-LT-01-07-Q460ʏ¹Ұ㥀"
+        ],
+        "step3_comparison": "NAUO12的产品代号完全匹配",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配NAUO12"
+      },
+      {
+        "bom_code": "01.01.01.1593",
+        "bom_name": "方形板-机加",
+        "bom_product_code": "S-LP1730(68IN)-MP1140-LT-01-10-Q460",
+        "step1_extract": "产品代号=S-LP1730(68IN)-MP1140-LT-01-10-Q460",
+        "step2_candidates": [
+          "NAUO13: S-LP1730(68IN)-MP1140-LT-01-10-Q460·½ÐÎ°å-»ú¼Ó",
+          "NAUO15: S-LP1730(68IN)-MP1140-LT-01-10-Q460·½ÐÎ°å-»ú¼Ó_1"
+        ],
+        "step3_comparison": "NAUO13/NAUO15的产品代号完全匹配",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配NAUO13和NAUO15"
+      },
+      {
+        "bom_code": "01.01.01.1591",
+        "bom_name": "右连接器板",
+        "bom_product_code": "S-LP1730(68IN)-MP1140-LT-01-08-Q460",
+        "step1_extract": "产品代号=S-LP1730(68IN)-MP1140-LT-01-08-Q460",
+        "step2_candidates": [
+          "NAUO14: S-LP1730(68IN)-MP1140-LT-01-08-Q460ÓÒÁ¬½ÓÆ÷°å"
+        ],
+        "step3_comparison": "NAUO14的产品代号完全匹配",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配NAUO14"
+      },
+      {
+        "bom_code": "01.01.01.1626",
+        "bom_name": "三角板",
+        "bom_product_code": "SJB-T8*64*37-Q355B",
+        "step1_extract": "产品代号=SJB-T8*64*37-Q355B",
+        "step2_candidates": [
+          "NAUO16: SJB-T8¡Á64¡Á37-Q355BÈý½Ç°å",
+          "NAUO19: SJB-T8¡Á64¡Á37-Q355BÈý½Ç°å_3"
+        ],
+        "step3_comparison": "NAUO16-NAUO19的产品代号完全匹配(符号标准化)",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配NAUO16, NAUO17, NAUO18, NAUO19"
+      },
+      {
+        "bom_code": "01.01.01.3941",
+        "bom_name": "方形板",
+        "bom_product_code": "FXB-T6*75*75-Q235",
+        "step1_extract": "产品代号=FXB-T6*75*75-Q235",
+        "step2_candidates": [
+          "NAUO20: FXB-T6¡Á75¡Á75-Q235·½ÐÎ°å",
+          "NAUO23: FXB-T6¡Á75¡Á75-Q235·½ÐÎ°å_3"
+        ],
+        "step3_comparison": "NAUO20-NAUO23的产品代号完全匹配(符号标准化)",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配NAUO20, NAUO21, NAUO22, NAUO23"
+      },
+      {
+        "bom_code": "01.01.01.0517",
+        "bom_name": "防滑板",
+        "bom_product_code": "S-EDGP1630-DR-01-10-Q235",
+        "step1_extract": "产品代号=S-EDGP1630-DR-01-10-Q235",
+        "step2_candidates": [
+          "NAUO24: S-EDGP1630-DR-01-10-Q235·;¬°㥀1yX6XNa",
+          "NAUO25: S-EDGP1630-DR-01-10-Q235·;¬°㥀1yX6XNa _1"
+        ],
+        "step3_comparison": "NAUO24/NAUO25的产品代号完全匹配",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配NAUO24和NAUO25，覆盖两个BOM项"
+      }
+    ]
+  },
+  "ai_matched_pairs": [
+    {
+      "node_name": "NAUO1",
+      "bom_code": "01.01.03.0692",
+      "confidence": 0.98,
+      "reasoning": "产品代号FG-T5*80*80-1134-Q345完全匹配"
+    },
+    {
+      "node_name": "NAUO2",
+      "bom_code": "01.01.03.0692",
+      "confidence": 0.98,
+      "reasoning": "产品代号FG-T5*80*80-1134-Q345完全匹配"
+    },
+    {
+      "node_name": "NAUO3",
+      "bom_code": "01.01.03.0693",
+      "confidence": 0.98,
+      "reasoning": "产品代号FG-T5*80*80-318-Q345完全匹配"
+    },
+    {
+      "node_name": "NAUO4",
+      "bom_code": "01.01.03.0693",
+      "confidence": 0.98,
+      "reasoning": "产品代号FG-T5*80*80-318-Q345完全匹配"
+    },
+    {
+      "node_name": "NAUO5",
+      "bom_code": "01.01.4792",
+      "confidence": 0.95,
+      "reasoning": "产品代号S-RB1830-03-02-Q345完全匹配"
+    },
+    {
+      "node_name": "NAUO6",
+      "bom_code": "01.01.4792",
+      "confidence": 0.95,
+      "reasoning": "产品代号S-RB1830-03-02-Q345完全匹配"
+    },
+    {
+      "node_name": "NAUO7",
+      "bom_code": "01.02.01.3875",
+      "confidence": 0.95,
+      "reasoning": "产品代号S-RB1830-03-03-Q345完全匹配"
+    },
+    {
+      "node_name": "NAUO8",
+      "bom_code": "01.02.01.3875",
+      "confidence": 0.95,
+      "reasoning": "产品代号S-RB1830-03-03-Q345完全匹配"
+    },
+    {
+      "node_name": "NAUO10",
+      "bom_code": "01.02.02.0446",
+      "confidence": 0.95,
+      "reasoning": "产品代号S-RB1830-03-07-Q235完全匹配"
+    },
+    {
+      "node_name": "NAUO11",
+      "bom_code": "01.01.01.1589",
+      "confidence": 0.98,
+      "reasoning": "产品代号S-LP1730...-01-06-Q460完全匹配"
+    },
+    {
+      "node_name": "NAUO12",
+      "bom_code": "01.01.01.1590",
+      "confidence": 0.95,
+      "reasoning": "产品代号S-LP1730...-01-07-Q460完全匹配"
+    },
+    {
+      "node_name": "NAUO13",
+      "bom_code": "01.01.01.1593",
+      "confidence": 0.98,
+      "reasoning": "产品代号S-LP1730...-01-10-Q460完全匹配"
+    },
+    {
+      "node_name": "NAUO15",
+      "bom_code": "01.01.01.1593",
+      "confidence": 0.98,
+      "reasoning": "产品代号S-LP1730...-01-10-Q460完全匹配"
+    },
+    {
+      "node_name": "NAUO14",
+      "bom_code": "01.01.01.1591",
+      "confidence": 0.98,
+      "reasoning": "产品代号S-LP1730...-01-08-Q460完全匹配"
+    },
+    {
+      "node_name": "NAUO16",
+      "bom_code": "01.01.01.1626",
+      "confidence": 0.98,
+      "reasoning": "产品代号SJB-T8*64*37-Q355B完全匹配"
+    },
+    {
+      "node_name": "NAUO17",
+      "bom_code": "01.01.01.1626",
+      "confidence": 0.98,
+      "reasoning": "产品代号SJB-T8*64*37-Q355B完全匹配"
+    },
+    {
+      "node_name": "NAUO18",
+      "bom_code": "01.01.01.1626",
+      "confidence": 0.98,
+      "reasoning": "产品代号SJB-T8*64*37-Q355B完全匹配"
+    },
+    {
+      "node_name": "NAUO19",
+      "bom_code": "01.01.01.1626",
+      "confidence": 0.98,
+      "reasoning": "产品代号SJB-T8*64*37-Q355B完全匹配"
+    },
+    {
+      "node_name": "NAUO20",
+      "bom_code": "01.01.01.3941",
+      "confidence": 0.98,
+      "reasoning": "产品代号FXB-T6*75*75-Q235完全匹配"
+    },
+    {
+      "node_name": "NAUO21",
+      "bom_code": "01.01.01.3941",
+      "confidence": 0.98,
+      "reasoning": "产品代号FXB-T6*75*75-Q235完全匹配"
+    },
+    {
+      "node_name": "NAUO22",
+      "bom_code": "01.01.01.3941",
+      "confidence": 0.98,
+      "reasoning": "产品代号FXB-T6*75*75-Q235完全匹配"
+    },
+    {
+      "node_name": "NAUO23",
+      "bom_code": "01.01.01.3941",
+      "confidence": 0.98,
+      "reasoning": "产品代号FXB-T6*75*75-Q235完全匹配"
+    },
+    {
+      "node_name": "NAUO24",
+      "bom_code": "01.01.01.0517",
+      "confidence": 0.95,
+      "reasoning": "产品代号S-EDGP1630-DR-01-10-Q235完全匹配"
+    },
+    {
+      "node_name": "NAUO25",
+      "bom_code": "01.01.01.0517",
+      "confidence": 0.95,
+      "reasoning": "产品代号S-EDGP1630-DR-01-10-Q235完全匹配"
+    }
+  ]
+}
+```

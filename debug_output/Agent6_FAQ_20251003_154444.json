@@ -1,0 +1,277 @@
+{
+  "agent_name": "Agent6_FAQ",
+  "model": "google/gemini-2.5-flash-preview-09-2025",
+  "timestamp": "20251003_154444",
+  "image_count": 0,
+  "temperature": 0.2,
+  "system_prompt": "你是安全工程师李师傅，拥有20年安全管理经验。\n\n你的任务：为每个装配步骤添加安全警告（如果该步骤有安全风险）。\n\n## 核心原则\n\n1. **安全第一**：识别所有潜在的安全风险\n2. **嵌入警告**：为有风险的步骤添加safety_warnings字段\n3. **工人友好**：使用通俗语言，避免专业术语\n\n## 输出格式\n\n严格按照以下JSON格式输出（返回增强后的装配步骤）：\n\n```json\n{\n  \"enhanced_steps\": [\n    {\n      \"step_number\": 1,\n      \"title\": \"步骤标题\",\n      \"parts_used\": [...],\n      \"tools_required\": [...],\n      \"operation\": \"操作说明\",\n      \"quality_check\": \"质量检查\",\n      \"estimated_time_minutes\": 10,\n      \"welding\": {...},\n      \"safety_warnings\": [\n        \"佩戴安全帽和防护眼镜\",\n        \"确保工件固定牢固\",\n        \"注意防止烫伤\"\n      ]\n    }\n  ]\n}\n```\n\n**⚠️ 重要**：\n- 如果步骤没有安全风险，不要添加safety_warnings字段\n- 如果步骤有安全风险，safety_warnings必须是字符串数组\n- 保持原有步骤的所有字段不变，只添加safety_warnings字段\n\n## 重要提醒\n\n- **只输出JSON，不要输出其他内容**\n- **安全警告要具体**：说明具体的风险和预防措施\n- **使用通俗语言**：工人能看懂的语言\n",
+  "user_query": "请为以下装配步骤添加安全警告（如果有安全风险）。\n\n## 装配步骤\n\n[\n  {\n    \"step_number\": 1,\n    \"title\": \"安装连接板\",\n    \"parts_used\": [\n      {\n        \"bom_code\": \"01.01.01.11509\",\n        \"bom_name\": \"连接板 1\",\n        \"quantity\": 1,\n        \"mesh_id\": [\n          \"mesh_018\"\n        ]\n      },\n      {\n        \"bom_code\": \"01.01.03.2718\",\n        \"bom_name\": \"矩形管 1\",\n        \"quantity\": 1,\n        \"mesh_id\": [\n          \"mesh_019\"\n        ]\n      }\n    ],\n    \"tools_required\": [\n      \"装配平台\",\n      \"直角尺\",\n      \"点焊机\"\n    ],\n    \"operation\": \"将连接板（基准件）平稳放置在装配平台上。将矩形管 1（长边）对准连接板的底部边缘，使用夹具固定到位。确保矩形管与连接板垂直，并进行点焊定位。\",\n    \"quality_check\": \"检查矩形管与连接板的垂直度，误差不超过1mm。点焊位置要牢固，防止后续装配时移位。\",\n    \"estimated_time_minutes\": 8,\n    \"welding\": {\n      \"required\": true,\n      \"welding_type\": \"点焊/定位焊\",\n      \"welding_method\": \"CO2气保焊\",\n      \"weld_size\": \"点焊长度10mm，共4点\",\n      \"welding_position\": \"连接板与矩形管的连接处\",\n      \"quality_requirements\": \"点焊要牢固，防止零件在后续操作中移位。\",\n      \"safety_notes\": \"点焊时注意飞溅，佩戴防护眼镜和手套。\"\n    }\n  },\n  {\n    \"step_number\": 2,\n    \"title\": \"安装侧面矩形管\",\n    \"parts_used\": [\n      {\n        \"bom_code\": \"01.01.03.2720\",\n        \"bom_name\": \"矩形管 1\",\n        \"quantity\": 1,\n        \"mesh_id\": [\n          \"mesh_003\"\n        ]\n      },\n      {\n        \"bom_code\": \"01.01.03.2719\",\n        \"bom_name\": \"矩形管 2\",\n        \"quantity\": 2,\n        \"mesh_id\": [\n          \"mesh_006\",\n          \"mesh_007\"\n        ]\n      }\n    ],\n    \"tools_required\": [\n      \"直角尺\",\n      \"卡尺\",\n      \"点焊机\"\n    ],\n    \"operation\": \"将矩形管 1（短边，作为上横梁）放置在连接板的顶部，并与底部的矩形管 1（长边）对齐。然后，将两个矩形管 2（侧立柱）分别安装在连接板的两侧，连接上下矩形管。使用夹具固定，并进行点焊定位。\",\n    \"quality_check\": \"检查整体框架的尺寸和对角线长度，确保框架方正。检查矩形管 2 的间距是否符合图纸要求。\",\n    \"estimated_time_minutes\": 10,\n    \"welding\": {\n      \"required\": true,\n      \"welding_type\": \"点焊/定位焊\",\n      \"welding_method\": \"CO2气保焊\",\n      \"weld_size\": \"点焊长度10mm，每处连接2点\",\n      \"welding_position\": \"所有矩形管之间的连接角部\",\n      \"quality_requirements\": \"定位焊要保证框架的垂直度和方正度，焊点不能太大，方便后续清根。\",\n      \"safety_notes\": \"确保工件接地良好，防止触电。点焊后检查夹具是否松动。\"\n    }\n  },\n  {\n    \"step_number\": 3,\n    \"title\": \"安装左右挂件\",\n    \"parts_used\": [\n      {\n        \"bom_code\": \"01.05.0019\",\n        \"bom_name\": \"左挂件虚拟组件 1\",\n        \"quantity\": 1,\n        \"mesh_id\": [\n          \"mesh_009\"\n        ]\n      },\n      {\n        \"bom_code\": \"01.05.0018\",\n        \"bom_name\": \"右挂件虚拟组件 1\",\n        \"quantity\": 1,\n        \"mesh_id\": [\n          \"mesh_008\"\n        ]\n      }\n    ],\n    \"tools_required\": [\n      \"定位工装\",\n      \"点焊机\"\n    ],\n    \"operation\": \"根据图纸要求，将左挂件虚拟组件和右挂件虚拟组件分别安装到框架的两端。使用专用定位工装确保挂件的轴线高度和间距准确。点焊固定。\",\n    \"quality_check\": \"检查左右挂件的相对位置和水平度，确保挂件的轴孔中心距符合图纸公差要求。\",\n    \"estimated_time_minutes\": 12,\n    \"welding\": {\n      \"required\": true,\n      \"welding_type\": \"点焊/定位焊\",\n      \"welding_method\": \"CO2气保焊\",\n      \"weld_size\": \"点焊长度8mm，每侧2点\",\n      \"welding_position\": \"挂件与矩形管的接触面\",\n      \"quality_requirements\": \"定位焊必须在定位工装夹紧状态下进行，确保位置精度。\",\n      \"safety_notes\": \"使用定位工装时，注意手部安全，避免夹伤。焊接前清理定位区域的油污。\"\n    }\n  },\n  {\n    \"step_number\": 4,\n    \"title\": \"安装封板\",\n    \"parts_used\": [\n      {\n        \"bom_code\": \"01.01.01.16608\",\n        \"bom_name\": \"封板 2\",\n        \"quantity\": 2,\n        \"mesh_id\": [\n          \"mesh_004\"\n        ]\n      }\n    ],\n    \"tools_required\": [\n      \"点焊机\"\n    ],\n    \"operation\": \"将两块封板分别安装到框架的侧面开口处，与矩形管和连接板边缘对齐。确保封板平整，无翘曲，并进行点焊定位。\",\n    \"quality_check\": \"检查封板与框架的贴合度，缝隙应均匀且最小化。\",\n    \"estimated_time_minutes\": 6,\n    \"welding\": {\n      \"required\": true,\n      \"welding_type\": \"点焊/定位焊\",\n      \"welding_method\": \"CO2气保焊\",\n      \"weld_size\": \"点焊长度5mm，每块封板均匀分布4点\",\n      \"welding_position\": \"封板与矩形管的边缘接触处\",\n      \"quality_requirements\": \"点焊要均匀分布，防止封板在后续焊接中产生较大变形。\",\n      \"safety_notes\": \"封板较薄，点焊时注意电流和电压设置，避免烧穿。\"\n    }\n  },\n  {\n    \"step_number\": 5,\n    \"title\": \"安装加强筋\",\n    \"parts_used\": [\n      {\n        \"bom_code\": \"01.01.01.17678\",\n        \"bom_name\": \"加强筋 2\",\n        \"quantity\": 2,\n        \"mesh_id\": [\n          \"mesh_001\"\n        ]\n      }\n    ],\n    \"tools_required\": [\n      \"直角尺\",\n      \"点焊机\"\n    ],\n    \"operation\": \"将两个加强筋安装在框架内部，用于支撑连接板和矩形管。确保加强筋的斜面方向正确，并与相邻零件紧密贴合。点焊固定。\",\n    \"quality_check\": \"检查加强筋的安装角度和位置，确保其起到有效支撑作用。\",\n    \"estimated_time_minutes\": 7,\n    \"welding\": {\n      \"required\": true,\n      \"welding_type\": \"点焊/定位焊\",\n      \"welding_method\": \"CO2气保焊\",\n      \"weld_size\": \"点焊长度10mm，每条边2点\",\n      \"welding_position\": \"加强筋与连接板和矩形管的接触边\",\n      \"quality_requirements\": \"加强筋必须紧密贴合，定位焊要保证受力方向的牢固性。\",\n      \"safety_notes\": \"加强筋在内部，操作空间小，注意焊枪角度，避免烫伤。\"\n    }\n  },\n  {\n    \"step_number\": 6,\n    \"title\": \"安装方形板-机加\",\n    \"parts_used\": [\n      {\n        \"bom_code\": \"01.01.01.6589\",\n        \"bom_name\": \"方形板-机加 4\",\n        \"quantity\": 4,\n        \"mesh_id\": [\n          \"mesh_014\"\n        ]\n      }\n    ],\n    \"tools_required\": [\n      \"点焊机\"\n    ],\n    \"operation\": \"将四个方形板-机加（小块）分别安装到框架的指定位置（通常是底部或侧面的加强点）。确保它们与主体结构对齐，并进行点焊定位。\",\n    \"quality_check\": \"检查方形板的安装位置是否准确，特别是孔位是否与图纸一致。\",\n    \"estimated_time_minutes\": 5,\n    \"welding\": {\n      \"required\": true,\n      \"welding_type\": \"点焊/定位焊\",\n      \"welding_method\": \"CO2气保焊\",\n      \"weld_size\": \"点焊长度5mm，每块板2点\",\n      \"welding_position\": \"方形板与主体结构的接触边缘\",\n      \"quality_requirements\": \"方形板是机加工件，定位焊时要保护孔位精度，避免变形。\",\n      \"safety_notes\": \"小零件容易发热，注意散热和防烫。\"\n    }\n  },\n  {\n    \"step_number\": 7,\n    \"title\": \"整体焊接\",\n    \"parts_used\": [],\n    \"tools_required\": [\n      \"CO2焊机\",\n      \"焊枪\",\n      \"焊渣锤\"\n    ],\n    \"operation\": \"对所有已点焊定位的零件进行全面焊接。按照先内后外、先短后长的顺序进行焊接，以减少焊接变形。焊接完成后，清理焊渣，并进行外观检查。\",\n    \"quality_check\": \"检查所有焊缝是否饱满、均匀，无虚焊、漏焊、裂纹等缺陷。检查组件整体尺寸和平面度，确保焊接变形在允许范围内。\",\n    \"estimated_time_minutes\": 20,\n    \"welding\": {\n      \"required\": true,\n      \"welding_type\": \"角焊/搭接焊\",\n      \"welding_method\": \"CO2气保焊\",\n      \"weld_size\": \"焊脚高度6mm（按图纸要求），连续焊缝\",\n      \"welding_position\": \"所有零件的连接处（包括矩形管、连接板、挂件、加强筋和封板）\",\n      \"quality_requirements\": \"焊缝必须连续、饱满，不得有咬边、气孔、夹渣等缺陷。焊缝高度和宽度要均匀。\",\n      \"safety_notes\": \"进行全面焊接时，工作区域必须保持良好通风，防止烟尘中毒。佩戴全套防护用品（面罩、手套、防火服）。注意控制热输入，防止结构件变形过大。\"\n    }\n  }\n]\n\n## 要求\n\n1. **识别风险步骤**：判断哪些步骤有安全风险（吊装、焊接、高空作业、重物搬运等）\n2. **添加安全警告**：为有风险的步骤添加safety_warnings字段\n3. **保持原有字段**：不要修改或删除原有的字段（step_number、title、welding等）\n4. **使用通俗语言**：工人能看懂的语言\n5. **警告要具体**：说明具体的风险和预防措施\n\n## 自检清单\n\n- [ ] 所有有风险的步骤都添加了safety_warnings字段\n- [ ] safety_warnings是字符串数组，每条警告简洁明了\n- [ ] 原有步骤的所有字段都保持不变\n- [ ] 没有风险的步骤没有添加safety_warnings字段\n\n现在开始为装配步骤添加安全警告！\n",
+  "raw_response": "```json\n{\n  \"enhanced_steps\": [\n    {\n      \"step_number\": 1,\n      \"title\": \"安装连接板\",\n      \"parts_used\": [\n        {\n          \"bom_code\": \"01.01.01.11509\",\n          \"bom_name\": \"连接板 1\",\n          \"quantity\": 1,\n          \"mesh_id\": [\n            \"mesh_018\"\n          ]\n        },\n        {\n          \"bom_code\": \"01.01.03.2718\",\n          \"bom_name\": \"矩形管 1\",\n          \"quantity\": 1,\n          \"mesh_id\": [\n            \"mesh_019\"\n          ]\n        }\n      ],\n      \"tools_required\": [\n        \"装配平台\",\n        \"直角尺\",\n        \"点焊机\"\n      ],\n      \"operation\": \"将连接板（基准件）平稳放置在装配平台上。将矩形管 1（长边）对准连接板的底部边缘，使用夹具固定到位。确保矩形管与连接板垂直，并进行点焊定位。\",\n      \"quality_check\": \"检查矩形管与连接板的垂直度，误差不超过1mm。点焊位置要牢固，防止后续装配时移位。\",\n      \"estimated_time_minutes\": 8,\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"点焊/定位焊\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"点焊长度10mm，共4点\",\n        \"welding_position\": \"连接板与矩形管的连接处\",\n        \"quality_requirements\": \"点焊要牢固，防止零件在后续操作中移位。\",\n        \"safety_notes\": \"点焊时注意飞溅，佩戴防护眼镜和手套。\"\n      },\n      \"safety_warnings\": [\n        \"进行点焊操作时，必须佩戴焊接面罩、防护眼镜和绝缘手套，防止电弧光和焊渣飞溅伤眼烫伤。\",\n        \"确保工件和夹具固定牢固，防止在点焊过程中零件突然移动或掉落伤人。\",\n        \"检查点焊机接地线是否连接可靠，防止触电事故。\"\n      ]\n    },\n    {\n      \"step_number\": 2,\n      \"title\": \"安装侧面矩形管\",\n      \"parts_used\": [\n        {\n          \"bom_code\": \"01.01.03.2720\",\n          \"bom_name\": \"矩形管 1\",\n          \"quantity\": 1,\n          \"mesh_id\": [\n            \"mesh_003\"\n          ]\n        },\n        {\n          \"bom_code\": \"01.01.03.2719\",\n          \"bom_name\": \"矩形管 2\",\n          \"quantity\": 2,\n          \"mesh_id\": [\n            \"mesh_006\",\n            \"mesh_007\"\n          ]\n        }\n      ],\n      \"tools_required\": [\n        \"直角尺\",\n        \"卡尺\",\n        \"点焊机\"\n      ],\n      \"operation\": \"将矩形管 1（短边，作为上横梁）放置在连接板的顶部，并与底部的矩形管 1（长边）对齐。然后，将两个矩形管 2（侧立柱）分别安装在连接板的两侧，连接上下矩形管。使用夹具固定，并进行点焊定位。\",\n      \"quality_check\": \"检查整体框架的尺寸和对角线长度，确保框架方正。检查矩形管 2 的间距是否符合图纸要求。\",\n      \"estimated_time_minutes\": 10,\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"点焊/定位焊\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"点焊长度10mm，每处连接2点\",\n        \"welding_position\": \"所有矩形管之间的连接角部\",\n        \"quality_requirements\": \"定位焊要保证框架的垂直度和方正度，焊点不能太大，方便后续清根。\",\n        \"safety_notes\": \"确保工件接地良好，防止触电。点焊后检查夹具是否松动。\"\n      },\n      \"safety_warnings\": [\n        \"操作点焊机时，必须穿戴好个人防护用品（焊接面罩、手套、工作服）。\",\n        \"使用夹具固定零件时，注意手部安全，避免被夹具或零件边缘夹伤或割伤。\",\n        \"点焊后零件表面温度高，清理焊渣或移动零件时，务必戴好手套，防止烫伤。\"\n      ]\n    },\n    {\n      \"step_number\": 3,\n      \"title\": \"安装左右挂件\",\n      \"parts_used\": [\n        {\n          \"bom_code\": \"01.05.0019\",\n          \"bom_name\": \"左挂件虚拟组件 1\",\n          \"quantity\": 1,\n          \"mesh_id\": [\n            \"mesh_009\"\n          ]\n        },\n        {\n          \"bom_code\": \"01.05.0018\",\n          \"bom_name\": \"右挂件虚拟组件 1\",\n          \"quantity\": 1,\n          \"mesh_id\": [\n            \"mesh_008\"\n          ]\n        }\n      ],\n      \"tools_required\": [\n        \"定位工装\",\n        \"点焊机\"\n      ],\n      \"operation\": \"根据图纸要求，将左挂件虚拟组件和右挂件虚拟组件分别安装到框架的两端。使用专用定位工装确保挂件的轴线高度和间距准确。点焊固定。\",\n      \"quality_check\": \"检查左右挂件的相对位置和水平度，确保挂件的轴孔中心距符合图纸公差要求。\",\n      \"estimated_time_minutes\": 12,\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"点焊/定位焊\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"点焊长度8mm，每侧2点\",\n        \"welding_position\": \"挂件与矩形管的接触面\",\n        \"quality_requirements\": \"定位焊必须在定位工装夹紧状态下进行，确保位置精度。\",\n        \"safety_notes\": \"使用定位工装时，注意手部安全，避免夹伤。焊接前清理定位区域的油污。\"\n      },\n      \"safety_warnings\": [\n        \"使用定位工装夹紧零件时，注意操作力度，避免手部被夹伤。\",\n        \"焊接前必须清理定位区域的油污、铁锈或水渍，防止焊接时产生有毒烟雾或影响焊接质量。\",\n        \"点焊时，确保焊枪电缆和气管没有缠绕或被重物压住，防止损坏或引发故障。\"\n      ]\n    },\n    {\n      \"step_number\": 4,\n      \"title\": \"安装封板\",\n      \"parts_used\": [\n        {\n          \"bom_code\": \"01.01.01.16608\",\n          \"bom_name\": \"封板 2\",\n          \"quantity\": 2,\n          \"mesh_id\": [\n            \"mesh_004\"\n          ]\n        }\n      ],\n      \"tools_required\": [\n        \"点焊机\"\n      ],\n      \"operation\": \"将两块封板分别安装到框架的侧面开口处，与矩形管和连接板边缘对齐。确保封板平整，无翘曲，并进行点焊定位。\",\n      \"quality_check\": \"检查封板与框架的贴合度，缝隙应均匀且最小化。\",\n      \"estimated_time_minutes\": 6,\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"点焊/定位焊\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"点焊长度5mm，每块封板均匀分布4点\",\n        \"welding_position\": \"封板与矩形管的边缘接触处\",\n        \"quality_requirements\": \"点焊要均匀分布，防止封板在后续焊接中产生较大变形。\",\n        \"safety_notes\": \"封板较薄，点焊时注意电流和电压设置，避免烧穿。\"\n      },\n      \"safety_warnings\": [\n        \"封板边缘可能锋利，搬运和安装时必须佩戴防割手套，防止割伤。\",\n        \"由于封板较薄，点焊时要快速准确，防止烧穿板材或造成大面积变形。\",\n        \"点焊机参数设置要符合薄板焊接要求，避免电流过大。\"\n      ]\n    },\n    {\n      \"step_number\": 5,\n      \"title\": \"安装加强筋\",\n      \"parts_used\": [\n        {\n          \"bom_code\": \"01.01.01.17678\",\n          \"bom_name\": \"加强筋 2\",\n          \"quantity\": 2,\n          \"mesh_id\": [\n            \"mesh_001\"\n          ]\n        }\n      ],\n      \"tools_required\": [\n        \"直角尺\",\n        \"点焊机\"\n      ],\n      \"operation\": \"将两个加强筋安装在框架内部，用于支撑连接板和矩形管。确保加强筋的斜面方向正确，并与相邻零件紧密贴合。点焊固定。\",\n      \"quality_check\": \"检查加强筋的安装角度和位置，确保其起到有效支撑作用。\",\n      \"estimated_time_minutes\": 7,\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"点焊/定位焊\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"点焊长度10mm，每条边2点\",\n        \"welding_position\": \"加强筋与连接板和矩形管的接触边\",\n        \"quality_requirements\": \"加强筋必须紧密贴合，定位焊要保证受力方向的牢固性。\",\n        \"safety_notes\": \"加强筋在内部，操作空间小，注意焊枪角度，避免烫伤。\"\n      },\n      \"safety_warnings\": [\n        \"加强筋安装在框架内部，操作空间狭窄，焊接时要特别注意焊枪和身体的距离，防止烫伤。\",\n        \"在狭小空间内焊接时，确保通风良好，避免吸入过量焊接烟尘。\",\n        \"操作完成后，检查工具是否遗留在框架内部，防止后续操作中造成损坏。\"\n      ]\n    },\n    {\n      \"step_number\": 6,\n      \"title\": \"安装方形板-机加\",\n      \"parts_used\": [\n        {\n          \"bom_code\": \"01.01.01.6589\",\n          \"bom_name\": \"方形板-机加 4\",\n          \"quantity\": 4,\n          \"mesh_id\": [\n            \"mesh_014\"\n          ]\n        }\n      ],\n      \"tools_required\": [\n        \"点焊机\"\n      ],\n      \"operation\": \"将四个方形板-机加（小块）分别安装到框架的指定位置（通常是底部或侧面的加强点）。确保它们与主体结构对齐，并进行点焊定位。\",\n      \"quality_check\": \"检查方形板的安装位置是否准确，特别是孔位是否与图纸一致。\",\n      \"estimated_time_minutes\": 5,\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"点焊/定位焊\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"点焊长度5mm，每块板2点\",\n        \"welding_position\": \"方形板与主体结构的接触边缘\",\n        \"quality_requirements\": \"方形板是机加工件，定位焊时要保护孔位精度，避免变形。\",\n        \"safety_notes\": \"小零件容易发热，注意散热和防烫。\"\n      },\n      \"safety_warnings\": [\n        \"方形板体积小，点焊后温度升高快，移动或检查时必须戴手套，防止烫伤。\",\n        \"定位焊时，要避免焊渣飞溅到机加工孔位内部，影响后续装配精度。\",\n        \"确保小零件固定稳固，防止在点焊过程中因夹持不牢而弹飞。\"\n      ]\n    },\n    {\n      \"step_number\": 7,\n      \"title\": \"整体焊接\",\n      \"parts_used\": [],\n      \"tools_required\": [\n        \"CO2焊机\",\n        \"焊枪\",\n        \"焊渣锤\"\n      ],\n      \"operation\": \"对所有已点焊定位的零件进行全面焊接。按照先内后外、先短后长的顺序进行焊接，以减少焊接变形。焊接完成后，清理焊渣，并进行外观检查。\",\n      \"quality_check\": \"检查所有焊缝是否饱满、均匀，无虚焊、漏焊、裂纹等缺陷。检查组件整体尺寸和平面度，确保焊接变形在允许范围内。\",\n      \"estimated_time_minutes\": 20,\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊/搭接焊\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"焊脚高度6mm（按图纸要求），连续焊缝\",\n        \"welding_position\": \"所有零件的连接处（包括矩形管、连接板、挂件、加强筋和封板）\",\n        \"quality_requirements\": \"焊缝必须连续、饱满，不得有咬边、气孔、夹渣等缺陷。焊缝高度和宽度要均匀。\",\n        \"safety_notes\": \"进行全面焊接时，工作区域必须保持良好通风，防止烟尘中毒。佩戴全套防护用品（面罩、手套、防火服）。注意控制热输入，防止结构件变形过大。\"\n      },\n      \"safety_warnings\": [\n        \"进行全面焊接时，必须佩戴全套防护用品：自动变光焊接面罩、防火服、绝缘手套和安全鞋。\",\n        \"确保工作区域有强制通风或局部排烟装置，防止吸入大量焊接烟尘，预防职业病。\",\n        \"使用焊渣锤清理焊渣时，必须佩戴防护眼镜，防止焊渣飞溅伤眼。\",\n        \"焊接过程中产生的热量大，注意周围环境，确保没有易燃易爆物品，并准备好灭火器材。\"\n      ]\n    }\n  ]\n}\n```",
+  "parsed_result": {
+    "enhanced_steps": [
+      {
+        "step_number": 1,
+        "title": "安装连接板",
+        "parts_used": [
+          {
+            "bom_code": "01.01.01.11509",
+            "bom_name": "连接板 1",
+            "quantity": 1,
+            "mesh_id": [
+              "mesh_018"
+            ]
+          },
+          {
+            "bom_code": "01.01.03.2718",
+            "bom_name": "矩形管 1",
+            "quantity": 1,
+            "mesh_id": [
+              "mesh_019"
+            ]
+          }
+        ],
+        "tools_required": [
+          "装配平台",
+          "直角尺",
+          "点焊机"
+        ],
+        "operation": "将连接板（基准件）平稳放置在装配平台上。将矩形管 1（长边）对准连接板的底部边缘，使用夹具固定到位。确保矩形管与连接板垂直，并进行点焊定位。",
+        "quality_check": "检查矩形管与连接板的垂直度，误差不超过1mm。点焊位置要牢固，防止后续装配时移位。",
+        "estimated_time_minutes": 8,
+        "welding": {
+          "required": true,
+          "welding_type": "点焊/定位焊",
+          "welding_method": "CO2气保焊",
+          "weld_size": "点焊长度10mm，共4点",
+          "welding_position": "连接板与矩形管的连接处",
+          "quality_requirements": "点焊要牢固，防止零件在后续操作中移位。",
+          "safety_notes": "点焊时注意飞溅，佩戴防护眼镜和手套。"
+        },
+        "safety_warnings": [
+          "进行点焊操作时，必须佩戴焊接面罩、防护眼镜和绝缘手套，防止电弧光和焊渣飞溅伤眼烫伤。",
+          "确保工件和夹具固定牢固，防止在点焊过程中零件突然移动或掉落伤人。",
+          "检查点焊机接地线是否连接可靠，防止触电事故。"
+        ]
+      },
+      {
+        "step_number": 2,
+        "title": "安装侧面矩形管",
+        "parts_used": [
+          {
+            "bom_code": "01.01.03.2720",
+            "bom_name": "矩形管 1",
+            "quantity": 1,
+            "mesh_id": [
+              "mesh_003"
+            ]
+          },
+          {
+            "bom_code": "01.01.03.2719",
+            "bom_name": "矩形管 2",
+            "quantity": 2,
+            "mesh_id": [
+              "mesh_006",
+              "mesh_007"
+            ]
+          }
+        ],
+        "tools_required": [
+          "直角尺",
+          "卡尺",
+          "点焊机"
+        ],
+        "operation": "将矩形管 1（短边，作为上横梁）放置在连接板的顶部，并与底部的矩形管 1（长边）对齐。然后，将两个矩形管 2（侧立柱）分别安装在连接板的两侧，连接上下矩形管。使用夹具固定，并进行点焊定位。",
+        "quality_check": "检查整体框架的尺寸和对角线长度，确保框架方正。检查矩形管 2 的间距是否符合图纸要求。",
+        "estimated_time_minutes": 10,
+        "welding": {
+          "required": true,
+          "welding_type": "点焊/定位焊",
+          "welding_method": "CO2气保焊",
+          "weld_size": "点焊长度10mm，每处连接2点",
+          "welding_position": "所有矩形管之间的连接角部",
+          "quality_requirements": "定位焊要保证框架的垂直度和方正度，焊点不能太大，方便后续清根。",
+          "safety_notes": "确保工件接地良好，防止触电。点焊后检查夹具是否松动。"
+        },
+        "safety_warnings": [
+          "操作点焊机时，必须穿戴好个人防护用品（焊接面罩、手套、工作服）。",
+          "使用夹具固定零件时，注意手部安全，避免被夹具或零件边缘夹伤或割伤。",
+          "点焊后零件表面温度高，清理焊渣或移动零件时，务必戴好手套，防止烫伤。"
+        ]
+      },
+      {
+        "step_number": 3,
+        "title": "安装左右挂件",
+        "parts_used": [
+          {
+            "bom_code": "01.05.0019",
+            "bom_name": "左挂件虚拟组件 1",
+            "quantity": 1,
+            "mesh_id": [
+              "mesh_009"
+            ]
+          },
+          {
+            "bom_code": "01.05.0018",
+            "bom_name": "右挂件虚拟组件 1",
+            "quantity": 1,
+            "mesh_id": [
+              "mesh_008"
+            ]
+          }
+        ],
+        "tools_required": [
+          "定位工装",
+          "点焊机"
+        ],
+        "operation": "根据图纸要求，将左挂件虚拟组件和右挂件虚拟组件分别安装到框架的两端。使用专用定位工装确保挂件的轴线高度和间距准确。点焊固定。",
+        "quality_check": "检查左右挂件的相对位置和水平度，确保挂件的轴孔中心距符合图纸公差要求。",
+        "estimated_time_minutes": 12,
+        "welding": {
+          "required": true,
+          "welding_type": "点焊/定位焊",
+          "welding_method": "CO2气保焊",
+          "weld_size": "点焊长度8mm，每侧2点",
+          "welding_position": "挂件与矩形管的接触面",
+          "quality_requirements": "定位焊必须在定位工装夹紧状态下进行，确保位置精度。",
+          "safety_notes": "使用定位工装时，注意手部安全，避免夹伤。焊接前清理定位区域的油污。"
+        },
+        "safety_warnings": [
+          "使用定位工装夹紧零件时，注意操作力度，避免手部被夹伤。",
+          "焊接前必须清理定位区域的油污、铁锈或水渍，防止焊接时产生有毒烟雾或影响焊接质量。",
+          "点焊时，确保焊枪电缆和气管没有缠绕或被重物压住，防止损坏或引发故障。"
+        ]
+      },
+      {
+        "step_number": 4,
+        "title": "安装封板",
+        "parts_used": [
+          {
+            "bom_code": "01.01.01.16608",
+            "bom_name": "封板 2",
+            "quantity": 2,
+            "mesh_id": [
+              "mesh_004"
+            ]
+          }
+        ],
+        "tools_required": [
+          "点焊机"
+        ],
+        "operation": "将两块封板分别安装到框架的侧面开口处，与矩形管和连接板边缘对齐。确保封板平整，无翘曲，并进行点焊定位。",
+        "quality_check": "检查封板与框架的贴合度，缝隙应均匀且最小化。",
+        "estimated_time_minutes": 6,
+        "welding": {
+          "required": true,
+          "welding_type": "点焊/定位焊",
+          "welding_method": "CO2气保焊",
+          "weld_size": "点焊长度5mm，每块封板均匀分布4点",
+          "welding_position": "封板与矩形管的边缘接触处",
+          "quality_requirements": "点焊要均匀分布，防止封板在后续焊接中产生较大变形。",
+          "safety_notes": "封板较薄，点焊时注意电流和电压设置，避免烧穿。"
+        },
+        "safety_warnings": [
+          "封板边缘可能锋利，搬运和安装时必须佩戴防割手套，防止割伤。",
+          "由于封板较薄，点焊时要快速准确，防止烧穿板材或造成大面积变形。",
+          "点焊机参数设置要符合薄板焊接要求，避免电流过大。"
+        ]
+      },
+      {
+        "step_number": 5,
+        "title": "安装加强筋",
+        "parts_used": [
+          {
+            "bom_code": "01.01.01.17678",
+            "bom_name": "加强筋 2",
+            "quantity": 2,
+            "mesh_id": [
+              "mesh_001"
+            ]
+          }
+        ],
+        "tools_required": [
+          "直角尺",
+          "点焊机"
+        ],
+        "operation": "将两个加强筋安装在框架内部，用于支撑连接板和矩形管。确保加强筋的斜面方向正确，并与相邻零件紧密贴合。点焊固定。",
+        "quality_check": "检查加强筋的安装角度和位置，确保其起到有效支撑作用。",
+        "estimated_time_minutes": 7,
+        "welding": {
+          "required": true,
+          "welding_type": "点焊/定位焊",
+          "welding_method": "CO2气保焊",
+          "weld_size": "点焊长度10mm，每条边2点",
+          "welding_position": "加强筋与连接板和矩形管的接触边",
+          "quality_requirements": "加强筋必须紧密贴合，定位焊要保证受力方向的牢固性。",
+          "safety_notes": "加强筋在内部，操作空间小，注意焊枪角度，避免烫伤。"
+        },
+        "safety_warnings": [
+          "加强筋安装在框架内部，操作空间狭窄，焊接时要特别注意焊枪和身体的距离，防止烫伤。",
+          "在狭小空间内焊接时，确保通风良好，避免吸入过量焊接烟尘。",
+          "操作完成后，检查工具是否遗留在框架内部，防止后续操作中造成损坏。"
+        ]
+      },
+      {
+        "step_number": 6,
+        "title": "安装方形板-机加",
+        "parts_used": [
+          {
+            "bom_code": "01.01.01.6589",
+            "bom_name": "方形板-机加 4",
+            "quantity": 4,
+            "mesh_id": [
+              "mesh_014"
+            ]
+          }
+        ],
+        "tools_required": [
+          "点焊机"
+        ],
+        "operation": "将四个方形板-机加（小块）分别安装到框架的指定位置（通常是底部或侧面的加强点）。确保它们与主体结构对齐，并进行点焊定位。",
+        "quality_check": "检查方形板的安装位置是否准确，特别是孔位是否与图纸一致。",
+        "estimated_time_minutes": 5,
+        "welding": {
+          "required": true,
+          "welding_type": "点焊/定位焊",
+          "welding_method": "CO2气保焊",
+          "weld_size": "点焊长度5mm，每块板2点",
+          "welding_position": "方形板与主体结构的接触边缘",
+          "quality_requirements": "方形板是机加工件，定位焊时要保护孔位精度，避免变形。",
+          "safety_notes": "小零件容易发热，注意散热和防烫。"
+        },
+        "safety_warnings": [
+          "方形板体积小，点焊后温度升高快，移动或检查时必须戴手套，防止烫伤。",
+          "定位焊时，要避免焊渣飞溅到机加工孔位内部，影响后续装配精度。",
+          "确保小零件固定稳固，防止在点焊过程中因夹持不牢而弹飞。"
+        ]
+      },
+      {
+        "step_number": 7,
+        "title": "整体焊接",
+        "parts_used": [],
+        "tools_required": [
+          "CO2焊机",
+          "焊枪",
+          "焊渣锤"
+        ],
+        "operation": "对所有已点焊定位的零件进行全面焊接。按照先内后外、先短后长的顺序进行焊接，以减少焊接变形。焊接完成后，清理焊渣，并进行外观检查。",
+        "quality_check": "检查所有焊缝是否饱满、均匀，无虚焊、漏焊、裂纹等缺陷。检查组件整体尺寸和平面度，确保焊接变形在允许范围内。",
+        "estimated_time_minutes": 20,
+        "welding": {
+          "required": true,
+          "welding_type": "角焊/搭接焊",
+          "welding_method": "CO2气保焊",
+          "weld_size": "焊脚高度6mm（按图纸要求），连续焊缝",
+          "welding_position": "所有零件的连接处（包括矩形管、连接板、挂件、加强筋和封板）",
+          "quality_requirements": "焊缝必须连续、饱满，不得有咬边、气孔、夹渣等缺陷。焊缝高度和宽度要均匀。",
+          "safety_notes": "进行全面焊接时，工作区域必须保持良好通风，防止烟尘中毒。佩戴全套防护用品（面罩、手套、防火服）。注意控制热输入，防止结构件变形过大。"
+        },
+        "safety_warnings": [
+          "进行全面焊接时，必须佩戴全套防护用品：自动变光焊接面罩、防火服、绝缘手套和安全鞋。",
+          "确保工作区域有强制通风或局部排烟装置，防止吸入大量焊接烟尘，预防职业病。",
+          "使用焊渣锤清理焊渣时，必须佩戴防护眼镜，防止焊渣飞溅伤眼。",
+          "焊接过程中产生的热量大，注意周围环境，确保没有易燃易爆物品，并准备好灭火器材。"
+        ]
+      }
+    ]
+  }
+}

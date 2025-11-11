@@ -1,0 +1,102 @@
+{
+  "cot_analysis": {
+    "total_unmatched_bom": 4,
+    "total_unmatched_3d": 6,
+    "analysis_steps": [
+      {
+        "bom_code": "01.01.01.16586",
+        "bom_name": "圆板",
+        "bom_product_code": "T-AB1830(72IN)-EURO-02-01-Q355B",
+        "step1_extract": "产品代号: T-AB1830(72IN)-EURO-02-01-Q355B, 零件类型: 圆板",
+        "step2_candidates": [
+          "NAUO1 | T-AB1830(72IN)-EURO-02-01-Q355BԲ°",
+          "NAUO2 | S-CB1830-07-03-Q345Բ°蒸2",
+          "NAUO6 | WFG-T4¡fӱ02-1703-20# Ϟ·캜"
+        ],
+        "step3_comparison": "NAUO1的geometry_name为'T-AB1830(72IN)-EURO-02-01-Q355BԲ°'，与BOM的product_code 'T-AB1830(72IN)-EURO-02-01-Q355B'完全一致。后面的'Բ°'是乱码，但产品代号匹配是最高优先级。",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配NAUO1，产品代号完全一致，置信度0.95。"
+      },
+      {
+        "bom_code": "01.02.01.3847",
+        "bom_name": "圆板",
+        "bom_product_code": "S-CB1830-07-03-Q345",
+        "step1_extract": "产品代号: S-CB1830-07-03-Q345, 零件类型: 圆板",
+        "step2_candidates": [
+          "NAUO2 | S-CB1830-07-03-Q345Բ°蒸2",
+          "NAUO6 | WFG-T4¡fӱ02-1703-20# Ϟ·캜",
+          "NAUO5 | FG-T3¡Á25¡Á25-1730-Q235·½¹Ü_2"
+        ],
+        "step3_comparison": "NAUO2的geometry_name为'S-CB1830-07-03-Q345Բ°蒸2'，与BOM的product_code 'S-CB1830-07-03-Q345'完全一致。后面的'Բ°蒸2'是乱码，但产品代号匹配是最高优先级。",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配NAUO2，产品代号完全一致，置信度0.95。"
+      },
+      {
+        "bom_code": "01.01.02.1869",
+        "bom_name": "无缝管",
+        "bom_product_code": "WFG-T4*Φ102-1703-20#",
+        "step1_extract": "产品代号: WFG-T4*Φ102-1703-20#, 零件类型: 无缝管",
+        "step2_candidates": [
+          "NAUO6 | WFG-T4¡fӱ02-1703-20# Ϟ·캜",
+          "NAUO5 | FG-T3¡Á25¡Á25-1730-Q235·½¹Ü_2",
+          "NAUO4 | FG-T3¡Á25¡Á25-1730-Q235·½¹Ü_1"
+        ],
+        "step3_comparison": "NAUO6的geometry_name为'WFG-T4¡fӱ02-1703-20# Ϟ·캜'。对比BOM product_code 'WFG-T4*Φ102-1703-20#'，发现前缀'WFG-T4'和后缀'-1703-20#'完全一致，中间部分'¡fӱ02'与'*Φ102'高度相似（乱码导致符号差异）。判断为产品代号匹配。",
+        "step4_confidence": 0.92,
+        "step5_decision": "匹配NAUO6，产品代号高度相似（乱码），置信度0.92。"
+      },
+      {
+        "bom_code": "01.01.03.1453",
+        "bom_name": "方管",
+        "bom_product_code": "FG-T3*25*25-1730-Q235",
+        "step1_extract": "产品代号: FG-T3*25*25-1730-Q235, 零件类型: 方管",
+        "step2_candidates": [
+          "NAUO3 | FG-T3¡Á25¡Á25-1730-Q235·½¹Ü",
+          "NAUO4 | FG-T3¡Á25¡Á25-1730-Q235·½¹Ü_1",
+          "NAUO5 | FG-T3¡Á25¡Á25-1730-Q235·½¹Ü_2"
+        ],
+        "step3_comparison": "NAUO3, NAUO4, NAUO5的geometry_name都包含'FG-T3¡Á25¡Á25-1730-Q235·½¹Ü'。对比BOM product_code 'FG-T3*25*25-1730-Q235'，发现前缀'FG-T3'和后缀'-1730-Q235'完全一致，中间的'¡Á25¡Á25'与'*25*25'高度相似（乱码导致符号差异，'¡Á'应为'*'或'×'）。由于BOM数量为1，但有3个3D零件，优先匹配NAUO3，并将剩余的NAUO4和NAUO5也匹配到该BOM项，符合一对多关系。",
+        "step4_confidence": 0.92,
+        "step5_decision": "匹配NAUO3, NAUO4, NAUO5，产品代号高度相似（乱码），置信度0.92。"
+      }
+    ]
+  },
+  "ai_matched_pairs": [
+    {
+      "node_name": "NAUO1",
+      "bom_code": "01.01.01.16586",
+      "confidence": 0.95,
+      "reasoning": "产品代号T-AB1830(72IN)-EURO-02-01-Q355B完全匹配"
+    },
+    {
+      "node_name": "NAUO2",
+      "bom_code": "01.02.01.3847",
+      "confidence": 0.95,
+      "reasoning": "产品代号S-CB1830-07-03-Q345完全匹配"
+    },
+    {
+      "node_name": "NAUO6",
+      "bom_code": "01.01.02.1869",
+      "confidence": 0.92,
+      "reasoning": "产品代号WFG-T4*Φ102-1703-20#高度相似（乱码）"
+    },
+    {
+      "node_name": "NAUO3",
+      "bom_code": "01.01.03.1453",
+      "confidence": 0.92,
+      "reasoning": "产品代号FG-T3*25*25-1730-Q235高度相似（乱码）"
+    },
+    {
+      "node_name": "NAUO4",
+      "bom_code": "01.01.03.1453",
+      "confidence": 0.92,
+      "reasoning": "产品代号FG-T3*25*25-1730-Q235高度相似（乱码）"
+    },
+    {
+      "node_name": "NAUO5",
+      "bom_code": "01.01.03.1453",
+      "confidence": 0.92,
+      "reasoning": "产品代号FG-T3*25*25-1730-Q235高度相似（乱码）"
+    }
+  ]
+}

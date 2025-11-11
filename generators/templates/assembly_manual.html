@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ product_info.name }} - 装配说明书</title>
+    <link rel="stylesheet" href="static/style.css">
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+            "three/examples/jsm/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+</head>
+<body>
+    <header class="manual-header">
+        <div class="container">
+            <h1>{{ product_info.name }}</h1>
+            <div class="product-meta">
+                <span class="drawing-no">图号: {{ product_info.drawing_no }}</span>
+                <span class="material">主材: {{ product_info.material_grade }}</span>
+            </div>
+        </div>
+    </header>
+
+    <nav class="step-navigation">
+        <div class="container">
+            <div class="nav-buttons">
+                <button id="prevBtn" class="nav-btn" disabled>上一步</button>
+                <span id="stepCounter" class="step-counter">1 / {{ total_steps }}</span>
+                <button id="nextBtn" class="nav-btn">下一步</button>
+            </div>
+            <div class="progress-bar">
+                <div id="progressFill" class="progress-fill"></div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="manual-content">
+        <div class="container">
+            <div class="content-grid">
+                <!-- 3D模型显示区域 -->
+                <section class="model-viewer">
+                    <div id="threejs-container" class="viewer-container">
+                        <div id="loading-indicator" class="loading">
+                            <div class="spinner"></div>
+                            <p>正在加载3D模型...</p>
+                        </div>
+                    </div>
+                    <div class="viewer-controls">
+                        <button id="resetView" class="control-btn">重置视角</button>
+                        <button id="explodeToggle" class="control-btn">爆炸视图</button>
+                        <input type="range" id="explodeSlider" min="0" max="1" step="0.01" value="0" class="explode-slider">
+                    </div>
+                </section>
+
+                <!-- 装配步骤区域 -->
+                <section class="assembly-steps">
+                    {% for step in assembly_steps %}
+                    <div class="step-card" id="step-{{ step.step_number }}" {% if loop.first %}style="display: block;"{% else %}style="display: none;"{% endif %}>
+                        <div class="step-header">
+                            <h2>步骤 {{ step.step_number }}: {{ step.title }}</h2>
+                            <span class="time-estimate">⏱️ {{ step.estimated_time }}分钟</span>
+                        </div>
+                        
+                        <div class="step-content">
+                            <div class="description">
+                                <h3>操作说明</h3>
+                                <p>{{ step.description }}</p>
+                            </div>
+                            
+                            {% if step.parts_involved %}
+                            <div class="parts-list">
+                                <h3>涉及零件</h3>
+                                <ul>
+                                    {% for part in step.parts_involved %}
+                                    <li class="part-item">{{ part }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {% endif %}
+                            
+                            {% if step.tools_required %}
+                            <div class="tools-list">
+                                <h3>所需工具</h3>
+                                <ul>
+                                    {% for tool in step.tools_required %}
+                                    <li class="tool-item">🔧 {{ tool }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {% endif %}
+                            
+                            {% if step.key_points %}
+                            <div class="key-points">
+                                <h3>关键要点</h3>
+                                <ul>
+                                    {% for point in step.key_points %}
+                                    <li class="key-point">💡 {{ point }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {% endif %}
+                            
+                            {% if step.safety_notes %}
+                            <div class="safety-notes">
+                                <h3>安全注意</h3>
+                                <ul>
+                                    {% for note in step.safety_notes %}
+                                    <li class="safety-note">⚠️ {{ note }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {% endif %}
+                            
+                            {% if step.quality_check %}
+                            <div class="quality-check">
+                                <h3>质量检查</h3>
+                                <ul>
+                                    {% for check in step.quality_check %}
+                                    <li class="quality-item">✓ {{ check }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <footer class="manual-footer">
+        <div class="container">
+            <p>{{ generation_info.generator }} v{{ generation_info.version }}</p>
+        </div>
+    </footer>
+
+    <script type="module" src="static/app.js"></script>
+</body>
+</html>

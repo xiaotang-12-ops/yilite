@@ -1,0 +1,38 @@
+```json
+{
+  "cot_analysis": {
+    "total_unmatched_bom": 1,
+    "total_unmatched_3d": 26,
+    "analysis_steps": [
+      {
+        "bom_code": "01.01.02.1222",
+        "bom_name": "轴套 2",
+        "bom_product_code": "ZT-φ60/φ35-50-Q235",
+        "step1_extract": "产品代号=ZT-φ60/φ35-50-Q235, 规格=φ60/φ35-50, 材料=Q235, 类型=轴套",
+        "step2_candidates": [
+          "mesh_006: ZT-¦Ӷ0-¦ӳ5-50-Q235ס͗_1",
+          "mesh_007: ZT-¦Ӷ0-¦ӳ5-50-Q235ס͗",
+          "mesh_025: T-SPV1830-EURO-03-02-Q235·½ÐÎ°å-»ú¼Ó"
+        ],
+        "step3_comparison": "mesh_006/mesh_007: 3D零件名称存在乱码，但前缀ZT-和后缀-50-Q235与BOM产品代号ZT-φ60/φ35-50-Q235高度相似。乱码部分'¦Ӷ0-¦ӳ5'推理为'φ60-φ35'或'φ60/φ35'。零件类型'ס͗'推理为'轴套'。产品代号结构匹配，材料Q235匹配，尺寸50匹配。mesh_025: 名称和代号均不匹配。",
+        "step4_confidence": 0.92,
+        "step5_decision": "匹配mesh_006和mesh_007（产品代号高度相似，乱码部分推理为规格φ60/φ35）"
+      }
+    ]
+  },
+  "ai_matched_pairs": [
+    {
+      "mesh_id": "mesh_006",
+      "bom_code": "01.01.02.1222",
+      "confidence": 0.92,
+      "reasoning": "产品代号ZT-φ60/φ35-50-Q235高度相似，乱码部分推理匹配"
+    },
+    {
+      "mesh_id": "mesh_007",
+      "bom_code": "01.01.02.1222",
+      "confidence": 0.92,
+      "reasoning": "产品代号ZT-φ60/φ35-50-Q235高度相似，乱码部分推理匹配"
+    }
+  ]
+}
+```

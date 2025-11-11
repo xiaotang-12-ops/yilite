@@ -1,0 +1,98 @@
+{
+  "agent_name": "Agent1_",
+  "model": "google/gemini-2.5-flash-preview-09-2025",
+  "timestamp": "20251003_151042",
+  "image_count": 7,
+  "temperature": 0.1,
+  "system_prompt": "你是装配工艺规划专家。\n\n你的任务：分析工程图纸，规划装配顺序。\n\n## 核心原则\n\n1. **产品由组件构成**：产品总图显示组件之间如何拼装，组件图显示组件内部如何装配\n2. **先做组件，再装产品**：每个组件内部先装配好，然后把组件拼装成产品\n3. **基准件优先**：最重的零件/组件作为基准，先装\n\n## 你需要回答的问题\n\n### 问题1：哪个组件先做？\n\n从产品总图的BOM表中：\n- 找出所有大组件（重量>10kg，代号01.09.xxxx）\n- 判断哪个组件应该先预装配（通常是最重的或最复杂的）\n- 给出组件预装配顺序\n\n### 问题2：每个组件怎么做？\n\n从组件图的BOM表中：\n- 找出组件内最重的零件作为基准件\n- 规划组件内部的装配顺序\n- 给出简洁的装配提示（3-5条）\n\n## 输出格式\n\n严格按照以下JSON格式输出：\n\n```json\n{\n  \"product_name\": \"产品名称\",\n  \"total_components\": 组件数量,\n  \n  \"component_assembly_plan\": [\n    {\n      \"component_code\": \"组件BOM代号\",\n      \"component_name\": \"组件名称\",\n      \"assembly_order\": 预装配顺序（1,2,3...）,\n      \"reason\": \"为什么这个顺序？（1句话）\",\n      \n      \"base_part_code\": \"组件内基准件BOM代号\",\n      \"base_part_name\": \"组件内基准件名称\",\n      \"base_part_weight_kg\": 基准件重量,\n      \n      \"assembly_steps\": [\n        \"步骤1：简洁描述\",\n        \"步骤2：简洁描述\",\n        \"步骤3：简洁描述\"\n      ]\n    }\n  ],\n  \n  \"product_assembly_plan\": {\n    \"base_component_code\": \"产品级基准组件BOM代号\",\n    \"base_component_name\": \"产品级基准组件名称\",\n    \"reason\": \"为什么选这个作为基准？（1句话）\",\n    \n    \"assembly_sequence\": [\n      {\n        \"step\": 1,\n        \"component_code\": \"组件BOM代号\",\n        \"action\": \"简洁描述这一步做什么\"\n      }\n    ]\n  }\n}\n```\n\n## 重要提醒\n\n- **只输出JSON，不要输出其他内容**\n- **保持简洁**：每个描述不超过20个字\n- **基于事实**：所有信息必须来自图纸和BOM表，不要编造\n- **区分层级**：产品级（组件之间）vs 组件级（组件内部）\n",
+  "user_query": "我提供了这个产品的工程图纸（产品总图 + 组件图1/2/3）和BOM表数据。\n\n请你回答两个核心问题：\n\n## 问题1：哪个组件先做？\n\n从BOM表中识别所有大组件（重量>10kg），然后规划组件预装配顺序。\n\n## 问题2：每个组件怎么做？\n\n对于每个组件：\n1. 从组件图的BOM表中找出最重的零件作为基准件\n2. 规划组件内部的装配顺序（3-5步即可）\n\n## BOM表数据\n\n[\n  {\n    \"code\": \"01.09.2556\",\n    \"name\": \"方形板-机加-镀锌\",\n    \"qty\": 0,\n    \"weight\": 3.65\n  },\n  {\n    \"code\": \"02.03.0088\",\n    \"name\": \"六角头螺栓8.8级GB/T5782-2016\",\n    \"qty\": 0,\n    \"weight\": 0.0\n  },\n  {\n    \"code\": \"01.09.1240\",\n    \"name\": \"电磁阀保护罩组件-漆后\",\n    \"qty\": 0,\n    \"weight\": 1.76\n  },\n  {\n    \"code\": \"02.03.0610\",\n    \"name\": \"平垫圈 倒角型 A级(钢)GB／T 97．2-1985\",\n    \"qty\": 0,\n    \"weight\": 0.04\n  },\n  {\n    \"code\": \"01.09.0308\",\n    \"name\": \"推雪板反光片固定板-镀锌\",\n    \"qty\": 0,\n    \"weight\": 0.19\n  },\n  {\n    \"code\": \"02.03.0378\",\n    \"name\": \"六角头螺栓全螺纹8.8级GB/T5783-2016\",\n    \"qty\": 0,\n    \"weight\": 0.12\n  },\n  {\n    \"code\": \"02.03.0147\",\n    \"name\": \"1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015\",\n    \"qty\": 0,\n    \"weight\": 1.5\n  },\n  {\n    \"code\": \"01.09.0304\",\n    \"name\": \"推雪板大垫圈-镀锌\",\n    \"qty\": 0,\n    \"weight\": 2.0\n  },\n  {\n    \"code\": \"02.03.0458\",\n    \"name\": \"六角头螺栓全螺纹8.8级GB/T5783-2016\",\n    \"qty\": 0,\n    \"weight\": 0.18\n  },\n  {\n    \"code\": \"02.03.0379\",\n    \"name\": \"六角头螺栓全螺纹8.8级GB/T5783-2016\",\n    \"qty\": 0,\n    \"weight\": 0.08\n  },\n  {\n    \"code\": \"02.03.0019\",\n    \"name\": \"1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015\",\n    \"qty\": 0,\n    \"weight\": 0.56\n  },\n  {\n    \"code\": \"02.03.0072\",\n    \"name\": \"平垫圈8.8级GB/T95-2002\",\n    \"qty\": 0,\n    \"weight\": 0.14\n  },\n  {\n    \"code\": \"02.03.1035\",\n    \"name\": \"内六角平圆头螺钉8.8级GB/T70.2-2015\",\n    \"qty\": 0,\n    \"weight\": 0.0\n  },\n  {\n    \"code\": \"02.03.0012\",\n    \"name\": \"安全销DIN 11023\",\n    \"qty\": 0,\n    \"weight\": 0.03\n  },\n  {\n    \"code\": \"02.03.0102\",\n    \"name\": \"六角头螺栓8.8级GB/T 5782-2016\",\n    \"qty\": 0,\n    \"weight\": 0.01\n  },\n  {\n    \"code\": \"02.03.0383\",\n    \"name\": \"六角头螺栓全螺纹8.8级GB/T5783-2016\",\n    \"qty\": 0,\n    \"weight\": 0.02\n  },\n  {\n    \"code\": \"02.04.0029\",\n    \"name\": \"推雪板反光片\",\n    \"qty\": 0,\n    \"weight\": 0.04\n  },\n  {\n    \"code\": \"02.08.03.0236\",\n    \"name\": \"电磁阀组\",\n    \"qty\": 0,\n    \"weight\": 3.33\n  },\n  {\n    \"code\": \"02.03.0001\",\n    \"name\": \"安全销DIN 11023\",\n    \"qty\": 0,\n    \"weight\": 0.12\n  },\n  {\n    \"code\": \"02.08.05.0004\",\n    \"name\": \"直通式压注油杯JB/T7940.1-1995\",\n    \"qty\": 0,\n    \"weight\": 0.18\n  }\n]\n\n## 要求\n\n- 严格按照系统提示词中的JSON格式输出\n- 保持简洁，每个描述不超过20个字\n- 不要输出无关信息（尺寸、焊接等）\n\n现在开始分析！\n",
+  "raw_response": "```json\n{\n  \"product_name\": \"V型推雪板雪板注油器\",\n  \"total_components\": 3,\n  \"component_assembly_plan\": [\n    {\n      \"component_code\": \"01.03.6999\",\n      \"component_name\": \"连接器后座组件\",\n      \"assembly_order\": 2,\n      \"reason\": \"重量适中，作为连接左右雪板的中间件。\",\n      \"base_part_code\": \"01.01.11509\",\n      \"base_part_name\": \"连接板\",\n      \"base_part_weight_kg\": 21.36,\n      \"assembly_steps\": [\n        \"将连接板(1)作为基准件放置。\",\n        \"装配左/右推雪板连接件(4,5)。\",\n        \"安装矩形管(2)和封板(6)。\",\n        \"安装加强筋(9)和后座轴套(3)。\"\n      ]\n    },\n    {\n      \"component_code\": \"01.03.7000\",\n      \"component_name\": \"后座连接架组件\",\n      \"assembly_order\": 3,\n      \"reason\": \"重量最轻，且结构相对简单，最后预装配。\",\n      \"base_part_code\": \"01.01.11514\",\n      \"base_part_name\": \"方形板-机加\",\n      \"base_part_weight_kg\": 15.79,\n      \"assembly_steps\": [\n        \"将方形板(1)作为基准件放置。\",\n        \"安装后座轴套(10)和前连接板(3)。\",\n        \"安装油缸固定板(5)和加强筋(6)。\",\n        \"安装后座轴套(8)和后座轴(9)。\"\n      ]\n    },\n    {\n      \"component_code\": \"01.03.7001\",\n      \"component_name\": \"左雪板组件\",\n      \"assembly_order\": 1,\n      \"reason\": \"重量最大，结构最复杂，应优先预装配。\",\n      \"base_part_code\": \"01.01.18591\",\n      \"base_part_name\": \"左雪板\",\n      \"base_part_weight_kg\": 28.38,\n      \"assembly_steps\": [\n        \"将左雪板(1)作为基准件放置。\",\n        \"安装后加强板(2)和后雪板-机加(3)。\",\n        \"安装前/后侧面定板(5,7)和加强板(6)。\",\n        \"安装反光片支架板(11)和反光片(12)。\"\n      ]\n    }\n  ],\n  \"product_assembly_plan\": {\n    \"base_component_code\": \"01.03.7001\",\n    \"base_component_name\": \"左雪板组件\",\n    \"reason\": \"左雪板组件最重(60.68kg)，作为产品装配基准。\",\n    \"assembly_sequence\": [\n      {\n        \"step\": 1,\n        \"component_code\": \"01.03.7001\",\n        \"action\": \"固定左雪板组件作为基准\"\n      },\n      {\n        \"step\": 2,\n        \"component_code\": \"01.03.6999\",\n        \"action\": \"连接器后座组件与左雪板连接\"\n      },\n      {\n        \"step\": 3,\n        \"component_code\": \"01.03.7000\",\n        \"action\": \"后座连接架组件与后座连接\"\n      },\n      {\n        \"step\": 4,\n        \"component_code\": \"01.09.1240\",\n        \"action\": \"安装电磁阀保护罩组件\"\n      },\n      {\n        \"step\": 5,\n        \"component_code\": \"02.08.03.0236\",\n        \"action\": \"安装电磁阀组和油杯\"\n      },\n      {\n        \"step\": 6,\n        \"component_code\": \"01.09.0308\",\n        \"action\": \"安装反光片固定板和反光片\"\n      }\n    ]\n  }\n}\n```",
+  "parsed_result": {
+    "product_name": "V型推雪板雪板注油器",
+    "total_components": 3,
+    "component_assembly_plan": [
+      {
+        "component_code": "01.03.6999",
+        "component_name": "连接器后座组件",
+        "assembly_order": 2,
+        "reason": "重量适中，作为连接左右雪板的中间件。",
+        "base_part_code": "01.01.11509",
+        "base_part_name": "连接板",
+        "base_part_weight_kg": 21.36,
+        "assembly_steps": [
+          "将连接板(1)作为基准件放置。",
+          "装配左/右推雪板连接件(4,5)。",
+          "安装矩形管(2)和封板(6)。",
+          "安装加强筋(9)和后座轴套(3)。"
+        ]
+      },
+      {
+        "component_code": "01.03.7000",
+        "component_name": "后座连接架组件",
+        "assembly_order": 3,
+        "reason": "重量最轻，且结构相对简单，最后预装配。",
+        "base_part_code": "01.01.11514",
+        "base_part_name": "方形板-机加",
+        "base_part_weight_kg": 15.79,
+        "assembly_steps": [
+          "将方形板(1)作为基准件放置。",
+          "安装后座轴套(10)和前连接板(3)。",
+          "安装油缸固定板(5)和加强筋(6)。",
+          "安装后座轴套(8)和后座轴(9)。"
+        ]
+      },
+      {
+        "component_code": "01.03.7001",
+        "component_name": "左雪板组件",
+        "assembly_order": 1,
+        "reason": "重量最大，结构最复杂，应优先预装配。",
+        "base_part_code": "01.01.18591",
+        "base_part_name": "左雪板",
+        "base_part_weight_kg": 28.38,
+        "assembly_steps": [
+          "将左雪板(1)作为基准件放置。",
+          "安装后加强板(2)和后雪板-机加(3)。",
+          "安装前/后侧面定板(5,7)和加强板(6)。",
+          "安装反光片支架板(11)和反光片(12)。"
+        ]
+      }
+    ],
+    "product_assembly_plan": {
+      "base_component_code": "01.03.7001",
+      "base_component_name": "左雪板组件",
+      "reason": "左雪板组件最重(60.68kg)，作为产品装配基准。",
+      "assembly_sequence": [
+        {
+          "step": 1,
+          "component_code": "01.03.7001",
+          "action": "固定左雪板组件作为基准"
+        },
+        {
+          "step": 2,
+          "component_code": "01.03.6999",
+          "action": "连接器后座组件与左雪板连接"
+        },
+        {
+          "step": 3,
+          "component_code": "01.03.7000",
+          "action": "后座连接架组件与后座连接"
+        },
+        {
+          "step": 4,
+          "component_code": "01.09.1240",
+          "action": "安装电磁阀保护罩组件"
+        },
+        {
+          "step": 5,
+          "component_code": "02.08.03.0236",
+          "action": "安装电磁阀组和油杯"
+        },
+        {
+          "step": 6,
+          "component_code": "01.09.0308",
+          "action": "安装反光片固定板和反光片"
+        }
+      ]
+    }
+  }
+}

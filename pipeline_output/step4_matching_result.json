@@ -1,0 +1,464 @@
+{
+  "success": true,
+  "component_level_mappings": {
+    "01.03.6999": {
+      "component_name": "连接器后座组件",
+      "glb_file": "pipeline_output\\glb_files\\component_01_03_6999.glb",
+      "bom_to_mesh": {
+        "01.01.01.11515": [
+          "mesh_002",
+          "mesh_003",
+          "mesh_011",
+          "mesh_012"
+        ],
+        "01.01.04.0592": [
+          "mesh_006"
+        ],
+        "01.01.01.11516": [
+          "mesh_007",
+          "mesh_008",
+          "mesh_009",
+          "mesh_010"
+        ],
+        "01.01.01.11514": [
+          "mesh_013"
+        ],
+        "01.01.01.11513": [
+          "mesh_014",
+          "mesh_015"
+        ],
+        "01.01.01.11512": [
+          "mesh_016",
+          "mesh_017"
+        ],
+        "01.01.01.11511": [
+          "mesh_018"
+        ],
+        "01.01.02.0337": [
+          "mesh_001"
+        ],
+        "01.02.02.0490": [
+          "mesh_004"
+        ],
+        "01.01.02.1221": [
+          "mesh_005"
+        ]
+      },
+      "total_bom_count": 10,
+      "bom_matched_count": 10,
+      "total_3d_parts": 18,
+      "code_matched": 7,
+      "ai_matched": 3,
+      "matching_rate": 1.0
+    },
+    "01.03.7000": {
+      "component_name": "后座连接架组件",
+      "glb_file": "pipeline_output\\glb_files\\component_01_03_7000.glb",
+      "bom_to_mesh": {
+        "01.01.03.2720": [
+          "mesh_003"
+        ],
+        "01.01.03.2719": [
+          "mesh_006",
+          "mesh_007"
+        ],
+        "01.01.03.2718": [
+          "mesh_019"
+        ],
+        "01.01.01.17678": [
+          "mesh_001"
+        ],
+        "01.01.01.16608": [
+          "mesh_004"
+        ],
+        "01.05.0019": [
+          "mesh_009"
+        ],
+        "01.05.0018": [
+          "mesh_010"
+        ],
+        "01.01.01.6589": [
+          "mesh_014"
+        ],
+        "01.01.01.11509": [
+          "mesh_018"
+        ]
+      },
+      "total_bom_count": 9,
+      "bom_matched_count": 9,
+      "total_3d_parts": 19,
+      "code_matched": 3,
+      "ai_matched": 6,
+      "matching_rate": 1.0
+    },
+    "01.03.7001": {
+      "component_name": "左滑雪板组件",
+      "glb_file": "pipeline_output\\glb_files\\component_01_03_7001.glb",
+      "bom_to_mesh": {
+        "01.01.01.11529": [
+          "mesh_003",
+          "mesh_004",
+          "mesh_005"
+        ],
+        "01.01.01.11527": [
+          "mesh_008"
+        ],
+        "01.01.01.11526": [
+          "mesh_009",
+          "mesh_010"
+        ],
+        "01.01.01.11525": [
+          "mesh_011"
+        ],
+        "01.01.01.11521": [
+          "mesh_012",
+          "mesh_013",
+          "mesh_014",
+          "mesh_015",
+          "mesh_021",
+          "mesh_022"
+        ],
+        "01.01.01.11524": [
+          "mesh_016",
+          "mesh_017"
+        ],
+        "01.01.01.11523": [
+          "mesh_018"
+        ],
+        "01.01.01.11522": [
+          "mesh_019",
+          "mesh_020"
+        ],
+        "01.01.01.18600": [
+          "mesh_023"
+        ],
+        "01.01.01.11519": [
+          "mesh_024"
+        ],
+        "01.01.01.18599": [
+          "mesh_025"
+        ],
+        "01.01.01.18598": [
+          "mesh_026"
+        ],
+        "01.02.01.4983": [
+          "mesh_001",
+          "mesh_002"
+        ],
+        "01.01.02.1222": [
+          "mesh_006",
+          "mesh_007"
+        ]
+      },
+      "total_bom_count": 15,
+      "bom_matched_count": 14,
+      "total_3d_parts": 26,
+      "code_matched": 12,
+      "ai_matched": 2,
+      "matching_rate": 0.9333333333333333
+    }
+  },
+  "product_level_mapping": {
+    "glb_file": "pipeline_output\\glb_files\\product_total.glb",
+    "bom_to_mesh": {
+      "02.03.1035": [
+        "mesh_001",
+        "mesh_004",
+        "mesh_005",
+        "mesh_006",
+        "mesh_007",
+        "mesh_008",
+        "mesh_020",
+        "mesh_023",
+        "mesh_024",
+        "mesh_025",
+        "mesh_026",
+        "mesh_027",
+        "mesh_139",
+        "mesh_142"
+      ],
+      "02.03.0072": [
+        "mesh_002",
+        "mesh_009",
+        "mesh_010",
+        "mesh_011",
+        "mesh_012",
+        "mesh_013",
+        "mesh_021",
+        "mesh_028",
+        "mesh_029",
+        "mesh_030",
+        "mesh_031",
+        "mesh_032",
+        "mesh_137",
+        "mesh_141"
+      ],
+      "02.03.0019": [
+        "mesh_003",
+        "mesh_014",
+        "mesh_015",
+        "mesh_016",
+        "mesh_017",
+        "mesh_018",
+        "mesh_022",
+        "mesh_033",
+        "mesh_034",
+        "mesh_035",
+        "mesh_036",
+        "mesh_037",
+        "mesh_138",
+        "mesh_140"
+      ],
+      "02.03.0088": [
+        "mesh_038",
+        "mesh_039"
+      ],
+      "02.03.0381": [
+        "mesh_040",
+        "mesh_041",
+        "mesh_042",
+        "mesh_043",
+        "mesh_044",
+        "mesh_045",
+        "mesh_046",
+        "mesh_047",
+        "mesh_048",
+        "mesh_049",
+        "mesh_050",
+        "mesh_051",
+        "mesh_052",
+        "mesh_053",
+        "mesh_054",
+        "mesh_055",
+        "mesh_056",
+        "mesh_057",
+        "mesh_058",
+        "mesh_059",
+        "mesh_060",
+        "mesh_061",
+        "mesh_062",
+        "mesh_063",
+        "mesh_198",
+        "mesh_200"
+      ],
+      "02.03.0610": [
+        "mesh_067",
+        "mesh_068",
+        "mesh_069",
+        "mesh_070"
+      ],
+      "02.03.0146": [
+        "mesh_075",
+        "mesh_079",
+        "mesh_081",
+        "mesh_083",
+        "mesh_085",
+        "mesh_087",
+        "mesh_089",
+        "mesh_091",
+        "mesh_093",
+        "mesh_095",
+        "mesh_097",
+        "mesh_099",
+        "mesh_101",
+        "mesh_148",
+        "mesh_197",
+        "mesh_201"
+      ],
+      "02.03.0383": [
+        "mesh_076",
+        "mesh_149"
+      ],
+      "02.08.05.0004": [
+        "mesh_077",
+        "mesh_078",
+        "mesh_122",
+        "mesh_124",
+        "mesh_126",
+        "mesh_128",
+        "mesh_130",
+        "mesh_132",
+        "mesh_134",
+        "mesh_136",
+        "mesh_146",
+        "mesh_153",
+        "mesh_155",
+        "mesh_157",
+        "mesh_159",
+        "mesh_161",
+        "mesh_163",
+        "mesh_169",
+        "mesh_171",
+        "mesh_173",
+        "mesh_175",
+        "mesh_177",
+        "mesh_193"
+      ],
+      "02.03.0378": [
+        "mesh_080",
+        "mesh_082",
+        "mesh_084",
+        "mesh_086",
+        "mesh_088",
+        "mesh_090",
+        "mesh_092",
+        "mesh_094",
+        "mesh_096",
+        "mesh_098",
+        "mesh_100",
+        "mesh_102"
+      ],
+      "02.03.0147": [
+        "mesh_104",
+        "mesh_107",
+        "mesh_110",
+        "mesh_113",
+        "mesh_117",
+        "mesh_118",
+        "mesh_223",
+        "mesh_224",
+        "mesh_225",
+        "mesh_226",
+        "mesh_227",
+        "mesh_228"
+      ],
+      "02.03.0458": [
+        "mesh_105",
+        "mesh_108",
+        "mesh_111",
+        "mesh_114",
+        "mesh_115",
+        "mesh_120"
+      ],
+      "02.03.0379": [
+        "mesh_121",
+        "mesh_123",
+        "mesh_125",
+        "mesh_127",
+        "mesh_129",
+        "mesh_131",
+        "mesh_133",
+        "mesh_135"
+      ],
+      "02.03.0102": [
+        "mesh_147"
+      ],
+      "02.03.0398": [
+        "mesh_154",
+        "mesh_156",
+        "mesh_158",
+        "mesh_160",
+        "mesh_162",
+        "mesh_164",
+        "mesh_170",
+        "mesh_172",
+        "mesh_174",
+        "mesh_176",
+        "mesh_178",
+        "mesh_194"
+      ],
+      "01.09.2566": [
+        "mesh_196",
+        "mesh_203"
+      ],
+      "02.03.0442": [
+        "mesh_199",
+        "mesh_202"
+      ],
+      "02.03.0612": [
+        "mesh_204",
+        "mesh_207"
+      ],
+      "02.03.0006": [
+        "mesh_212",
+        "mesh_213",
+        "mesh_214",
+        "mesh_215",
+        "mesh_216",
+        "mesh_217"
+      ],
+      "02.09.0103": [
+        "mesh_237",
+        "mesh_238",
+        "mesh_239",
+        "mesh_240",
+        "mesh_241",
+        "mesh_242"
+      ],
+      "01.09.2562": [
+        "mesh_243",
+        "mesh_244",
+        "mesh_245",
+        "mesh_246",
+        "mesh_247",
+        "mesh_252"
+      ],
+      "01.09.2563": [
+        "mesh_248",
+        "mesh_249",
+        "mesh_250",
+        "mesh_251"
+      ],
+      "01.09.2561": [
+        "mesh_253"
+      ],
+      "01.09.2556": [
+        "mesh_019"
+      ],
+      "01.09.0304": [
+        "mesh_119"
+      ],
+      "02.03.0012": [
+        "mesh_145"
+      ],
+      "02.04.0029": [
+        "mesh_151"
+      ],
+      "02.08.03.0236": [
+        "mesh_152"
+      ],
+      "02.03.0001": [
+        "mesh_168"
+      ],
+      "01.09.2565": [
+        "mesh_206"
+      ],
+      "02.16.0142": [
+        "mesh_209"
+      ],
+      "01.09.0999": [
+        "mesh_210"
+      ],
+      "01.09.0503": [
+        "mesh_211"
+      ],
+      "01.09.0995": [
+        "mesh_222"
+      ],
+      "02.08.01.0338": [
+        "mesh_235"
+      ],
+      "01.09.2555": [
+        "mesh_254"
+      ],
+      "01.02.07.0071": [
+        "mesh_255"
+      ],
+      "01.02.07.0239": [
+        "mesh_257"
+      ]
+    },
+    "total_bom_count": 41,
+    "bom_matched_count": 38,
+    "total_3d_parts": 414,
+    "code_matched": 23,
+    "ai_matched": 15,
+    "matching_rate": 0.926829268292683
+  },
+  "glb_files": {
+    "component_2": "pipeline_output\\glb_files\\component_01_03_6999.glb",
+    "component_1": "pipeline_output\\glb_files\\component_01_03_7000.glb",
+    "component_3": "pipeline_output\\glb_files\\component_01_03_7001.glb",
+    "product_total": "pipeline_output\\glb_files\\product_total.glb"
+  }
+}

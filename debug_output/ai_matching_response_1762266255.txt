@@ -1,0 +1,146 @@
+作为张工，我将严格按照COT推理流程，对未匹配的BOM项和3D零件进行智能匹配。
+
+## 🧠 COT推理过程
+
+### 初始信息
+- **未匹配的3D零件 (2个):**
+  1. NAUO2 | S-RB1830-05-01-45#×óÁ¬½ÓÖá
+  2. NAUO1 | S-CB1830-08-01-Q345Բ°䒱2
+- **未匹配的BOM项 (4个):**
+  1. 01.01.01.16586 | 圆板 | T-AB1830(72IN)-EURO-02-01-Q355B
+  2. 01.02.01.3847 | 圆板 | S-CB1830-07-03-Q345
+  3. 01.01.03.1453 | 方管 | FG-T3*25*25-1730-Q235
+  4. 01.02.01.1869 | 无缝管 | WFG-T4*φ102-1703-20#
+
+### 分析步骤
+
+#### BOM项 1：01.01.01.16586
+- **bom_code**: 01.01.01.16586
+- **bom_name**: 圆板
+- **bom_product_code**: T-AB1830(72IN)-EURO-02-01-Q355B
+- **step1_extract**: 产品代号=T-AB1830(72IN)-EURO-02-01-Q355B，类型=圆板
+- **step2_candidates**: NAUO2, NAUO1 (只有2个候选)
+- **step3_comparison**:
+    - NAUO2 (S-RB1830-05-01-45#×óÁ¬½ÓÖá): 产品代号不匹配 (T-AB vs S-RB)
+    - NAUO1 (S-CB1830-08-01-Q345Բ°䒱2): 产品代号不匹配 (T-AB vs S-CB)
+- **step4_confidence**: < 0.70
+- **step5_decision**: 无法匹配。
+
+#### BOM项 2：01.02.01.3847
+- **bom_code**: 01.02.01.3847
+- **bom_name**: 圆板
+- **bom_product_code**: S-CB1830-07-03-Q345
+- **step1_extract**: 产品代号=S-CB1830-07-03-Q345，类型=圆板
+- **step2_candidates**: NAUO2, NAUO1
+- **step3_comparison**:
+    - NAUO2 (S-RB1830-05-01-45#×óÁ¬½ÓÖá): 产品代号不匹配 (S-CB vs S-RB)
+    - NAUO1 (S-CB1830-08-01-Q345Բ°䒱2):
+        - 3D零件产品代号前缀：S-CB1830-08-01-Q345
+        - BOM产品代号：S-CB1830-07-03-Q345
+        - **差异**：代号中间部分不同 (08-01 vs 07-03)。
+        - **乱码分析**：3D零件名称`Բ°䒱2`可能是“圆板”的乱码。
+        - **结论**：产品代号高度相似，但存在差异，可能是版本或工艺差异。由于只有2个3D零件，且NAUO1与BOM的S-CB1830前缀和Q345材料一致，且名称可能是圆板乱码，尝试匹配。
+- **step4_confidence**: 0.85 (产品代号高度相似，且名称乱码暗示类型匹配)
+- **step5_decision**: 匹配NAUO1 (S-CB1830前缀和Q345材料一致，名称乱码可能是圆板)。
+
+#### BOM项 3：01.01.03.1453
+- **bom_code**: 01.01.03.1453
+- **bom_name**: 方管
+- **bom_product_code**: FG-T3*25*25-1730-Q235
+- **step1_extract**: 产品代号=FG-T3*25*25-1730-Q235，类型=方管
+- **step2_candidates**: NAUO2 (NAUO1已被匹配)
+- **step3_comparison**:
+    - NAUO2 (S-RB1830-05-01-45#×óÁ¬½ÓÖá): 产品代号完全不匹配 (FG-T3 vs S-RB)。类型不匹配 (方管 vs 轴套/连接)。
+- **step4_confidence**: < 0.70
+- **step5_decision**: 无法匹配。
+
+#### BOM项 4：01.02.01.1869
+- **bom_code**: 01.02.01.1869
+- **bom_name**: 无缝管
+- **bom_product_code**: WFG-T4*φ102-1703-20#
+- **step1_extract**: 产品代号=WFG-T4*φ102-1703-20#，类型=无缝管
+- **step2_candidates**: NAUO2 (NAUO1已被匹配)
+- **step3_comparison**:
+    - NAUO2 (S-RB1830-05-01-45#×óÁ¬½ÓÖá): 产品代号完全不匹配 (WFG vs S-RB)。类型不匹配 (无缝管 vs 轴套/连接)。
+- **step4_confidence**: < 0.70
+- **step5_decision**: 无法匹配。
+
+### 总结与遗漏项处理
+
+在本次匹配中，我们只成功匹配了BOM项 01.02.01.3847 与 3D零件 NAUO1。
+
+**遗漏的3D零件：** NAUO2 (S-RB1830-05-01-45#×óÁ¬½ÓÖá)。
+**遗漏的BOM项：** 01.01.01.16586, 01.01.03.1453, 01.02.01.1869。
+
+由于NAUO2的产品代号是`S-RB1830-05-01-45#`，名称乱码`×óÁ¬½ÓÖá`可能是“左连接轴”或“左连接套”。该代号与任何剩余BOM项的产品代号（T-AB..., FG-T3..., WFG-T4...）都不匹配。因此，无法进行高置信度匹配。
+
+最终匹配结果：1对。
+
+```json
+{
+  "cot_analysis": {
+    "total_unmatched_bom": 4,
+    "total_unmatched_3d": 2,
+    "analysis_steps": [
+      {
+        "bom_code": "01.01.01.16586",
+        "bom_name": "圆板",
+        "bom_product_code": "T-AB1830(72IN)-EURO-02-01-Q355B",
+        "step1_extract": "产品代号=T-AB1830(72IN)-EURO-02-01-Q355B，类型=圆板",
+        "step2_candidates": [
+          "NAUO2: S-RB1830-05-01-45#×óÁ¬½ÓÖá",
+          "NAUO1: S-CB1830-08-01-Q345Բ°蒸2"
+        ],
+        "step3_comparison": "所有3D零件的产品代号前缀均不匹配 (T-AB vs S-RB/S-CB)",
+        "step4_confidence": 0.65,
+        "step5_decision": "无法匹配"
+      },
+      {
+        "bom_code": "01.02.01.3847",
+        "bom_name": "圆板",
+        "bom_product_code": "S-CB1830-07-03-Q345",
+        "step1_extract": "产品代号=S-CB1830-07-03-Q345，材料=Q345，类型=圆板",
+        "step2_candidates": [
+          "NAUO1: S-CB1830-08-01-Q345Բ°蒸2",
+          "NAUO2: S-RB1830-05-01-45#×óÁ¬½ÓÖá"
+        ],
+        "step3_comparison": "NAUO1的产品代号前缀S-CB1830和材料Q345与BOM一致。代号中间部分(08-01 vs 07-03)略有差异，但高度相似。3D零件名称乱码'Բ°蒸2'可能是'圆板'的乱码。",
+        "step4_confidence": 0.85,
+        "step5_decision": "匹配NAUO1 (产品代号高度相似+材料一致+名称乱码暗示类型匹配)"
+      },
+      {
+        "bom_code": "01.01.03.1453",
+        "bom_name": "方管",
+        "bom_product_code": "FG-T3*25*25-1730-Q235",
+        "step1_extract": "产品代号=FG-T3*25*25-1730-Q235，类型=方管",
+        "step2_candidates": [
+          "NAUO2: S-RB1830-05-01-45#×óÁ¬½ÓÖá"
+        ],
+        "step3_comparison": "NAUO2的产品代号前缀S-RB与BOM的FG-T3完全不匹配，类型(方管 vs 轴套)不一致。",
+        "step4_confidence": 0.60,
+        "step5_decision": "无法匹配"
+      },
+      {
+        "bom_code": "01.02.01.1869",
+        "bom_name": "无缝管",
+        "bom_product_code": "WFG-T4*φ102-1703-20#",
+        "step1_extract": "产品代号=WFG-T4*φ102-1703-20#，类型=无缝管",
+        "step2_candidates": [
+          "NAUO2: S-RB1830-05-01-45#×óÁ¬½ÓÖá"
+        ],
+        "step3_comparison": "NAUO2的产品代号前缀S-RB与BOM的WFG完全不匹配，类型(无缝管 vs 轴套)不一致。",
+        "step4_confidence": 0.60,
+        "step5_decision": "无法匹配"
+      }
+    ]
+  },
+  "ai_matched_pairs": [
+    {
+      "node_name": "NAUO1",
+      "bom_code": "01.02.01.3847",
+      "confidence": 0.85,
+      "reasoning": "产品代号S-CB1830前缀和Q345材料一致，名称乱码暗示类型匹配"
+    }
+  ]
+}
+```

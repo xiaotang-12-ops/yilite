@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>测试加载说明书</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .button-group {
+      margin-bottom: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      margin-right: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      background: #409eff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+    button:hover {
+      background: #66b1ff;
+    }
+    .info {
+      background: #f0f9ff;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .success {
+      background: #f0f9ff;
+      color: #67c23a;
+      padding: 10px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+    }
+    .error {
+      background: #fef0f0;
+      color: #f56c6c;
+      padding: 10px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+    }
+    pre {
+      background: #f5f5f5;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+      max-height: 400px;
+    }
+  </style>
+</head>
+<body>
+  <h1>📖 测试加载装配说明书</h1>
+  
+  <div class="button-group">
+    <button onclick="loadFromFile()">1. 从文件加载 JSON</button>
+    <button onclick="saveToLocalStorage()">2. 保存到 localStorage</button>
+    <button onclick="viewInManualViewer()">3. 在查看器中打开</button>
+    <button onclick="clearStorage()">清空缓存</button>
+  </div>
+
+  <div id="status"></div>
+  
+  <div class="info">
+    <h3>📝 说明：</h3>
+    <ol>
+      <li>点击"从文件加载 JSON"按钮，选择 <code>output/2ca76253-b25e-45b9-9f88-c4c389bf0894/assembly_manual.json</code></li>
+      <li>点击"保存到 localStorage"将数据保存到浏览器缓存</li>
+      <li>点击"在查看器中打开"跳转到查看器页面</li>
+    </ol>
+  </div>
+
+  <div id="preview"></div>
+
+  <script>
+    let manualData = null;
+
+    async function loadFromFile() {
+      try {
+        // 创建文件选择器
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        
+        input.onchange = async (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            try {
+              manualData = JSON.parse(event.target.result);
+              showStatus('success', `✅ 成功加载文件: ${file.name}`);
+              showPreview();
+            } catch (error) {
+              showStatus('error', `❌ JSON 解析失败: ${error.message}`);
+            }
+          };
+          reader.readAsText(file);
+        };
+
+        input.click();
+      } catch (error) {
+        showStatus('error', `❌ 加载失败: ${error.message}`);
+      }
+    }
+
+    function saveToLocalStorage() {
+      if (!manualData) {
+        showStatus('error', '❌ 请先加载 JSON 文件');
+        return;
+      }
+
+      try {
+        // 保存到 localStorage
+        localStorage.setItem('current_manual', JSON.stringify(manualData));
+        
+        // 同时保存到历史记录
+        const historyKey = 'assembly_manual_history';
+        let history = [];
+        
+        try {
+          const stored = localStorage.getItem(historyKey);
+          if (stored) {
+            history = JSON.parse(stored);
+          }
+        } catch (e) {
+          console.warn('读取历史记录失败:', e);
+        }
+
+        const historyItem = {
+          taskId: '2ca76253-b25e-45b9-9f88-c4c389bf0894',
+          productName: manualData.metadata?.product_name || '前推雪板总成',
+          timestamp: new Date().toISOString(),
+          data: manualData
+        };
+
+        // 检查是否已存在
+        const existingIndex = history.findIndex(item => item.taskId === historyItem.taskId);
+        if (existingIndex >= 0) {
+          history[existingIndex] = historyItem;
+        } else {
+          history.unshift(historyItem);
+          if (history.length > 10) {
+            history = history.slice(0, 10);
+          }
+        }
+
+        localStorage.setItem(historyKey, JSON.stringify(history));
+        
+        showStatus('success', '✅ 已保存到 localStorage 和历史记录');
+      } catch (error) {
+        showStatus('error', `❌ 保存失败: ${error.message}`);
+      }
+    }
+
+    function viewInManualViewer() {
+      const taskId = '2ca76253-b25e-45b9-9f88-c4c389bf0894';
+      window.location.href = `/manual/${taskId}`;
+    }
+
+    function clearStorage() {
+      localStorage.removeItem('current_manual');
+      localStorage.removeItem('assembly_manual_history');
+      showStatus('success', '✅ 已清空缓存');
+      manualData = null;
+      document.getElementById('preview').innerHTML = '';
+    }
+
+    function showStatus(type, message) {
+      const statusDiv = document.getElementById('status');
+      statusDiv.innerHTML = `<div class="${type}">${message}</div>`;
+    }
+
+    function showPreview() {
+      const previewDiv = document.getElementById('preview');
+      previewDiv.innerHTML = `
+        <h3>📊 数据预览：</h3>
+        <p><strong>产品名称：</strong>${manualData.metadata?.product_name || '未命名'}</p>
+        <p><strong>组件数量：</strong>${manualData.metadata?.total_components || 0}</p>
+        <p><strong>产品装配步骤：</strong>${manualData.product_assembly?.steps?.length || 0} 个</p>
+        <p><strong>组件装配步骤：</strong>${manualData.component_assembly?.length || 0} 个</p>
+        <details>
+          <summary>查看完整 JSON</summary>
+          <pre>${JSON.stringify(manualData, null, 2)}</pre>
+        </details>
+      `;
+    }
+
+    // 页面加载时检查是否已有缓存
+    window.onload = () => {
+      const cached = localStorage.getItem('current_manual');
+      if (cached) {
+        showStatus('success', '✅ 检测到缓存数据');
+      }
+    };
+  </script>
+</body>
+</html>
+

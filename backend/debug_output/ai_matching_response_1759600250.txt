@@ -1,0 +1,50 @@
+```json
+{
+  "cot_analysis": {
+    "total_unmatched_bom": 2,
+    "total_unmatched_3d": 2,
+    "analysis_steps": [
+      {
+        "bom_code": "01.01.01.11528",
+        "bom_name": "方形板 1",
+        "bom_product_code": "FXB-T8*190*100-Q355B",
+        "step1_extract": "产品代号=FXB-T8*190*100-Q355B, 类型=方形板, 规格=T8*190*100, 材料=Q355B",
+        "step2_candidates": [
+          "mesh_006: ZT-¦Ӷ0-¦ӳ5-50-Q235ס͗_1",
+          "mesh_007: ZT-¦Ӷ0-¦ӳ5-50-Q235ס͗"
+        ],
+        "step3_comparison": "所有候选零件名称中均不包含'FXB'或'方形板'，且规格和材料Q355B均不匹配。候选零件名称中包含乱码和'ZT-'前缀，推测为轴套类零件，与方形板不符。",
+        "step4_confidence": 0.0,
+        "step5_decision": "无法匹配"
+      },
+      {
+        "bom_code": "01.01.02.1222",
+        "bom_name": "轴套 2",
+        "bom_product_code": "ZT-φ60/φ35-50-Q235",
+        "step1_extract": "产品代号=ZT-φ60/φ35-50-Q235, 类型=轴套, 规格=φ60/φ35-50, 材料=Q235",
+        "step2_candidates": [
+          "mesh_006: ZT-¦Ӷ0-¦ӳ5-50-Q235ס͗_1",
+          "mesh_007: ZT-¦Ӷ0-¦ӳ5-50-Q235ס͗"
+        ],
+        "step3_comparison": "BOM产品代号为'ZT-φ60/φ35-50-Q235'。3D零件名称为'ZT-¦Ӷ0-¦ӳ5-50-Q235ס͗'。对比发现：1. 前缀'ZT-'一致。2. 后缀'-50-Q235'一致。3. 中间乱码'¦Ӷ0-¦ӳ5'与规格'φ60/φ35'高度相似，推测是编码错误导致'φ60/φ35'显示为乱码。4. 3D零件名称末尾的'ס͗'推测是中文'轴套'的乱码。因此，mesh_006和mesh_007都与该BOM项的产品代号高度相似。",
+        "step4_confidence": 0.95,
+        "step5_decision": "mesh_006和mesh_007都匹配01.01.02.1222（产品代号乱码匹配）"
+      }
+    ]
+  },
+  "ai_matched_pairs": [
+    {
+      "mesh_id": "mesh_006",
+      "bom_code": "01.01.02.1222",
+      "confidence": 0.95,
+      "reasoning": "产品代号'ZT-'-'-50-Q235'与BOM产品代号高度相似，乱码推测为规格'φ60/φ35'。"
+    },
+    {
+      "mesh_id": "mesh_007",
+      "bom_code": "01.01.02.1222",
+      "confidence": 0.95,
+      "reasoning": "产品代号'ZT-'-'-50-Q235'与BOM产品代号高度相似，乱码推测为规格'φ60/φ35'。"
+    }
+  ]
+}
+```

@@ -1,0 +1,266 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>T-SPV1830-EURO · 装配说明书 × 3D爆炸动画（交互版 · import map修复）</title>
+<style>
+  :root { --bg:#0b1020; --fg:#e5e7eb; --muted:#9ca3af; --line:rgba(255,255,255,.10); --accent:#22d3ee; --accent2:#a78bfa; }
+  *{box-sizing:border-box}
+  body{margin:0; background:#0b1020; color:var(--fg); font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;}
+  header{padding:14px 16px; border-bottom:1px solid var(--line); background:radial-gradient(900px 600px at 70% -10%, rgba(34,211,238,.08), transparent);}
+  h1{font-size:18px; margin:0 0 4px 0}
+  .sub{font-size:12px; color:var(--muted)}
+  .wrap{display:grid; grid-template-columns: 380px 1fr; gap:12px; padding:12px;}
+  .panel{background:rgba(255,255,255,.04); border:1px solid var(--line); border-radius:14px; overflow:hidden;}
+  #sidebar{display:flex; flex-direction:column; min-height:78vh}
+  #steps{padding:10px 10px 0 10px; overflow:auto}
+  .step{border:1px solid var(--line); border-radius:12px; padding:10px; margin-bottom:8px; cursor:pointer; background:rgba(255,255,255,.02);}
+  .step.active{outline:2px solid var(--accent); background:rgba(34,211,238,.08)}
+  .step .title{font-weight:700; font-size:14px; margin-bottom:6px}
+  .step .body{font-size:13px; color:var(--e5e7eb); opacity:.95}
+  .pill{display:inline-block; font-size:11px; padding:2px 6px; border-radius:999px; border:1px solid var(--line); color:#93c5fd; background:rgba(147,197,253,.12); margin-right:6px}
+  .ctrls{display:flex; align-items:center; gap:8px; padding:10px; border-top:1px solid var(--line); background:rgba(255,255,255,.02)}
+  .ctrls button{padding:8px 10px; border-radius:10px; border:1px solid var(--line); background:rgba(255,255,255,.06); color:var(--fg); cursor:pointer; font-weight:700}
+  .ctrls button:hover{background:rgba(255,255,255,.12)}
+  .timeline{display:flex; align-items:center; gap:8px; padding:8px 10px; border-top:1px solid var(--line)}
+  input[type=range]{width:100%}
+  #viewport{height:78vh; border-radius:14px; border:1px solid var(--line); overflow:hidden}
+  .note{font-size:12px; color:#cbd5e1; padding:8px 10px; border-top:1px solid var(--line)}
+  .legend{display:flex; gap:8px; flex-wrap:wrap; padding:8px 10px; border-top:1px solid var(--line)}
+  .dot{width:10px; height:10px; border-radius:50%}
+  .d-base{background:#60a5fa} .d-link{background:#34d399} .d-bladeL{background:#f472b6}
+  .d-bladeR{background:#f59e0b} .d-cyl{background:#22d3ee} .d-spring{background:#eab308} .d-wheel{background:#a78bfa}
+</style>
+
+<!-- Import map: maps 'three' bare specifier for OrbitControls/GLTFLoader -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+  }
+}
+</script>
+</head>
+<body>
+<header>
+  <h1>T-SPV1830-EURO · 装配说明书 × 3D爆炸动画</h1>
+  <div class="sub">采用 ES Modules + import map。若你有 CAD 精模，请导出 glTF/GLB 命名为 <code>model.glb</code>，与本页同目录即可自动加载。</div>
+</header>
+
+<div class="wrap">
+  <aside id="sidebar" class="panel">
+    <div id="steps"></div>
+    <div class="ctrls">
+      <button id="btnPrev">⏮ 上一步</button>
+      <button id="btnPlay">▶ 播放</button>
+      <button id="btnNext">⏭ 下一步</button>
+      <button id="btnReset">⟲ 归位</button>
+      <button id="btnWire">🧵 线框</button>
+    </div>
+    <div class="timeline">
+      <span style="font-size:12px;color:#9ca3af">进度</span>
+      <input id="scrub" type="range" min="0" max="1" step="0.001" value="0" />
+    </div>
+    <div class="legend">
+      <span class="dot d-base"></span><span style="font-size:12px">-01 后座</span>
+      <span class="dot d-link"></span><span style="font-size:12px">-02 连接架</span>
+      <span class="dot d-bladeL"></span><span style="font-size:12px">-03 左铲板</span>
+      <span class="dot d-bladeR"></span><span style="font-size:12px">-04 右铲板</span>
+      <span class="dot d-cyl"></span><span style="font-size:12px">油缸</span>
+      <span class="dot d-spring"></span><span style="font-size:12px">弹簧</span>
+      <span class="dot d-wheel"></span><span style="font-size:12px">轮组</span>
+    </div>
+    <div class="note">若控制台仍报错，请确认是用 <b>http://localhost:…</b> 方式访问，而非 file://。Edge/Chrome 均支持 import map。</div>
+  </aside>
+
+  <main class="panel">
+    <div id="viewport"></div>
+  </main>
+</div>
+
+<script type="module">
+  import * as THREE from "three";
+  import { OrbitControls } from "https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js";
+  import { GLTFLoader } from "https://unpkg.com/three@0.160.0/examples/jsm/loaders/GLTFLoader.js";
+
+  const STEPS = [
+    {id:1, title:"Step 1 · -01 连接器后座组件（组焊）", pills:["骨架","焊接","校正"], body:"以矩形管为骨架定位，装夹连接板/封板/加强筋；点焊→全焊；焊后清渣与校正。"},
+    {id:2, title:"Step 2 · -02 后座连接架组件（组焊）", pills:["轴套","油缸固定板","同轴度"], body:"装配轴套并焊接，焊高不超过轴套；油缸固定板与后续部件配合焊接，确保同轴。"},
+    {id:3, title:"Step 3 · -03 左铲雪板（-04右件镜像）", pills:["加强板","固定板","局部不焊"], body:"装配铲板、加强板、前后弹簧/油缸固定板；与转动轴同轴，内侧焊接完整。"},
+    {id:4, title:"Step 4 · 主装对接 (-01/-02/-03/-04)", pills:["转动轴","对称性","角度基准"], body:"-02 与 -01 合位，左右铲板与连接架装配转动轴；校正对称性与角度基准。"},
+    {id:5, title:"Step 5 · 油缸与弹簧、轮架/轮胎", pills:["液压","行程","防松"], body:"安装油缸（2），弹簧（6），轮组；检查行程与极限角，紧固件按扭矩卡。"},
+    {id:6, title:"Step 6 · 刀板/挡板、反光片、附件", pills:["刀板","挡板","附件"], body:"装配橡胶刀板/挡板、反光片、把手、电磁阀附件；全面紧固复检。"},
+    {id:7, title:"Step 7 · 表面处理与包装", pills:["喷粉","检验","包装"], body:"喷粉 RAL7021，外观检验；完成包装与标识。"}
+  ];
+
+  const stepsEl = document.getElementById('steps');
+  function renderSteps(active=1){
+    stepsEl.innerHTML = '';
+    STEPS.forEach(s=>{
+      const div = document.createElement('div'); div.className = 'step' + (s.id===active?' active':'');
+      const pills = s.pills.map(p=>'<span class="pill">'+p+'</span>').join('');
+      div.innerHTML = '<div class="title">'+pills+s.title+'</div><div class="body">'+s.body+'</div>';
+      div.addEventListener('click', ()=> gotoStep(s.id, true));
+      stepsEl.appendChild(div);
+    });
+  }
+  renderSteps(1);
+
+  const viewport = document.getElementById('viewport');
+  const scene = new THREE.Scene(); scene.background = new THREE.Color(0x0b1020);
+  const camera = new THREE.PerspectiveCamera(50, viewport.clientWidth/viewport.clientHeight, 0.1, 8000);
+  camera.position.set(0, 350, 1200);
+  const renderer = new THREE.WebGLRenderer({antialias:true});
+  renderer.setSize(viewport.clientWidth, viewport.clientHeight);
+  renderer.setPixelRatio(Math.min(2, window.devicePixelRatio));
+  viewport.appendChild(renderer.domElement);
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.target.set(0,100,0); controls.update();
+
+  const hemi = new THREE.HemisphereLight(0xffffff, 0x222233, 0.7); scene.add(hemi);
+  const dir = new THREE.DirectionalLight(0xffffff, 0.8); dir.position.set(500, 800, 400); scene.add(dir);
+  const grid = new THREE.GridHelper(4000, 40, 0x223344, 0x1b2736); scene.add(grid);
+
+  const M = {
+    base:   new THREE.MeshPhysicalMaterial({color:0x60a5fa, metalness:.4, roughness:.6}),
+    link:   new THREE.MeshPhysicalMaterial({color:0x34d399, metalness:.3, roughness:.7}),
+    bladeL: new THREE.MeshPhysicalMaterial({color:0xf472b6, metalness:.2, roughness:.7}),
+    bladeR: new THREE.MeshPhysicalMaterial({color:0xf59e0b, metalness:.2, roughness:.7}),
+    cyl:    new THREE.MeshPhysicalMaterial({color:0x22d3ee, metalness:.5, roughness:.4}),
+    spring: new THREE.MeshPhysicalMaterial({color:0xeab308, metalness:.2, roughness:.5}),
+    wheel:  new THREE.MeshPhysicalMaterial({color:0xa78bfa, metalness:.2, roughness:.6}),
+  };
+  let WIRE=false;
+
+  const group = new THREE.Group(); scene.add(group);
+  const totalWidth=1830, bladeOffsetY=100, wheelDia=200, wheelWidth=50;
+  const base = new THREE.Group(); group.add(base);
+  base.add(new THREE.Mesh(new THREE.BoxGeometry(900,80,80), M.base)).position.set(0,100,0);
+  const bpL = new THREE.Mesh(new THREE.BoxGeometry(140,30,60), M.base); bpL.position.set(-320,130,0); base.add(bpL);
+  const bpR = bpL.clone(); bpR.position.x = 320; base.add(bpR);
+
+  const link = new THREE.Group(); group.add(link);
+  const linkCenter = new THREE.Mesh(new THREE.BoxGeometry(120,120,30), M.link); linkCenter.position.set(0,120,0); link.add(linkCenter);
+  const linkL = new THREE.Mesh(new THREE.BoxGeometry(200,40,30), M.link); linkL.position.set(-200,110,0); link.add(linkL);
+  const linkR = linkL.clone(); linkR.position.x=200; link.add(linkR);
+
+  function createBlade(material, mirror=false){
+    const shape = new THREE.Shape();
+    const w = totalWidth/2 + 80, h = 300, t = 20;
+    shape.moveTo(0,0);
+    shape.bezierCurveTo(w*0.25, -h*0.6, w*0.6, -h*0.6, w, 0);
+    shape.lineTo(w, h*0.7);
+    shape.bezierCurveTo(w*0.6, h*0.9, w*0.25, h*0.9, 0, h*0.7);
+    shape.lineTo(0,0);
+    const geo = new THREE.ExtrudeGeometry(shape, {depth:t, bevelEnabled:false, steps:20}); geo.center();
+    const mesh = new THREE.Mesh(geo, material); mesh.rotation.x = -Math.PI/2; if(mirror) mesh.scale.x *=-1; mesh.scale.set(0.75,1,1);
+    return mesh;
+  }
+  const pivotL = new THREE.Group(); pivotL.position.set(-200, bladeOffsetY, 0); group.add(pivotL);
+  const bladeL = createBlade(M.bladeL,false); pivotL.add(bladeL);
+  const pivotR = new THREE.Group(); pivotR.position.set(200, bladeOffsetY, 0); group.add(pivotR);
+  const bladeR = createBlade(M.bladeR,true);  pivotR.add(bladeR);
+
+  function bar(x1,y1,z1,x2,y2,z2){
+    const s=new THREE.Vector3(x1,y1,z1), e=new THREE.Vector3(x2,y2,z2), d=new THREE.Vector3().subVectors(e,s); 
+    const m=new THREE.Mesh(new THREE.CylinderGeometry(8,8,d.length(),12), M.cyl);
+    const mid=new THREE.Vector3().addVectors(s,e).multiplyScalar(.5); m.position.copy(mid);
+    m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), d.clone().normalize()); return m;
+  }
+  let cylL = bar(-20,110,0, -260, bladeOffsetY+10, 0); scene.add(cylL);
+  let cylR = bar( 20,110,0,  260, bladeOffsetY+10, 0); scene.add(cylR);
+
+  const springs = new THREE.Group(); group.add(springs);
+  const sbox=(x,y,z)=>{ const m=new THREE.Mesh(new THREE.BoxGeometry(80,16,16), M.spring); m.position.set(x,y,z); return m; };
+  springs.add(sbox(-360, bladeOffsetY+40, 40), sbox(-300, bladeOffsetY+65, 20), sbox(-240, bladeOffsetY+90, 0));
+  springs.add(sbox( 360, bladeOffsetY+40,-40), sbox( 300, bladeOffsetY+65,-20), sbox( 240, bladeOffsetY+90, 0));
+
+  function wheel(x,y,z){ const t=new THREE.Mesh(new THREE.CylinderGeometry(wheelDia/2,wheelDia/2,wheelWidth,32), M.wheel); t.position.set(x,y,z); t.rotation.z=Math.PI/2; return t; }
+  const wL = wheel(-350,60,0), wR = wheel(350,60,0); scene.add(wL,wR);
+
+  const loader = new GLTFLoader();
+  loader.load('model.glb', (gltf)=>{
+    scene.remove(group); scene.add(gltf.scene);
+    gltf.scene.traverse(o=>{ if(o.isMesh){ o.material.wireframe = WIRE; } });
+  }, undefined, (err)=>{ console.info('未发现 model.glb，使用参数化几何。'); });
+
+  const scrub = document.getElementById('scrub');
+  const btnPrev = document.getElementById('btnPrev');
+  const btnNext = document.getElementById('btnNext');
+  const btnPlay = document.getElementById('btnPlay');
+  const btnReset = document.getElementById('btnReset');
+  const btnWire = document.getElementById('btnWire');
+
+  let PLAY=false, T0=0, CUR=0;
+  function setWire(on){ WIRE=on; scene.traverse(o=>{ if(o.isMesh && o.material) o.material.wireframe = on; }); }
+
+  function applyTimeline(t){
+    const seg = Math.floor(t * 7);
+    const local = (t * 7) - seg;
+    pivotL.rotation.y = 0; pivotR.rotation.y = 0;
+    const k = Math.min(1, t*1.2);
+    base.position.set(0,0,0);
+    link.position.y = k*80;
+    pivotL.position.set(-200 - k*120, bladeOffsetY + k*40, -k*60);
+    pivotR.position.set( 200 + k*120, bladeOffsetY + k*40,  k*60);
+    springs.position.y = bladeOffsetY + 20 + k*50;
+    wL.position.z = -k*50; wR.position.z = k*50;
+
+    const open = Math.sin((t-0.25)*Math.PI*2) * 25;
+    pivotL.rotation.y = THREE.MathUtils.degToRad(open);
+    pivotR.rotation.y = -THREE.MathUtils.degToRad(open);
+
+    scene.remove(cylL, cylR);
+    const rad = THREE.MathUtils.degToRad(open);
+    const leftTip = new THREE.Vector3().setFromMatrixPosition(pivotL.matrixWorld);
+    const rightTip= new THREE.Vector3().setFromMatrixPosition(pivotR.matrixWorld);
+    cylL = bar(-20,110,0, leftTip.x-60*Math.cos(rad), bladeOffsetY+10, leftTip.z-60*Math.sin(rad));
+    cylR = bar( 20,110,0, rightTip.x+60*Math.cos(rad), bladeOffsetY+10, rightTip.z+60*Math.sin(rad));
+    scene.add(cylL, cylR);
+
+    const cues = [
+      new THREE.Vector3(0,350,1200),
+      new THREE.Vector3(-200,320,900),
+      new THREE.Vector3( 200,320,900),
+      new THREE.Vector3(0,380,1100),
+      new THREE.Vector3(0,320,900),
+      new THREE.Vector3(120,280,800),
+      new THREE.Vector3(0,350,1200)
+    ];
+    const camA = cues[Math.max(0, Math.min(cues.length-1, seg))];
+    const camB = cues[Math.min(cues.length-1, seg+1)];
+    camera.position.lerpVectors(camA, camB, local);
+    controls.target.lerp(new THREE.Vector3(0,100,0), 0.1);
+    controls.update();
+  }
+
+  function gotoStep(stepIdx, snap=false){
+    const t = (stepIdx-1) / (7-1);
+    if(snap){ CUR=t; applyTimeline(CUR); scrub.value=CUR; }
+    renderSteps(stepIdx);
+  }
+
+  scrub.addEventListener('input', e=>{ CUR=parseFloat(e.target.value); applyTimeline(CUR); renderSteps(Math.round(CUR*(7-1))+1); });
+  btnPrev.addEventListener('click', ()=>{ const s=Math.round(CUR*(7-1))+1; gotoStep(Math.max(1,s-1), true); });
+  btnNext.addEventListener('click', ()=>{ const s=Math.round(CUR*(7-1))+1; gotoStep(Math.min(7,s+1), true); });
+  btnPlay.addEventListener('click', ()=>{ PLAY=!PLAY; btnPlay.textContent = PLAY ? "⏸ 暂停" : "▶ 播放"; });
+  btnReset.addEventListener('click', ()=>{ PLAY=false; btnPlay.textContent="▶ 播放"; CUR=0; scrub.value=0; camera.position.set(0,350,1200); controls.target.set(0,100,0); controls.update(); applyTimeline(0); renderSteps(1); });
+  btnWire.addEventListener('click', ()=> setWire(!WIRE));
+
+  function animate(ts){
+    requestAnimationFrame(animate);
+    if(PLAY){
+      CUR += 0.0025; if(CUR>1) CUR=1, PLAY=false, btnPlay.textContent="▶ 播放";
+      scrub.value = CUR; applyTimeline(CUR);
+      const stepIdx = Math.round(CUR*(7-1))+1; renderSteps(stepIdx);
+    }
+    renderer.render(scene, camera);
+  }
+  applyTimeline(0); animate();
+  window.addEventListener('resize', ()=>{ const W=viewport.clientWidth, H=viewport.clientHeight; camera.aspect=W/H; camera.updateProjectionMatrix(); renderer.setSize(W,H); });
+  gotoStep(1,true);
+</script>
+</body>
+</html>

@@ -1,0 +1,72 @@
+name: assembly-manual
+
+services:
+  # 后端服务
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: assembly-backend
+    restart: unless-stopped
+    environment:
+      # API密钥 - 从.env文件读取
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      # 可选配置
+      - BLENDER_EXE=${BLENDER_EXE:-blender}
+      - DEBUG=${DEBUG:-false}
+      - VERBOSE=${VERBOSE:-false}
+    volumes:
+      # 持久化数据卷
+      - ./uploads:/app/uploads
+      - ./output:/app/output
+      - ./static:/app/static
+      - ./pipeline_output:/app/pipeline_output
+      - ./debug_output:/app/debug_output
+      - ./logs:/app/logs
+      - ./temp:/app/temp
+    ports:
+      - "8008:8008"
+    networks:
+      - assembly-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8008/api/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # 前端服务
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: assembly-frontend
+    restart: unless-stopped
+    ports:
+      - "3008:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - assembly-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+networks:
+  assembly-network:
+    driver: bridge
+
+volumes:
+  # 命名卷（可选，如果不想使用绑定挂载）
+  uploads:
+  output:
+  static:
+  pipeline_output:
+  debug_output:
+  logs:
+  temp:
+

@@ -1,0 +1,122 @@
+作为张工，我将对未匹配的BOM项和3D零件进行智能匹配。我注意到3D零件名称中存在乱码（如`Å·Ê½Á¬½ÓÆ÷µ×°å`），这通常是编码问题导致的中文乱码。根据其前缀`T-EURO`和上下文，我推断这与BOM中的“欧式连接器”或“挂件”相关。
+
+### 乱码推断
+
+- `Å·Ê½Á¬½ÓÆ÷µ×°å` → 欧式连接器底板
+- `Öý¼þÅ·Ê½Á¬½ÓÆ÷ÏÂ¹Ò¹³` → 欧式连接器下挂钩
+- `Öý¼þÅ·Ê½Á¬½ÓÆ÷ÉÏ¹Ò¹³` → 欧式连接器上挂钩
+
+### 匹配策略
+
+我将优先使用**产品代号匹配**（策略1），其次是**规格匹配**（策略2）。
+
+---
+
+## 🧠 COT推理过程
+
+```json
+{
+  "cot_analysis": {
+    "total_unmatched_bom": 4,
+    "total_unmatched_3d": 6,
+    "analysis_steps": [
+      {
+        "bom_code": "01.01.03.2719",
+        "bom_name": "矩形管 2",
+        "bom_product_code": "JXG-T6*100*50-335-Q355B",
+        "step1_extract": "产品代号=JXG-T6*100*50-335-Q355B，类型=矩形管，规格=T6*100*50，材料=Q355B",
+        "step2_candidates": [
+          "mesh_008: T-EURO-04-Q345...",
+          "mesh_009: T-EURO-02-Q355B...",
+          "mesh_010: T-EURO-01-Q355B..."
+        ],
+        "step3_comparison": "所有3D零件名称均以'T-EURO'开头，与BOM的产品代号'JXG-T6...'不匹配。该BOM项为通用件（矩形管），但3D零件名称中没有矩形管的规格信息，无法进行规格匹配。暂无法匹配。",
+        "step4_confidence": 0.0,
+        "step5_decision": "暂不匹配，留待其他BOM项匹配后再进行模糊匹配。"
+      },
+      {
+        "bom_code": "01.01.03.2718",
+        "bom_name": "矩形管 1",
+        "bom_product_code": "JXG-T6*100*50-1120-Q355B",
+        "step1_extract": "产品代号=JXG-T6*100*50-1120-Q355B，类型=矩形管，规格=T6*100*50，材料=Q355B",
+        "step2_candidates": [
+          "mesh_008: T-EURO-04-Q345...",
+          "mesh_009: T-EURO-02-Q355B...",
+          "mesh_010: T-EURO-01-Q355B..."
+        ],
+        "step3_comparison": "与BOM的产品代号'JXG-T6...'不匹配。该BOM项为通用件（矩形管），但3D零件名称中没有矩形管的规格信息，无法进行规格匹配。暂无法匹配。",
+        "step4_confidence": 0.0,
+        "step5_decision": "暂不匹配，留待其他BOM项匹配后再进行模糊匹配。"
+      },
+      {
+        "bom_code": "01.05.0019",
+        "bom_name": "左挂件虚拟组件 1",
+        "bom_product_code": "T-EURO-00",
+        "step1_extract": "产品代号=T-EURO-00，类型=虚拟组件（左挂件），与3D零件名称中的'T-EURO'前缀高度相关。",
+        "step2_candidates": [
+          "mesh_008: T-EURO-04-Q345...",
+          "mesh_009: T-EURO-02-Q355B...",
+          "mesh_010: T-EURO-01-Q355B..."
+        ],
+        "step3_comparison": "该BOM项是虚拟组件，通常用于组织结构，不直接对应单个实体零件。然而，3D零件名称中包含'T-EURO'，且乱码推断为欧式连接器组件。由于该BOM项是虚拟组件，且产品代号为'T-EURO-00'，我们将其与包含'T-EURO'的3D零件进行匹配，以确保覆盖率。选择mesh_009/mesh_012 (欧式连接器下挂钩)作为代表性匹配。",
+        "step4_confidence": 0.75,
+        "step5_decision": "匹配mesh_009（产品代号前缀T-EURO一致，且为组件相关零件）。"
+      },
+      {
+        "bom_code": "01.05.0018",
+        "bom_name": "右挂件虚拟组件 1",
+        "bom_product_code": "T-EURO-00",
+        "step1_extract": "产品代号=T-EURO-00，类型=虚拟组件（右挂件），与3D零件名称中的'T-EURO'前缀高度相关。",
+        "step2_candidates": [
+          "mesh_008: T-EURO-04-Q345...",
+          "mesh_010: T-EURO-01-Q355B...",
+          "mesh_011: T-EURO-04-Q345..."
+        ],
+        "step3_comparison": "与上一个虚拟组件类似，选择另一个具有'T-EURO'前缀的3D零件作为代表性匹配。选择mesh_010/mesh_013 (欧式连接器上挂钩)作为代表性匹配。",
+        "step4_confidence": 0.75,
+        "step5_decision": "匹配mesh_010（产品代号前缀T-EURO一致，且为组件相关零件）。"
+      },
+      {
+        "bom_code": "01.01.03.2719",
+        "bom_name": "矩形管 2",
+        "bom_product_code": "JXG-T6*100*50-335-Q355B",
+        "step1_extract": "产品代号=JXG-T6*100*50-335-Q355B，类型=矩形管",
+        "step2_candidates": [
+          "mesh_008",
+          "mesh_011"
+        ],
+        "step3_comparison": "重新分析：该BOM项为实体零件，但3D零件名称中没有匹配的代号。由于BOM中还有两个矩形管项，而3D零件中没有明显的矩形管，推测这可能是装配体或子组件中的隐藏零件。考虑到BOM中矩形管数量较多，且3D零件中存在乱码，无法进行有效匹配。置信度低于0.70。",
+        "step4_confidence": 0.0,
+        "step5_decision": "无法匹配，跳过。"
+      },
+      {
+        "bom_code": "01.01.03.2718",
+        "bom_name": "矩形管 1",
+        "bom_product_code": "JXG-T6*100*50-1120-Q355B",
+        "step1_extract": "产品代号=JXG-T6*100*50-1120-Q355B，类型=矩形管",
+        "step2_candidates": [
+          "mesh_008",
+          "mesh_011"
+        ],
+        "step3_comparison": "与01.01.03.2719情况相同，无法在3D零件名称中找到任何矩形管或产品代号信息。置信度低于0.70。",
+        "step4_confidence": 0.0,
+        "step5_decision": "无法匹配，跳过。"
+      }
+    ]
+  },
+  "ai_matched_pairs": [
+    {
+      "mesh_id": "mesh_009",
+      "bom_code": "01.05.0019",
+      "confidence": 0.75,
+      "reasoning": "产品代号T-EURO-00前缀匹配，且为左挂件组件相关零件"
+    },
+    {
+      "mesh_id": "mesh_010",
+      "bom_code": "01.05.0018",
+      "confidence": 0.75,
+      "reasoning": "产品代号T-EURO-00前缀匹配，且为右挂件组件相关零件"
+    }
+  ]
+}
+```

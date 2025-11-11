@@ -1,0 +1,785 @@
+[
+  {
+    "seq": "53",
+    "code": "01.09.2556",
+    "product_code": "T-SPV1830-EURO-09-Q235",
+    "name": "方形板-机加-镀锌",
+    "quantity": 1,
+    "weight": 3.65,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "52",
+    "code": "02.03.0088",
+    "product_code": "M8*80",
+    "name": "六角头螺栓8.8级GB/T5782-2016",
+    "quantity": 2,
+    "weight": 0.0,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "51",
+    "code": "01.09.1240",
+    "product_code": "T-SWB1400-SMS-C-LK-04",
+    "name": "电磁阀保护罩组件-漆后",
+    "quantity": 1,
+    "weight": 1.76,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "50",
+    "code": "02.03.0610",
+    "product_code": "20*3",
+    "name": "平垫圈 倒角型 A级(钢)GB／T 97．2-1985",
+    "quantity": 4,
+    "weight": 0.04,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "49",
+    "code": "01.09.0308",
+    "product_code": "SPE1.83-LD-10-Q235",
+    "name": "推雪板反光片固定板-镀锌",
+    "quantity": 2,
+    "weight": 0.19,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "48",
+    "code": "02.03.0378",
+    "product_code": "M6*20",
+    "name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+    "quantity": 12,
+    "weight": 0.12,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "47",
+    "code": "02.03.0147",
+    "product_code": "M30",
+    "name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+    "quantity": 6,
+    "weight": 1.5,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "46",
+    "code": "01.09.0304",
+    "product_code": "SPE1.83-LD-06-45#",
+    "name": "推雪板大垫圈-镀锌",
+    "quantity": 6,
+    "weight": 2.0,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "45",
+    "code": "02.03.0458",
+    "product_code": "M30*60",
+    "name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+    "quantity": 6,
+    "weight": 0.18,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "44",
+    "code": "02.03.0379",
+    "product_code": "M8*20",
+    "name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+    "quantity": 8,
+    "weight": 0.08,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "43",
+    "code": "02.03.0019",
+    "product_code": "M16",
+    "name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+    "quantity": 14,
+    "weight": 0.56,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "42",
+    "code": "02.03.0072",
+    "product_code": "16*3",
+    "name": "平垫圈8.8级GB/T95-2002",
+    "quantity": 14,
+    "weight": 0.14,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "41",
+    "code": "02.03.1035",
+    "product_code": "M16*85",
+    "name": "内六角平圆头螺钉8.8级GB/T70.2-2015",
+    "quantity": 14,
+    "weight": 0.0,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "40",
+    "code": "02.03.0012",
+    "product_code": "Φ4.5*40",
+    "name": "安全销DIN 11023",
+    "quantity": 1,
+    "weight": 0.03,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "39",
+    "code": "02.03.0102",
+    "product_code": "M8*65",
+    "name": "六角头螺栓8.8级GB/T 5782-2016",
+    "quantity": 1,
+    "weight": 0.01,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "38",
+    "code": "02.03.0383",
+    "product_code": "M6*16",
+    "name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+    "quantity": 2,
+    "weight": 0.02,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "37",
+    "code": "02.04.0029",
+    "product_code": "SPE1.83-LD-09",
+    "name": "推雪板反光片",
+    "quantity": 2,
+    "weight": 0.04,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "36",
+    "code": "02.08.03.0236",
+    "product_code": "A181-014",
+    "name": "电磁阀组",
+    "quantity": 1,
+    "weight": 3.33,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "35",
+    "code": "02.03.0001",
+    "product_code": "φ8*45",
+    "name": "安全销DIN 11023",
+    "quantity": 4,
+    "weight": 0.12,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "34",
+    "code": "02.08.05.0004",
+    "product_code": "M8",
+    "name": "直通式压注油杯JB/T7940.1-1995",
+    "quantity": 18,
+    "weight": 0.18,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "33",
+    "code": "02.03.0028",
+    "product_code": "M8",
+    "name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+    "quantity": 23,
+    "weight": 0.23,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "32",
+    "code": "02.03.0398",
+    "product_code": "M8*40",
+    "name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+    "quantity": 12,
+    "weight": 0.12,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "31",
+    "code": "02.03.0381",
+    "product_code": "6*1.6",
+    "name": "平垫圈8.8级GB/T95-2002",
+    "quantity": 26,
+    "weight": 0.26,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "30",
+    "code": "02.03.0146",
+    "product_code": "M6",
+    "name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+    "quantity": 16,
+    "weight": 0.16,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "29",
+    "code": "02.03.0442",
+    "product_code": "M6*40",
+    "name": "内六角圆柱头螺钉8.8级GB/T70.1-2008",
+    "quantity": 2,
+    "weight": 0.16,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "28",
+    "code": "01.09.2566",
+    "product_code": "ML-CA1200-Avant300-500-11-Q235",
+    "name": "圆钢-机加-镀锌",
+    "quantity": 2,
+    "weight": 0.12,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "27",
+    "code": "01.09.2565",
+    "product_code": "ML-CA1200-Avant300-500-08-45#",
+    "name": "自制螺栓-镀锌",
+    "quantity": 2,
+    "weight": 0.7,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "26",
+    "code": "02.03.0612",
+    "product_code": "M20",
+    "name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+    "quantity": 2,
+    "weight": 0.14,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "25",
+    "code": "02.16.0142",
+    "product_code": "轮胎外径φ200，轮胎面宽50，轴孔φ20，轴长50",
+    "name": "实心橡胶轮",
+    "quantity": 2,
+    "weight": 2.95,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "24",
+    "code": "01.09.0999",
+    "product_code": "T-U2500-16-45#",
+    "name": "V型推雪板轴套-镀锌",
+    "quantity": 1,
+    "weight": 0.17,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "23",
+    "code": "01.09.0503",
+    "product_code": "CX-φ12-150-45#",
+    "name": "插销-镀锌",
+    "quantity": 1,
+    "weight": 0.1,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "22",
+    "code": "02.03.0006",
+    "product_code": "30*4",
+    "name": "平垫圈8.8级GB/T95-2002",
+    "quantity": 6,
+    "weight": 0.06,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "21",
+    "code": "01.09.0995",
+    "product_code": "T-U2500-11-45#",
+    "name": "V型推雪板销轴-镀锌",
+    "quantity": 6,
+    "weight": 3.22,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "20",
+    "code": "02.03.0148",
+    "product_code": "M30",
+    "name": "1型六角螺母8.8级GB/T 6170-2015",
+    "quantity": 6,
+    "weight": 1.2,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "19",
+    "code": "01.09.2564",
+    "product_code": "ML-CA1200-Avant300-500-07",
+    "name": "把手组件-镀锌",
+    "quantity": 2,
+    "weight": 1.58,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "18",
+    "code": "02.08.01.0338",
+    "product_code": "EHYG-φ63/φ35-428-251-Ⅱ",
+    "name": "油缸",
+    "quantity": 2,
+    "weight": 17.1,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "17",
+    "code": "02.09.0103",
+    "product_code": "TH-φ10*16*φ56*260-YS",
+    "name": "压缩弹簧",
+    "quantity": 6,
+    "weight": 5.56,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "16",
+    "code": "01.09.2563",
+    "product_code": "XZ-φ40*10-φ30*87-φ10*10-45#",
+    "name": "销轴-镀锌",
+    "quantity": 4,
+    "weight": 2.26,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "15",
+    "code": "01.09.2562",
+    "product_code": "XZ-φ35*10-φ25*145-φ10*10-45#",
+    "name": "销轴-镀锌",
+    "quantity": 6,
+    "weight": 3.72,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "14",
+    "code": "01.09.2561",
+    "product_code": "XZ-φ50*15-φ35*485-φ10*10-45#",
+    "name": "销轴-镀锌",
+    "quantity": 1,
+    "weight": 3.89,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "13",
+    "code": "01.09.2555",
+    "product_code": "T-SPV1830-EURO-08-Q235",
+    "name": "方形板-机加-镀锌",
+    "quantity": 1,
+    "weight": 3.65,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "12",
+    "code": "01.02.07.0071",
+    "product_code": "T-SPV250-Z602-12",
+    "name": "橡胶挡板",
+    "quantity": 1,
+    "weight": 2.33,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "11",
+    "code": "01.02.07.0239",
+    "product_code": "T-SPV1830-EURO-07",
+    "name": "橡胶刀板",
+    "quantity": 2,
+    "weight": 27.56,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "10",
+    "code": "01.09.2560",
+    "product_code": "T-SPV250-Z602-09",
+    "name": "后座支撑架组件-漆后",
+    "quantity": 1,
+    "weight": 2.49,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "9",
+    "code": "01.09.2559",
+    "product_code": "T-SPV250-Z602-08",
+    "name": "推雪板弹簧导柱组件-镀锌",
+    "quantity": 6,
+    "weight": 15.85,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "8",
+    "code": "01.09.2558",
+    "product_code": "T-SPV250-Z602-07",
+    "name": "轮胎架内臂组件-镀锌",
+    "quantity": 2,
+    "weight": 9.38,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "7",
+    "code": "01.09.2557",
+    "product_code": "T-SPV250-Z602-06",
+    "name": "轮胎架外臂组件-漆后",
+    "quantity": 2,
+    "weight": 11.34,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "6",
+    "code": "01.09.2553",
+    "product_code": "T-SPV1830-EURO-05",
+    "name": "右刀板后座组件-漆后",
+    "quantity": 1,
+    "weight": 11.17,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "5",
+    "code": "01.09.2554",
+    "product_code": "T-SPV1830-EURO-06",
+    "name": "左刀板后座组件-漆后",
+    "quantity": 1,
+    "weight": 11.17,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "4",
+    "code": "01.09.2552",
+    "product_code": "T-SPV1830-EURO-04",
+    "name": "右铲雪板组件-漆后",
+    "quantity": 1,
+    "weight": 60.68,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "3",
+    "code": "01.09.2551",
+    "product_code": "T-SPV1830-EURO-03",
+    "name": "左铲雪板组件-漆后",
+    "quantity": 1,
+    "weight": 60.69,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "2",
+    "code": "01.09.2550",
+    "product_code": "T-SPV1830-EURO-02",
+    "name": "后座连接架组件-漆后",
+    "quantity": 1,
+    "weight": 59.64,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "1",
+    "code": "01.09.2549",
+    "product_code": "T-SPV1830-EURO-01",
+    "name": "连接器后座组件-漆后",
+    "quantity": 1,
+    "weight": 77.27,
+    "source_pdf": "产品总图.pdf"
+  },
+  {
+    "seq": "9",
+    "code": "01.01.01.17678",
+    "product_code": "CS-ST1070(42IN)-MP910-LDY100D-01-03-Q355B",
+    "name": "加强筋 2",
+    "quantity": 2,
+    "weight": 1.2,
+    "source_pdf": "组件图1.pdf"
+  },
+  {
+    "seq": "8",
+    "code": "01.01.03.2720",
+    "product_code": "JXG-T6*100*50-970-Q355B",
+    "name": "矩形管 1",
+    "quantity": 1,
+    "weight": 12.61,
+    "source_pdf": "组件图1.pdf"
+  },
+  {
+    "seq": "7",
+    "code": "01.01.01.16608",
+    "product_code": "S-SBE2130(84IN)-MP1220-01-01-Q355B",
+    "name": "封板 2",
+    "quantity": 2,
+    "weight": 5.12,
+    "source_pdf": "组件图1.pdf"
+  },
+  {
+    "seq": "6",
+    "code": "01.01.03.2719",
+    "product_code": "JXG-T6*100*50-335-Q355B",
+    "name": "矩形管 2",
+    "quantity": 2,
+    "weight": 8.71,
+    "source_pdf": "组件图1.pdf"
+  },
+  {
+    "seq": "5",
+    "code": "01.05.0019",
+    "product_code": "T-EURO-00",
+    "name": "左挂件虚拟组件 1",
+    "quantity": 1,
+    "weight": 6.53,
+    "source_pdf": "组件图1.pdf"
+  },
+  {
+    "seq": "4",
+    "code": "01.05.0018",
+    "product_code": "T-EURO-00",
+    "name": "右挂件虚拟组件 1",
+    "quantity": 1,
+    "weight": 6.53,
+    "source_pdf": "组件图1.pdf"
+  },
+  {
+    "seq": "3",
+    "code": "01.01.01.6589",
+    "product_code": "T-SPE-FL-01-SMS-01-Q235",
+    "name": "方形板-机加 4",
+    "quantity": 4,
+    "weight": 0.64,
+    "source_pdf": "组件图1.pdf"
+  },
+  {
+    "seq": "2",
+    "code": "01.01.01.11509",
+    "product_code": "T-SPV250-Z602-01-01-Q355B",
+    "name": "连接板 1",
+    "quantity": 1,
+    "weight": 21.36,
+    "source_pdf": "组件图1.pdf"
+  },
+  {
+    "seq": "1",
+    "code": "01.01.03.2718",
+    "product_code": "JXG-T6*100*50-1120-Q355B",
+    "name": "矩形管 1",
+    "quantity": 1,
+    "weight": 14.56,
+    "source_pdf": "组件图1.pdf"
+  },
+  {
+    "seq": "10",
+    "code": "01.01.02.0337",
+    "product_code": "T-U2500-01-09-Q235",
+    "name": "后座轴套 1",
+    "quantity": 1,
+    "weight": 0.3,
+    "source_pdf": "组件图2.pdf"
+  },
+  {
+    "seq": "9",
+    "code": "01.02.02.0490",
+    "product_code": "T-U2500-01-05-Q235",
+    "name": "后座轴套 1",
+    "quantity": 1,
+    "weight": 2.29,
+    "source_pdf": "组件图2.pdf"
+  },
+  {
+    "seq": "8",
+    "code": "01.01.02.1221",
+    "product_code": "ZT-φ55/φ37-35-Q235",
+    "name": "轴套 1",
+    "quantity": 1,
+    "weight": 0.35,
+    "source_pdf": "组件图2.pdf"
+  },
+  {
+    "seq": "7",
+    "code": "01.01.04.0592",
+    "product_code": "T-SPV250-Z602-02-07-Q235",
+    "name": "角钢-机加 1",
+    "quantity": 1,
+    "weight": 0.63,
+    "source_pdf": "组件图2.pdf"
+  },
+  {
+    "seq": "6",
+    "code": "01.01.01.11516",
+    "product_code": "T-SPV250-Z602-02-06-Q355B",
+    "name": "加强板 4",
+    "quantity": 4,
+    "weight": 1.41,
+    "source_pdf": "组件图2.pdf"
+  },
+  {
+    "seq": "5",
+    "code": "01.01.01.11515",
+    "product_code": "T-SPV250-Z602-02-05-Q355B",
+    "name": "油缸固定板 4",
+    "quantity": 4,
+    "weight": 2.1,
+    "source_pdf": "组件图2.pdf"
+  },
+  {
+    "seq": "4",
+    "code": "01.01.01.11514",
+    "product_code": "T-SPV250-Z602-02-04-Q355B",
+    "name": "折弯板 1",
+    "quantity": 1,
+    "weight": 0.49,
+    "source_pdf": "组件图2.pdf"
+  },
+  {
+    "seq": "3",
+    "code": "01.01.01.11513",
+    "product_code": "T-SPV250-Z602-02-03-Q355B",
+    "name": "侧连接板 2",
+    "quantity": 2,
+    "weight": 24.97,
+    "source_pdf": "组件图2.pdf"
+  },
+  {
+    "seq": "2",
+    "code": "01.01.01.11512",
+    "product_code": "T-SPV250-Z602-02-02-Q355B",
+    "name": "上连接板 2",
+    "quantity": 2,
+    "weight": 11.35,
+    "source_pdf": "组件图2.pdf"
+  },
+  {
+    "seq": "1",
+    "code": "01.01.01.11511",
+    "product_code": "T-SPV250-Z602-02-01-Q355B",
+    "name": "方形板-机加 1",
+    "quantity": 1,
+    "weight": 15.79,
+    "source_pdf": "组件图2.pdf"
+  },
+  {
+    "seq": "15",
+    "code": "01.02.01.4983",
+    "product_code": "T-U2500-02-12-Q345",
+    "name": "左铲雪板加强板 2",
+    "quantity": 2,
+    "weight": 1.48,
+    "source_pdf": "组件图3.pdf"
+  },
+  {
+    "seq": "14",
+    "code": "01.01.01.11529",
+    "product_code": "FXB-T8*95*80-Q355B",
+    "name": "方形板 3",
+    "quantity": 3,
+    "weight": 1.38,
+    "source_pdf": "组件图3.pdf"
+  },
+  {
+    "seq": "13",
+    "code": "01.01.01.11528",
+    "product_code": "FXB-T8*190*100-Q355B",
+    "name": "方形板 1",
+    "quantity": 1,
+    "weight": 1.16,
+    "source_pdf": "组件图3.pdf"
+  },
+  {
+    "seq": "12",
+    "code": "01.01.02.1222",
+    "product_code": "ZT-φ60/φ35-50-Q235",
+    "name": "轴套 2",
+    "quantity": 2,
+    "weight": 1.46,
+    "source_pdf": "组件图3.pdf"
+  },
+  {
+    "seq": "11",
+    "code": "01.01.01.11527",
+    "product_code": "T-SPV250-Z602-03-11-Q235",
+    "name": "反光片安装板 1",
+    "quantity": 1,
+    "weight": 0.18,
+    "source_pdf": "组件图3.pdf"
+  },
+  {
+    "seq": "10",
+    "code": "01.01.01.11526",
+    "product_code": "T-SPV250-Z602-03-10-Q235",
+    "name": "轴套加强板 2",
+    "quantity": 2,
+    "weight": 0.83,
+    "source_pdf": "组件图3.pdf"
+  },
+  {
+    "seq": "9",
+    "code": "01.01.01.11525",
+    "product_code": "T-SPV250-Z602-03-09-Q235",
+    "name": "支撑固定板 1",
+    "quantity": 1,
+    "weight": 0.66,
+    "source_pdf": "组件图3.pdf"
+  },
+  {
+    "seq": "8",
+    "code": "01.01.01.11524",
+    "product_code": "T-SPV250-Z602-03-08-Q235",
+    "name": "后弹簧固定板 2",
+    "quantity": 2,
+    "weight": 0.82,
+    "source_pdf": "组件图3.pdf"
+  },
+  {
+    "seq": "7",
+    "code": "01.01.01.11523",
+    "product_code": "T-SPV250-Z602-03-07-Q235",
+    "name": "前弹簧固定板 1",
+    "quantity": 1,
+    "weight": 0.89,
+    "source_pdf": "组件图3.pdf"
+  },
+  {
+    "seq": "6",
+    "code": "01.01.01.11522",
+    "product_code": "T-SPV250-Z602-03-06-Q355B",
+    "name": "前油缸固定板 2",
+    "quantity": 2,
+    "weight": 2.41,
+    "source_pdf": "组件图3.pdf"
+  },
+  {
+    "seq": "5",
+    "code": "01.01.01.11521",
+    "product_code": "T-SPV250-Z602-03-05-Q355B",
+    "name": "底部连接板 6",
+    "quantity": 6,
+    "weight": 3.47,
+    "source_pdf": "组件图3.pdf"
+  },
+  {
+    "seq": "4",
+    "code": "01.01.01.18600",
+    "product_code": "T-SPV1830-EURO-03-03-Q355B",
+    "name": "前加强板 1",
+    "quantity": 1,
+    "weight": 3.34,
+    "source_pdf": "组件图3.pdf"
+  },
+  {
+    "seq": "3",
+    "code": "01.01.01.11519",
+    "product_code": "T-SPV250-Z602-03-03-Q355B",
+    "name": "后加强板 1",
+    "quantity": 1,
+    "weight": 2.56,
+    "source_pdf": "组件图3.pdf"
+  },
+  {
+    "seq": "2",
+    "code": "01.01.01.18599",
+    "product_code": "T-SPV1830-EURO-03-02-Q235",
+    "name": "方形板-机加 1",
+    "quantity": 1,
+    "weight": 11.69,
+    "source_pdf": "组件图3.pdf"
+  },
+  {
+    "seq": "1",
+    "code": "01.01.01.18598",
+    "product_code": "T-SPV1830-EURO-03-01-Q235",
+    "name": "左铲板 1",
+    "quantity": 1,
+    "weight": 28.38,
+    "source_pdf": "组件图3.pdf"
+  }
+]

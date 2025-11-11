@@ -1,0 +1,300 @@
+{
+  "agent_name": "Agent5_",
+  "model": "google/gemini-2.5-flash-preview-09-2025",
+  "timestamp": "20251005_005210",
+  "image_count": 2,
+  "temperature": 0.1,
+  "system_prompt": "你是焊接工艺专家王师傅，拥有30年焊接经验。\n\n你的任务：为每个装配步骤添加焊接要点（如果该步骤涉及焊接）。\n\n## 核心原则\n\n1. **识别焊接步骤**：判断哪些装配步骤需要焊接\n2. **嵌入焊接要点**：为需要焊接的步骤添加welding字段\n3. **工人友好**：使用通俗语言，避免专业术语\n4. **安全第一**：强调焊接安全和质量要求\n\n## 输出格式\n\n严格按照以下JSON格式输出（返回增强后的装配步骤）：\n\n```json\n{\n  \"enhanced_steps\": [\n    {\n      \"step_number\": 1,\n      \"title\": \"步骤标题\",\n      \"parts_used\": [...],\n      \"tools_required\": [...],\n      \"operation\": \"操作说明\",\n      \"quality_check\": \"质量检查\",\n      \"estimated_time_minutes\": 10,\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"焊脚高度6mm\",\n        \"welding_position\": \"平焊\",\n        \"quality_requirements\": \"焊缝饱满，无气孔\",\n        \"safety_notes\": \"佩戴焊接面罩，确保通风\"\n      }\n    }\n  ]\n}\n```\n\n**⚠️ 重要**：\n- 如果步骤不需要焊接，不要添加welding字段\n- 如果步骤需要焊接，welding.required必须为true\n- 保持原有步骤的所有字段不变，只添加welding字段\n\n## 重要提醒\n\n- **只输出JSON，不要输出其他内容**\n- **焊接位置要具体**：说明是哪两个零件之间的焊接\n- **使用通俗语言**：说\"焊缝高度6mm\"不说\"焊脚尺寸6\"\n- **包含安全提示**：每个焊接点都要有安全注意事项\n",
+  "user_query": "请为以下装配步骤添加焊接要点（如果涉及焊接）。\n\n## 装配步骤\n\n[\n  {\n    \"step_number\": 1,\n    \"action\": \"定位基准件\",\n    \"description\": \"将图纸上编号为3的侧连接板（01.01.01.11513）平稳放置在焊接平台上，作为装配的基准件。注意检查板材的平整度。\",\n    \"position_description\": \"焊接平台中心\",\n    \"parts_used\": [\n      {\n        \"bom_code\": \"01.01.01.11513\",\n        \"bom_name\": \"侧连接板 2\",\n        \"quantity\": 1,\n        \"drawing_number\": \"3\"\n      }\n    ],\n    \"tools\": [\n      \"焊接平台\",\n      \"角尺\"\n    ],\n    \"warnings\": [\n      \"确保板材放置平稳，避免后续焊接变形。\"\n    ]\n  },\n  {\n    \"step_number\": 2,\n    \"action\": \"安装方形板\",\n    \"description\": \"将图纸上编号为1的方形板-机加（01.01.01.11511）放置在步骤1的侧连接板（3）的底部边缘，按照图纸所示位置进行点焊定位。注意方形板的机加工面朝向。\",\n    \"position_description\": \"侧连接板（3）的底部边缘\",\n    \"parts_used\": [\n      {\n        \"bom_code\": \"01.01.01.11511\",\n        \"bom_name\": \"方形板-机加\",\n        \"quantity\": 1,\n        \"drawing_number\": \"1\"\n      }\n    ],\n    \"tools\": [\n      \"点焊机\",\n      \"磁力夹具\"\n    ],\n    \"warnings\": [\n      \"点焊定位时，确保方形板与侧连接板的垂直度。\"\n    ]\n  },\n  {\n    \"step_number\": 3,\n    \"action\": \"安装上连接板\",\n    \"description\": \"将图纸上编号为2的上连接板 2（01.01.01.11512）放置在侧连接板（3）的顶部边缘，与方形板（1）平行，进行点焊定位。\",\n    \"position_description\": \"侧连接板（3）的顶部边缘\",\n    \"parts_used\": [\n      {\n        \"bom_code\": \"01.01.01.11512\",\n        \"bom_name\": \"上连接板 2\",\n        \"quantity\": 1,\n        \"drawing_number\": \"2\"\n      }\n    ],\n    \"tools\": [\n      \"点焊机\",\n      \"角尺\"\n    ],\n    \"warnings\": [\n      \"确保上连接板与侧连接板的垂直度，并与方形板保持平行。\"\n    ]\n  },\n  {\n    \"step_number\": 4,\n    \"action\": \"安装第二块侧连接板\",\n    \"description\": \"将第二块侧连接板（3）安装在方形板（1）和上连接板（2）的另一端，形成一个箱体结构。使用夹具固定后进行点焊定位。\",\n    \"position_description\": \"方形板（1）和上连接板（2）的另一端\",\n    \"parts_used\": [\n      {\n        \"bom_code\": \"01.01.01.11513\",\n        \"bom_name\": \"侧连接板 2\",\n        \"quantity\": 1,\n        \"drawing_number\": \"3\"\n      }\n    ],\n    \"tools\": [\n      \"点焊机\",\n      \"快速夹具\"\n    ],\n    \"warnings\": [\n      \"检查箱体结构的对角线尺寸，确保无扭曲变形。\"\n    ]\n  },\n  {\n    \"step_number\": 5,\n    \"action\": \"安装折弯板和角钢\",\n    \"description\": \"将图纸上编号为4的折弯板 1（01.01.01.11514）和编号为7的角钢-机加 1（01.01.04.0592）安装在主体框架的内部，按照图纸所示位置进行点焊定位。\",\n    \"position_description\": \"主体框架内部，靠近侧连接板（3）\",\n    \"parts_used\": [\n      {\n        \"bom_code\": \"01.01.01.11514\",\n        \"bom_name\": \"折弯板 1\",\n        \"quantity\": 1,\n        \"drawing_number\": \"4\"\n      },\n      {\n        \"bom_code\": \"01.01.04.0592\",\n        \"bom_name\": \"角钢-机加 1\",\n        \"quantity\": 1,\n        \"drawing_number\": \"7\"\n      }\n    ],\n    \"tools\": [\n      \"点焊机\",\n      \"卷尺\"\n    ],\n    \"warnings\": [\n      \"角钢和折弯板的位置是关键支撑点，必须严格按照尺寸定位。\"\n    ]\n  },\n  {\n    \"step_number\": 6,\n    \"action\": \"安装加强板\",\n    \"description\": \"将4块图纸上编号为6的加强板 4（01.01.01.11516）分别安装在主体框架的四个角部，用于加强结构强度。进行点焊定位。\",\n    \"position_description\": \"主体框架的四个角部\",\n    \"parts_used\": [\n      {\n        \"bom_code\": \"01.01.01.11516\",\n        \"bom_name\": \"加强板 4\",\n        \"quantity\": 4,\n        \"drawing_number\": \"6\"\n      }\n    ],\n    \"tools\": [\n      \"点焊机\"\n    ],\n    \"warnings\": [\n      \"加强板应紧密贴合主体结构，无间隙。\"\n    ]\n  },\n  {\n    \"step_number\": 7,\n    \"action\": \"安装油缸固定板\",\n    \"description\": \"将4块图纸上编号为5的油缸固定板 4（01.01.01.11515）安装在侧连接板（3）的外部，按照图纸上的孔位和尺寸要求进行点焊定位。\",\n    \"position_description\": \"侧连接板（3）外部，靠近底部\",\n    \"parts_used\": [\n      {\n        \"bom_code\": \"01.01.01.11515\",\n        \"bom_name\": \"油缸固定板 4\",\n        \"quantity\": 4,\n        \"drawing_number\": \"5\"\n      }\n    ],\n    \"tools\": [\n      \"点焊机\",\n      \"定位销\"\n    ],\n    \"warnings\": [\n      \"油缸固定板的孔位必须对齐，确保后续油缸安装顺利。\"\n    ]\n  },\n  {\n    \"step_number\": 8,\n    \"action\": \"安装轴套（8, 9, 10）\",\n    \"description\": \"依次将图纸上编号为8的轴套 1（01.01.02.1221）、编号为9的后座轴套 1（01.02.02.0490）和编号为10的后座轴套 1（01.01.02.0337）安装在侧连接板（3）的指定孔位上。轴套需从外部插入，并与侧连接板齐平，进行点焊定位。\",\n    \"position_description\": \"侧连接板（3）上的轴孔位置\",\n    \"parts_used\": [\n      {\n        \"bom_code\": \"01.01.02.1221\",\n        \"bom_name\": \"轴套 1\",\n        \"quantity\": 1,\n        \"drawing_number\": \"8\"\n      },\n      {\n        \"bom_code\": \"01.02.02.0490\",\n        \"bom_name\": \"后座轴套 1\",\n        \"quantity\": 1,\n        \"drawing_number\": \"9\"\n      },\n      {\n        \"bom_code\": \"01.01.02.0337\",\n        \"bom_name\": \"后座轴套 1\",\n        \"quantity\": 1,\n        \"drawing_number\": \"10\"\n      }\n    ],\n    \"tools\": [\n      \"点焊机\",\n      \"游标卡尺\"\n    ],\n    \"warnings\": [\n      \"轴套的端面必须与侧连接板的表面齐平，确保装配精度。\"\n    ]\n  },\n  {\n    \"step_number\": 9,\n    \"action\": \"全面焊接\",\n    \"description\": \"对所有已定位的零件（1, 2, 3, 4, 5, 6, 7, 8, 9, 10）进行全面焊接。焊接要求参照图纸技术要求：焊缝饱满、焊道美观，焊脚大小及焊缝位置符合要求。注意控制焊接变形。\",\n    \"position_description\": \"所有连接面\",\n    \"parts_used\": [],\n    \"tools\": [\n      \"焊机\",\n      \"焊条/焊丝\"\n    ],\n    \"warnings\": [\n      \"焊接完成后，立即进行清渣和外观检查。避免过热导致结构变形。\"\n    ]\n  },\n  {\n    \"step_number\": 10,\n    \"action\": \"校正与清理\",\n    \"description\": \"对焊接完成的组件进行整体校正，确保关键尺寸符合图纸要求。使用角磨机清理所有飞溅物和毛刺，确保表面光滑，为后续喷漆做准备。\",\n    \"position_description\": \"整体组件\",\n    \"parts_used\": [],\n    \"tools\": [\n      \"角磨机\",\n      \"校正平台\",\n      \"卷尺\"\n    ],\n    \"warnings\": [\n      \"校正时力度要均匀，避免二次损伤。清理后的组件表面应无尖锐边缘。\"\n    ]\n  }\n]\n\n## 要求\n\n1. **识别焊接步骤**：判断哪些步骤需要焊接（通常是零件固定、连接的步骤）\n2. **添加焊接要点**：为需要焊接的步骤添加welding字段\n3. **保持原有字段**：不要修改或删除原有的字段（step_number、title、parts_used等）\n4. **使用通俗语言**：工人能看懂的语言\n5. **包含安全提示**：每个焊接点都要有安全注意事项\n\n## 自检清单\n\n- [ ] 所有需要焊接的步骤都添加了welding字段\n- [ ] welding字段包含完整信息（type、method、size、position、quality、safety）\n- [ ] 原有步骤的所有字段都保持不变\n- [ ] 不需要焊接的步骤没有添加welding字段\n\n现在开始为装配步骤添加焊接要点！\n",
+  "raw_response": "```json\n{\n  \"enhanced_steps\": [\n    {\n      \"step_number\": 1,\n      \"action\": \"定位基准件\",\n      \"description\": \"将图纸上编号为3的侧连接板（01.01.01.11513）平稳放置在焊接平台上，作为装配的基准件。注意检查板材的平整度。\",\n      \"position_description\": \"焊接平台中心\",\n      \"parts_used\": [\n        {\n          \"bom_code\": \"01.01.01.11513\",\n          \"bom_name\": \"侧连接板 2\",\n          \"quantity\": 1,\n          \"drawing_number\": \"3\"\n        }\n      ],\n      \"tools\": [\n        \"焊接平台\",\n        \"角尺\"\n      ],\n      \"warnings\": [\n        \"确保板材放置平稳，避免后续焊接变形。\"\n      ]\n    },\n    {\n      \"step_number\": 2,\n      \"action\": \"安装方形板\",\n      \"description\": \"将图纸上编号为1的方形板-机加（01.01.01.11511）放置在步骤1的侧连接板（3）的底部边缘，按照图纸所示位置进行点焊定位。注意方形板的机加工面朝向。\",\n      \"position_description\": \"侧连接板（3）的底部边缘\",\n      \"parts_used\": [\n        {\n          \"bom_code\": \"01.01.01.11511\",\n          \"bom_name\": \"方形板-机加\",\n          \"quantity\": 1,\n          \"drawing_number\": \"1\"\n        }\n      ],\n      \"tools\": [\n        \"点焊机\",\n        \"磁力夹具\"\n      ],\n      \"warnings\": [\n        \"点焊定位时，确保方形板与侧连接板的垂直度。\"\n      ],\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"点焊定位\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"点焊，焊点长度10mm\",\n        \"welding_position\": \"方形板（1）与侧连接板（3）的连接处\",\n        \"quality_requirements\": \"焊点牢固，定位准确，确保垂直度90度\",\n        \"safety_notes\": \"点焊时注意佩戴防护眼镜和手套，防止飞溅物烫伤\"\n      }\n    },\n    {\n      \"step_number\": 3,\n      \"action\": \"安装上连接板\",\n      \"description\": \"将图纸上编号为2的上连接板 2（01.01.01.11512）放置在侧连接板（3）的顶部边缘，与方形板（1）平行，进行点焊定位。\",\n      \"position_description\": \"侧连接板（3）的顶部边缘\",\n      \"parts_used\": [\n        {\n          \"bom_code\": \"01.01.01.11512\",\n          \"bom_name\": \"上连接板 2\",\n          \"quantity\": 1,\n          \"drawing_number\": \"2\"\n        }\n      ],\n      \"tools\": [\n        \"点焊机\",\n        \"角尺\"\n      ],\n      \"warnings\": [\n        \"确保上连接板与侧连接板的垂直度，并与方形板保持平行。\"\n      ],\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"点焊定位\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"点焊，焊点长度10mm\",\n        \"welding_position\": \"上连接板（2）与侧连接板（3）的连接处\",\n        \"quality_requirements\": \"焊点牢固，确保上连接板与侧连接板垂直度\",\n        \"safety_notes\": \"点焊时注意佩戴防护眼镜和手套，防止飞溅物烫伤\"\n      }\n    },\n    {\n      \"step_number\": 4,\n      \"action\": \"安装第二块侧连接板\",\n      \"description\": \"将第二块侧连接板（3）安装在方形板（1）和上连接板（2）的另一端，形成一个箱体结构。使用夹具固定后进行点焊定位。\",\n      \"position_description\": \"方形板（1）和上连接板（2）的另一端\",\n      \"parts_used\": [\n        {\n          \"bom_code\": \"01.01.01.11513\",\n          \"bom_name\": \"侧连接板 2\",\n          \"quantity\": 1,\n          \"drawing_number\": \"3\"\n        }\n      ],\n      \"tools\": [\n        \"点焊机\",\n        \"快速夹具\"\n      ],\n      \"warnings\": [\n        \"检查箱体结构的对角线尺寸，确保无扭曲变形。\"\n      ],\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"点焊定位\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"点焊，每条边2个焊点\",\n        \"welding_position\": \"第二块侧连接板（3）与方形板（1）和上连接板（2）的连接处\",\n        \"quality_requirements\": \"箱体结构对角线误差小于1mm，确保结构方正\",\n        \"safety_notes\": \"使用夹具固定时，注意夹紧力度，点焊后检查结构稳定性\"\n      }\n    },\n    {\n      \"step_number\": 5,\n      \"action\": \"安装折弯板和角钢\",\n      \"description\": \"将图纸上编号为4的折弯板 1（01.01.01.11514）和编号为7的角钢-机加 1（01.01.04.0592）安装在主体框架的内部，按照图纸所示位置进行点焊定位。\",\n      \"position_description\": \"主体框架内部，靠近侧连接板（3）\",\n      \"parts_used\": [\n        {\n          \"bom_code\": \"01.01.01.11514\",\n          \"bom_name\": \"折弯板 1\",\n          \"quantity\": 1,\n          \"drawing_number\": \"4\"\n        },\n        {\n          \"bom_code\": \"01.01.04.0592\",\n          \"bom_name\": \"角钢-机加 1\",\n          \"quantity\": 1,\n          \"drawing_number\": \"7\"\n        }\n      ],\n      \"tools\": [\n        \"点焊机\",\n        \"卷尺\"\n      ],\n      \"warnings\": [\n        \"角钢和折弯板的位置是关键支撑点，必须严格按照尺寸定位。\"\n      ],\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"点焊定位\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"点焊，每条边2个焊点\",\n        \"welding_position\": \"折弯板（4）和角钢（7）与侧连接板（3）的连接处\",\n        \"quality_requirements\": \"定位准确，确保支撑件与侧板贴合紧密\",\n        \"safety_notes\": \"内部焊接空间较小，注意焊枪角度，避免烫伤内部线缆（如果存在）\"\n      }\n    },\n    {\n      \"step_number\": 6,\n      \"action\": \"安装加强板\",\n      \"description\": \"将4块图纸上编号为6的加强板 4（01.01.01.11516）分别安装在主体框架的四个角部，用于加强结构强度。进行点焊定位。\",\n      \"position_description\": \"主体框架的四个角部\",\n      \"parts_used\": [\n        {\n          \"bom_code\": \"01.01.01.11516\",\n          \"bom_name\": \"加强板 4\",\n          \"quantity\": 4,\n          \"drawing_number\": \"6\"\n        }\n      ],\n      \"tools\": [\n        \"点焊机\"\n      ],\n      \"warnings\": [\n        \"加强板应紧密贴合主体结构，无间隙。\"\n      ],\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"点焊定位\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"点焊，每块加强板4个焊点\",\n        \"welding_position\": \"加强板（6）与侧连接板（3）和上/下方板的连接处\",\n        \"quality_requirements\": \"加强板必须紧贴，焊点均匀分布\",\n        \"safety_notes\": \"加强板通常在角部，注意焊接时防止反光伤害眼睛\"\n      }\n    },\n    {\n      \"step_number\": 7,\n      \"action\": \"安装油缸固定板\",\n      \"description\": \"将4块图纸上编号为5的油缸固定板 4（01.01.01.11515）安装在侧连接板（3）的外部，按照图纸上的孔位和尺寸要求进行点焊定位。\",\n      \"position_description\": \"侧连接板（3）外部，靠近底部\",\n      \"parts_used\": [\n        {\n          \"bom_code\": \"01.01.01.11515\",\n          \"bom_name\": \"油缸固定板 4\",\n          \"quantity\": 4,\n          \"drawing_number\": \"5\"\n        }\n      ],\n      \"tools\": [\n        \"点焊机\",\n        \"定位销\"\n      ],\n      \"warnings\": [\n        \"油缸固定板的孔位必须对齐，确保后续油缸安装顺利。\"\n      ],\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"点焊定位\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"点焊，每块固定板4个焊点\",\n        \"welding_position\": \"油缸固定板（5）与侧连接板（3）的外部连接面\",\n        \"quality_requirements\": \"定位销确保孔位对齐，焊点牢固，防止后续移动\",\n        \"safety_notes\": \"油缸固定板是受力件，点焊时要保证焊点强度，防止脱落\"\n      }\n    },\n    {\n      \"step_number\": 8,\n      \"action\": \"安装轴套（8, 9, 10）\",\n      \"description\": \"依次将图纸上编号为8的轴套 1（01.01.02.1221）、编号为9的后座轴套 1（01.02.02.0490）和编号为10的后座轴套 1（01.01.02.0337）安装在侧连接板（3）的指定孔位上。轴套需从外部插入，并与侧连接板齐平，进行点焊定位。\",\n      \"position_description\": \"侧连接板（3）上的轴孔位置\",\n      \"parts_used\": [\n        {\n          \"bom_code\": \"01.01.02.1221\",\n          \"bom_name\": \"轴套 1\",\n          \"quantity\": 1,\n          \"drawing_number\": \"8\"\n        },\n        {\n          \"bom_code\": \"01.02.02.0490\",\n          \"bom_name\": \"后座轴套 1\",\n          \"quantity\": 1,\n          \"drawing_number\": \"9\"\n        },\n        {\n          \"bom_code\": \"01.01.02.0337\",\n          \"bom_name\": \"后座轴套 1\",\n          \"quantity\": 1,\n          \"drawing_number\": \"10\"\n        }\n      ],\n      \"tools\": [\n        \"点焊机\",\n        \"游标卡尺\"\n      ],\n      \"warnings\": [\n        \"轴套的端面必须与侧连接板的表面齐平，确保装配精度。\"\n      ],\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"点焊定位\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"点焊，每个轴套3个点\",\n        \"welding_position\": \"轴套（8, 9, 10）与侧连接板（3）的圆周连接处\",\n        \"quality_requirements\": \"轴套端面与侧板齐平，焊点均匀，防止轴套倾斜\",\n        \"safety_notes\": \"轴套是精密零件，点焊时电流不宜过大，防止烧穿或严重变形\"\n      }\n    },\n    {\n      \"step_number\": 9,\n      \"action\": \"全面焊接\",\n      \"description\": \"对所有已定位的零件（1, 2, 3, 4, 5, 6, 7, 8, 9, 10）进行全面焊接。焊接要求参照图纸技术要求：焊缝饱满、焊道美观，焊脚大小及焊缝位置符合要求。注意控制焊接变形。\",\n      \"position_description\": \"所有连接面\",\n      \"parts_used\": [],\n      \"tools\": [\n        \"焊机\",\n        \"焊条/焊丝\"\n      ],\n      \"warnings\": [\n        \"焊接完成后，立即进行清渣和外观检查。避免过热导致结构变形。\"\n      ],\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊和对接焊\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"焊脚高度6mm（按图纸要求），连续焊\",\n        \"welding_position\": \"所有零件的连接缝，特别是箱体结构（1, 2, 3）和受力件（5, 7）\",\n        \"quality_requirements\": \"焊缝必须饱满，无气孔、夹渣、裂纹等缺陷。焊道均匀美观，焊后变形控制在1mm以内\",\n        \"safety_notes\": \"进行全面焊接时，必须佩戴全套防护装备（面罩、手套、防火服）。注意通风，并采用分段、对称焊接法，控制热输入，防止结构变形\"\n      }\n    },\n    {\n      \"step_number\": 10,\n      \"action\": \"校正与清理\",\n      \"description\": \"对焊接完成的组件进行整体校正，确保关键尺寸符合图纸要求。使用角磨机清理所有飞溅物和毛刺，确保表面光滑，为后续喷漆做准备。\",\n      \"position_description\": \"整体组件\",\n      \"parts_used\": [],\n      \"tools\": [\n        \"角磨机\",\n        \"校正平台\",\n        \"卷尺\"\n      ],\n      \"warnings\": [\n        \"校正时力度要均匀，避免二次损伤。清理后的组件表面应无尖锐边缘。\"\n      ]\n    }\n  ]\n}\n```",
+  "parsed_result": {
+    "enhanced_steps": [
+      {
+        "step_number": 1,
+        "action": "定位基准件",
+        "description": "将图纸上编号为3的侧连接板（01.01.01.11513）平稳放置在焊接平台上，作为装配的基准件。注意检查板材的平整度。",
+        "position_description": "焊接平台中心",
+        "parts_used": [
+          {
+            "bom_code": "01.01.01.11513",
+            "bom_name": "侧连接板 2",
+            "quantity": 1,
+            "drawing_number": "3"
+          }
+        ],
+        "tools": [
+          "焊接平台",
+          "角尺"
+        ],
+        "warnings": [
+          "确保板材放置平稳，避免后续焊接变形。"
+        ]
+      },
+      {
+        "step_number": 2,
+        "action": "安装方形板",
+        "description": "将图纸上编号为1的方形板-机加（01.01.01.11511）放置在步骤1的侧连接板（3）的底部边缘，按照图纸所示位置进行点焊定位。注意方形板的机加工面朝向。",
+        "position_description": "侧连接板（3）的底部边缘",
+        "parts_used": [
+          {
+            "bom_code": "01.01.01.11511",
+            "bom_name": "方形板-机加",
+            "quantity": 1,
+            "drawing_number": "1"
+          }
+        ],
+        "tools": [
+          "点焊机",
+          "磁力夹具"
+        ],
+        "warnings": [
+          "点焊定位时，确保方形板与侧连接板的垂直度。"
+        ],
+        "welding": {
+          "required": true,
+          "welding_type": "点焊定位",
+          "welding_method": "CO2气保焊",
+          "weld_size": "点焊，焊点长度10mm",
+          "welding_position": "方形板（1）与侧连接板（3）的连接处",
+          "quality_requirements": "焊点牢固，定位准确，确保垂直度90度",
+          "safety_notes": "点焊时注意佩戴防护眼镜和手套，防止飞溅物烫伤"
+        }
+      },
+      {
+        "step_number": 3,
+        "action": "安装上连接板",
+        "description": "将图纸上编号为2的上连接板 2（01.01.01.11512）放置在侧连接板（3）的顶部边缘，与方形板（1）平行，进行点焊定位。",
+        "position_description": "侧连接板（3）的顶部边缘",
+        "parts_used": [
+          {
+            "bom_code": "01.01.01.11512",
+            "bom_name": "上连接板 2",
+            "quantity": 1,
+            "drawing_number": "2"
+          }
+        ],
+        "tools": [
+          "点焊机",
+          "角尺"
+        ],
+        "warnings": [
+          "确保上连接板与侧连接板的垂直度，并与方形板保持平行。"
+        ],
+        "welding": {
+          "required": true,
+          "welding_type": "点焊定位",
+          "welding_method": "CO2气保焊",
+          "weld_size": "点焊，焊点长度10mm",
+          "welding_position": "上连接板（2）与侧连接板（3）的连接处",
+          "quality_requirements": "焊点牢固，确保上连接板与侧连接板垂直度",
+          "safety_notes": "点焊时注意佩戴防护眼镜和手套，防止飞溅物烫伤"
+        }
+      },
+      {
+        "step_number": 4,
+        "action": "安装第二块侧连接板",
+        "description": "将第二块侧连接板（3）安装在方形板（1）和上连接板（2）的另一端，形成一个箱体结构。使用夹具固定后进行点焊定位。",
+        "position_description": "方形板（1）和上连接板（2）的另一端",
+        "parts_used": [
+          {
+            "bom_code": "01.01.01.11513",
+            "bom_name": "侧连接板 2",
+            "quantity": 1,
+            "drawing_number": "3"
+          }
+        ],
+        "tools": [
+          "点焊机",
+          "快速夹具"
+        ],
+        "warnings": [
+          "检查箱体结构的对角线尺寸，确保无扭曲变形。"
+        ],
+        "welding": {
+          "required": true,
+          "welding_type": "点焊定位",
+          "welding_method": "CO2气保焊",
+          "weld_size": "点焊，每条边2个焊点",
+          "welding_position": "第二块侧连接板（3）与方形板（1）和上连接板（2）的连接处",
+          "quality_requirements": "箱体结构对角线误差小于1mm，确保结构方正",
+          "safety_notes": "使用夹具固定时，注意夹紧力度，点焊后检查结构稳定性"
+        }
+      },
+      {
+        "step_number": 5,
+        "action": "安装折弯板和角钢",
+        "description": "将图纸上编号为4的折弯板 1（01.01.01.11514）和编号为7的角钢-机加 1（01.01.04.0592）安装在主体框架的内部，按照图纸所示位置进行点焊定位。",
+        "position_description": "主体框架内部，靠近侧连接板（3）",
+        "parts_used": [
+          {
+            "bom_code": "01.01.01.11514",
+            "bom_name": "折弯板 1",
+            "quantity": 1,
+            "drawing_number": "4"
+          },
+          {
+            "bom_code": "01.01.04.0592",
+            "bom_name": "角钢-机加 1",
+            "quantity": 1,
+            "drawing_number": "7"
+          }
+        ],
+        "tools": [
+          "点焊机",
+          "卷尺"
+        ],
+        "warnings": [
+          "角钢和折弯板的位置是关键支撑点，必须严格按照尺寸定位。"
+        ],
+        "welding": {
+          "required": true,
+          "welding_type": "点焊定位",
+          "welding_method": "CO2气保焊",
+          "weld_size": "点焊，每条边2个焊点",
+          "welding_position": "折弯板（4）和角钢（7）与侧连接板（3）的连接处",
+          "quality_requirements": "定位准确，确保支撑件与侧板贴合紧密",
+          "safety_notes": "内部焊接空间较小，注意焊枪角度，避免烫伤内部线缆（如果存在）"
+        }
+      },
+      {
+        "step_number": 6,
+        "action": "安装加强板",
+        "description": "将4块图纸上编号为6的加强板 4（01.01.01.11516）分别安装在主体框架的四个角部，用于加强结构强度。进行点焊定位。",
+        "position_description": "主体框架的四个角部",
+        "parts_used": [
+          {
+            "bom_code": "01.01.01.11516",
+            "bom_name": "加强板 4",
+            "quantity": 4,
+            "drawing_number": "6"
+          }
+        ],
+        "tools": [
+          "点焊机"
+        ],
+        "warnings": [
+          "加强板应紧密贴合主体结构，无间隙。"
+        ],
+        "welding": {
+          "required": true,
+          "welding_type": "点焊定位",
+          "welding_method": "CO2气保焊",
+          "weld_size": "点焊，每块加强板4个焊点",
+          "welding_position": "加强板（6）与侧连接板（3）和上/下方板的连接处",
+          "quality_requirements": "加强板必须紧贴，焊点均匀分布",
+          "safety_notes": "加强板通常在角部，注意焊接时防止反光伤害眼睛"
+        }
+      },
+      {
+        "step_number": 7,
+        "action": "安装油缸固定板",
+        "description": "将4块图纸上编号为5的油缸固定板 4（01.01.01.11515）安装在侧连接板（3）的外部，按照图纸上的孔位和尺寸要求进行点焊定位。",
+        "position_description": "侧连接板（3）外部，靠近底部",
+        "parts_used": [
+          {
+            "bom_code": "01.01.01.11515",
+            "bom_name": "油缸固定板 4",
+            "quantity": 4,
+            "drawing_number": "5"
+          }
+        ],
+        "tools": [
+          "点焊机",
+          "定位销"
+        ],
+        "warnings": [
+          "油缸固定板的孔位必须对齐，确保后续油缸安装顺利。"
+        ],
+        "welding": {
+          "required": true,
+          "welding_type": "点焊定位",
+          "welding_method": "CO2气保焊",
+          "weld_size": "点焊，每块固定板4个焊点",
+          "welding_position": "油缸固定板（5）与侧连接板（3）的外部连接面",
+          "quality_requirements": "定位销确保孔位对齐，焊点牢固，防止后续移动",
+          "safety_notes": "油缸固定板是受力件，点焊时要保证焊点强度，防止脱落"
+        }
+      },
+      {
+        "step_number": 8,
+        "action": "安装轴套（8, 9, 10）",
+        "description": "依次将图纸上编号为8的轴套 1（01.01.02.1221）、编号为9的后座轴套 1（01.02.02.0490）和编号为10的后座轴套 1（01.01.02.0337）安装在侧连接板（3）的指定孔位上。轴套需从外部插入，并与侧连接板齐平，进行点焊定位。",
+        "position_description": "侧连接板（3）上的轴孔位置",
+        "parts_used": [
+          {
+            "bom_code": "01.01.02.1221",
+            "bom_name": "轴套 1",
+            "quantity": 1,
+            "drawing_number": "8"
+          },
+          {
+            "bom_code": "01.02.02.0490",
+            "bom_name": "后座轴套 1",
+            "quantity": 1,
+            "drawing_number": "9"
+          },
+          {
+            "bom_code": "01.01.02.0337",
+            "bom_name": "后座轴套 1",
+            "quantity": 1,
+            "drawing_number": "10"
+          }
+        ],
+        "tools": [
+          "点焊机",
+          "游标卡尺"
+        ],
+        "warnings": [
+          "轴套的端面必须与侧连接板的表面齐平，确保装配精度。"
+        ],
+        "welding": {
+          "required": true,
+          "welding_type": "点焊定位",
+          "welding_method": "CO2气保焊",
+          "weld_size": "点焊，每个轴套3个点",
+          "welding_position": "轴套（8, 9, 10）与侧连接板（3）的圆周连接处",
+          "quality_requirements": "轴套端面与侧板齐平，焊点均匀，防止轴套倾斜",
+          "safety_notes": "轴套是精密零件，点焊时电流不宜过大，防止烧穿或严重变形"
+        }
+      },
+      {
+        "step_number": 9,
+        "action": "全面焊接",
+        "description": "对所有已定位的零件（1, 2, 3, 4, 5, 6, 7, 8, 9, 10）进行全面焊接。焊接要求参照图纸技术要求：焊缝饱满、焊道美观，焊脚大小及焊缝位置符合要求。注意控制焊接变形。",
+        "position_description": "所有连接面",
+        "parts_used": [],
+        "tools": [
+          "焊机",
+          "焊条/焊丝"
+        ],
+        "warnings": [
+          "焊接完成后，立即进行清渣和外观检查。避免过热导致结构变形。"
+        ],
+        "welding": {
+          "required": true,
+          "welding_type": "角焊和对接焊",
+          "welding_method": "CO2气保焊",
+          "weld_size": "焊脚高度6mm（按图纸要求），连续焊",
+          "welding_position": "所有零件的连接缝，特别是箱体结构（1, 2, 3）和受力件（5, 7）",
+          "quality_requirements": "焊缝必须饱满，无气孔、夹渣、裂纹等缺陷。焊道均匀美观，焊后变形控制在1mm以内",
+          "safety_notes": "进行全面焊接时，必须佩戴全套防护装备（面罩、手套、防火服）。注意通风，并采用分段、对称焊接法，控制热输入，防止结构变形"
+        }
+      },
+      {
+        "step_number": 10,
+        "action": "校正与清理",
+        "description": "对焊接完成的组件进行整体校正，确保关键尺寸符合图纸要求。使用角磨机清理所有飞溅物和毛刺，确保表面光滑，为后续喷漆做准备。",
+        "position_description": "整体组件",
+        "parts_used": [],
+        "tools": [
+          "角磨机",
+          "校正平台",
+          "卷尺"
+        ],
+        "warnings": [
+          "校正时力度要均匀，避免二次损伤。清理后的组件表面应无尖锐边缘。"
+        ]
+      }
+    ]
+  }
+}

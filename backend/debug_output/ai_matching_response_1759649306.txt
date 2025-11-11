@@ -1,0 +1,250 @@
+```json
+{
+  "cot_analysis": {
+    "total_unmatched_bom": 10,
+    "total_unmatched_3d": 18,
+    "analysis_steps": [
+      {
+        "bom_code": "01.01.02.0337",
+        "bom_name": "后座轴套 1",
+        "bom_product_code": "T-U2500-01-09-Q235",
+        "step1_extract": "产品代号: T-U2500-01-09-Q235, 名称: 后座轴套",
+        "step2_candidates": [
+          "mesh_001 | T-U2500-01-09-Q235ºó×ùÖáÌ×",
+          "mesh_004 | T-U2500-01-05-Q235ºó×ùÖáÌ×"
+        ],
+        "step3_comparison": "mesh_001的产品代号T-U2500-01-09-Q235与BOM完全一致。名称乱码'ºó×ùÖáÌ×'推测为'后座轴套'。",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配mesh_001（产品代号完全一致）"
+      },
+      {
+        "bom_code": "01.02.02.0490",
+        "bom_name": "后座轴套 1",
+        "bom_product_code": "T-U2500-01-05-Q235",
+        "step1_extract": "产品代号: T-U2500-01-05-Q235, 名称: 后座轴套",
+        "step2_candidates": [
+          "mesh_004 | T-U2500-01-05-Q235ºó×ùÖáÌ×",
+          "mesh_001 | T-U2500-01-09-Q235ºó×ùÖáÌ×"
+        ],
+        "step3_comparison": "mesh_004的产品代号T-U2500-01-05-Q235与BOM完全一致。名称乱码'ºó×ùÖáÌ×'推测为'后座轴套'。",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配mesh_004（产品代号完全一致）"
+      },
+      {
+        "bom_code": "01.01.02.1221",
+        "bom_name": "轴套 1",
+        "bom_product_code": "ZT-φ55/φ37-35-Q235",
+        "step1_extract": "产品代号: ZT-φ55/φ37-35-Q235, 名称: 轴套",
+        "step2_candidates": [
+          "mesh_005 | ZT-¦ӵ5-¦ӳ7-35-Q235ס͗"
+        ],
+        "step3_comparison": "mesh_005的产品代号ZT-¦ӵ5-¦ӳ7-35-Q235与BOM的ZT-φ55/φ37-35-Q235高度相似，乱码'¦ӵ5-¦ӳ7'推测为'φ55/φ37'，且材料Q235一致。",
+        "step4_confidence": 0.92,
+        "step5_decision": "匹配mesh_005（产品代号高度相似，乱码推测一致）"
+      },
+      {
+        "bom_code": "01.01.04.0592",
+        "bom_name": "角钢-机加 1",
+        "bom_product_code": "T-SPV250-Z602-02-07-Q235",
+        "step1_extract": "产品代号: T-SPV250-Z602-02-07-Q235, 名称: 角钢-机加",
+        "step2_candidates": [
+          "mesh_006 | T-SPV250-Z602-02-07-Q235½Ç¸Ö-»ú¼Ó"
+        ],
+        "step3_comparison": "mesh_006的产品代号T-SPV250-Z602-02-07-Q235与BOM完全一致。名称乱码'½Ç¸Ö-»ú¼Ó'推测为'角钢-机加'。",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配mesh_006（产品代号完全一致）"
+      },
+      {
+        "bom_code": "01.01.01.11516",
+        "bom_name": "加强板 4",
+        "bom_product_code": "T-SPV250-Z602-02-06-Q355B",
+        "step1_extract": "产品代号: T-SPV250-Z602-02-06-Q355B, 名称: 加强板, 数量: 4",
+        "step2_candidates": [
+          "mesh_007 | T-SPV250-Z602-02-06-Q355B¼ÓÇ¿°å_3",
+          "mesh_008 | T-SPV250-Z602-02-06-Q355B¼ÓÇ¿°å_2",
+          "mesh_009 | T-SPV250-Z602-02-06-Q355B¼ÓÇ¿°å_1",
+          "mesh_010 | T-SPV250-Z602-02-06-Q355B¼ÓÇ¿°å"
+        ],
+        "step3_comparison": "mesh_007, mesh_008, mesh_009, mesh_010的产品代号T-SPV250-Z602-02-06-Q355B与BOM完全一致。乱码'¼ÓÇ¿°å'推测为'加强板'。BOM数量4与3D零件数量4一致（mesh_007至mesh_010）。",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配mesh_007, mesh_008, mesh_009, mesh_010（产品代号完全一致）"
+      },
+      {
+        "bom_code": "01.01.01.11515",
+        "bom_name": "油缸固定板 4",
+        "bom_product_code": "T-SPV250-Z602-02-05-Q355B",
+        "step1_extract": "产品代号: T-SPV250-Z602-02-05-Q355B, 名称: 油缸固定板, 数量: 4",
+        "step2_candidates": [
+          "mesh_002 | T-SPV250-Z602-02-05-Q355Bԍ¸׹̶¨°_3",
+          "mesh_003 | T-SPV250-Z602-02-05-Q355Bԍ¸׹̶¨°_2",
+          "mesh_011 | T-SPV250-Z602-02-05-Q355Bԍ¸׹̶¨°_1",
+          "mesh_012 | T-SPV250-Z602-02-05-Q355Bԍ¸׹̶¨°"
+        ],
+        "step3_comparison": "mesh_002, mesh_003, mesh_011, mesh_012的产品代号T-SPV250-Z602-02-05-Q355B与BOM完全一致。乱码'ԍ¸׹̶¨°'推测为'油缸固定板'。BOM数量4与3D零件数量4一致。",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配mesh_002, mesh_003, mesh_011, mesh_012（产品代号完全一致）"
+      },
+      {
+        "bom_code": "01.01.01.11514",
+        "bom_name": "折弯板 1",
+        "bom_product_code": "T-SPV250-Z602-02-04-Q355B",
+        "step1_extract": "产品代号: T-SPV250-Z602-02-04-Q355B, 名称: 折弯板, 数量: 1",
+        "step2_candidates": [
+          "mesh_013 | T-SPV250-Z602-02-04-Q355B֛Τ°"
+        ],
+        "step3_comparison": "mesh_013的产品代号T-SPV250-Z602-02-04-Q355B与BOM完全一致。乱码'֛Τ°'推测为'折弯板'。",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配mesh_013（产品代号完全一致）"
+      },
+      {
+        "bom_code": "01.01.01.11513",
+        "bom_name": "侧连接板 2",
+        "bom_product_code": "T-SPV250-Z602-02-03-Q355B",
+        "step1_extract": "产品代号: T-SPV250-Z602-02-03-Q355B, 名称: 侧连接板, 数量: 2",
+        "step2_candidates": [
+          "mesh_014 | T-SPV250-Z602-02-03-Q355B²ၬ½Ӱ_1",
+          "mesh_015 | T-SPV250-Z602-02-03-Q355B²ၬ½Ӱ"
+        ],
+        "step3_comparison": "mesh_014和mesh_015的产品代号T-SPV250-Z602-02-03-Q355B与BOM完全一致。乱码'²ၬ½Ӱ'推测为'侧连接板'。BOM数量2与3D零件数量2一致。",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配mesh_014和mesh_015（产品代号完全一致）"
+      },
+      {
+        "bom_code": "01.01.01.11512",
+        "bom_name": "上连接板 2",
+        "bom_product_code": "T-SPV250-Z602-02-02-Q355B",
+        "step1_extract": "产品代号: T-SPV250-Z602-02-02-Q355B, 名称: 上连接板, 数量: 2",
+        "step2_candidates": [
+          "mesh_016 | T-SPV250-Z602-02-02-Q355Bʏl½Ӱ_1",
+          "mesh_017 | T-SPV250-Z602-02-02-Q355Bʏl½Ӱ"
+        ],
+        "step3_comparison": "mesh_016和mesh_017的产品代号T-SPV250-Z602-02-02-Q355B与BOM完全一致。乱码'ʏl½Ӱ'推测为'上连接板'。BOM数量2与3D零件数量2一致。",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配mesh_016和mesh_017（产品代号完全一致）"
+      },
+      {
+        "bom_code": "01.01.01.11511",
+        "bom_name": "方形板-机加 1",
+        "bom_product_code": "T-SPV250-Z602-02-01-Q355B",
+        "step1_extract": "产品代号: T-SPV250-Z602-02-01-Q355B, 名称: 方形板-机加, 数量: 1",
+        "step2_candidates": [
+          "mesh_018 | T-SPV250-Z602-02-01-Q355B·½ÐÎ°å-»ú¼Ó"
+        ],
+        "step3_comparison": "mesh_018的产品代号T-SPV250-Z602-02-01-Q355B与BOM完全一致。乱码'·½ÐÎ°å-»ú¼Ó'推测为'方形板-机加'。",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配mesh_018（产品代号完全一致）"
+      }
+    ]
+  },
+  "ai_matched_pairs": [
+    {
+      "mesh_id": "mesh_001",
+      "bom_code": "01.01.02.0337",
+      "confidence": 0.95,
+      "reasoning": "产品代号T-U2500-01-09-Q235完全匹配"
+    },
+    {
+      "mesh_id": "mesh_004",
+      "bom_code": "01.02.02.0490",
+      "confidence": 0.95,
+      "reasoning": "产品代号T-U2500-01-05-Q235完全匹配"
+    },
+    {
+      "mesh_id": "mesh_005",
+      "bom_code": "01.01.02.1221",
+      "confidence": 0.92,
+      "reasoning": "产品代号ZT-φ55/φ37-35-Q235高度相似（乱码推测）"
+    },
+    {
+      "mesh_id": "mesh_006",
+      "bom_code": "01.01.04.0592",
+      "confidence": 0.95,
+      "reasoning": "产品代号T-SPV250-Z602-02-07-Q235完全匹配"
+    },
+    {
+      "mesh_id": "mesh_007",
+      "bom_code": "01.01.01.11516",
+      "confidence": 0.95,
+      "reasoning": "产品代号T-SPV250-Z602-02-06-Q355B完全匹配"
+    },
+    {
+      "mesh_id": "mesh_008",
+      "bom_code": "01.01.01.11516",
+      "confidence": 0.95,
+      "reasoning": "产品代号T-SPV250-Z602-02-06-Q355B完全匹配"
+    },
+    {
+      "mesh_id": "mesh_009",
+      "bom_code": "01.01.01.11516",
+      "confidence": 0.95,
+      "reasoning": "产品代号T-SPV250-Z602-02-06-Q355B完全匹配"
+    },
+    {
+      "mesh_id": "mesh_010",
+      "bom_code": "01.01.01.11516",
+      "confidence": 0.95,
+      "reasoning": "产品代号T-SPV250-Z602-02-06-Q355B完全匹配"
+    },
+    {
+      "mesh_id": "mesh_002",
+      "bom_code": "01.01.01.11515",
+      "confidence": 0.95,
+      "reasoning": "产品代号T-SPV250-Z602-02-05-Q355B完全匹配"
+    },
+    {
+      "mesh_id": "mesh_003",
+      "bom_code": "01.01.01.11515",
+      "confidence": 0.95,
+      "reasoning": "产品代号T-SPV250-Z602-02-05-Q355B完全匹配"
+    },
+    {
+      "mesh_id": "mesh_011",
+      "bom_code": "01.01.01.11515",
+      "confidence": 0.95,
+      "reasoning": "产品代号T-SPV250-Z602-02-05-Q355B完全匹配"
+    },
+    {
+      "mesh_id": "mesh_012",
+      "bom_code": "01.01.01.11515",
+      "confidence": 0.95,
+      "reasoning": "产品代号T-SPV250-Z602-02-05-Q355B完全匹配"
+    },
+    {
+      "mesh_id": "mesh_013",
+      "bom_code": "01.01.01.11514",
+      "confidence": 0.95,
+      "reasoning": "产品代号T-SPV250-Z602-02-04-Q355B完全匹配"
+    },
+    {
+      "mesh_id": "mesh_014",
+      "bom_code": "01.01.01.11513",
+      "confidence": 0.95,
+      "reasoning": "产品代号T-SPV250-Z602-02-03-Q355B完全匹配"
+    },
+    {
+      "mesh_id": "mesh_015",
+      "bom_code": "01.01.01.11513",
+      "confidence": 0.95,
+      "reasoning": "产品代号T-SPV250-Z602-02-03-Q355B完全匹配"
+    },
+    {
+      "mesh_id": "mesh_016",
+      "bom_code": "01.01.01.11512",
+      "confidence": 0.95,
+      "reasoning": "产品代号T-SPV250-Z602-02-02-Q355B完全匹配"
+    },
+    {
+      "mesh_id": "mesh_017",
+      "bom_code": "01.01.01.11512",
+      "confidence": 0.95,
+      "reasoning": "产品代号T-SPV250-Z602-02-02-Q355B完全匹配"
+    },
+    {
+      "mesh_id": "mesh_018",
+      "bom_code": "01.01.01.11511",
+      "confidence": 0.95,
+      "reasoning": "产品代号T-SPV250-Z602-02-01-Q355B完全匹配"
+    }
+  ]
+}
+```

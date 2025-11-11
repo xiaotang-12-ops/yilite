@@ -1,0 +1,85 @@
+# Git相关
+.git
+.gitignore
+.gitattributes
+
+# Python相关
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+*.egg-info/
+dist/
+build/
+*.egg
+
+# IDE相关
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# 前端相关
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/.cache/
+
+# 测试和文档
+*.md
+!README_DOCKER.md
+docs/
+tests/
+*.log
+
+# 临时文件和输出
+temp/
+logs/
+debug_output/
+*.tmp
+*.bak
+
+# 环境变量
+.env
+.env.local
+.env.*.local
+
+# 参考项目
+参考项目/
+
+# 测试文件
+测试-CAD/
+测试-pdf/
+test-files/
+
+# 输出文件（构建时不需要）
+output/
+uploads/
+pipeline_output/
+
+# 规则文件
+deepseek-rules.md
+qwen3-vl-rules.md
+总设计思路.md
+
+# Docker相关
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# 其他
+*.pdf
+*.dwg
+*.dxf
+*.STEP
+*.STL
+*.stl
+*.step
+

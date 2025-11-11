@@ -1,0 +1,384 @@
+{
+  "agent_name": "Agent6_FAQ",
+  "model": "openai/gpt-4.1",
+  "timestamp": "20251005_130640",
+  "image_count": 0,
+  "temperature": 0.2,
+  "system_prompt": "# 角色定位\n\n你是**李师傅**，一位拥有20年安全管理经验的高级安全工程师。\n\n## 教育背景\n\n- **学历**：安全工程专业本科\n- **职业资格**：注册安全工程师、高级安全评价师\n- **专业培训**：\n  - 机械制造安全管理\n  - 职业健康与安全管理体系（ISO 45001）\n  - 事故调查与分析\n  - 应急预案编制与演练\n\n## 职业背景\n\n- **工作经历**：20年机械制造企业安全管理经验，参与过大型装备制造、钢结构加工等项目\n- **专业领域**：\n  - 机械加工安全（车、铣、刨、磨、钻等）\n  - 焊接作业安全（电焊、气焊、氩弧焊等）\n  - 起重吊装安全（行车、叉车、吊索具等）\n  - 高空作业安全（脚手架、安全带、防坠落等）\n  - 个人防护用品管理（安全帽、防护眼镜、手套、安全鞋等）\n\n## 知识结构（详细）\n\n### 1. 机械伤害风险\n- **夹伤/挤伤**：手指、手臂被运动部件夹住\n- **切割伤**：锋利边缘、毛刺、切削工具\n- **碰撞伤**：头部碰撞、身体碰撞\n- **坠落伤**：零件坠落、工具坠落、人员坠落\n\n### 2. 焊接作业风险\n- **电击伤**：焊机漏电、接地不良\n- **弧光伤**：电弧紫外线灼伤眼睛和皮肤\n- **烫伤**：高温熔池、焊渣飞溅\n- **火灾爆炸**：易燃物引燃、气瓶泄漏\n- **有毒气体**：焊接烟尘、一氧化碳中毒\n\n### 3. 起重吊装风险\n- **吊物坠落**：吊索具断裂、捆绑不牢\n- **吊物摆动**：碰撞人员、设备\n- **超载**：超过起重机额定载荷\n- **指挥失误**：信号不清、违章指挥\n\n### 4. 高空作业风险\n- **人员坠落**：未系安全带、脚手架不牢\n- **物体打击**：工具、零件从高处坠落\n- **脚手架坍塌**：搭设不规范、超载\n\n### 5. 个人防护用品\n- **头部防护**：安全帽（防止碰撞、坠物打击）\n- **眼部防护**：防护眼镜、焊接面罩（防止飞溅、弧光）\n- **手部防护**：防护手套（防止切割、烫伤、化学品）\n- **足部防护**：安全鞋（防砸、防刺穿、防滑）\n- **呼吸防护**：防尘口罩、防毒面具（防止粉尘、有毒气体）\n\n### 6. 应急处理\n- **机械伤害**：立即停机、呼救、止血、固定、送医\n- **电击伤**：切断电源、心肺复苏、送医\n- **烫伤**：冷水冲洗、覆盖无菌纱布、送医\n- **火灾**：使用灭火器、疏散人员、报警\n\n## 任务步骤（Chain of Thought）\n\n你的任务是**为每个装配步骤添加安全警告**（如果该步骤有安全风险）。请按照以下5个步骤思考：\n\n### 步骤1：识别风险步骤\n- 分析每个装配步骤的操作内容\n- 判断是否涉及高风险作业（焊接、吊装、高空、重物搬运等）\n- 识别潜在的伤害类型（机械伤害、电击、烫伤、坠落等）\n\n### 步骤2：分析风险源\n- 确定风险的来源（设备、工具、材料、环境、人员操作等）\n- 评估风险的严重程度（轻微、中等、严重、致命）\n- 考虑风险的发生概率\n\n### 步骤3：制定预防措施\n- 针对每个风险源，制定具体的预防措施\n- 强调个人防护用品的使用\n- 强调安全操作规程的遵守\n\n### 步骤4：添加安全警告\n- 为每个有风险的步骤添加safety_warnings字段\n- 每条警告要简洁明了，说明具体的风险和预防措施\n- 使用工人能看懂的语言\n\n### 步骤5：验证完整性\n- 检查所有高风险步骤是否都添加了安全警告\n- 检查安全警告是否具体、可操作\n- 检查是否遗漏了任何潜在风险\n\n## 核心原则\n\n1. **步骤级嵌入**：为每个有风险的步骤添加safety_warnings字段，而不是单独列出安全警告\n2. **工人友好**：使用通俗语言，避免专业术语\n3. **具体可操作**：说明具体的风险和预防措施，而不是泛泛而谈\n4. **不重复显示**：安全警告只在下方\"安全\"标签页中统一显示，不在当前步骤详情中重复显示\n\n## 输出格式\n\n严格按照以下JSON格式输出（返回增强后的装配步骤）：\n\n```json\n{\n  \"enhanced_steps\": [\n    {\n      \"step_number\": 1,\n      \"title\": \"点焊定位\",\n      \"parts_used\": [...],\n      \"tools_required\": [...],\n      \"operation\": \"操作说明\",\n      \"quality_check\": \"质量检查\",\n      \"estimated_time_minutes\": 10,\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"点焊\",\n        \"welding_method\": \"CO2气保焊\",\n        ...\n      },\n      \"safety_warnings\": [\n        \"佩戴焊接面罩和防护手套，防止弧光灼伤眼睛和皮肤\",\n        \"确保工件夹紧牢固，防止点焊时位移造成伤害\",\n        \"焊接区域周围3米内不得有易燃物，配备灭火器\",\n        \"焊机必须接地良好，防止漏电触电\"\n      ]\n    },\n    {\n      \"step_number\": 2,\n      \"title\": \"螺栓连接\",\n      \"parts_used\": [...],\n      \"operation\": \"操作说明\",\n      \"quality_check\": \"质量检查\",\n      \"estimated_time_minutes\": 15,\n      \"safety_warnings\": [\n        \"佩戴安全帽和防护眼镜，防止零件坠落和飞溅\",\n        \"使用扭力扳手时注意力度，防止扳手滑脱伤人\"\n      ]\n    },\n    {\n      \"step_number\": 3,\n      \"title\": \"简单装配\",\n      \"parts_used\": [...],\n      \"operation\": \"操作说明\",\n      \"quality_check\": \"质量检查\",\n      \"estimated_time_minutes\": 5\n      // ⚠️ 如果没有明显安全风险，不添加safety_warnings字段\n    }\n  ]\n}\n```\n\n**⚠️ 关键要求**：\n\n1. **步骤级嵌入**：\n   - 为每个有风险的步骤添加`safety_warnings`字段\n   - 没有明显风险的步骤不添加`safety_warnings`字段\n   - 保持原有步骤的所有字段不变\n\n2. **安全警告要具体**：\n   - ✅ 说\"佩戴焊接面罩和防护手套，防止弧光灼伤眼睛和皮肤\"\n   - ❌ 不说\"注意安全\"\n   - ✅ 说\"焊接区域周围3米内不得有易燃物，配备灭火器\"\n   - ❌ 不说\"注意防火\"\n\n3. **使用通俗语言**：\n   - 工人能看懂的语言\n   - 避免专业术语和英文缩写\n\n4. **警告要全面**：\n   - 涵盖个人防护、设备安全、环境安全、操作安全\n   - 每条警告说明具体的风险和预防措施\n\n## 重要提醒\n\n- **只输出JSON，不要输出其他内容**\n- **保持原有字段不变**：不要修改或删除原有的字段（包括welding字段）\n- **警告要简洁明了**：每条警告一句话，说明风险和预防措施\n- **不要过度警告**：只针对有明显风险的步骤添加警告\n",
+  "user_query": "请为以下装配步骤添加安全警告（如果有安全风险）。\n\n## 📸 视觉分析任务\n\n**你会看到工程图纸图片，请仔细观察：**\n\n1. **危险作业标识**：\n   - 图纸上的安全警告标识\n   - 特殊作业要求（如高空作业、吊装作业等）\n   - 危险区域标注\n\n2. **零件特征**：\n   - 重型零件（需要吊装）\n   - 锋利边缘（容易割伤）\n   - 高温部件（容易烫伤）\n\n3. **作业环境**：\n   - 狭窄空间（容易碰撞）\n   - 高空位置（容易坠落）\n   - 密闭空间（通风不良）\n\n## 装配步骤\n\n[\n  {\n    \"step_number\": 1,\n    \"action\": \"放置基准件\",\n    \"description\": \"将图纸1号连接板（BOM序号2）平放在装配平台上，作为整个组件的基准件，注意板面朝上，孔位朝外。\",\n    \"position_description\": \"基准件，所有零件以其为参照\",\n    \"parts_used\": [\n      {\n        \"bom_seq\": \"2\",\n        \"bom_name\": \"连接板\",\n        \"quantity\": 1,\n        \"drawing_number\": \"1\",\n        \"mesh_id\": [\n          \"mesh_018\"\n        ],\n        \"bom_code\": \"01.01.01.11509\"\n      }\n    ],\n    \"tools\": [\n      \"行车\",\n      \"吊带\",\n      \"卷尺\"\n    ],\n    \"warnings\": [\n      \"吊装时注意手指安全\",\n      \"放置时确保连接板水平\"\n    ]\n  },\n  {\n    \"step_number\": 2,\n    \"action\": \"焊接矩形管\",\n    \"description\": \"将图纸8号矩形管（BOM序号8）和1号矩形管（BOM序号1）分别放置在连接板（1号）下方和上方定位线处，调整两根管子与连接板边缘对齐，点焊固定。\",\n    \"position_description\": \"8号管在连接板下方，1号管在连接板上方\",\n    \"parts_used\": [\n      {\n        \"bom_seq\": \"8\",\n        \"bom_name\": \"矩形管\",\n        \"quantity\": 1,\n        \"drawing_number\": \"8\",\n        \"mesh_id\": [\n          \"mesh_003\",\n          \"mesh_006\",\n          \"mesh_007\",\n          \"mesh_019\"\n        ],\n        \"bom_code\": \"01.01.03.2720\"\n      },\n      {\n        \"bom_seq\": \"1\",\n        \"bom_name\": \"矩形管\",\n        \"quantity\": 1,\n        \"drawing_number\": \"2\"\n      }\n    ],\n    \"tools\": [\n      \"电焊机\",\n      \"焊条\",\n      \"角尺\",\n      \"夹具\"\n    ],\n    \"warnings\": [\n      \"点焊前检查尺寸\",\n      \"焊接时佩戴防护面罩\"\n    ],\n    \"welding\": {\n      \"required\": true,\n      \"welding_type\": \"角焊\",\n      \"welding_method\": \"手工电弧焊\",\n      \"weld_size\": \"焊缝高度6mm，点焊长度10~20mm，间隔均匀\",\n      \"welding_position\": \"矩形管（1号、8号）与连接板（1号）连接处，平焊\",\n      \"quality_requirements\": \"点焊牢固，无虚焊、漏焊，焊点分布均匀\",\n      \"safety_notes\": \"佩戴焊接面罩和防护手套，点焊时注意防止飞溅烫伤，保持工作区通风\"\n    }\n  },\n  {\n    \"step_number\": 3,\n    \"action\": \"焊接方形板\",\n    \"description\": \"将图纸3号方形板-机加（BOM序号3）分别放置在连接板（1号）两侧定位处，确保与连接板和矩形管贴合，点焊固定。\",\n    \"position_description\": \"3号方形板在连接板左右两侧\",\n    \"parts_used\": [\n      {\n        \"bom_seq\": \"3\",\n        \"bom_name\": \"方形板-机加\",\n        \"quantity\": 4,\n        \"drawing_number\": \"3\",\n        \"mesh_id\": [\n          \"mesh_014\",\n          \"mesh_015\",\n          \"mesh_016\",\n          \"mesh_017\"\n        ],\n        \"bom_code\": \"01.01.01.6589\"\n      }\n    ],\n    \"tools\": [\n      \"电焊机\",\n      \"焊条\",\n      \"夹具\",\n      \"角尺\"\n    ],\n    \"warnings\": [\n      \"点焊时注意板与管的贴合\",\n      \"防止焊接变形\"\n    ],\n    \"welding\": {\n      \"required\": true,\n      \"welding_type\": \"角焊\",\n      \"welding_method\": \"手工电弧焊\",\n      \"weld_size\": \"焊缝高度6mm，点焊长度10~20mm，间隔均匀\",\n      \"welding_position\": \"方形板（3号）与连接板、矩形管的连接处，平焊\",\n      \"quality_requirements\": \"点焊牢固，焊点分布均匀，无虚焊、漏焊\",\n      \"safety_notes\": \"佩戴焊接面罩和防护手套，点焊时注意防止飞溅烫伤，保持工作区通风\"\n    }\n  },\n  {\n    \"step_number\": 4,\n    \"action\": \"安装挂件\",\n    \"description\": \"将图纸5号左挂件虚拟组件（BOM序号5）和4号右挂件虚拟组件（BOM序号4）分别放置在连接板（1号）两端，调整位置后点焊固定。\",\n    \"position_description\": \"5号挂件在左侧，4号挂件在右侧\",\n    \"parts_used\": [\n      {\n        \"bom_seq\": \"5\",\n        \"bom_name\": \"左挂件虚拟组件\",\n        \"quantity\": 1,\n        \"drawing_number\": \"5\"\n      },\n      {\n        \"bom_seq\": \"4\",\n        \"bom_name\": \"右挂件虚拟组件\",\n        \"quantity\": 1,\n        \"drawing_number\": \"4\"\n      }\n    ],\n    \"tools\": [\n      \"电焊机\",\n      \"焊条\",\n      \"夹具\"\n    ],\n    \"warnings\": [\n      \"挂件定位要准确\",\n      \"焊接时防止错位\"\n    ],\n    \"welding\": {\n      \"required\": true,\n      \"welding_type\": \"角焊\",\n      \"welding_method\": \"手工电弧焊\",\n      \"weld_size\": \"焊缝高度6mm，点焊长度10~20mm，间隔均匀\",\n      \"welding_position\": \"左挂件（5号）、右挂件（4号）与连接板（1号）连接处，平焊\",\n      \"quality_requirements\": \"点焊牢固，焊点分布均匀，无虚焊、漏焊\",\n      \"safety_notes\": \"佩戴焊接面罩和防护手套，点焊时注意防止飞溅烫伤，保持工作区通风\"\n    }\n  },\n  {\n    \"step_number\": 5,\n    \"action\": \"焊接加强筋\",\n    \"description\": \"将图纸9号加强筋（BOM序号9）分别放置在连接板（1号）后方两侧，贴合矩形管和连接板，点焊固定。\",\n    \"position_description\": \"9号加强筋在连接板后方两侧\",\n    \"parts_used\": [\n      {\n        \"bom_seq\": \"9\",\n        \"bom_name\": \"加强筋\",\n        \"quantity\": 2,\n        \"drawing_number\": \"9\",\n        \"mesh_id\": [\n          \"mesh_001\",\n          \"mesh_002\"\n        ],\n        \"bom_code\": \"01.01.01.17678\"\n      }\n    ],\n    \"tools\": [\n      \"电焊机\",\n      \"焊条\",\n      \"夹具\"\n    ],\n    \"warnings\": [\n      \"加强筋与板面贴合紧密\",\n      \"焊接顺序对称进行\"\n    ],\n    \"welding\": {\n      \"required\": true,\n      \"welding_type\": \"角焊\",\n      \"welding_method\": \"手工电弧焊\",\n      \"weld_size\": \"焊缝高度6mm，点焊长度10~20mm，间隔均匀\",\n      \"welding_position\": \"加强筋（9号）与连接板（1号）、矩形管连接处，平焊\",\n      \"quality_requirements\": \"点焊牢固，焊点分布均匀，无虚焊、漏焊\",\n      \"safety_notes\": \"佩戴焊接面罩和防护手套，点焊时注意防止飞溅烫伤，保持工作区通风\"\n    }\n  },\n  {\n    \"step_number\": 6,\n    \"action\": \"焊接封板\",\n    \"description\": \"将图纸7号封板（BOM序号7）分别放置在连接板（1号）顶部两端，调整与矩形管和连接板贴合，点焊固定。\",\n    \"position_description\": \"7号封板在连接板顶部两端\",\n    \"parts_used\": [\n      {\n        \"bom_seq\": \"7\",\n        \"bom_name\": \"封板\",\n        \"quantity\": 2,\n        \"drawing_number\": \"7\",\n        \"mesh_id\": [\n          \"mesh_004\",\n          \"mesh_005\"\n        ],\n        \"bom_code\": \"01.01.01.16608\"\n      }\n    ],\n    \"tools\": [\n      \"电焊机\",\n      \"焊条\",\n      \"夹具\"\n    ],\n    \"warnings\": [\n      \"封板与管、板贴合紧密\",\n      \"焊接时注意防止烧穿\"\n    ],\n    \"welding\": {\n      \"required\": true,\n      \"welding_type\": \"角焊\",\n      \"welding_method\": \"手工电弧焊\",\n      \"weld_size\": \"焊缝高度6mm，点焊长度10~20mm，间隔均匀\",\n      \"welding_position\": \"封板（7号）与连接板（1号）、矩形管连接处，平焊\",\n      \"quality_requirements\": \"点焊牢固，焊点分布均匀，无虚焊、漏焊\",\n      \"safety_notes\": \"佩戴焊接面罩和防护手套，点焊时注意防止飞溅烫伤，保持工作区通风\"\n    }\n  },\n  {\n    \"step_number\": 7,\n    \"action\": \"满焊所有点焊部位\",\n    \"description\": \"对所有已点焊的零件进行满焊，焊缝要连续饱满，焊接顺序应对称进行，防止变形。\",\n    \"position_description\": \"所有连接部位\",\n    \"parts_used\": [\n      {\n        \"bom_seq\": \"1\",\n        \"bom_name\": \"矩形管\",\n        \"quantity\": 0,\n        \"drawing_number\": \"2\"\n      },\n      {\n        \"bom_seq\": \"2\",\n        \"bom_name\": \"连接板\",\n        \"quantity\": 0,\n        \"drawing_number\": \"1\",\n        \"mesh_id\": [\n          \"mesh_018\"\n        ],\n        \"bom_code\": \"01.01.01.11509\"\n      },\n      {\n        \"bom_seq\": \"3\",\n        \"bom_name\": \"方形板-机加\",\n        \"quantity\": 0,\n        \"drawing_number\": \"3\",\n        \"mesh_id\": [\n          \"mesh_014\",\n          \"mesh_015\",\n          \"mesh_016\",\n          \"mesh_017\"\n        ],\n        \"bom_code\": \"01.01.01.6589\"\n      },\n      {\n        \"bom_seq\": \"4\",\n        \"bom_name\": \"右挂件虚拟组件\",\n        \"quantity\": 0,\n        \"drawing_number\": \"4\"\n      },\n      {\n        \"bom_seq\": \"5\",\n        \"bom_name\": \"左挂件虚拟组件\",\n        \"quantity\": 0,\n        \"drawing_number\": \"5\"\n      },\n      {\n        \"bom_seq\": \"7\",\n        \"bom_name\": \"封板\",\n        \"quantity\": 0,\n        \"drawing_number\": \"7\",\n        \"mesh_id\": [\n          \"mesh_004\",\n          \"mesh_005\"\n        ],\n        \"bom_code\": \"01.01.01.16608\"\n      },\n      {\n        \"bom_seq\": \"8\",\n        \"bom_name\": \"矩形管\",\n        \"quantity\": 0,\n        \"drawing_number\": \"8\",\n        \"mesh_id\": [\n          \"mesh_003\",\n          \"mesh_006\",\n          \"mesh_007\",\n          \"mesh_019\"\n        ],\n        \"bom_code\": \"01.01.03.2720\"\n      },\n      {\n        \"bom_seq\": \"9\",\n        \"bom_name\": \"加强筋\",\n        \"quantity\": 0,\n        \"drawing_number\": \"9\",\n        \"mesh_id\": [\n          \"mesh_001\",\n          \"mesh_002\"\n        ],\n        \"bom_code\": \"01.01.01.17678\"\n      }\n    ],\n    \"tools\": [\n      \"电焊机\",\n      \"焊条\",\n      \"钢丝刷\"\n    ],\n    \"warnings\": [\n      \"焊缝要连续饱满\",\n      \"焊接顺序要对称，防止变形\"\n    ],\n    \"welding\": {\n      \"required\": true,\n      \"welding_type\": \"角焊\",\n      \"welding_method\": \"手工电弧焊\",\n      \"weld_size\": \"焊缝高度8mm，连续满焊\",\n      \"welding_position\": \"所有点焊部位，包括矩形管、方形板、挂件、加强筋、封板与连接板的连接处，主要为平焊，局部有立焊和角部焊接\",\n      \"quality_requirements\": \"焊缝饱满、连续，无气孔、夹渣、裂纹，焊后清渣打磨，必要时进行无损检测\",\n      \"safety_notes\": \"佩戴焊接面罩、防护手套和防护服，保持通风，焊接时注意防止烫伤和火花飞溅，焊机接地良好，周围无易燃物\"\n    }\n  }\n]\n\n## 要求\n\n请按照以下5个步骤思考，为装配步骤添加安全警告：\n\n### 步骤1：识别风险步骤\n- 分析每个装配步骤的操作内容\n- 判断是否涉及高风险作业：\n  * **焊接作业**：电击、弧光、烫伤、火灾\n  * **吊装作业**：吊物坠落、碰撞、超载\n  * **高空作业**：人员坠落、物体打击\n  * **重物搬运**：砸伤、扭伤、夹伤\n  * **机械加工**：切割伤、夹伤、碰撞\n\n### 步骤2：分析风险源\n- 确定风险的来源（设备、工具、材料、环境、人员操作等）\n- 评估风险的严重程度（轻微、中等、严重、致命）\n- 考虑风险的发生概率\n\n### 步骤3：制定预防措施\n- 针对每个风险源，制定具体的预防措施\n- 强调个人防护用品的使用：\n  * **焊接**：焊接面罩、防护手套、防护服\n  * **吊装**：安全帽、安全鞋、手套\n  * **高空**：安全带、安全帽、防滑鞋\n  * **机械**：防护眼镜、手套、安全鞋\n\n### 步骤4：添加安全警告\n- 为每个有风险的步骤添加safety_warnings字段\n- 每条警告要简洁明了，说明具体的风险和预防措施\n- 使用工人能看懂的语言\n\n### 步骤5：验证完整性\n- 检查所有高风险步骤是否都添加了安全警告\n- 检查安全警告是否具体、可操作\n- 检查是否遗漏了任何潜在风险\n\n## ⚠️ 强制自检清单（生成后必须逐项检查）\n\n**在输出JSON之前，你必须完成以下验证：**\n\n1. **风险步骤识别验证**：\n   - [ ] 所有涉及焊接、吊装、高空、重物搬运的步骤都添加了safety_warnings字段\n   - [ ] 没有明显风险的步骤没有添加safety_warnings字段\n\n2. **安全警告完整性验证**：\n   - [ ] 每个safety_warnings字段都是字符串数组\n   - [ ] 每条警告都说明了具体的风险和预防措施\n   - [ ] 涵盖了个人防护、设备安全、环境安全、操作安全\n\n3. **语言通俗性验证**：\n   - [ ] 使用工人能看懂的语言\n   - [ ] 避免专业术语和英文缩写\n   - [ ] 每条警告简洁明了（一句话）\n\n4. **原有字段保持验证**：\n   - [ ] 原有步骤的所有字段都保持不变（包括welding字段）\n   - [ ] 没有修改或删除任何原有字段\n\n**如果自检发现任何问题，必须重新生成！**\n\n现在开始为装配步骤添加安全警告！\n",
+  "raw_response": "```json\n{\n  \"enhanced_steps\": [\n    {\n      \"step_number\": 1,\n      \"action\": \"放置基准件\",\n      \"description\": \"将图纸1号连接板（BOM序号2）平放在装配平台上，作为整个组件的基准件，注意板面朝上，孔位朝外。\",\n      \"position_description\": \"基准件，所有零件以其为参照\",\n      \"parts_used\": [\n        {\n          \"bom_seq\": \"2\",\n          \"bom_name\": \"连接板\",\n          \"quantity\": 1,\n          \"drawing_number\": \"1\",\n          \"mesh_id\": [\n            \"mesh_018\"\n          ],\n          \"bom_code\": \"01.01.01.11509\"\n        }\n      ],\n      \"tools\": [\n        \"行车\",\n        \"吊带\",\n        \"卷尺\"\n      ],\n      \"warnings\": [\n        \"吊装时注意手指安全\",\n        \"放置时确保连接板水平\"\n      ],\n      \"safety_warnings\": [\n        \"吊装连接板时必须戴安全帽和手套，防止砸伤和夹伤手指\",\n        \"吊带挂钩要挂牢，严禁站在吊物下方，防止吊物坠落伤人\",\n        \"放置连接板时注意脚下，防止重物砸脚，建议穿防砸安全鞋\"\n      ]\n    },\n    {\n      \"step_number\": 2,\n      \"action\": \"焊接矩形管\",\n      \"description\": \"将图纸8号矩形管（BOM序号8）和1号矩形管（BOM序号1）分别放置在连接板（1号）下方和上方定位线处，调整两根管子与连接板边缘对齐，点焊固定。\",\n      \"position_description\": \"8号管在连接板下方，1号管在连接板上方\",\n      \"parts_used\": [\n        {\n          \"bom_seq\": \"8\",\n          \"bom_name\": \"矩形管\",\n          \"quantity\": 1,\n          \"drawing_number\": \"8\",\n          \"mesh_id\": [\n            \"mesh_003\",\n            \"mesh_006\",\n            \"mesh_007\",\n            \"mesh_019\"\n          ],\n          \"bom_code\": \"01.01.03.2720\"\n        },\n        {\n          \"bom_seq\": \"1\",\n          \"bom_name\": \"矩形管\",\n          \"quantity\": 1,\n          \"drawing_number\": \"2\"\n        }\n      ],\n      \"tools\": [\n        \"电焊机\",\n        \"焊条\",\n        \"角尺\",\n        \"夹具\"\n      ],\n      \"warnings\": [\n        \"点焊前检查尺寸\",\n        \"焊接时佩戴防护面罩\"\n      ],\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊\",\n        \"welding_method\": \"手工电弧焊\",\n        \"weld_size\": \"焊缝高度6mm，点焊长度10~20mm，间隔均匀\",\n        \"welding_position\": \"矩形管（1号、8号）与连接板（1号）连接处，平焊\",\n        \"quality_requirements\": \"点焊牢固，无虚焊、漏焊，焊点分布均匀\",\n        \"safety_notes\": \"佩戴焊接面罩和防护手套，点焊时注意防止飞溅烫伤，保持工作区通风\"\n      },\n      \"safety_warnings\": [\n        \"焊接时必须戴焊接面罩和防护手套，防止弧光灼伤和烫伤\",\n        \"焊接区域3米内不得有易燃物，旁边要备好灭火器\",\n        \"焊机要接地良好，防止漏电触电\",\n        \"点焊时注意工件夹紧，防止移动造成夹伤\",\n        \"保持工作区通风，防止吸入有害烟气\"\n      ]\n    },\n    {\n      \"step_number\": 3,\n      \"action\": \"焊接方形板\",\n      \"description\": \"将图纸3号方形板-机加（BOM序号3）分别放置在连接板（1号）两侧定位处，确保与连接板和矩形管贴合，点焊固定。\",\n      \"position_description\": \"3号方形板在连接板左右两侧\",\n      \"parts_used\": [\n        {\n          \"bom_seq\": \"3\",\n          \"bom_name\": \"方形板-机加\",\n          \"quantity\": 4,\n          \"drawing_number\": \"3\",\n          \"mesh_id\": [\n            \"mesh_014\",\n            \"mesh_015\",\n            \"mesh_016\",\n            \"mesh_017\"\n          ],\n          \"bom_code\": \"01.01.01.6589\"\n        }\n      ],\n      \"tools\": [\n        \"电焊机\",\n        \"焊条\",\n        \"夹具\",\n        \"角尺\"\n      ],\n      \"warnings\": [\n        \"点焊时注意板与管的贴合\",\n        \"防止焊接变形\"\n      ],\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊\",\n        \"welding_method\": \"手工电弧焊\",\n        \"weld_size\": \"焊缝高度6mm，点焊长度10~20mm，间隔均匀\",\n        \"welding_position\": \"方形板（3号）与连接板、矩形管的连接处，平焊\",\n        \"quality_requirements\": \"点焊牢固，焊点分布均匀，无虚焊、漏焊\",\n        \"safety_notes\": \"佩戴焊接面罩和防护手套，点焊时注意防止飞溅烫伤，保持工作区通风\"\n      },\n      \"safety_warnings\": [\n        \"焊接时必须戴焊接面罩和防护手套，防止弧光和烫伤\",\n        \"点焊时注意飞溅，防止烫伤皮肤\",\n        \"焊接区域要保持通风，避免吸入烟尘\",\n        \"焊机接地要可靠，防止触电\"\n      ]\n    },\n    {\n      \"step_number\": 4,\n      \"action\": \"安装挂件\",\n      \"description\": \"将图纸5号左挂件虚拟组件（BOM序号5）和4号右挂件虚拟组件（BOM序号4）分别放置在连接板（1号）两端，调整位置后点焊固定。\",\n      \"position_description\": \"5号挂件在左侧，4号挂件在右侧\",\n      \"parts_used\": [\n        {\n          \"bom_seq\": \"5\",\n          \"bom_name\": \"左挂件虚拟组件\",\n          \"quantity\": 1,\n          \"drawing_number\": \"5\"\n        },\n        {\n          \"bom_seq\": \"4\",\n          \"bom_name\": \"右挂件虚拟组件\",\n          \"quantity\": 1,\n          \"drawing_number\": \"4\"\n        }\n      ],\n      \"tools\": [\n        \"电焊机\",\n        \"焊条\",\n        \"夹具\"\n      ],\n      \"warnings\": [\n        \"挂件定位要准确\",\n        \"焊接时防止错位\"\n      ],\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊\",\n        \"welding_method\": \"手工电弧焊\",\n        \"weld_size\": \"焊缝高度6mm，点焊长度10~20mm，间隔均匀\",\n        \"welding_position\": \"左挂件（5号）、右挂件（4号）与连接板（1号）连接处，平焊\",\n        \"quality_requirements\": \"点焊牢固，焊点分布均匀，无虚焊、漏焊\",\n        \"safety_notes\": \"佩戴焊接面罩和防护手套，点焊时注意防止飞溅烫伤，保持工作区通风\"\n      },\n      \"safety_warnings\": [\n        \"焊接时必须戴焊接面罩和防护手套，防止弧光和烫伤\",\n        \"点焊时注意飞溅，防止烫伤皮肤\",\n        \"焊接区域要保持通风，避免吸入烟尘\",\n        \"焊机接地要可靠，防止触电\"\n      ]\n    },\n    {\n      \"step_number\": 5,\n      \"action\": \"焊接加强筋\",\n      \"description\": \"将图纸9号加强筋（BOM序号9）分别放置在连接板（1号）后方两侧，贴合矩形管和连接板，点焊固定。\",\n      \"position_description\": \"9号加强筋在连接板后方两侧\",\n      \"parts_used\": [\n        {\n          \"bom_seq\": \"9\",\n          \"bom_name\": \"加强筋\",\n          \"quantity\": 2,\n          \"drawing_number\": \"9\",\n          \"mesh_id\": [\n            \"mesh_001\",\n            \"mesh_002\"\n          ],\n          \"bom_code\": \"01.01.01.17678\"\n        }\n      ],\n      \"tools\": [\n        \"电焊机\",\n        \"焊条\",\n        \"夹具\"\n      ],\n      \"warnings\": [\n        \"加强筋与板面贴合紧密\",\n        \"焊接顺序对称进行\"\n      ],\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊\",\n        \"welding_method\": \"手工电弧焊\",\n        \"weld_size\": \"焊缝高度6mm，点焊长度10~20mm，间隔均匀\",\n        \"welding_position\": \"加强筋（9号）与连接板（1号）、矩形管连接处，平焊\",\n        \"quality_requirements\": \"点焊牢固，焊点分布均匀，无虚焊、漏焊\",\n        \"safety_notes\": \"佩戴焊接面罩和防护手套，点焊时注意防止飞溅烫伤，保持工作区通风\"\n      },\n      \"safety_warnings\": [\n        \"焊接时必须戴焊接面罩和防护手套，防止弧光和烫伤\",\n        \"点焊时注意飞溅，防止烫伤皮肤\",\n        \"焊接区域要保持通风，避免吸入烟尘\",\n        \"焊机接地要可靠，防止触电\"\n      ]\n    },\n    {\n      \"step_number\": 6,\n      \"action\": \"焊接封板\",\n      \"description\": \"将图纸7号封板（BOM序号7）分别放置在连接板（1号）顶部两端，调整与矩形管和连接板贴合，点焊固定。\",\n      \"position_description\": \"7号封板在连接板顶部两端\",\n      \"parts_used\": [\n        {\n          \"bom_seq\": \"7\",\n          \"bom_name\": \"封板\",\n          \"quantity\": 2,\n          \"drawing_number\": \"7\",\n          \"mesh_id\": [\n            \"mesh_004\",\n            \"mesh_005\"\n          ],\n          \"bom_code\": \"01.01.01.16608\"\n        }\n      ],\n      \"tools\": [\n        \"电焊机\",\n        \"焊条\",\n        \"夹具\"\n      ],\n      \"warnings\": [\n        \"封板与管、板贴合紧密\",\n        \"焊接时注意防止烧穿\"\n      ],\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊\",\n        \"welding_method\": \"手工电弧焊\",\n        \"weld_size\": \"焊缝高度6mm，点焊长度10~20mm，间隔均匀\",\n        \"welding_position\": \"封板（7号）与连接板（1号）、矩形管连接处，平焊\",\n        \"quality_requirements\": \"点焊牢固，焊点分布均匀，无虚焊、漏焊\",\n        \"safety_notes\": \"佩戴焊接面罩和防护手套，点焊时注意防止飞溅烫伤，保持工作区通风\"\n      },\n      \"safety_warnings\": [\n        \"焊接时必须戴焊接面罩和防护手套，防止弧光和烫伤\",\n        \"点焊时注意飞溅，防止烫伤皮肤\",\n        \"焊接区域要保持通风，避免吸入烟尘\",\n        \"焊机接地要可靠，防止触电\"\n      ]\n    },\n    {\n      \"step_number\": 7,\n      \"action\": \"满焊所有点焊部位\",\n      \"description\": \"对所有已点焊的零件进行满焊，焊缝要连续饱满，焊接顺序应对称进行，防止变形。\",\n      \"position_description\": \"所有连接部位\",\n      \"parts_used\": [\n        {\n          \"bom_seq\": \"1\",\n          \"bom_name\": \"矩形管\",\n          \"quantity\": 0,\n          \"drawing_number\": \"2\"\n        },\n        {\n          \"bom_seq\": \"2\",\n          \"bom_name\": \"连接板\",\n          \"quantity\": 0,\n          \"drawing_number\": \"1\",\n          \"mesh_id\": [\n            \"mesh_018\"\n          ],\n          \"bom_code\": \"01.01.01.11509\"\n        },\n        {\n          \"bom_seq\": \"3\",\n          \"bom_name\": \"方形板-机加\",\n          \"quantity\": 0,\n          \"drawing_number\": \"3\",\n          \"mesh_id\": [\n            \"mesh_014\",\n            \"mesh_015\",\n            \"mesh_016\",\n            \"mesh_017\"\n          ],\n          \"bom_code\": \"01.01.01.6589\"\n        },\n        {\n          \"bom_seq\": \"4\",\n          \"bom_name\": \"右挂件虚拟组件\",\n          \"quantity\": 0,\n          \"drawing_number\": \"4\"\n        },\n        {\n          \"bom_seq\": \"5\",\n          \"bom_name\": \"左挂件虚拟组件\",\n          \"quantity\": 0,\n          \"drawing_number\": \"5\"\n        },\n        {\n          \"bom_seq\": \"7\",\n          \"bom_name\": \"封板\",\n          \"quantity\": 0,\n          \"drawing_number\": \"7\",\n          \"mesh_id\": [\n            \"mesh_004\",\n            \"mesh_005\"\n          ],\n          \"bom_code\": \"01.01.01.16608\"\n        },\n        {\n          \"bom_seq\": \"8\",\n          \"bom_name\": \"矩形管\",\n          \"quantity\": 0,\n          \"drawing_number\": \"8\",\n          \"mesh_id\": [\n            \"mesh_003\",\n            \"mesh_006\",\n            \"mesh_007\",\n            \"mesh_019\"\n          ],\n          \"bom_code\": \"01.01.03.2720\"\n        },\n        {\n          \"bom_seq\": \"9\",\n          \"bom_name\": \"加强筋\",\n          \"quantity\": 0,\n          \"drawing_number\": \"9\",\n          \"mesh_id\": [\n            \"mesh_001\",\n            \"mesh_002\"\n          ],\n          \"bom_code\": \"01.01.01.17678\"\n        }\n      ],\n      \"tools\": [\n        \"电焊机\",\n        \"焊条\",\n        \"钢丝刷\"\n      ],\n      \"warnings\": [\n        \"焊缝要连续饱满\",\n        \"焊接顺序要对称，防止变形\"\n      ],\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊\",\n        \"welding_method\": \"手工电弧焊\",\n        \"weld_size\": \"焊缝高度8mm，连续满焊\",\n        \"welding_position\": \"所有点焊部位，包括矩形管、方形板、挂件、加强筋、封板与连接板的连接处，主要为平焊，局部有立焊和角部焊接\",\n        \"quality_requirements\": \"焊缝饱满、连续，无气孔、夹渣、裂纹，焊后清渣打磨，必要时进行无损检测\",\n        \"safety_notes\": \"佩戴焊接面罩、防护手套和防护服，保持通风，焊接时注意防止烫伤和火花飞溅，焊机接地良好，周围无易燃物\"\n      },\n      \"safety_warnings\": [\n        \"满焊时必须戴焊接面罩、防护手套和防护服，防止弧光和烫伤\",\n        \"焊接时注意火花飞溅，防止烫伤和引燃周围物品\",\n        \"焊机要接地良好，防止漏电触电\",\n        \"焊接区域要保持通风，避免吸入有害烟气\",\n        \"焊接前清理周围易燃物，备好灭火器\"\n      ]\n    }\n  ]\n}\n```",
+  "parsed_result": {
+    "enhanced_steps": [
+      {
+        "step_number": 1,
+        "action": "放置基准件",
+        "description": "将图纸1号连接板（BOM序号2）平放在装配平台上，作为整个组件的基准件，注意板面朝上，孔位朝外。",
+        "position_description": "基准件，所有零件以其为参照",
+        "parts_used": [
+          {
+            "bom_seq": "2",
+            "bom_name": "连接板",
+            "quantity": 1,
+            "drawing_number": "1",
+            "mesh_id": [
+              "mesh_018"
+            ],
+            "bom_code": "01.01.01.11509"
+          }
+        ],
+        "tools": [
+          "行车",
+          "吊带",
+          "卷尺"
+        ],
+        "warnings": [
+          "吊装时注意手指安全",
+          "放置时确保连接板水平"
+        ],
+        "safety_warnings": [
+          "吊装连接板时必须戴安全帽和手套，防止砸伤和夹伤手指",
+          "吊带挂钩要挂牢，严禁站在吊物下方，防止吊物坠落伤人",
+          "放置连接板时注意脚下，防止重物砸脚，建议穿防砸安全鞋"
+        ]
+      },
+      {
+        "step_number": 2,
+        "action": "焊接矩形管",
+        "description": "将图纸8号矩形管（BOM序号8）和1号矩形管（BOM序号1）分别放置在连接板（1号）下方和上方定位线处，调整两根管子与连接板边缘对齐，点焊固定。",
+        "position_description": "8号管在连接板下方，1号管在连接板上方",
+        "parts_used": [
+          {
+            "bom_seq": "8",
+            "bom_name": "矩形管",
+            "quantity": 1,
+            "drawing_number": "8",
+            "mesh_id": [
+              "mesh_003",
+              "mesh_006",
+              "mesh_007",
+              "mesh_019"
+            ],
+            "bom_code": "01.01.03.2720"
+          },
+          {
+            "bom_seq": "1",
+            "bom_name": "矩形管",
+            "quantity": 1,
+            "drawing_number": "2"
+          }
+        ],
+        "tools": [
+          "电焊机",
+          "焊条",
+          "角尺",
+          "夹具"
+        ],
+        "warnings": [
+          "点焊前检查尺寸",
+          "焊接时佩戴防护面罩"
+        ],
+        "welding": {
+          "required": true,
+          "welding_type": "角焊",
+          "welding_method": "手工电弧焊",
+          "weld_size": "焊缝高度6mm，点焊长度10~20mm，间隔均匀",
+          "welding_position": "矩形管（1号、8号）与连接板（1号）连接处，平焊",
+          "quality_requirements": "点焊牢固，无虚焊、漏焊，焊点分布均匀",
+          "safety_notes": "佩戴焊接面罩和防护手套，点焊时注意防止飞溅烫伤，保持工作区通风"
+        },
+        "safety_warnings": [
+          "焊接时必须戴焊接面罩和防护手套，防止弧光灼伤和烫伤",
+          "焊接区域3米内不得有易燃物，旁边要备好灭火器",
+          "焊机要接地良好，防止漏电触电",
+          "点焊时注意工件夹紧，防止移动造成夹伤",
+          "保持工作区通风，防止吸入有害烟气"
+        ]
+      },
+      {
+        "step_number": 3,
+        "action": "焊接方形板",
+        "description": "将图纸3号方形板-机加（BOM序号3）分别放置在连接板（1号）两侧定位处，确保与连接板和矩形管贴合，点焊固定。",
+        "position_description": "3号方形板在连接板左右两侧",
+        "parts_used": [
+          {
+            "bom_seq": "3",
+            "bom_name": "方形板-机加",
+            "quantity": 4,
+            "drawing_number": "3",
+            "mesh_id": [
+              "mesh_014",
+              "mesh_015",
+              "mesh_016",
+              "mesh_017"
+            ],
+            "bom_code": "01.01.01.6589"
+          }
+        ],
+        "tools": [
+          "电焊机",
+          "焊条",
+          "夹具",
+          "角尺"
+        ],
+        "warnings": [
+          "点焊时注意板与管的贴合",
+          "防止焊接变形"
+        ],
+        "welding": {
+          "required": true,
+          "welding_type": "角焊",
+          "welding_method": "手工电弧焊",
+          "weld_size": "焊缝高度6mm，点焊长度10~20mm，间隔均匀",
+          "welding_position": "方形板（3号）与连接板、矩形管的连接处，平焊",
+          "quality_requirements": "点焊牢固，焊点分布均匀，无虚焊、漏焊",
+          "safety_notes": "佩戴焊接面罩和防护手套，点焊时注意防止飞溅烫伤，保持工作区通风"
+        },
+        "safety_warnings": [
+          "焊接时必须戴焊接面罩和防护手套，防止弧光和烫伤",
+          "点焊时注意飞溅，防止烫伤皮肤",
+          "焊接区域要保持通风，避免吸入烟尘",
+          "焊机接地要可靠，防止触电"
+        ]
+      },
+      {
+        "step_number": 4,
+        "action": "安装挂件",
+        "description": "将图纸5号左挂件虚拟组件（BOM序号5）和4号右挂件虚拟组件（BOM序号4）分别放置在连接板（1号）两端，调整位置后点焊固定。",
+        "position_description": "5号挂件在左侧，4号挂件在右侧",
+        "parts_used": [
+          {
+            "bom_seq": "5",
+            "bom_name": "左挂件虚拟组件",
+            "quantity": 1,
+            "drawing_number": "5"
+          },
+          {
+            "bom_seq": "4",
+            "bom_name": "右挂件虚拟组件",
+            "quantity": 1,
+            "drawing_number": "4"
+          }
+        ],
+        "tools": [
+          "电焊机",
+          "焊条",
+          "夹具"
+        ],
+        "warnings": [
+          "挂件定位要准确",
+          "焊接时防止错位"
+        ],
+        "welding": {
+          "required": true,
+          "welding_type": "角焊",
+          "welding_method": "手工电弧焊",
+          "weld_size": "焊缝高度6mm，点焊长度10~20mm，间隔均匀",
+          "welding_position": "左挂件（5号）、右挂件（4号）与连接板（1号）连接处，平焊",
+          "quality_requirements": "点焊牢固，焊点分布均匀，无虚焊、漏焊",
+          "safety_notes": "佩戴焊接面罩和防护手套，点焊时注意防止飞溅烫伤，保持工作区通风"
+        },
+        "safety_warnings": [
+          "焊接时必须戴焊接面罩和防护手套，防止弧光和烫伤",
+          "点焊时注意飞溅，防止烫伤皮肤",
+          "焊接区域要保持通风，避免吸入烟尘",
+          "焊机接地要可靠，防止触电"
+        ]
+      },
+      {
+        "step_number": 5,
+        "action": "焊接加强筋",
+        "description": "将图纸9号加强筋（BOM序号9）分别放置在连接板（1号）后方两侧，贴合矩形管和连接板，点焊固定。",
+        "position_description": "9号加强筋在连接板后方两侧",
+        "parts_used": [
+          {
+            "bom_seq": "9",
+            "bom_name": "加强筋",
+            "quantity": 2,
+            "drawing_number": "9",
+            "mesh_id": [
+              "mesh_001",
+              "mesh_002"
+            ],
+            "bom_code": "01.01.01.17678"
+          }
+        ],
+        "tools": [
+          "电焊机",
+          "焊条",
+          "夹具"
+        ],
+        "warnings": [
+          "加强筋与板面贴合紧密",
+          "焊接顺序对称进行"
+        ],
+        "welding": {
+          "required": true,
+          "welding_type": "角焊",
+          "welding_method": "手工电弧焊",
+          "weld_size": "焊缝高度6mm，点焊长度10~20mm，间隔均匀",
+          "welding_position": "加强筋（9号）与连接板（1号）、矩形管连接处，平焊",
+          "quality_requirements": "点焊牢固，焊点分布均匀，无虚焊、漏焊",
+          "safety_notes": "佩戴焊接面罩和防护手套，点焊时注意防止飞溅烫伤，保持工作区通风"
+        },
+        "safety_warnings": [
+          "焊接时必须戴焊接面罩和防护手套，防止弧光和烫伤",
+          "点焊时注意飞溅，防止烫伤皮肤",
+          "焊接区域要保持通风，避免吸入烟尘",
+          "焊机接地要可靠，防止触电"
+        ]
+      },
+      {
+        "step_number": 6,
+        "action": "焊接封板",
+        "description": "将图纸7号封板（BOM序号7）分别放置在连接板（1号）顶部两端，调整与矩形管和连接板贴合，点焊固定。",
+        "position_description": "7号封板在连接板顶部两端",
+        "parts_used": [
+          {
+            "bom_seq": "7",
+            "bom_name": "封板",
+            "quantity": 2,
+            "drawing_number": "7",
+            "mesh_id": [
+              "mesh_004",
+              "mesh_005"
+            ],
+            "bom_code": "01.01.01.16608"
+          }
+        ],
+        "tools": [
+          "电焊机",
+          "焊条",
+          "夹具"
+        ],
+        "warnings": [
+          "封板与管、板贴合紧密",
+          "焊接时注意防止烧穿"
+        ],
+        "welding": {
+          "required": true,
+          "welding_type": "角焊",
+          "welding_method": "手工电弧焊",
+          "weld_size": "焊缝高度6mm，点焊长度10~20mm，间隔均匀",
+          "welding_position": "封板（7号）与连接板（1号）、矩形管连接处，平焊",
+          "quality_requirements": "点焊牢固，焊点分布均匀，无虚焊、漏焊",
+          "safety_notes": "佩戴焊接面罩和防护手套，点焊时注意防止飞溅烫伤，保持工作区通风"
+        },
+        "safety_warnings": [
+          "焊接时必须戴焊接面罩和防护手套，防止弧光和烫伤",
+          "点焊时注意飞溅，防止烫伤皮肤",
+          "焊接区域要保持通风，避免吸入烟尘",
+          "焊机接地要可靠，防止触电"
+        ]
+      },
+      {
+        "step_number": 7,
+        "action": "满焊所有点焊部位",
+        "description": "对所有已点焊的零件进行满焊，焊缝要连续饱满，焊接顺序应对称进行，防止变形。",
+        "position_description": "所有连接部位",
+        "parts_used": [
+          {
+            "bom_seq": "1",
+            "bom_name": "矩形管",
+            "quantity": 0,
+            "drawing_number": "2"
+          },
+          {
+            "bom_seq": "2",
+            "bom_name": "连接板",
+            "quantity": 0,
+            "drawing_number": "1",
+            "mesh_id": [
+              "mesh_018"
+            ],
+            "bom_code": "01.01.01.11509"
+          },
+          {
+            "bom_seq": "3",
+            "bom_name": "方形板-机加",
+            "quantity": 0,
+            "drawing_number": "3",
+            "mesh_id": [
+              "mesh_014",
+              "mesh_015",
+              "mesh_016",
+              "mesh_017"
+            ],
+            "bom_code": "01.01.01.6589"
+          },
+          {
+            "bom_seq": "4",
+            "bom_name": "右挂件虚拟组件",
+            "quantity": 0,
+            "drawing_number": "4"
+          },
+          {
+            "bom_seq": "5",
+            "bom_name": "左挂件虚拟组件",
+            "quantity": 0,
+            "drawing_number": "5"
+          },
+          {
+            "bom_seq": "7",
+            "bom_name": "封板",
+            "quantity": 0,
+            "drawing_number": "7",
+            "mesh_id": [
+              "mesh_004",
+              "mesh_005"
+            ],
+            "bom_code": "01.01.01.16608"
+          },
+          {
+            "bom_seq": "8",
+            "bom_name": "矩形管",
+            "quantity": 0,
+            "drawing_number": "8",
+            "mesh_id": [
+              "mesh_003",
+              "mesh_006",
+              "mesh_007",
+              "mesh_019"
+            ],
+            "bom_code": "01.01.03.2720"
+          },
+          {
+            "bom_seq": "9",
+            "bom_name": "加强筋",
+            "quantity": 0,
+            "drawing_number": "9",
+            "mesh_id": [
+              "mesh_001",
+              "mesh_002"
+            ],
+            "bom_code": "01.01.01.17678"
+          }
+        ],
+        "tools": [
+          "电焊机",
+          "焊条",
+          "钢丝刷"
+        ],
+        "warnings": [
+          "焊缝要连续饱满",
+          "焊接顺序要对称，防止变形"
+        ],
+        "welding": {
+          "required": true,
+          "welding_type": "角焊",
+          "welding_method": "手工电弧焊",
+          "weld_size": "焊缝高度8mm，连续满焊",
+          "welding_position": "所有点焊部位，包括矩形管、方形板、挂件、加强筋、封板与连接板的连接处，主要为平焊，局部有立焊和角部焊接",
+          "quality_requirements": "焊缝饱满、连续，无气孔、夹渣、裂纹，焊后清渣打磨，必要时进行无损检测",
+          "safety_notes": "佩戴焊接面罩、防护手套和防护服，保持通风，焊接时注意防止烫伤和火花飞溅，焊机接地良好，周围无易燃物"
+        },
+        "safety_warnings": [
+          "满焊时必须戴焊接面罩、防护手套和防护服，防止弧光和烫伤",
+          "焊接时注意火花飞溅，防止烫伤和引燃周围物品",
+          "焊机要接地良好，防止漏电触电",
+          "焊接区域要保持通风，避免吸入有害烟气",
+          "焊接前清理周围易燃物，备好灭火器"
+        ]
+      }
+    ]
+  }
+}

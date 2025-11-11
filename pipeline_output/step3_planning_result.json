@@ -1,0 +1,235 @@
+{
+  "success": true,
+  "component_assembly_plan": [
+    {
+      "component_code": "01.03.6999",
+      "component_name": "连接器后座组件",
+      "assembly_order": 2,
+      "reason": "重量适中，需先于左滑雪板装配到后座组件上。",
+      "base_part_code": "01.01.11509",
+      "base_part_name": "连接板",
+      "base_part_weight_kg": 21.36,
+      "assembly_steps": [
+        "连接板（基准）定位",
+        "装配矩形管和加强筋",
+        "焊接所有零件",
+        "校正并检查尺寸"
+      ]
+    },
+    {
+      "component_code": "01.03.7000",
+      "component_name": "后座连接架组件",
+      "assembly_order": 1,
+      "reason": "最重组件，作为产品装配的基准。",
+      "base_part_code": "01.01.11512",
+      "base_part_name": "上连接板",
+      "base_part_weight_kg": 5.68,
+      "assembly_steps": [
+        "上连接板（基准）定位",
+        "装配下连接板和方形板",
+        "焊接所有零件",
+        "装配后座轴套和油缸固定板"
+      ]
+    },
+    {
+      "component_code": "01.03.7001",
+      "component_name": "左滑雪板组件",
+      "assembly_order": 3,
+      "reason": "重量最轻，且需要与后座连接架组件配合。",
+      "base_part_code": "01.01.18599",
+      "base_part_name": "左滑雪板",
+      "base_part_weight_kg": 28.38,
+      "assembly_steps": [
+        "左滑雪板（基准）定位",
+        "装配前后滑雪板和加强件",
+        "焊接所有零件",
+        "装配反光片支架和反光片"
+      ]
+    }
+  ],
+  "product_assembly_plan": {
+    "base_component_code": "01.03.7000",
+    "base_component_name": "后座连接架组件",
+    "reason": "该组件重量最大（59.64kg），适合作为产品装配基准。",
+    "assembly_sequence": [
+      {
+        "step": 1,
+        "component_code": "01.03.7000",
+        "action": "固定后座连接架组件（基准）"
+      },
+      {
+        "step": 2,
+        "component_code": "01.03.6999",
+        "action": "将连接器后座组件装到后座连接架上"
+      },
+      {
+        "step": 3,
+        "component_code": "01.03.7001",
+        "action": "将左滑雪板组件装到后座连接架上"
+      },
+      {
+        "step": 4,
+        "component_code": "01.09.2550",
+        "action": "装配右滑雪板组件"
+      },
+      {
+        "step": 5,
+        "component_code": "01.09.2551",
+        "action": "装配左推雪板组件"
+      },
+      {
+        "step": 6,
+        "component_code": "01.09.2552",
+        "action": "装配右推雪板组件"
+      },
+      {
+        "step": 7,
+        "component_code": "01.09.2553",
+        "action": "装配推雪板连接件"
+      },
+      {
+        "step": 8,
+        "component_code": "01.09.2554",
+        "action": "装配右推雪板连接件"
+      },
+      {
+        "step": 9,
+        "component_code": "01.09.2557",
+        "action": "装配液压缸组件"
+      },
+      {
+        "step": 10,
+        "component_code": "01.09.2558",
+        "action": "装配液压缸组件"
+      },
+      {
+        "step": 11,
+        "component_code": "01.09.2559",
+        "action": "装配液压缸组件"
+      },
+      {
+        "step": 12,
+        "component_code": "01.09.1240",
+        "action": "装配电磁阀保护罩组件"
+      }
+    ]
+  },
+  "raw_result": {
+    "product_name": "V型推雪板滑板注油器",
+    "total_components": 3,
+    "component_assembly_plan": [
+      {
+        "component_code": "01.03.6999",
+        "component_name": "连接器后座组件",
+        "assembly_order": 2,
+        "reason": "重量适中，需先于左滑雪板装配到后座组件上。",
+        "base_part_code": "01.01.11509",
+        "base_part_name": "连接板",
+        "base_part_weight_kg": 21.36,
+        "assembly_steps": [
+          "连接板（基准）定位",
+          "装配矩形管和加强筋",
+          "焊接所有零件",
+          "校正并检查尺寸"
+        ]
+      },
+      {
+        "component_code": "01.03.7000",
+        "component_name": "后座连接架组件",
+        "assembly_order": 1,
+        "reason": "最重组件，作为产品装配的基准。",
+        "base_part_code": "01.01.11512",
+        "base_part_name": "上连接板",
+        "base_part_weight_kg": 5.68,
+        "assembly_steps": [
+          "上连接板（基准）定位",
+          "装配下连接板和方形板",
+          "焊接所有零件",
+          "装配后座轴套和油缸固定板"
+        ]
+      },
+      {
+        "component_code": "01.03.7001",
+        "component_name": "左滑雪板组件",
+        "assembly_order": 3,
+        "reason": "重量最轻，且需要与后座连接架组件配合。",
+        "base_part_code": "01.01.18599",
+        "base_part_name": "左滑雪板",
+        "base_part_weight_kg": 28.38,
+        "assembly_steps": [
+          "左滑雪板（基准）定位",
+          "装配前后滑雪板和加强件",
+          "焊接所有零件",
+          "装配反光片支架和反光片"
+        ]
+      }
+    ],
+    "product_assembly_plan": {
+      "base_component_code": "01.03.7000",
+      "base_component_name": "后座连接架组件",
+      "reason": "该组件重量最大（59.64kg），适合作为产品装配基准。",
+      "assembly_sequence": [
+        {
+          "step": 1,
+          "component_code": "01.03.7000",
+          "action": "固定后座连接架组件（基准）"
+        },
+        {
+          "step": 2,
+          "component_code": "01.03.6999",
+          "action": "将连接器后座组件装到后座连接架上"
+        },
+        {
+          "step": 3,
+          "component_code": "01.03.7001",
+          "action": "将左滑雪板组件装到后座连接架上"
+        },
+        {
+          "step": 4,
+          "component_code": "01.09.2550",
+          "action": "装配右滑雪板组件"
+        },
+        {
+          "step": 5,
+          "component_code": "01.09.2551",
+          "action": "装配左推雪板组件"
+        },
+        {
+          "step": 6,
+          "component_code": "01.09.2552",
+          "action": "装配右推雪板组件"
+        },
+        {
+          "step": 7,
+          "component_code": "01.09.2553",
+          "action": "装配推雪板连接件"
+        },
+        {
+          "step": 8,
+          "component_code": "01.09.2554",
+          "action": "装配右推雪板连接件"
+        },
+        {
+          "step": 9,
+          "component_code": "01.09.2557",
+          "action": "装配液压缸组件"
+        },
+        {
+          "step": 10,
+          "component_code": "01.09.2558",
+          "action": "装配液压缸组件"
+        },
+        {
+          "step": 11,
+          "component_code": "01.09.2559",
+          "action": "装配液压缸组件"
+        },
+        {
+          "step": 12,
+          "component_code": "01.09.1240",
+          "action": "装配电磁阀保护罩组件"
+        }
+      ]
+    }
+  }
+}

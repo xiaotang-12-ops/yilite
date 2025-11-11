@@ -1,0 +1,46 @@
+{
+  "generated_at": "2025-09-23T15:42:18.153156Z",
+  "dpi": 250,
+  "root": "E:\\装配\\测试-pdf",
+  "manuals": [
+    {
+      "pdf": "E:\\装配\\测试-pdf\\产品总图.pdf",
+      "manual_html": "E:\\装配\\processing\\manual\\产品总图\\manual.html",
+      "images": [
+        "产品总图\\images\\page-01.png",
+        "产品总图\\images\\page-02.png"
+      ],
+      "bom_json": "E:\\装配\\processing\\manual\\产品总图\\bom.json",
+      "bom_items": 53
+    },
+    {
+      "pdf": "E:\\装配\\测试-pdf\\组件图1.pdf",
+      "manual_html": "E:\\装配\\processing\\manual\\组件图1\\manual.html",
+      "images": [
+        "组件图1\\images\\page-01.png"
+      ],
+      "bom_json": "E:\\装配\\processing\\manual\\组件图1\\bom.json",
+      "bom_items": 11
+    },
+    {
+      "pdf": "E:\\装配\\测试-pdf\\组件图2.pdf",
+      "manual_html": "E:\\装配\\processing\\manual\\组件图2\\manual.html",
+      "images": [
+        "组件图2\\images\\page-01.png",
+        "组件图2\\images\\page-02.png"
+      ],
+      "bom_json": "E:\\装配\\processing\\manual\\组件图2\\bom.json",
+      "bom_items": 11
+    },
+    {
+      "pdf": "E:\\装配\\测试-pdf\\组件图3.pdf",
+      "manual_html": "E:\\装配\\processing\\manual\\组件图3\\manual.html",
+      "images": [
+        "组件图3\\images\\page-01.png",
+        "组件图3\\images\\page-02.png"
+      ],
+      "bom_json": "E:\\装配\\processing\\manual\\组件图3\\bom.json",
+      "bom_items": 16
+    }
+  ]
+}

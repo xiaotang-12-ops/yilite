@@ -1,0 +1,312 @@
+{
+  "agent_name": "Agent5_",
+  "model": "google/gemini-2.5-flash-preview-09-2025",
+  "timestamp": "20251104_140137",
+  "image_count": 1,
+  "temperature": 0.1,
+  "system_prompt": "# 角色定位\n\n你是**王师傅**，一位拥有30年焊接经验的高级焊接工艺专家。\n\n## 教育背景\n\n- **学历**：焊接技术与工程专业本科\n- **职业资格**：国际焊接工程师（IWE）、高级焊工技师\n- **专业培训**：\n  - 压力容器焊接工艺评定\n  - 特种设备焊接质量控制\n  - 焊接缺陷分析与预防\n\n## 职业背景\n\n- **工作经历**：30年焊接一线经验，参与过大型钢结构、压力容器、机械装备等项目\n- **专业领域**：\n  - 手工电弧焊、CO2气保焊、氩弧焊等多种焊接方法\n  - 碳钢、不锈钢、铝合金等材料焊接\n  - 焊接工艺评定（WPS/PQR）\n  - 焊接质量检验与缺陷分析\n\n## 知识结构（详细）\n\n### 1. 焊接方法与工艺\n- **手工电弧焊（SMAW）**：适用于碳钢、低合金钢，操作灵活\n- **CO2气保焊（MAG）**：适用于中厚板，焊接效率高，成本低\n- **氩弧焊（TIG）**：适用于不锈钢、铝合金，焊缝质量高\n- **埋弧焊（SAW）**：适用于厚板长焊缝，自动化程度高\n\n### 2. 焊接接头类型\n- **对接焊**：板材端面对接，承载能力强\n- **角焊**：两板材垂直或倾斜连接，最常见\n- **塞焊/槽焊**：孔内填充焊接，用于叠板连接\n- **点焊**：定位焊，临时固定零件\n\n### 3. 焊接位置\n- **平焊（1G/1F）**：最容易操作，焊缝质量最好\n- **横焊（2G/2F）**：需要控制熔池下坠\n- **立焊（3G/3F）**：需要向上或向下焊接\n- **仰焊（4G/4F）**：最困难，需要防止熔池下落\n\n### 4. 焊接质量控制\n- **焊前准备**：清理油污、锈蚀、氧化皮，保证坡口质量\n- **焊接参数**：电流、电压、焊接速度、保护气体流量\n- **焊接顺序**：对称焊、分段焊、跳焊，控制变形\n- **焊后检验**：外观检查、无损检测（RT/UT/MT/PT）\n\n### 5. 焊接缺陷与预防\n- **气孔**：焊前清理不彻底、保护气体不足\n- **夹渣**：焊接电流过小、焊接速度过快\n- **裂纹**：预热不足、冷却过快、应力集中\n- **未熔合**：焊接电流过小、坡口角度不当\n- **烧穿**：焊接电流过大、间隙过大\n\n### 6. 焊接安全\n- **个人防护**：焊接面罩、防护手套、防护服、安全鞋\n- **环境安全**：通风良好、防火措施、接地保护\n- **设备安全**：焊机检查、气瓶固定、电缆完好\n\n## 任务步骤（Chain of Thought）\n\n你的任务是**为每个装配步骤添加焊接要点**（如果该步骤涉及焊接）。请按照以下5个步骤思考：\n\n### 步骤1：识别焊接步骤\n- 分析每个装配步骤的操作内容\n- 判断是否涉及零件的永久性连接（焊接）\n- 区分焊接步骤和螺栓连接步骤\n\n### 步骤2：确定焊接类型\n- 根据零件的连接方式，确定焊接接头类型（对接、角焊、塞焊等）\n- 根据图纸上的焊接符号，确定焊接方法（手工焊、气保焊等）\n\n### 步骤3：分析焊接位置\n- 根据零件的空间位置，确定焊接位置（平焊、横焊、立焊、仰焊）\n- 考虑焊接的可达性和操作难度\n\n### 步骤4：制定焊接工艺\n- 确定焊接参数（焊缝尺寸、焊接方法、焊接材料）\n- 制定焊接顺序（对称焊、分段焊等）\n- 提出质量要求（焊缝外观、无损检测等）\n\n### 步骤5：添加安全提示\n- 针对每个焊接步骤，添加具体的安全注意事项\n- 强调个人防护、环境安全、设备安全\n\n## 核心原则\n\n1. **步骤级嵌入**：为每个需要焊接的步骤添加welding字段，而不是单独列出焊接要求\n2. **工人友好**：使用通俗语言，避免专业术语（如\"焊脚高度6mm\"而不是\"焊脚尺寸a=6\"）\n3. **安全第一**：每个焊接步骤都要有具体的安全提示\n4. **质量保证**：明确焊接质量要求和检验方法\n\n## 输出格式\n\n严格按照以下JSON格式输出（返回增强后的装配步骤）：\n\n```json\n{\n  \"enhanced_steps\": [\n    {\n      \"step_number\": 1,\n      \"title\": \"步骤标题\",\n      \"parts_used\": [...],\n      \"tools_required\": [...],\n      \"operation\": \"操作说明\",\n      \"quality_check\": \"质量检查\",\n      \"estimated_time_minutes\": 10,\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"焊脚高度6mm\",\n        \"welding_position\": \"零件①与零件②的连接处，平焊\",\n        \"quality_requirements\": \"焊缝饱满、连续，无气孔、夹渣、裂纹\",\n        \"safety_notes\": \"佩戴焊接面罩和防护手套，确保通风良好，周围无易燃物\"\n      }\n    },\n    {\n      \"step_number\": 2,\n      \"title\": \"另一个步骤\",\n      \"parts_used\": [...],\n      \"operation\": \"操作说明\",\n      \"quality_check\": \"质量检查\",\n      \"estimated_time_minutes\": 15\n      // ⚠️ 如果不需要焊接，不添加welding字段\n    }\n  ]\n}\n```\n\n**⚠️ 关键要求**：\n\n1. **步骤级嵌入**：\n   - 为每个需要焊接的步骤添加`welding`字段\n   - 不需要焊接的步骤不添加`welding`字段\n   - 保持原有步骤的所有字段不变\n\n2. **焊接位置要具体**：\n   - 说明是哪两个零件之间的焊接（如\"零件①与零件②的连接处\"）\n   - 说明焊接位置（如\"平焊\"、\"横焊\"、\"立焊\"）\n\n3. **使用通俗语言**：\n   - ✅ 说\"焊缝高度6mm\"\n   - ❌ 不说\"焊脚尺寸a=6\"\n   - ✅ 说\"CO2气保焊\"\n   - ❌ 不说\"GMAW\"\n\n4. **安全提示要具体**：\n   - 每个焊接步骤都要有具体的安全注意事项\n   - 包括个人防护、环境安全、操作安全\n\n## 重要提醒\n\n- **只输出JSON，不要输出其他内容**\n- **保持原有字段不变**：不要修改或删除原有的字段\n- **焊接信息要完整**：type、method、size、position、quality、safety都要有\n- **质量要求要明确**：说明焊缝的外观要求和检验方法\n",
+  "user_query": "请为以下装配步骤添加焊接要点（如果涉及焊接）。\n\n## 📸 视觉分析任务\n\n**你会看到工程图纸图片，请仔细观察：**\n\n1. **焊接符号**：\n   - 图纸上的焊接符号（如角焊符号、对接焊符号等）\n   - 焊缝尺寸标注（如焊脚高度、焊缝长度等）\n   - 焊接方法代码（如手工焊、气保焊等）\n\n2. **零件连接关系**：\n   - 哪些零件之间需要焊接连接\n   - 焊接位置和方向\n   - 焊接的可达性\n\n3. **技术要求**：\n   - 焊接质量等级\n   - 焊后处理要求（如打磨、清理等）\n   - 无损检测要求\n\n## 装配步骤\n\n[\n  {\n    \"step_number\": 1,\n    \"action\": \"放置基准件\",\n    \"description\": \"将图纸上标注为③的方管（中侧板）平稳放置在装配工装或工作台上，作为整个组件的装配基准。\",\n    \"position_description\": \"方管长边水平放置，确保后续焊接操作的可达性。\",\n    \"parts_used\": [\n      {\n        \"bom_seq\": \"3\",\n        \"bom_name\": \"中侧板\",\n        \"quantity\": 2,\n        \"drawing_number\": \"3\"\n      }\n    ],\n    \"tools\": [\n      \"行车\",\n      \"吊具\",\n      \"水平仪\"\n    ],\n    \"warnings\": [\n      \"方管较重，吊装时注意安全，确保吊装平稳。\"\n    ]\n  },\n  {\n    \"step_number\": 2,\n    \"action\": \"安装底部方管\",\n    \"description\": \"将图纸上标注为①和②的方管（底部的两根长方管）分别放置在③号中侧板的底部两侧，并进行点焊定位。注意方管的端面应与中侧板的端面齐平。\",\n    \"position_description\": \"①号方管和②号方管位于③号中侧板的下方，沿长度方向平行放置。\",\n    \"parts_used\": [\n      {\n        \"bom_seq\": \"1\",\n        \"bom_name\": \"方管\",\n        \"quantity\": 2,\n        \"drawing_number\": \"1\"\n      },\n      {\n        \"bom_seq\": \"2\",\n        \"bom_name\": \"方管\",\n        \"quantity\": 2,\n        \"drawing_number\": \"2\"\n      }\n    ],\n    \"tools\": [\n      \"焊机\",\n      \"角尺\",\n      \"卷尺\"\n    ],\n    \"warnings\": [\n      \"点焊时注意定位精度，确保两根方管的平行度。\"\n    ]\n  },\n  {\n    \"step_number\": 3,\n    \"action\": \"安装连接板\",\n    \"description\": \"将图纸上标注为⑥的左连接器板和⑩的右连接器板分别安装在③号中侧板的两端。⑥号板安装在左侧，⑩号板安装在右侧。确保连接板上的孔位与方管的预留孔位对齐，并进行点焊定位。\",\n    \"position_description\": \"⑥号和⑩号连接板垂直于③号中侧板，位于组件的两端。\",\n    \"parts_used\": [\n      {\n        \"bom_seq\": \"6\",\n        \"bom_name\": \"左连接器板\",\n        \"quantity\": 1,\n        \"drawing_number\": \"6\"\n      },\n      {\n        \"bom_seq\": \"10\",\n        \"bom_name\": \"右连接器板\",\n        \"quantity\": 1,\n        \"drawing_number\": \"10\"\n      }\n    ],\n    \"tools\": [\n      \"焊机\",\n      \"卡尺\",\n      \"磁力夹具\"\n    ],\n    \"warnings\": [\n      \"连接板是关键定位件，点焊前必须检查其垂直度和端面齐平度。\"\n    ]\n  },\n  {\n    \"step_number\": 4,\n    \"action\": \"安装内部支撑件\",\n    \"description\": \"将图纸上标注为④的中连接板（数量2）和⑤的方形板-机加（数量1）安装在③号中侧板的内部，作为内部支撑。④号板位于中间，⑤号板位于下方。根据图纸尺寸（如410mm、250mm）进行定位，并进行点焊。\",\n    \"position_description\": \"④号和⑤号零件位于③号中侧板和①②号方管围成的内部空间。\",\n    \"parts_used\": [\n      {\n        \"bom_seq\": \"4\",\n        \"bom_name\": \"中连接板\",\n        \"quantity\": 2,\n        \"drawing_number\": \"4\"\n      },\n      {\n        \"bom_seq\": \"5\",\n        \"bom_name\": \"方形板-机加\",\n        \"quantity\": 1,\n        \"drawing_number\": \"5\"\n      }\n    ],\n    \"tools\": [\n      \"焊机\",\n      \"卷尺\",\n      \"定位块\"\n    ],\n    \"warnings\": [\n      \"内部支撑件的定位尺寸非常重要，必须精确测量。\"\n    ]\n  },\n  {\n    \"step_number\": 5,\n    \"action\": \"安装上挂板和轴套\",\n    \"description\": \"将图纸上标注为⑧的上挂板（数量1）安装在③号中侧板的上方中央位置，并进行点焊。然后将⑨号轴套（数量1）安装在⑧号上挂板的下方，确保轴套中心线与上挂板的孔位对齐，并进行点焊。\",\n    \"position_description\": \"⑧号上挂板位于组件顶部，⑨号轴套位于⑧号板下方。\",\n    \"parts_used\": [\n      {\n        \"bom_seq\": \"8\",\n        \"bom_name\": \"上挂板\",\n        \"quantity\": 1,\n        \"drawing_number\": \"8\"\n      },\n      {\n        \"bom_seq\": \"9\",\n        \"bom_name\": \"轴套\",\n        \"quantity\": 1,\n        \"drawing_number\": \"9\"\n      }\n    ],\n    \"tools\": [\n      \"焊机\",\n      \"塞尺\",\n      \"中心定位销\"\n    ],\n    \"warnings\": [\n      \"轴套的定位精度要求高，必须使用定位销或专用夹具确保同轴度。\"\n    ]\n  },\n  {\n    \"step_number\": 6,\n    \"action\": \"安装侧面加强板\",\n    \"description\": \"将图纸上标注为⑦的左连接器板（数量1）和⑪的三角板（数量4）安装在组件两侧。⑦号板安装在左侧，与⑥号板对称。⑪号三角板安装在四个角部，用于加强连接板与方管的连接强度。全部进行点焊定位。\",\n    \"position_description\": \"⑦号板位于左侧，与⑥号板相对。⑪号三角板位于四个角部，呈斜向支撑。\",\n    \"parts_used\": [\n      {\n        \"bom_seq\": \"7\",\n        \"bom_name\": \"左连接器板\",\n        \"quantity\": 1,\n        \"drawing_number\": \"7\"\n      },\n      {\n        \"bom_seq\": \"11\",\n        \"bom_name\": \"三角板\",\n        \"quantity\": 4,\n        \"drawing_number\": \"11\"\n      }\n    ],\n    \"tools\": [\n      \"焊机\",\n      \"角尺\"\n    ],\n    \"warnings\": [\n      \"三角板的焊接应保证焊缝饱满，避免应力集中。\"\n    ]\n  },\n  {\n    \"step_number\": 7,\n    \"action\": \"安装外部方板和防滑板\",\n    \"description\": \"将图纸上标注为⑫的方形板（数量4）安装在组件外部的四个侧面，用于封闭结构。将⑬号防滑板（数量2）安装在组件的底部两侧。全部进行点焊定位。\",\n    \"position_description\": \"⑫号方形板覆盖外部侧面，⑬号防滑板位于底部外侧。\",\n    \"parts_used\": [\n      {\n        \"bom_seq\": \"12\",\n        \"bom_name\": \"方形板\",\n        \"quantity\": 4,\n        \"drawing_number\": \"12\"\n      },\n      {\n        \"bom_seq\": \"13\",\n        \"bom_name\": \"防滑板\",\n        \"quantity\": 2,\n        \"drawing_number\": \"13\"\n      }\n    ],\n    \"tools\": [\n      \"焊机\",\n      \"磁力夹具\"\n    ],\n    \"warnings\": [\n      \"方形板和防滑板的安装应确保表面平整，无明显凹凸。\"\n    ]\n  },\n  {\n    \"step_number\": 8,\n    \"action\": \"满焊所有零件\",\n    \"description\": \"按照技术要求（如：选择合理的焊接顺序，保证焊接平稳性）对所有已点焊定位的零件进行满焊。焊接顺序应遵循对称、分散原则，以减少焊接变形。\",\n    \"position_description\": \"对所有零件的连接处进行全焊。\",\n    \"parts_used\": [],\n    \"tools\": [\n      \"焊机\",\n      \"焊条/焊丝\",\n      \"防护用品\"\n    ],\n    \"warnings\": [\n      \"焊接过程中注意控制热输入，避免组件整体变形。焊缝应符合图纸和技术要求，无虚焊、漏焊等不良现象。\"\n    ]\n  },\n  {\n    \"step_number\": 9,\n    \"action\": \"焊后清理与打磨\",\n    \"description\": \"焊接完成后，去除所有焊渣、飞溅物。对所有焊缝进行打磨处理，特别是锐边、尖角和尖锐倒角，确保符合技术要求中的'焊后去除焊渣'和'锐边/尖角/尖锐倒角钝化'要求。\",\n    \"position_description\": \"所有焊缝和锐利边缘。\",\n    \"parts_used\": [],\n    \"tools\": [\n      \"角磨机\",\n      \"钢丝刷\",\n      \"防护眼镜\"\n    ],\n    \"warnings\": [\n      \"打磨时注意保护轴套等机加面，避免损伤。\"\n    ]\n  }\n]\n\n## 要求\n\n请按照以下5个步骤思考，为装配步骤添加焊接要点：\n\n### 步骤1：识别焊接步骤\n- 分析每个装配步骤的操作内容\n- 判断是否涉及零件的永久性连接（焊接）\n- 通常包含\"焊接\"、\"点焊\"、\"定位焊\"等关键词的步骤需要焊接\n\n### 步骤2：确定焊接类型\n- 根据零件的连接方式，确定焊接接头类型：\n  * **角焊**：两板材垂直或倾斜连接（最常见）\n  * **对接焊**：板材端面对接\n  * **塞焊/槽焊**：孔内填充焊接\n  * **点焊**：定位焊，临时固定\n\n### 步骤3：分析焊接位置\n- 根据零件的空间位置，确定焊接位置：\n  * **平焊**：最容易操作，焊缝质量最好\n  * **横焊**：需要控制熔池下坠\n  * **立焊**：需要向上或向下焊接\n  * **仰焊**：最困难，需要防止熔池下落\n\n### 步骤4：制定焊接工艺\n- 确定焊接方法（CO2气保焊、手工电弧焊、氩弧焊等）\n- 确定焊缝尺寸（焊脚高度、焊缝长度等）\n- 制定质量要求（焊缝外观、无损检测等）\n\n### 步骤5：添加安全提示\n- 针对每个焊接步骤，添加具体的安全注意事项\n- 包括个人防护、环境安全、设备安全\n\n## ⚠️ 强制自检清单（生成后必须逐项检查）\n\n**在输出JSON之前，你必须完成以下验证：**\n\n1. **焊接步骤识别验证**：\n   - [ ] 所有涉及焊接的步骤都添加了welding字段\n   - [ ] 不需要焊接的步骤没有添加welding字段\n   - [ ] welding.required字段正确设置为true\n\n2. **焊接信息完整性验证**：\n   - [ ] 每个welding字段都包含完整信息（type、method、size、position、quality_requirements、safety_notes）\n   - [ ] 焊接位置具体明确（说明是哪两个零件之间的焊接）\n   - [ ] 焊接方法符合实际（CO2气保焊、手工电弧焊等）\n\n3. **语言通俗性验证**：\n   - [ ] 使用工人能看懂的语言（如\"焊缝高度6mm\"而不是\"焊脚尺寸a=6\"）\n   - [ ] 避免专业术语和英文缩写\n\n4. **原有字段保持验证**：\n   - [ ] 原有步骤的所有字段都保持不变\n   - [ ] 没有修改或删除任何原有字段\n\n**如果自检发现任何问题，必须重新生成！**\n\n现在开始为装配步骤添加焊接要点！\n",
+  "raw_response": "```json\n{\n  \"enhanced_steps\": [\n    {\n      \"step_number\": 1,\n      \"action\": \"放置基准件\",\n      \"description\": \"将图纸上标注为③的方管（中侧板）平稳放置在装配工装或工作台上，作为整个组件的装配基准。\",\n      \"position_description\": \"方管长边水平放置，确保后续焊接操作的可达性。\",\n      \"parts_used\": [\n        {\n          \"bom_seq\": \"3\",\n          \"bom_name\": \"中侧板\",\n          \"quantity\": 2,\n          \"drawing_number\": \"3\"\n        }\n      ],\n      \"tools\": [\n        \"行车\",\n        \"吊具\",\n        \"水平仪\"\n      ],\n      \"warnings\": [\n        \"方管较重，吊装时注意安全，确保吊装平稳。\"\n      ],\n      \"quality_check\": \"检查方管放置是否水平，作为后续装配的基准。\"\n    },\n    {\n      \"step_number\": 2,\n      \"action\": \"安装底部方管\",\n      \"description\": \"将图纸上标注为①和②的方管（底部的两根长方管）分别放置在③号中侧板的底部两侧，并进行点焊定位。注意方管的端面应与中侧板的端面齐平。\",\n      \"position_description\": \"①号方管和②号方管位于③号中侧板的下方，沿长度方向平行放置。\",\n      \"parts_used\": [\n        {\n          \"bom_seq\": \"1\",\n          \"bom_name\": \"方管\",\n          \"quantity\": 2,\n          \"drawing_number\": \"1\"\n        },\n        {\n          \"bom_seq\": \"2\",\n          \"bom_name\": \"方管\",\n          \"quantity\": 2,\n          \"drawing_number\": \"2\"\n        }\n      ],\n      \"tools\": [\n        \"焊机\",\n        \"角尺\",\n        \"卷尺\"\n      ],\n      \"warnings\": [\n        \"点焊时注意定位精度，确保两根方管的平行度。\"\n      ],\n      \"quality_check\": \"检查①②号方管与③号中侧板的垂直度及端面齐平度，点焊牢固。\",\n      \"estimated_time_minutes\": 15,\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊（定位焊）\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"点焊长度10-15mm，焊脚高度4mm\",\n        \"welding_position\": \"零件①/②与零件③的连接处，平焊位置为主\",\n        \"quality_requirements\": \"点焊位置应均匀分布，焊点牢固，无虚焊，确保定位精度。\",\n        \"safety_notes\": \"佩戴焊接面罩、防护手套和防护服。确保工作区域通风良好，防止烟尘吸入。\"\n      }\n    },\n    {\n      \"step_number\": 3,\n      \"action\": \"安装连接板\",\n      \"description\": \"将图纸上标注为⑥的左连接器板和⑩的右连接器板分别安装在③号中侧板的两端。⑥号板安装在左侧，⑩号板安装在右侧。确保连接板上的孔位与方管的预留孔位对齐，并进行点焊定位。\",\n      \"position_description\": \"⑥号和⑩号连接板垂直于③号中侧板，位于组件的两端。\",\n      \"parts_used\": [\n        {\n          \"bom_seq\": \"6\",\n          \"bom_name\": \"左连接器板\",\n          \"quantity\": 1,\n          \"drawing_number\": \"6\"\n        },\n        {\n          \"bom_seq\": \"10\",\n          \"bom_name\": \"右连接器板\",\n          \"quantity\": 1,\n          \"drawing_number\": \"10\"\n        }\n      ],\n      \"tools\": [\n        \"焊机\",\n        \"卡尺\",\n        \"磁力夹具\"\n      ],\n      \"warnings\": [\n        \"连接板是关键定位件，点焊前必须检查其垂直度和端面齐平度。\"\n      ],\n      \"quality_check\": \"检查连接板与中侧板的垂直度（90度），点焊牢固。\",\n      \"estimated_time_minutes\": 10,\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊（定位焊）\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"点焊长度10-15mm，焊脚高度4mm\",\n        \"welding_position\": \"零件⑥/⑩与零件③的连接处，横焊和立焊位置\",\n        \"quality_requirements\": \"点焊位置应避开最终焊缝的起始和终止点。确保连接板定位准确，无倾斜。\",\n        \"safety_notes\": \"使用磁力夹具固定零件，防止点焊时零件晃动或掉落。注意防止电弧光灼伤眼睛。\"\n      }\n    },\n    {\n      \"step_number\": 4,\n      \"action\": \"安装内部支撑件\",\n      \"description\": \"将图纸上标注为④的中连接板（数量2）和⑤的方形板-机加（数量1）安装在③号中侧板的内部，作为内部支撑。④号板位于中间，⑤号板位于下方。根据图纸尺寸（如410mm、250mm）进行定位，并进行点焊。\",\n      \"position_description\": \"④号和⑤号零件位于③号中侧板和①②号方管围成的内部空间。\",\n      \"parts_used\": [\n        {\n          \"bom_seq\": \"4\",\n          \"bom_name\": \"中连接板\",\n          \"quantity\": 2,\n          \"drawing_number\": \"4\"\n        },\n        {\n          \"bom_seq\": \"5\",\n          \"bom_name\": \"方形板-机加\",\n          \"quantity\": 1,\n          \"drawing_number\": \"5\"\n        }\n      ],\n      \"tools\": [\n        \"焊机\",\n        \"卷尺\",\n        \"定位块\"\n      ],\n      \"warnings\": [\n        \"内部支撑件的定位尺寸非常重要，必须精确测量。\"\n      ],\n      \"quality_check\": \"检查④⑤号零件的定位尺寸（410mm、250mm）是否准确，点焊牢固。\",\n      \"estimated_time_minutes\": 15,\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊（定位焊）\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"点焊长度10mm，焊脚高度3mm\",\n        \"welding_position\": \"零件④/⑤与零件①/②/③的连接处，内部平焊和立焊位置\",\n        \"quality_requirements\": \"定位焊应保证支撑件与主体结构紧密贴合，无间隙。\",\n        \"safety_notes\": \"内部空间操作受限，注意焊枪角度，避免烫伤。确保焊机接地良好。\"\n      }\n    },\n    {\n      \"step_number\": 5,\n      \"action\": \"安装上挂板和轴套\",\n      \"description\": \"将图纸上标注为⑧的上挂板（数量1）安装在③号中侧板的上方中央位置，并进行点焊。然后将⑨号轴套（数量1）安装在⑧号上挂板的下方，确保轴套中心线与上挂板的孔位对齐，并进行点焊。\",\n      \"position_description\": \"⑧号上挂板位于组件顶部，⑨号轴套位于⑧号板下方。\",\n      \"parts_used\": [\n        {\n          \"bom_seq\": \"8\",\n          \"bom_name\": \"上挂板\",\n          \"quantity\": 1,\n          \"drawing_number\": \"8\"\n        },\n        {\n          \"bom_seq\": \"9\",\n          \"bom_name\": \"轴套\",\n          \"quantity\": 1,\n          \"drawing_number\": \"9\"\n        }\n      ],\n      \"tools\": [\n        \"焊机\",\n        \"塞尺\",\n        \"中心定位销\"\n      ],\n      \"warnings\": [\n        \"轴套的定位精度要求高，必须使用定位销或专用夹具确保同轴度。\"\n      ],\n      \"quality_check\": \"检查⑧号板与③号板的中心线对齐度，⑨号轴套与⑧号板的同轴度，点焊牢固。\",\n      \"estimated_time_minutes\": 15,\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊/环形焊（定位焊）\",\n        \"welding_method\": \"CO2气保焊/氩弧焊（针对轴套）\",\n        \"weld_size\": \"点焊长度10mm，轴套与挂板连接处点焊4点\",\n        \"welding_position\": \"零件⑧与零件③的连接处（平焊），零件⑨与零件⑧的连接处（仰焊/平焊）\",\n        \"quality_requirements\": \"轴套定位焊时，应使用低电流，避免热变形影响同轴度。轴套周围点焊应均匀。\",\n        \"safety_notes\": \"轴套是精密零件，焊接时要控制热输入，防止烧穿或严重变形。使用定位销后方可点焊。\"\n      }\n    },\n    {\n      \"step_number\": 6,\n      \"action\": \"安装侧面加强板\",\n      \"description\": \"将图纸上标注为⑦的左连接器板（数量1）和⑪的三角板（数量4）安装在组件两侧。⑦号板安装在左侧，与⑥号板对称。⑪号三角板安装在四个角部，用于加强连接板与方管的连接强度。全部进行点焊定位。\",\n      \"position_description\": \"⑦号板位于左侧，与⑥号板相对。⑪号三角板位于四个角部，呈斜向支撑。\",\n      \"parts_used\": [\n        {\n          \"bom_seq\": \"7\",\n          \"bom_name\": \"左连接器板\",\n          \"quantity\": 1,\n          \"drawing_number\": \"7\"\n        },\n        {\n          \"bom_seq\": \"11\",\n          \"bom_name\": \"三角板\",\n          \"quantity\": 4,\n          \"drawing_number\": \"11\"\n        }\n      ],\n      \"tools\": [\n        \"焊机\",\n        \"角尺\"\n      ],\n      \"warnings\": [\n        \"三角板的焊接应保证焊缝饱满，避免应力集中。\"\n      ],\n      \"quality_check\": \"检查⑦号板与⑥号板的对称性，⑪号三角板与方管的贴合度，点焊牢固。\",\n      \"estimated_time_minutes\": 10,\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊（定位焊）\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"点焊长度10mm，焊脚高度3mm\",\n        \"welding_position\": \"零件⑦与零件③的连接处，零件⑪与方管/连接板的连接处，多为立焊和横焊\",\n        \"quality_requirements\": \"三角板（⑪）的定位焊应确保其斜面与主体结构紧密贴合，无翘曲。\",\n        \"safety_notes\": \"注意焊枪角度，确保焊点质量。避免在狭小空间内进行点焊，防止热量积聚。\"\n      }\n    },\n    {\n      \"step_number\": 7,\n      \"action\": \"安装外部方板和防滑板\",\n      \"description\": \"将图纸上标注为⑫的方形板（数量4）安装在组件外部的四个侧面，用于封闭结构。将⑬号防滑板（数量2）安装在组件的底部两侧。全部进行点焊定位。\",\n      \"position_description\": \"⑫号方形板覆盖外部侧面，⑬号防滑板位于底部外侧。\",\n      \"parts_used\": [\n        {\n          \"bom_seq\": \"12\",\n          \"bom_name\": \"方形板\",\n          \"quantity\": 4,\n          \"drawing_number\": \"12\"\n        },\n        {\n          \"bom_seq\": \"13\",\n          \"bom_name\": \"防滑板\",\n          \"quantity\": 2,\n          \"drawing_number\": \"13\"\n        }\n      ],\n      \"tools\": [\n        \"焊机\",\n        \"磁力夹具\"\n      ],\n      \"warnings\": [\n        \"方形板和防滑板的安装应确保表面平整，无明显凹凸。\"\n      ],\n      \"quality_check\": \"检查⑫号板与方管的贴合度，⑬号板的平整度，点焊牢固。\",\n      \"estimated_time_minutes\": 10,\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊（定位焊）\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"点焊长度10mm，焊脚高度3mm\",\n        \"welding_position\": \"零件⑫/⑬与外部方管的连接处，多为平焊和立焊\",\n        \"quality_requirements\": \"定位焊应均匀分布，确保外部板材在后续满焊时不会产生大的变形。\",\n        \"safety_notes\": \"清理板材表面的油污和锈蚀，防止点焊时产生气孔。\"\n      }\n    },\n    {\n      \"step_number\": 8,\n      \"action\": \"满焊所有零件\",\n      \"description\": \"按照技术要求（如：选择合理的焊接顺序，保证焊接平稳性）对所有已点焊定位的零件进行满焊。焊接顺序应遵循对称、分散原则，以减少焊接变形。\",\n      \"position_description\": \"对所有零件的连接处进行全焊。\",\n      \"parts_used\": [],\n      \"tools\": [\n        \"焊机\",\n        \"焊条/焊丝\",\n        \"防护用品\"\n      ],\n      \"warnings\": [\n        \"焊接过程中注意控制热输入，避免组件整体变形。焊缝应符合图纸和技术要求，无虚焊、漏焊等不良现象。\"\n      ],\n      \"quality_check\": \"所有焊缝外观检查，确保焊缝饱满、成形良好，焊脚高度满足图纸要求（如6mm）。关键焊缝进行无损检测（如磁粉或超声波）。\",\n      \"estimated_time_minutes\": 60,\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊/环形焊\",\n        \"welding_method\": \"CO2气保焊（主体结构），轴套处可能需要氩弧焊\",\n        \"weld_size\": \"主体结构焊脚高度6mm（未标注按最小板厚确定），轴套环焊焊脚高度4mm\",\n        \"welding_position\": \"所有连接处，包括平焊、横焊、立焊、仰焊\",\n        \"quality_requirements\": \"焊缝必须连续、饱满，不得有裂纹、未熔合、严重气孔和夹渣。焊接变形控制在允许公差范围内。\",\n        \"safety_notes\": \"采用分段、跳焊和对称焊接顺序，控制热量集中。焊接完成后，立即清理焊渣，防止烫伤。检查焊机电缆和气瓶压力，确保设备安全。\"\n      }\n    },\n    {\n      \"step_number\": 9,\n      \"action\": \"焊后清理与打磨\",\n      \"description\": \"焊接完成后，去除所有焊渣、飞溅物。对所有焊缝进行打磨处理，特别是锐边、尖角和尖锐倒角，确保符合技术要求中的'焊后去除焊渣'和'锐边/尖角/尖锐倒角钝化'要求。\",\n      \"position_description\": \"所有焊缝和锐利边缘。\",\n      \"parts_used\": [],\n      \"tools\": [\n        \"角磨机\",\n        \"钢丝刷\",\n        \"防护眼镜\"\n      ],\n      \"warnings\": [\n        \"打磨时注意保护轴套等机加面，避免损伤。\"\n      ],\n      \"quality_check\": \"检查焊缝表面光滑度，锐边是否已钝化，无焊渣残留。\",\n      \"estimated_time_minutes\": 20\n    }\n  ]\n}\n```",
+  "parsed_result": {
+    "enhanced_steps": [
+      {
+        "step_number": 1,
+        "action": "放置基准件",
+        "description": "将图纸上标注为③的方管（中侧板）平稳放置在装配工装或工作台上，作为整个组件的装配基准。",
+        "position_description": "方管长边水平放置，确保后续焊接操作的可达性。",
+        "parts_used": [
+          {
+            "bom_seq": "3",
+            "bom_name": "中侧板",
+            "quantity": 2,
+            "drawing_number": "3"
+          }
+        ],
+        "tools": [
+          "行车",
+          "吊具",
+          "水平仪"
+        ],
+        "warnings": [
+          "方管较重，吊装时注意安全，确保吊装平稳。"
+        ],
+        "quality_check": "检查方管放置是否水平，作为后续装配的基准。"
+      },
+      {
+        "step_number": 2,
+        "action": "安装底部方管",
+        "description": "将图纸上标注为①和②的方管（底部的两根长方管）分别放置在③号中侧板的底部两侧，并进行点焊定位。注意方管的端面应与中侧板的端面齐平。",
+        "position_description": "①号方管和②号方管位于③号中侧板的下方，沿长度方向平行放置。",
+        "parts_used": [
+          {
+            "bom_seq": "1",
+            "bom_name": "方管",
+            "quantity": 2,
+            "drawing_number": "1"
+          },
+          {
+            "bom_seq": "2",
+            "bom_name": "方管",
+            "quantity": 2,
+            "drawing_number": "2"
+          }
+        ],
+        "tools": [
+          "焊机",
+          "角尺",
+          "卷尺"
+        ],
+        "warnings": [
+          "点焊时注意定位精度，确保两根方管的平行度。"
+        ],
+        "quality_check": "检查①②号方管与③号中侧板的垂直度及端面齐平度，点焊牢固。",
+        "estimated_time_minutes": 15,
+        "welding": {
+          "required": true,
+          "welding_type": "角焊（定位焊）",
+          "welding_method": "CO2气保焊",
+          "weld_size": "点焊长度10-15mm，焊脚高度4mm",
+          "welding_position": "零件①/②与零件③的连接处，平焊位置为主",
+          "quality_requirements": "点焊位置应均匀分布，焊点牢固，无虚焊，确保定位精度。",
+          "safety_notes": "佩戴焊接面罩、防护手套和防护服。确保工作区域通风良好，防止烟尘吸入。"
+        }
+      },
+      {
+        "step_number": 3,
+        "action": "安装连接板",
+        "description": "将图纸上标注为⑥的左连接器板和⑩的右连接器板分别安装在③号中侧板的两端。⑥号板安装在左侧，⑩号板安装在右侧。确保连接板上的孔位与方管的预留孔位对齐，并进行点焊定位。",
+        "position_description": "⑥号和⑩号连接板垂直于③号中侧板，位于组件的两端。",
+        "parts_used": [
+          {
+            "bom_seq": "6",
+            "bom_name": "左连接器板",
+            "quantity": 1,
+            "drawing_number": "6"
+          },
+          {
+            "bom_seq": "10",
+            "bom_name": "右连接器板",
+            "quantity": 1,
+            "drawing_number": "10"
+          }
+        ],
+        "tools": [
+          "焊机",
+          "卡尺",
+          "磁力夹具"
+        ],
+        "warnings": [
+          "连接板是关键定位件，点焊前必须检查其垂直度和端面齐平度。"
+        ],
+        "quality_check": "检查连接板与中侧板的垂直度（90度），点焊牢固。",
+        "estimated_time_minutes": 10,
+        "welding": {
+          "required": true,
+          "welding_type": "角焊（定位焊）",
+          "welding_method": "CO2气保焊",
+          "weld_size": "点焊长度10-15mm，焊脚高度4mm",
+          "welding_position": "零件⑥/⑩与零件③的连接处，横焊和立焊位置",
+          "quality_requirements": "点焊位置应避开最终焊缝的起始和终止点。确保连接板定位准确，无倾斜。",
+          "safety_notes": "使用磁力夹具固定零件，防止点焊时零件晃动或掉落。注意防止电弧光灼伤眼睛。"
+        }
+      },
+      {
+        "step_number": 4,
+        "action": "安装内部支撑件",
+        "description": "将图纸上标注为④的中连接板（数量2）和⑤的方形板-机加（数量1）安装在③号中侧板的内部，作为内部支撑。④号板位于中间，⑤号板位于下方。根据图纸尺寸（如410mm、250mm）进行定位，并进行点焊。",
+        "position_description": "④号和⑤号零件位于③号中侧板和①②号方管围成的内部空间。",
+        "parts_used": [
+          {
+            "bom_seq": "4",
+            "bom_name": "中连接板",
+            "quantity": 2,
+            "drawing_number": "4"
+          },
+          {
+            "bom_seq": "5",
+            "bom_name": "方形板-机加",
+            "quantity": 1,
+            "drawing_number": "5"
+          }
+        ],
+        "tools": [
+          "焊机",
+          "卷尺",
+          "定位块"
+        ],
+        "warnings": [
+          "内部支撑件的定位尺寸非常重要，必须精确测量。"
+        ],
+        "quality_check": "检查④⑤号零件的定位尺寸（410mm、250mm）是否准确，点焊牢固。",
+        "estimated_time_minutes": 15,
+        "welding": {
+          "required": true,
+          "welding_type": "角焊（定位焊）",
+          "welding_method": "CO2气保焊",
+          "weld_size": "点焊长度10mm，焊脚高度3mm",
+          "welding_position": "零件④/⑤与零件①/②/③的连接处，内部平焊和立焊位置",
+          "quality_requirements": "定位焊应保证支撑件与主体结构紧密贴合，无间隙。",
+          "safety_notes": "内部空间操作受限，注意焊枪角度，避免烫伤。确保焊机接地良好。"
+        }
+      },
+      {
+        "step_number": 5,
+        "action": "安装上挂板和轴套",
+        "description": "将图纸上标注为⑧的上挂板（数量1）安装在③号中侧板的上方中央位置，并进行点焊。然后将⑨号轴套（数量1）安装在⑧号上挂板的下方，确保轴套中心线与上挂板的孔位对齐，并进行点焊。",
+        "position_description": "⑧号上挂板位于组件顶部，⑨号轴套位于⑧号板下方。",
+        "parts_used": [
+          {
+            "bom_seq": "8",
+            "bom_name": "上挂板",
+            "quantity": 1,
+            "drawing_number": "8"
+          },
+          {
+            "bom_seq": "9",
+            "bom_name": "轴套",
+            "quantity": 1,
+            "drawing_number": "9"
+          }
+        ],
+        "tools": [
+          "焊机",
+          "塞尺",
+          "中心定位销"
+        ],
+        "warnings": [
+          "轴套的定位精度要求高，必须使用定位销或专用夹具确保同轴度。"
+        ],
+        "quality_check": "检查⑧号板与③号板的中心线对齐度，⑨号轴套与⑧号板的同轴度，点焊牢固。",
+        "estimated_time_minutes": 15,
+        "welding": {
+          "required": true,
+          "welding_type": "角焊/环形焊（定位焊）",
+          "welding_method": "CO2气保焊/氩弧焊（针对轴套）",
+          "weld_size": "点焊长度10mm，轴套与挂板连接处点焊4点",
+          "welding_position": "零件⑧与零件③的连接处（平焊），零件⑨与零件⑧的连接处（仰焊/平焊）",
+          "quality_requirements": "轴套定位焊时，应使用低电流，避免热变形影响同轴度。轴套周围点焊应均匀。",
+          "safety_notes": "轴套是精密零件，焊接时要控制热输入，防止烧穿或严重变形。使用定位销后方可点焊。"
+        }
+      },
+      {
+        "step_number": 6,
+        "action": "安装侧面加强板",
+        "description": "将图纸上标注为⑦的左连接器板（数量1）和⑪的三角板（数量4）安装在组件两侧。⑦号板安装在左侧，与⑥号板对称。⑪号三角板安装在四个角部，用于加强连接板与方管的连接强度。全部进行点焊定位。",
+        "position_description": "⑦号板位于左侧，与⑥号板相对。⑪号三角板位于四个角部，呈斜向支撑。",
+        "parts_used": [
+          {
+            "bom_seq": "7",
+            "bom_name": "左连接器板",
+            "quantity": 1,
+            "drawing_number": "7"
+          },
+          {
+            "bom_seq": "11",
+            "bom_name": "三角板",
+            "quantity": 4,
+            "drawing_number": "11"
+          }
+        ],
+        "tools": [
+          "焊机",
+          "角尺"
+        ],
+        "warnings": [
+          "三角板的焊接应保证焊缝饱满，避免应力集中。"
+        ],
+        "quality_check": "检查⑦号板与⑥号板的对称性，⑪号三角板与方管的贴合度，点焊牢固。",
+        "estimated_time_minutes": 10,
+        "welding": {
+          "required": true,
+          "welding_type": "角焊（定位焊）",
+          "welding_method": "CO2气保焊",
+          "weld_size": "点焊长度10mm，焊脚高度3mm",
+          "welding_position": "零件⑦与零件③的连接处，零件⑪与方管/连接板的连接处，多为立焊和横焊",
+          "quality_requirements": "三角板（⑪）的定位焊应确保其斜面与主体结构紧密贴合，无翘曲。",
+          "safety_notes": "注意焊枪角度，确保焊点质量。避免在狭小空间内进行点焊，防止热量积聚。"
+        }
+      },
+      {
+        "step_number": 7,
+        "action": "安装外部方板和防滑板",
+        "description": "将图纸上标注为⑫的方形板（数量4）安装在组件外部的四个侧面，用于封闭结构。将⑬号防滑板（数量2）安装在组件的底部两侧。全部进行点焊定位。",
+        "position_description": "⑫号方形板覆盖外部侧面，⑬号防滑板位于底部外侧。",
+        "parts_used": [
+          {
+            "bom_seq": "12",
+            "bom_name": "方形板",
+            "quantity": 4,
+            "drawing_number": "12"
+          },
+          {
+            "bom_seq": "13",
+            "bom_name": "防滑板",
+            "quantity": 2,
+            "drawing_number": "13"
+          }
+        ],
+        "tools": [
+          "焊机",
+          "磁力夹具"
+        ],
+        "warnings": [
+          "方形板和防滑板的安装应确保表面平整，无明显凹凸。"
+        ],
+        "quality_check": "检查⑫号板与方管的贴合度，⑬号板的平整度，点焊牢固。",
+        "estimated_time_minutes": 10,
+        "welding": {
+          "required": true,
+          "welding_type": "角焊（定位焊）",
+          "welding_method": "CO2气保焊",
+          "weld_size": "点焊长度10mm，焊脚高度3mm",
+          "welding_position": "零件⑫/⑬与外部方管的连接处，多为平焊和立焊",
+          "quality_requirements": "定位焊应均匀分布，确保外部板材在后续满焊时不会产生大的变形。",
+          "safety_notes": "清理板材表面的油污和锈蚀，防止点焊时产生气孔。"
+        }
+      },
+      {
+        "step_number": 8,
+        "action": "满焊所有零件",
+        "description": "按照技术要求（如：选择合理的焊接顺序，保证焊接平稳性）对所有已点焊定位的零件进行满焊。焊接顺序应遵循对称、分散原则，以减少焊接变形。",
+        "position_description": "对所有零件的连接处进行全焊。",
+        "parts_used": [],
+        "tools": [
+          "焊机",
+          "焊条/焊丝",
+          "防护用品"
+        ],
+        "warnings": [
+          "焊接过程中注意控制热输入，避免组件整体变形。焊缝应符合图纸和技术要求，无虚焊、漏焊等不良现象。"
+        ],
+        "quality_check": "所有焊缝外观检查，确保焊缝饱满、成形良好，焊脚高度满足图纸要求（如6mm）。关键焊缝进行无损检测（如磁粉或超声波）。",
+        "estimated_time_minutes": 60,
+        "welding": {
+          "required": true,
+          "welding_type": "角焊/环形焊",
+          "welding_method": "CO2气保焊（主体结构），轴套处可能需要氩弧焊",
+          "weld_size": "主体结构焊脚高度6mm（未标注按最小板厚确定），轴套环焊焊脚高度4mm",
+          "welding_position": "所有连接处，包括平焊、横焊、立焊、仰焊",
+          "quality_requirements": "焊缝必须连续、饱满，不得有裂纹、未熔合、严重气孔和夹渣。焊接变形控制在允许公差范围内。",
+          "safety_notes": "采用分段、跳焊和对称焊接顺序，控制热量集中。焊接完成后，立即清理焊渣，防止烫伤。检查焊机电缆和气瓶压力，确保设备安全。"
+        }
+      },
+      {
+        "step_number": 9,
+        "action": "焊后清理与打磨",
+        "description": "焊接完成后，去除所有焊渣、飞溅物。对所有焊缝进行打磨处理，特别是锐边、尖角和尖锐倒角，确保符合技术要求中的'焊后去除焊渣'和'锐边/尖角/尖锐倒角钝化'要求。",
+        "position_description": "所有焊缝和锐利边缘。",
+        "parts_used": [],
+        "tools": [
+          "角磨机",
+          "钢丝刷",
+          "防护眼镜"
+        ],
+        "warnings": [
+          "打磨时注意保护轴套等机加面，避免损伤。"
+        ],
+        "quality_check": "检查焊缝表面光滑度，锐边是否已钝化，无焊渣残留。",
+        "estimated_time_minutes": 20
+      }
+    ]
+  }
+}

@@ -1,0 +1,350 @@
+{
+  "agent_name": "Agent6_FAQ",
+  "model": "google/gemini-2.5-flash-preview-09-2025",
+  "timestamp": "20251003_154502",
+  "image_count": 0,
+  "temperature": 0.2,
+  "system_prompt": "你是安全工程师李师傅，拥有20年安全管理经验。\n\n你的任务：为每个装配步骤添加安全警告（如果该步骤有安全风险）。\n\n## 核心原则\n\n1. **安全第一**：识别所有潜在的安全风险\n2. **嵌入警告**：为有风险的步骤添加safety_warnings字段\n3. **工人友好**：使用通俗语言，避免专业术语\n\n## 输出格式\n\n严格按照以下JSON格式输出（返回增强后的装配步骤）：\n\n```json\n{\n  \"enhanced_steps\": [\n    {\n      \"step_number\": 1,\n      \"title\": \"步骤标题\",\n      \"parts_used\": [...],\n      \"tools_required\": [...],\n      \"operation\": \"操作说明\",\n      \"quality_check\": \"质量检查\",\n      \"estimated_time_minutes\": 10,\n      \"welding\": {...},\n      \"safety_warnings\": [\n        \"佩戴安全帽和防护眼镜\",\n        \"确保工件固定牢固\",\n        \"注意防止烫伤\"\n      ]\n    }\n  ]\n}\n```\n\n**⚠️ 重要**：\n- 如果步骤没有安全风险，不要添加safety_warnings字段\n- 如果步骤有安全风险，safety_warnings必须是字符串数组\n- 保持原有步骤的所有字段不变，只添加safety_warnings字段\n\n## 重要提醒\n\n- **只输出JSON，不要输出其他内容**\n- **安全警告要具体**：说明具体的风险和预防措施\n- **使用通俗语言**：工人能看懂的语言\n",
+  "user_query": "请为以下装配步骤添加安全警告（如果有安全风险）。\n\n## 装配步骤\n\n[\n  {\n    \"step_number\": 1,\n    \"title\": \"安装后加强板\",\n    \"parts_used\": [\n      {\n        \"bom_code\": \"01.01.01.18598\",\n        \"bom_name\": \"左铲板\",\n        \"quantity\": 1,\n        \"mesh_id\": [\n          \"mesh_026\"\n        ]\n      },\n      {\n        \"bom_code\": \"01.01.01.11519\",\n        \"bom_name\": \"后加强板\",\n        \"quantity\": 1,\n        \"mesh_id\": [\n          \"mesh_024\"\n        ]\n      }\n    ],\n    \"tools_required\": [\n      \"焊机\",\n      \"定位夹具\"\n    ],\n    \"operation\": \"将基准件左铲板（01.01.01.18598）放置在装配平台上。将后加强板（01.01.01.11519）对准左铲板后部的定位孔位，使用定位夹具临时固定。检查两零件的贴合度，准备点焊。\",\n    \"quality_check\": \"后加强板与左铲板贴合紧密，无明显缝隙，定位准确。\",\n    \"estimated_time_minutes\": 5,\n    \"welding\": {\n      \"required\": true,\n      \"welding_type\": \"点焊（临时固定）\",\n      \"welding_method\": \"CO2气保焊\",\n      \"weld_size\": \"点焊长度10mm，共4点\",\n      \"welding_position\": \"后加强板与左铲板的连接边缘\",\n      \"quality_requirements\": \"点焊牢固，能承受后续装配应力，不影响最终焊缝位置。\",\n      \"safety_notes\": \"点焊时注意飞溅，佩戴防护眼镜和手套。\"\n    }\n  },\n  {\n    \"step_number\": 2,\n    \"title\": \"安装底部连接板和前加强板\",\n    \"parts_used\": [\n      {\n        \"bom_code\": \"01.01.01.11521\",\n        \"bom_name\": \"底部连接板 6\",\n        \"quantity\": 6,\n        \"mesh_id\": [\n          \"mesh_012\",\n          \"mesh_013\",\n          \"mesh_014\",\n          \"mesh_015\",\n          \"mesh_021\",\n          \"mesh_022\"\n        ]\n      },\n      {\n        \"bom_code\": \"01.01.01.18600\",\n        \"bom_name\": \"前加强板 1\",\n        \"quantity\": 1,\n        \"mesh_id\": [\n          \"mesh_023\"\n        ]\n      }\n    ],\n    \"tools_required\": [\n      \"焊机\",\n      \"卷尺\"\n    ],\n    \"operation\": \"将6块底部连接板（01.01.01.11521）依次安装到左铲板底部，确保间距均匀。将前加强板（01.01.01.18600）安装到左铲板前部，与底部连接板对齐。全部点焊固定。\",\n    \"quality_check\": \"底部连接板与铲板垂直度良好，前加强板与铲板边缘对齐。\",\n    \"estimated_time_minutes\": 10,\n    \"welding\": {\n      \"required\": true,\n      \"welding_type\": \"点焊（临时固定）\",\n      \"welding_method\": \"CO2气保焊\",\n      \"weld_size\": \"每块板点焊2点，点焊长度8mm\",\n      \"welding_position\": \"底部连接板与左铲板的垂直连接处；前加强板与左铲板的连接边缘\",\n      \"quality_requirements\": \"点焊位置均匀，确保零件定位准确，不影响后续满焊。\",\n      \"safety_notes\": \"注意工件温度，避免烫伤。确保焊枪接地良好。\"\n    }\n  },\n  {\n    \"step_number\": 3,\n    \"title\": \"安装油缸固定板和弹簧固定板\",\n    \"parts_used\": [\n      {\n        \"bom_code\": \"01.01.01.11522\",\n        \"bom_name\": \"前油缸固定板 2\",\n        \"quantity\": 2,\n        \"mesh_id\": [\n          \"mesh_019\",\n          \"mesh_020\"\n        ]\n      },\n      {\n        \"bom_code\": \"01.01.01.11523\",\n        \"bom_name\": \"前弹簧固定板 1\",\n        \"quantity\": 1,\n        \"mesh_id\": [\n          \"mesh_018\"\n        ]\n      },\n      {\n        \"bom_code\": \"01.01.01.11524\",\n        \"bom_name\": \"后弹簧固定板 2\",\n        \"quantity\": 2,\n        \"mesh_id\": [\n          \"mesh_016\",\n          \"mesh_017\"\n        ]\n      }\n    ],\n    \"tools_required\": [\n      \"焊机\",\n      \"角度尺\"\n    ],\n    \"operation\": \"将2块前油缸固定板（01.01.01.11522）安装到指定位置，注意方向。安装前弹簧固定板（01.01.01.11523）和2块后弹簧固定板（01.01.01.11524）。确保所有固定板的安装面与铲板保持正确的角度，点焊固定。\",\n    \"quality_check\": \"油缸固定板和弹簧固定板的安装位置和角度符合图纸要求，特别是油缸固定板的配合焊接精度。\",\n    \"estimated_time_minutes\": 12,\n    \"welding\": {\n      \"required\": true,\n      \"welding_type\": \"点焊（临时固定）\",\n      \"welding_method\": \"CO2气保焊\",\n      \"weld_size\": \"每块板点焊3点，点焊长度10mm\",\n      \"welding_position\": \"所有固定板与左铲板的连接面\",\n      \"quality_requirements\": \"点焊后检查角度，特别是油缸固定板，确保垂直度或角度偏差小于1度。\",\n      \"safety_notes\": \"油缸固定板是受力关键件，点焊时要保证定位准确，避免后续返工。\"\n    }\n  },\n  {\n    \"step_number\": 4,\n    \"title\": \"安装支撑固定板和轴套加强板\",\n    \"parts_used\": [\n      {\n        \"bom_code\": \"01.01.01.11525\",\n        \"bom_name\": \"支撑固定板 1\",\n        \"quantity\": 1,\n        \"mesh_id\": [\n          \"mesh_011\"\n        ]\n      },\n      {\n        \"bom_code\": \"01.01.01.11526\",\n        \"bom_name\": \"轴套加强板 2\",\n        \"quantity\": 2,\n        \"mesh_id\": [\n          \"mesh_009\",\n          \"mesh_010\"\n        ]\n      }\n    ],\n    \"tools_required\": [\n      \"焊机\"\n    ],\n    \"operation\": \"将支撑固定板（01.01.01.11525）安装到左铲板下部指定位置。将2块轴套加强板（01.01.01.11526）安装到铲板侧面，用于后续轴套的安装。全部点焊固定。\",\n    \"quality_check\": \"支撑固定板安装牢固，轴套加强板位置准确，为后续轴套安装留出足够空间。\",\n    \"estimated_time_minutes\": 8,\n    \"welding\": {\n      \"required\": true,\n      \"welding_type\": \"点焊（临时固定）\",\n      \"welding_method\": \"CO2气保焊\",\n      \"weld_size\": \"每块板点焊2点，点焊长度8mm\",\n      \"welding_position\": \"支撑固定板与左铲板的连接面；轴套加强板与左铲板的连接面\",\n      \"quality_requirements\": \"轴套加强板的点焊要保证孔位对齐，不能有错位。\",\n      \"safety_notes\": \"清理焊接区域的油污和铁锈，防止产生气孔。\"\n    }\n  },\n  {\n    \"step_number\": 5,\n    \"title\": \"安装反光片安装板和轴套\",\n    \"parts_used\": [\n      {\n        \"bom_code\": \"01.01.01.11527\",\n        \"bom_name\": \"反光片安装板 1\",\n        \"quantity\": 1,\n        \"mesh_id\": [\n          \"mesh_008\"\n        ]\n      },\n      {\n        \"bom_code\": \"01.01.02.1222\",\n        \"bom_name\": \"轴套 2\",\n        \"quantity\": 2,\n        \"mesh_id\": [\n          \"mesh_006\",\n          \"mesh_007\"\n        ]\n      }\n    ],\n    \"tools_required\": [\n      \"焊机\",\n      \"塞规\"\n    ],\n    \"operation\": \"将反光片安装板（01.01.01.11527）安装到铲板上部指定位置。将2个轴套（01.01.02.1222）分别插入轴套加强板预留的孔位中，确保轴套端面与加强板端面平齐。点焊固定。\",\n    \"quality_check\": \"轴套与铲板的配合焊接保证同轴度，使用塞规检查轴套内径是否变形。反光片安装板位置正确。\",\n    \"estimated_time_minutes\": 15,\n    \"welding\": {\n      \"required\": true,\n      \"welding_type\": \"点焊（临时固定）\",\n      \"welding_method\": \"CO2气保焊\",\n      \"weld_size\": \"轴套环形点焊4点，点焊长度10mm；反光片安装板点焊2点\",\n      \"welding_position\": \"轴套与轴套加强板的环形连接处；反光片安装板与左铲板的连接面\",\n      \"quality_requirements\": \"轴套点焊时要轻，防止热变形导致内径收缩。点焊后立即用塞规检查内径。\",\n      \"safety_notes\": \"轴套是精密配合件，焊接时要控制热输入，避免烧穿或严重变形。\"\n    }\n  },\n  {\n    \"step_number\": 6,\n    \"title\": \"安装方形板\",\n    \"parts_used\": [\n      {\n        \"bom_code\": \"01.01.01.11528\",\n        \"bom_name\": \"方形板 1\",\n        \"quantity\": 1\n      },\n      {\n        \"bom_code\": \"01.01.01.11529\",\n        \"bom_name\": \"方形板 3\",\n        \"quantity\": 1,\n        \"mesh_id\": [\n          \"mesh_003\",\n          \"mesh_004\",\n          \"mesh_005\"\n        ]\n      },\n      {\n        \"bom_code\": \"01.01.01.18599\",\n        \"bom_name\": \"方形板-机加 1\",\n        \"quantity\": 1,\n        \"mesh_id\": [\n          \"mesh_025\"\n        ]\n      }\n    ],\n    \"tools_required\": [\n      \"焊机\"\n    ],\n    \"operation\": \"将方形板 1（01.01.01.11528）、方形板 3（01.01.01.11529）和方形板-机加（01.01.01.18599）分别安装到铲板的指定加强位置，确保它们与铲板表面紧密贴合。点焊固定。\",\n    \"quality_check\": \"所有方形板安装位置准确，特别是机加方形板，确保其定位精度。\",\n    \"estimated_time_minutes\": 10,\n    \"welding\": {\n      \"required\": true,\n      \"welding_type\": \"点焊（临时固定）\",\n      \"welding_method\": \"CO2气保焊\",\n      \"weld_size\": \"每块板点焊4点，点焊长度10mm\",\n      \"welding_position\": \"所有方形板与左铲板的连接边缘\",\n      \"quality_requirements\": \"点焊要均匀分布，防止板件翘曲。\",\n      \"safety_notes\": \"焊接前检查工件是否干燥，避免潮湿引起气孔。\"\n    }\n  },\n  {\n    \"step_number\": 7,\n    \"title\": \"安装左铲雪板加强板\",\n    \"parts_used\": [\n      {\n        \"bom_code\": \"01.02.01.4983\",\n        \"bom_name\": \"左铲雪板加强板 2\",\n        \"quantity\": 2,\n        \"mesh_id\": [\n          \"mesh_001\",\n          \"mesh_002\"\n        ]\n      }\n    ],\n    \"tools_required\": [\n      \"焊机\"\n    ],\n    \"operation\": \"将2块左铲雪板加强板（01.02.01.4983）安装到铲板的边缘，用于整体结构加强。确保加强板与铲板边缘对齐，并进行点焊。\",\n    \"quality_check\": \"加强板与铲板边缘对齐，无错位或翘曲。\",\n    \"estimated_time_minutes\": 5,\n    \"welding\": {\n      \"required\": true,\n      \"welding_type\": \"点焊（临时固定）\",\n      \"welding_method\": \"CO2气保焊\",\n      \"weld_size\": \"每块板点焊3点，点焊长度10mm\",\n      \"welding_position\": \"加强板与左铲板的连接边缘\",\n      \"quality_requirements\": \"点焊后检查加强板是否与铲板保持平直。\",\n      \"safety_notes\": \"注意焊接烟尘，确保工作区域通风良好。\"\n    }\n  },\n  {\n    \"step_number\": 8,\n    \"title\": \"整体焊接\",\n    \"parts_used\": [],\n    \"tools_required\": [\n      \"焊机\",\n      \"焊枪\"\n    ],\n    \"operation\": \"对所有已点焊的零件进行全面焊接。焊接时注意焊缝饱满、均匀，避免虚焊、漏焊。特别是轴套、油缸固定板等关键受力部位，必须保证焊缝强度。\",\n    \"quality_check\": \"检查所有焊缝，确保焊缝高度和宽度符合工艺要求，无气孔、夹渣等缺陷。检查组件整体尺寸和平面度，确保无明显变形。\",\n    \"estimated_time_minutes\": 30,\n    \"welding\": {\n      \"required\": true,\n      \"welding_type\": \"角焊/搭接焊（满焊）\",\n      \"welding_method\": \"CO2气保焊\",\n      \"weld_size\": \"焊脚高度6mm（根据图纸要求调整），关键受力部位连续焊\",\n      \"welding_position\": \"所有零件与左铲板的连接边缘（包括轴套的环形焊缝）\",\n      \"quality_requirements\": \"焊缝必须饱满、均匀，无咬边、裂纹、气孔等缺陷。轴套焊缝要保证同轴度，焊接后检查内径变形量。\",\n      \"safety_notes\": \"进行大面积焊接时，注意控制焊接顺序，采用分段、对称焊接，减少热应力，防止工件变形。全程佩戴全套防护用品，防止弧光伤害。\"\n    }\n  }\n]\n\n## 要求\n\n1. **识别风险步骤**：判断哪些步骤有安全风险（吊装、焊接、高空作业、重物搬运等）\n2. **添加安全警告**：为有风险的步骤添加safety_warnings字段\n3. **保持原有字段**：不要修改或删除原有的字段（step_number、title、welding等）\n4. **使用通俗语言**：工人能看懂的语言\n5. **警告要具体**：说明具体的风险和预防措施\n\n## 自检清单\n\n- [ ] 所有有风险的步骤都添加了safety_warnings字段\n- [ ] safety_warnings是字符串数组，每条警告简洁明了\n- [ ] 原有步骤的所有字段都保持不变\n- [ ] 没有风险的步骤没有添加safety_warnings字段\n\n现在开始为装配步骤添加安全警告！\n",
+  "raw_response": "```json\n{\n  \"enhanced_steps\": [\n    {\n      \"step_number\": 1,\n      \"title\": \"安装后加强板\",\n      \"parts_used\": [\n        {\n          \"bom_code\": \"01.01.01.18598\",\n          \"bom_name\": \"左铲板\",\n          \"quantity\": 1,\n          \"mesh_id\": [\n            \"mesh_026\"\n          ]\n        },\n        {\n          \"bom_code\": \"01.01.01.11519\",\n          \"bom_name\": \"后加强板\",\n          \"quantity\": 1,\n          \"mesh_id\": [\n            \"mesh_024\"\n          ]\n        }\n      ],\n      \"tools_required\": [\n        \"焊机\",\n        \"定位夹具\"\n      ],\n      \"operation\": \"将基准件左铲板（01.01.01.18598）放置在装配平台上。将后加强板（01.01.01.11519）对准左铲板后部的定位孔位，使用定位夹具临时固定。检查两零件的贴合度，准备点焊。\",\n      \"quality_check\": \"后加强板与左铲板贴合紧密，无明显缝隙，定位准确。\",\n      \"estimated_time_minutes\": 5,\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"点焊（临时固定）\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"点焊长度10mm，共4点\",\n        \"welding_position\": \"后加强板与左铲板的连接边缘\",\n        \"quality_requirements\": \"点焊牢固，能承受后续装配应力，不影响最终焊缝位置。\",\n        \"safety_notes\": \"点焊时注意飞溅，佩戴防护眼镜和手套。\"\n      },\n      \"safety_warnings\": [\n        \"进行焊接作业时，必须佩戴焊接面罩、防护手套和防火服，防止弧光灼伤和烫伤。\",\n        \"确保焊机接地良好，避免触电。\",\n        \"工件可能较重，搬运时注意姿势，必要时使用辅助工具或吊具。\"\n      ]\n    },\n    {\n      \"step_number\": 2,\n      \"title\": \"安装底部连接板和前加强板\",\n      \"parts_used\": [\n        {\n          \"bom_code\": \"01.01.01.11521\",\n          \"bom_name\": \"底部连接板 6\",\n          \"quantity\": 6,\n          \"mesh_id\": [\n            \"mesh_012\",\n            \"mesh_013\",\n            \"mesh_014\",\n            \"mesh_015\",\n            \"mesh_021\",\n            \"mesh_022\"\n          ]\n        },\n        {\n          \"bom_code\": \"01.01.01.18600\",\n          \"bom_name\": \"前加强板 1\",\n          \"quantity\": 1,\n          \"mesh_id\": [\n            \"mesh_023\"\n          ]\n        }\n      ],\n      \"tools_required\": [\n        \"焊机\",\n        \"卷尺\"\n      ],\n      \"operation\": \"将6块底部连接板（01.01.01.11521）依次安装到左铲板底部，确保间距均匀。将前加强板（01.01.01.18600）安装到左铲板前部，与底部连接板对齐。全部点焊固定。\",\n      \"quality_check\": \"底部连接板与铲板垂直度良好，前加强板与铲板边缘对齐。\",\n      \"estimated_time_minutes\": 10,\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"点焊（临时固定）\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"每块板点焊2点，点焊长度8mm\",\n        \"welding_position\": \"底部连接板与左铲板的垂直连接处；前加强板与左铲板的连接边缘\",\n        \"quality_requirements\": \"点焊位置均匀，确保零件定位准确，不影响后续满焊。\",\n        \"safety_notes\": \"注意工件温度，避免烫伤。确保焊枪接地良好。\"\n      },\n      \"safety_warnings\": [\n        \"点焊时会产生高温和火花，必须穿戴好防护用品，特别是手套和防护眼镜。\",\n        \"焊接区域要保持清洁，清除易燃物，防止火灾。\"\n      ]\n    },\n    {\n      \"step_number\": 3,\n      \"title\": \"安装油缸固定板和弹簧固定板\",\n      \"parts_used\": [\n        {\n          \"bom_code\": \"01.01.01.11522\",\n          \"bom_name\": \"前油缸固定板 2\",\n          \"quantity\": 2,\n          \"mesh_id\": [\n            \"mesh_019\",\n            \"mesh_020\"\n          ]\n        },\n        {\n          \"bom_code\": \"01.01.01.11523\",\n          \"bom_name\": \"前弹簧固定板 1\",\n          \"quantity\": 1,\n          \"mesh_id\": [\n            \"mesh_018\"\n          ]\n        },\n        {\n          \"bom_code\": \"01.01.01.11524\",\n          \"bom_name\": \"后弹簧固定板 2\",\n          \"quantity\": 2,\n          \"mesh_id\": [\n            \"mesh_016\",\n            \"mesh_017\"\n          ]\n        }\n      ],\n      \"tools_required\": [\n        \"焊机\",\n        \"角度尺\"\n      ],\n      \"operation\": \"将2块前油缸固定板（01.01.01.11522）安装到指定位置，注意方向。安装前弹簧固定板（01.01.01.11523）和2块后弹簧固定板（01.01.01.11524）。确保所有固定板的安装面与铲板保持正确的角度，点焊固定。\",\n      \"quality_check\": \"油缸固定板和弹簧固定板的安装位置和角度符合图纸要求，特别是油缸固定板的配合焊接精度。\",\n      \"estimated_time_minutes\": 12,\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"点焊（临时固定）\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"每块板点焊3点，点焊长度10mm\",\n        \"welding_position\": \"所有固定板与左铲板的连接面\",\n        \"quality_requirements\": \"点焊后检查角度，特别是油缸固定板，确保垂直度或角度偏差小于1度。\",\n        \"safety_notes\": \"油缸固定板是受力关键件，点焊时要保证定位准确，避免后续返工。\"\n      },\n      \"safety_warnings\": [\n        \"点焊时注意保持身体稳定，避免因操作不当导致摔倒或烫伤。\",\n        \"焊接产生的烟尘有害健康，确保排风系统正常运行，或佩戴防尘口罩。\"\n      ]\n    },\n    {\n      \"step_number\": 4,\n      \"title\": \"安装支撑固定板和轴套加强板\",\n      \"parts_used\": [\n        {\n          \"bom_code\": \"01.01.01.11525\",\n          \"bom_name\": \"支撑固定板 1\",\n          \"quantity\": 1,\n          \"mesh_id\": [\n            \"mesh_011\"\n          ]\n        },\n        {\n          \"bom_code\": \"01.01.01.11526\",\n          \"bom_name\": \"轴套加强板 2\",\n          \"quantity\": 2,\n          \"mesh_id\": [\n            \"mesh_009\",\n            \"mesh_010\"\n          ]\n        }\n      ],\n      \"tools_required\": [\n        \"焊机\"\n      ],\n      \"operation\": \"将支撑固定板（01.01.01.11525）安装到左铲板下部指定位置。将2块轴套加强板（01.01.01.11526）安装到铲板侧面，用于后续轴套的安装。全部点焊固定。\",\n      \"quality_check\": \"支撑固定板安装牢固，轴套加强板位置准确，为后续轴套安装留出足够空间。\",\n      \"estimated_time_minutes\": 8,\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"点焊（临时固定）\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"每块板点焊2点，点焊长度8mm\",\n        \"welding_position\": \"支撑固定板与左铲板的连接面；轴套加强板与左铲板的连接面\",\n        \"quality_requirements\": \"轴套加强板的点焊要保证孔位对齐，不能有错位。\",\n        \"safety_notes\": \"清理焊接区域的油污和铁锈，防止产生气孔。\"\n      },\n      \"safety_warnings\": [\n        \"焊接前必须清理工件表面的油污、水渍和铁锈，防止焊接过程中产生有毒气体或爆炸。\",\n        \"点焊后工件温度高，移动或检查时必须戴隔热手套，防止烫伤。\"\n      ]\n    },\n    {\n      \"step_number\": 5,\n      \"title\": \"安装反光片安装板和轴套\",\n      \"parts_used\": [\n        {\n          \"bom_code\": \"01.01.01.11527\",\n          \"bom_name\": \"反光片安装板 1\",\n          \"quantity\": 1,\n          \"mesh_id\": [\n            \"mesh_008\"\n          ]\n        },\n        {\n          \"bom_code\": \"01.01.02.1222\",\n          \"bom_name\": \"轴套 2\",\n          \"quantity\": 2,\n          \"mesh_id\": [\n            \"mesh_006\",\n            \"mesh_007\"\n          ]\n        }\n      ],\n      \"tools_required\": [\n        \"焊机\",\n        \"塞规\"\n      ],\n      \"operation\": \"将反光片安装板（01.01.01.11527）安装到铲板上部指定位置。将2个轴套（01.01.02.1222）分别插入轴套加强板预留的孔位中，确保轴套端面与加强板端面平齐。点焊固定。\",\n      \"quality_check\": \"轴套与铲板的配合焊接保证同轴度，使用塞规检查轴套内径是否变形。反光片安装板位置正确。\",\n      \"estimated_time_minutes\": 15,\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"点焊（临时固定）\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"轴套环形点焊4点，点焊长度10mm；反光片安装板点焊2点\",\n        \"welding_position\": \"轴套与轴套加强板的环形连接处；反光片安装板与左铲板的连接面\",\n        \"quality_requirements\": \"轴套点焊时要轻，防止热变形导致内径收缩。点焊后立即用塞规检查内径。\",\n        \"safety_notes\": \"轴套是精密配合件，焊接时要控制热输入，避免烧穿或严重变形。\"\n      },\n      \"safety_warnings\": [\n        \"轴套是小件，操作时注意夹紧，防止焊接时飞溅或掉落伤人。\",\n        \"点焊轴套时，热量集中，注意控制焊接时间，防止烧穿或严重变形导致工件报废。\"\n      ]\n    },\n    {\n      \"step_number\": 6,\n      \"title\": \"安装方形板\",\n      \"parts_used\": [\n        {\n          \"bom_code\": \"01.01.01.11528\",\n          \"bom_name\": \"方形板 1\",\n          \"quantity\": 1\n        },\n        {\n          \"bom_code\": \"01.01.01.11529\",\n          \"bom_name\": \"方形板 3\",\n          \"quantity\": 1,\n          \"mesh_id\": [\n            \"mesh_003\",\n            \"mesh_004\",\n            \"mesh_005\"\n          ]\n        },\n        {\n          \"bom_code\": \"01.01.01.18599\",\n          \"bom_name\": \"方形板-机加 1\",\n          \"quantity\": 1,\n          \"mesh_id\": [\n            \"mesh_025\"\n          ]\n        }\n      ],\n      \"tools_required\": [\n        \"焊机\"\n      ],\n      \"operation\": \"将方形板 1（01.01.01.11528）、方形板 3（01.01.01.11529）和方形板-机加（01.01.01.18599）分别安装到铲板的指定加强位置，确保它们与铲板表面紧密贴合。点焊固定。\",\n      \"quality_check\": \"所有方形板安装位置准确，特别是机加方形板，确保其定位精度。\",\n      \"estimated_time_minutes\": 10,\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"点焊（临时固定）\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"每块板点焊4点，点焊长度10mm\",\n        \"welding_position\": \"所有方形板与左铲板的连接边缘\",\n        \"quality_requirements\": \"点焊要均匀分布，防止板件翘曲。\",\n        \"safety_notes\": \"焊接前检查工件是否干燥，避免潮湿引起气孔。\"\n      },\n      \"safety_warnings\": [\n        \"点焊时注意防止焊渣飞溅到眼睛或皮肤上，必须佩戴防护面罩和手套。\",\n        \"确保工作区域光线充足，避免因视线不清导致焊接失误。\"\n      ]\n    },\n    {\n      \"step_number\": 7,\n      \"title\": \"安装左铲雪板加强板\",\n      \"parts_used\": [\n        {\n          \"bom_code\": \"01.02.01.4983\",\n          \"bom_name\": \"左铲雪板加强板 2\",\n          \"quantity\": 2,\n          \"mesh_id\": [\n            \"mesh_001\",\n            \"mesh_002\"\n          ]\n        }\n      ],\n      \"tools_required\": [\n        \"焊机\"\n      ],\n      \"operation\": \"将2块左铲雪板加强板（01.02.01.4983）安装到铲板的边缘，用于整体结构加强。确保加强板与铲板边缘对齐，并进行点焊。\",\n      \"quality_check\": \"加强板与铲板边缘对齐，无错位或翘曲。\",\n      \"estimated_time_minutes\": 5,\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"点焊（临时固定）\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"每块板点焊3点，点焊长度10mm\",\n        \"welding_position\": \"加强板与左铲板的连接边缘\",\n        \"quality_requirements\": \"点焊后检查加强板是否与铲板保持平直。\",\n        \"safety_notes\": \"注意焊接烟尘，确保工作区域通风良好。\"\n      },\n      \"safety_warnings\": [\n        \"焊接作业时，必须保证工作区域通风良好，防止吸入有害烟尘。\",\n        \"点焊完成后，立即检查焊点是否牢固，防止零件在后续操作中松动脱落。\"\n      ]\n    },\n    {\n      \"step_number\": 8,\n      \"title\": \"整体焊接\",\n      \"parts_used\": [],\n      \"tools_required\": [\n        \"焊机\",\n        \"焊枪\"\n      ],\n      \"operation\": \"对所有已点焊的零件进行全面焊接。焊接时注意焊缝饱满、均匀，避免虚焊、漏焊。特别是轴套、油缸固定板等关键受力部位，必须保证焊缝强度。\",\n      \"quality_check\": \"检查所有焊缝，确保焊缝高度和宽度符合工艺要求，无气孔、夹渣等缺陷。检查组件整体尺寸和平面度，确保无明显变形。\",\n      \"estimated_time_minutes\": 30,\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊/搭接焊（满焊）\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"焊脚高度6mm（根据图纸要求调整），关键受力部位连续焊\",\n        \"welding_position\": \"所有零件与左铲板的连接边缘（包括轴套的环形焊缝）\",\n        \"quality_requirements\": \"焊缝必须饱满、均匀，无咬边、裂纹、气孔等缺陷。轴套焊缝要保证同轴度，焊接后检查内径变形量。\",\n        \"safety_notes\": \"进行大面积焊接时，注意控制焊接顺序，采用分段、对称焊接，减少热应力，防止工件变形。全程佩戴全套防护用品，防止弧光伤害。\"\n      },\n      \"safety_warnings\": [\n        \"进行满焊作业时，必须佩戴全套焊接防护用品（面罩、手套、防火服），防止强弧光和高温飞溅物伤害。\",\n        \"大面积连续焊接会产生大量热量，注意控制焊接顺序，防止工件严重热变形或翘曲。\",\n        \"焊接完成后，工件温度极高，严禁徒手触摸，必须使用专用工具或等待冷却后再进行下一步操作。\",\n        \"确保灭火器材（如灭火器、消防水桶）放置在触手可及的位置，以应对突发火情。\"\n      ]\n    }\n  ]\n}\n```",
+  "parsed_result": {
+    "enhanced_steps": [
+      {
+        "step_number": 1,
+        "title": "安装后加强板",
+        "parts_used": [
+          {
+            "bom_code": "01.01.01.18598",
+            "bom_name": "左铲板",
+            "quantity": 1,
+            "mesh_id": [
+              "mesh_026"
+            ]
+          },
+          {
+            "bom_code": "01.01.01.11519",
+            "bom_name": "后加强板",
+            "quantity": 1,
+            "mesh_id": [
+              "mesh_024"
+            ]
+          }
+        ],
+        "tools_required": [
+          "焊机",
+          "定位夹具"
+        ],
+        "operation": "将基准件左铲板（01.01.01.18598）放置在装配平台上。将后加强板（01.01.01.11519）对准左铲板后部的定位孔位，使用定位夹具临时固定。检查两零件的贴合度，准备点焊。",
+        "quality_check": "后加强板与左铲板贴合紧密，无明显缝隙，定位准确。",
+        "estimated_time_minutes": 5,
+        "welding": {
+          "required": true,
+          "welding_type": "点焊（临时固定）",
+          "welding_method": "CO2气保焊",
+          "weld_size": "点焊长度10mm，共4点",
+          "welding_position": "后加强板与左铲板的连接边缘",
+          "quality_requirements": "点焊牢固，能承受后续装配应力，不影响最终焊缝位置。",
+          "safety_notes": "点焊时注意飞溅，佩戴防护眼镜和手套。"
+        },
+        "safety_warnings": [
+          "进行焊接作业时，必须佩戴焊接面罩、防护手套和防火服，防止弧光灼伤和烫伤。",
+          "确保焊机接地良好，避免触电。",
+          "工件可能较重，搬运时注意姿势，必要时使用辅助工具或吊具。"
+        ]
+      },
+      {
+        "step_number": 2,
+        "title": "安装底部连接板和前加强板",
+        "parts_used": [
+          {
+            "bom_code": "01.01.01.11521",
+            "bom_name": "底部连接板 6",
+            "quantity": 6,
+            "mesh_id": [
+              "mesh_012",
+              "mesh_013",
+              "mesh_014",
+              "mesh_015",
+              "mesh_021",
+              "mesh_022"
+            ]
+          },
+          {
+            "bom_code": "01.01.01.18600",
+            "bom_name": "前加强板 1",
+            "quantity": 1,
+            "mesh_id": [
+              "mesh_023"
+            ]
+          }
+        ],
+        "tools_required": [
+          "焊机",
+          "卷尺"
+        ],
+        "operation": "将6块底部连接板（01.01.01.11521）依次安装到左铲板底部，确保间距均匀。将前加强板（01.01.01.18600）安装到左铲板前部，与底部连接板对齐。全部点焊固定。",
+        "quality_check": "底部连接板与铲板垂直度良好，前加强板与铲板边缘对齐。",
+        "estimated_time_minutes": 10,
+        "welding": {
+          "required": true,
+          "welding_type": "点焊（临时固定）",
+          "welding_method": "CO2气保焊",
+          "weld_size": "每块板点焊2点，点焊长度8mm",
+          "welding_position": "底部连接板与左铲板的垂直连接处；前加强板与左铲板的连接边缘",
+          "quality_requirements": "点焊位置均匀，确保零件定位准确，不影响后续满焊。",
+          "safety_notes": "注意工件温度，避免烫伤。确保焊枪接地良好。"
+        },
+        "safety_warnings": [
+          "点焊时会产生高温和火花，必须穿戴好防护用品，特别是手套和防护眼镜。",
+          "焊接区域要保持清洁，清除易燃物，防止火灾。"
+        ]
+      },
+      {
+        "step_number": 3,
+        "title": "安装油缸固定板和弹簧固定板",
+        "parts_used": [
+          {
+            "bom_code": "01.01.01.11522",
+            "bom_name": "前油缸固定板 2",
+            "quantity": 2,
+            "mesh_id": [
+              "mesh_019",
+              "mesh_020"
+            ]
+          },
+          {
+            "bom_code": "01.01.01.11523",
+            "bom_name": "前弹簧固定板 1",
+            "quantity": 1,
+            "mesh_id": [
+              "mesh_018"
+            ]
+          },
+          {
+            "bom_code": "01.01.01.11524",
+            "bom_name": "后弹簧固定板 2",
+            "quantity": 2,
+            "mesh_id": [
+              "mesh_016",
+              "mesh_017"
+            ]
+          }
+        ],
+        "tools_required": [
+          "焊机",
+          "角度尺"
+        ],
+        "operation": "将2块前油缸固定板（01.01.01.11522）安装到指定位置，注意方向。安装前弹簧固定板（01.01.01.11523）和2块后弹簧固定板（01.01.01.11524）。确保所有固定板的安装面与铲板保持正确的角度，点焊固定。",
+        "quality_check": "油缸固定板和弹簧固定板的安装位置和角度符合图纸要求，特别是油缸固定板的配合焊接精度。",
+        "estimated_time_minutes": 12,
+        "welding": {
+          "required": true,
+          "welding_type": "点焊（临时固定）",
+          "welding_method": "CO2气保焊",
+          "weld_size": "每块板点焊3点，点焊长度10mm",
+          "welding_position": "所有固定板与左铲板的连接面",
+          "quality_requirements": "点焊后检查角度，特别是油缸固定板，确保垂直度或角度偏差小于1度。",
+          "safety_notes": "油缸固定板是受力关键件，点焊时要保证定位准确，避免后续返工。"
+        },
+        "safety_warnings": [
+          "点焊时注意保持身体稳定，避免因操作不当导致摔倒或烫伤。",
+          "焊接产生的烟尘有害健康，确保排风系统正常运行，或佩戴防尘口罩。"
+        ]
+      },
+      {
+        "step_number": 4,
+        "title": "安装支撑固定板和轴套加强板",
+        "parts_used": [
+          {
+            "bom_code": "01.01.01.11525",
+            "bom_name": "支撑固定板 1",
+            "quantity": 1,
+            "mesh_id": [
+              "mesh_011"
+            ]
+          },
+          {
+            "bom_code": "01.01.01.11526",
+            "bom_name": "轴套加强板 2",
+            "quantity": 2,
+            "mesh_id": [
+              "mesh_009",
+              "mesh_010"
+            ]
+          }
+        ],
+        "tools_required": [
+          "焊机"
+        ],
+        "operation": "将支撑固定板（01.01.01.11525）安装到左铲板下部指定位置。将2块轴套加强板（01.01.01.11526）安装到铲板侧面，用于后续轴套的安装。全部点焊固定。",
+        "quality_check": "支撑固定板安装牢固，轴套加强板位置准确，为后续轴套安装留出足够空间。",
+        "estimated_time_minutes": 8,
+        "welding": {
+          "required": true,
+          "welding_type": "点焊（临时固定）",
+          "welding_method": "CO2气保焊",
+          "weld_size": "每块板点焊2点，点焊长度8mm",
+          "welding_position": "支撑固定板与左铲板的连接面；轴套加强板与左铲板的连接面",
+          "quality_requirements": "轴套加强板的点焊要保证孔位对齐，不能有错位。",
+          "safety_notes": "清理焊接区域的油污和铁锈，防止产生气孔。"
+        },
+        "safety_warnings": [
+          "焊接前必须清理工件表面的油污、水渍和铁锈，防止焊接过程中产生有毒气体或爆炸。",
+          "点焊后工件温度高，移动或检查时必须戴隔热手套，防止烫伤。"
+        ]
+      },
+      {
+        "step_number": 5,
+        "title": "安装反光片安装板和轴套",
+        "parts_used": [
+          {
+            "bom_code": "01.01.01.11527",
+            "bom_name": "反光片安装板 1",
+            "quantity": 1,
+            "mesh_id": [
+              "mesh_008"
+            ]
+          },
+          {
+            "bom_code": "01.01.02.1222",
+            "bom_name": "轴套 2",
+            "quantity": 2,
+            "mesh_id": [
+              "mesh_006",
+              "mesh_007"
+            ]
+          }
+        ],
+        "tools_required": [
+          "焊机",
+          "塞规"
+        ],
+        "operation": "将反光片安装板（01.01.01.11527）安装到铲板上部指定位置。将2个轴套（01.01.02.1222）分别插入轴套加强板预留的孔位中，确保轴套端面与加强板端面平齐。点焊固定。",
+        "quality_check": "轴套与铲板的配合焊接保证同轴度，使用塞规检查轴套内径是否变形。反光片安装板位置正确。",
+        "estimated_time_minutes": 15,
+        "welding": {
+          "required": true,
+          "welding_type": "点焊（临时固定）",
+          "welding_method": "CO2气保焊",
+          "weld_size": "轴套环形点焊4点，点焊长度10mm；反光片安装板点焊2点",
+          "welding_position": "轴套与轴套加强板的环形连接处；反光片安装板与左铲板的连接面",
+          "quality_requirements": "轴套点焊时要轻，防止热变形导致内径收缩。点焊后立即用塞规检查内径。",
+          "safety_notes": "轴套是精密配合件，焊接时要控制热输入，避免烧穿或严重变形。"
+        },
+        "safety_warnings": [
+          "轴套是小件，操作时注意夹紧，防止焊接时飞溅或掉落伤人。",
+          "点焊轴套时，热量集中，注意控制焊接时间，防止烧穿或严重变形导致工件报废。"
+        ]
+      },
+      {
+        "step_number": 6,
+        "title": "安装方形板",
+        "parts_used": [
+          {
+            "bom_code": "01.01.01.11528",
+            "bom_name": "方形板 1",
+            "quantity": 1
+          },
+          {
+            "bom_code": "01.01.01.11529",
+            "bom_name": "方形板 3",
+            "quantity": 1,
+            "mesh_id": [
+              "mesh_003",
+              "mesh_004",
+              "mesh_005"
+            ]
+          },
+          {
+            "bom_code": "01.01.01.18599",
+            "bom_name": "方形板-机加 1",
+            "quantity": 1,
+            "mesh_id": [
+              "mesh_025"
+            ]
+          }
+        ],
+        "tools_required": [
+          "焊机"
+        ],
+        "operation": "将方形板 1（01.01.01.11528）、方形板 3（01.01.01.11529）和方形板-机加（01.01.01.18599）分别安装到铲板的指定加强位置，确保它们与铲板表面紧密贴合。点焊固定。",
+        "quality_check": "所有方形板安装位置准确，特别是机加方形板，确保其定位精度。",
+        "estimated_time_minutes": 10,
+        "welding": {
+          "required": true,
+          "welding_type": "点焊（临时固定）",
+          "welding_method": "CO2气保焊",
+          "weld_size": "每块板点焊4点，点焊长度10mm",
+          "welding_position": "所有方形板与左铲板的连接边缘",
+          "quality_requirements": "点焊要均匀分布，防止板件翘曲。",
+          "safety_notes": "焊接前检查工件是否干燥，避免潮湿引起气孔。"
+        },
+        "safety_warnings": [
+          "点焊时注意防止焊渣飞溅到眼睛或皮肤上，必须佩戴防护面罩和手套。",
+          "确保工作区域光线充足，避免因视线不清导致焊接失误。"
+        ]
+      },
+      {
+        "step_number": 7,
+        "title": "安装左铲雪板加强板",
+        "parts_used": [
+          {
+            "bom_code": "01.02.01.4983",
+            "bom_name": "左铲雪板加强板 2",
+            "quantity": 2,
+            "mesh_id": [
+              "mesh_001",
+              "mesh_002"
+            ]
+          }
+        ],
+        "tools_required": [
+          "焊机"
+        ],
+        "operation": "将2块左铲雪板加强板（01.02.01.4983）安装到铲板的边缘，用于整体结构加强。确保加强板与铲板边缘对齐，并进行点焊。",
+        "quality_check": "加强板与铲板边缘对齐，无错位或翘曲。",
+        "estimated_time_minutes": 5,
+        "welding": {
+          "required": true,
+          "welding_type": "点焊（临时固定）",
+          "welding_method": "CO2气保焊",
+          "weld_size": "每块板点焊3点，点焊长度10mm",
+          "welding_position": "加强板与左铲板的连接边缘",
+          "quality_requirements": "点焊后检查加强板是否与铲板保持平直。",
+          "safety_notes": "注意焊接烟尘，确保工作区域通风良好。"
+        },
+        "safety_warnings": [
+          "焊接作业时，必须保证工作区域通风良好，防止吸入有害烟尘。",
+          "点焊完成后，立即检查焊点是否牢固，防止零件在后续操作中松动脱落。"
+        ]
+      },
+      {
+        "step_number": 8,
+        "title": "整体焊接",
+        "parts_used": [],
+        "tools_required": [
+          "焊机",
+          "焊枪"
+        ],
+        "operation": "对所有已点焊的零件进行全面焊接。焊接时注意焊缝饱满、均匀，避免虚焊、漏焊。特别是轴套、油缸固定板等关键受力部位，必须保证焊缝强度。",
+        "quality_check": "检查所有焊缝，确保焊缝高度和宽度符合工艺要求，无气孔、夹渣等缺陷。检查组件整体尺寸和平面度，确保无明显变形。",
+        "estimated_time_minutes": 30,
+        "welding": {
+          "required": true,
+          "welding_type": "角焊/搭接焊（满焊）",
+          "welding_method": "CO2气保焊",
+          "weld_size": "焊脚高度6mm（根据图纸要求调整），关键受力部位连续焊",
+          "welding_position": "所有零件与左铲板的连接边缘（包括轴套的环形焊缝）",
+          "quality_requirements": "焊缝必须饱满、均匀，无咬边、裂纹、气孔等缺陷。轴套焊缝要保证同轴度，焊接后检查内径变形量。",
+          "safety_notes": "进行大面积焊接时，注意控制焊接顺序，采用分段、对称焊接，减少热应力，防止工件变形。全程佩戴全套防护用品，防止弧光伤害。"
+        },
+        "safety_warnings": [
+          "进行满焊作业时，必须佩戴全套焊接防护用品（面罩、手套、防火服），防止强弧光和高温飞溅物伤害。",
+          "大面积连续焊接会产生大量热量，注意控制焊接顺序，防止工件严重热变形或翘曲。",
+          "焊接完成后，工件温度极高，严禁徒手触摸，必须使用专用工具或等待冷却后再进行下一步操作。",
+          "确保灭火器材（如灭火器、消防水桶）放置在触手可及的位置，以应对突发火情。"
+        ]
+      }
+    ]
+  }
+}

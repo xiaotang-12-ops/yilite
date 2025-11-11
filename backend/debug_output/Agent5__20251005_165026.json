@@ -1,0 +1,423 @@
+{
+  "agent_name": "Agent5_",
+  "model": "google/gemini-2.5-flash-preview-09-2025",
+  "timestamp": "20251005_165026",
+  "image_count": 2,
+  "temperature": 0.1,
+  "system_prompt": "# 角色定位\n\n你是**王师傅**，一位拥有30年焊接经验的高级焊接工艺专家。\n\n## 教育背景\n\n- **学历**：焊接技术与工程专业本科\n- **职业资格**：国际焊接工程师（IWE）、高级焊工技师\n- **专业培训**：\n  - 压力容器焊接工艺评定\n  - 特种设备焊接质量控制\n  - 焊接缺陷分析与预防\n\n## 职业背景\n\n- **工作经历**：30年焊接一线经验，参与过大型钢结构、压力容器、机械装备等项目\n- **专业领域**：\n  - 手工电弧焊、CO2气保焊、氩弧焊等多种焊接方法\n  - 碳钢、不锈钢、铝合金等材料焊接\n  - 焊接工艺评定（WPS/PQR）\n  - 焊接质量检验与缺陷分析\n\n## 知识结构（详细）\n\n### 1. 焊接方法与工艺\n- **手工电弧焊（SMAW）**：适用于碳钢、低合金钢，操作灵活\n- **CO2气保焊（MAG）**：适用于中厚板，焊接效率高，成本低\n- **氩弧焊（TIG）**：适用于不锈钢、铝合金，焊缝质量高\n- **埋弧焊（SAW）**：适用于厚板长焊缝，自动化程度高\n\n### 2. 焊接接头类型\n- **对接焊**：板材端面对接，承载能力强\n- **角焊**：两板材垂直或倾斜连接，最常见\n- **塞焊/槽焊**：孔内填充焊接，用于叠板连接\n- **点焊**：定位焊，临时固定零件\n\n### 3. 焊接位置\n- **平焊（1G/1F）**：最容易操作，焊缝质量最好\n- **横焊（2G/2F）**：需要控制熔池下坠\n- **立焊（3G/3F）**：需要向上或向下焊接\n- **仰焊（4G/4F）**：最困难，需要防止熔池下落\n\n### 4. 焊接质量控制\n- **焊前准备**：清理油污、锈蚀、氧化皮，保证坡口质量\n- **焊接参数**：电流、电压、焊接速度、保护气体流量\n- **焊接顺序**：对称焊、分段焊、跳焊，控制变形\n- **焊后检验**：外观检查、无损检测（RT/UT/MT/PT）\n\n### 5. 焊接缺陷与预防\n- **气孔**：焊前清理不彻底、保护气体不足\n- **夹渣**：焊接电流过小、焊接速度过快\n- **裂纹**：预热不足、冷却过快、应力集中\n- **未熔合**：焊接电流过小、坡口角度不当\n- **烧穿**：焊接电流过大、间隙过大\n\n### 6. 焊接安全\n- **个人防护**：焊接面罩、防护手套、防护服、安全鞋\n- **环境安全**：通风良好、防火措施、接地保护\n- **设备安全**：焊机检查、气瓶固定、电缆完好\n\n## 任务步骤（Chain of Thought）\n\n你的任务是**为每个装配步骤添加焊接要点**（如果该步骤涉及焊接）。请按照以下5个步骤思考：\n\n### 步骤1：识别焊接步骤\n- 分析每个装配步骤的操作内容\n- 判断是否涉及零件的永久性连接（焊接）\n- 区分焊接步骤和螺栓连接步骤\n\n### 步骤2：确定焊接类型\n- 根据零件的连接方式，确定焊接接头类型（对接、角焊、塞焊等）\n- 根据图纸上的焊接符号，确定焊接方法（手工焊、气保焊等）\n\n### 步骤3：分析焊接位置\n- 根据零件的空间位置，确定焊接位置（平焊、横焊、立焊、仰焊）\n- 考虑焊接的可达性和操作难度\n\n### 步骤4：制定焊接工艺\n- 确定焊接参数（焊缝尺寸、焊接方法、焊接材料）\n- 制定焊接顺序（对称焊、分段焊等）\n- 提出质量要求（焊缝外观、无损检测等）\n\n### 步骤5：添加安全提示\n- 针对每个焊接步骤，添加具体的安全注意事项\n- 强调个人防护、环境安全、设备安全\n\n## 核心原则\n\n1. **步骤级嵌入**：为每个需要焊接的步骤添加welding字段，而不是单独列出焊接要求\n2. **工人友好**：使用通俗语言，避免专业术语（如\"焊脚高度6mm\"而不是\"焊脚尺寸a=6\"）\n3. **安全第一**：每个焊接步骤都要有具体的安全提示\n4. **质量保证**：明确焊接质量要求和检验方法\n\n## 输出格式\n\n严格按照以下JSON格式输出（返回增强后的装配步骤）：\n\n```json\n{\n  \"enhanced_steps\": [\n    {\n      \"step_number\": 1,\n      \"title\": \"步骤标题\",\n      \"parts_used\": [...],\n      \"tools_required\": [...],\n      \"operation\": \"操作说明\",\n      \"quality_check\": \"质量检查\",\n      \"estimated_time_minutes\": 10,\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"焊脚高度6mm\",\n        \"welding_position\": \"零件①与零件②的连接处，平焊\",\n        \"quality_requirements\": \"焊缝饱满、连续，无气孔、夹渣、裂纹\",\n        \"safety_notes\": \"佩戴焊接面罩和防护手套，确保通风良好，周围无易燃物\"\n      }\n    },\n    {\n      \"step_number\": 2,\n      \"title\": \"另一个步骤\",\n      \"parts_used\": [...],\n      \"operation\": \"操作说明\",\n      \"quality_check\": \"质量检查\",\n      \"estimated_time_minutes\": 15\n      // ⚠️ 如果不需要焊接，不添加welding字段\n    }\n  ]\n}\n```\n\n**⚠️ 关键要求**：\n\n1. **步骤级嵌入**：\n   - 为每个需要焊接的步骤添加`welding`字段\n   - 不需要焊接的步骤不添加`welding`字段\n   - 保持原有步骤的所有字段不变\n\n2. **焊接位置要具体**：\n   - 说明是哪两个零件之间的焊接（如\"零件①与零件②的连接处\"）\n   - 说明焊接位置（如\"平焊\"、\"横焊\"、\"立焊\"）\n\n3. **使用通俗语言**：\n   - ✅ 说\"焊缝高度6mm\"\n   - ❌ 不说\"焊脚尺寸a=6\"\n   - ✅ 说\"CO2气保焊\"\n   - ❌ 不说\"GMAW\"\n\n4. **安全提示要具体**：\n   - 每个焊接步骤都要有具体的安全注意事项\n   - 包括个人防护、环境安全、操作安全\n\n## 重要提醒\n\n- **只输出JSON，不要输出其他内容**\n- **保持原有字段不变**：不要修改或删除原有的字段\n- **焊接信息要完整**：type、method、size、position、quality、safety都要有\n- **质量要求要明确**：说明焊缝的外观要求和检验方法\n",
+  "user_query": "请为以下装配步骤添加焊接要点（如果涉及焊接）。\n\n## 📸 视觉分析任务\n\n**你会看到工程图纸图片，请仔细观察：**\n\n1. **焊接符号**：\n   - 图纸上的焊接符号（如角焊符号、对接焊符号等）\n   - 焊缝尺寸标注（如焊脚高度、焊缝长度等）\n   - 焊接方法代码（如手工焊、气保焊等）\n\n2. **零件连接关系**：\n   - 哪些零件之间需要焊接连接\n   - 焊接位置和方向\n   - 焊接的可达性\n\n3. **技术要求**：\n   - 焊接质量等级\n   - 焊后处理要求（如打磨、清理等）\n   - 无损检测要求\n\n## 装配步骤\n\n[\n  {\n    \"step_number\": 1,\n    \"action\": \"放置基准件\",\n    \"description\": \"将图纸上标注为①的左铲板（01.01.01.18598）平稳放置在焊接工作台上，作为装配基准。确保铲板内侧（有安装孔的一侧）朝上。\",\n    \"position_description\": \"铲板内侧朝上，平放于工作台。\",\n    \"parts_used\": [\n      {\n        \"bom_seq\": \"1\",\n        \"bom_name\": \"左铲板 1\",\n        \"quantity\": 1,\n        \"drawing_number\": \"①\",\n        \"node_name\": [\n          \"NAUO1\"\n        ],\n        \"bom_code\": \"01.01.01.18598\"\n      }\n    ],\n    \"tools\": [\n      \"行车/吊具\",\n      \"水平仪\"\n    ],\n    \"warnings\": [\n      \"吊装时注意平衡，防止零件倾倒。\"\n    ]\n  },\n  {\n    \"step_number\": 2,\n    \"action\": \"安装方形板-机加\",\n    \"description\": \"将图纸上标注为②的方形板-机加（01.01.01.18599）放置在①号左铲板的后部边缘，对齐定位孔。该零件用于后续连接，需确保其安装面与铲板垂直。\",\n    \"position_description\": \"安装在①号左铲板的后部边缘，与铲板垂直。\",\n    \"parts_used\": [\n      {\n        \"bom_seq\": \"2\",\n        \"bom_name\": \"方形板-机加 1\",\n        \"quantity\": 1,\n        \"drawing_number\": \"②\",\n        \"node_name\": [\n          \"NAUO2\"\n        ],\n        \"bom_code\": \"01.01.01.18599\"\n      }\n    ],\n    \"tools\": [\n      \"焊机\",\n      \"角尺\"\n    ],\n    \"warnings\": [\n      \"点焊固定前，必须使用角尺检查垂直度。\"\n    ]\n  },\n  {\n    \"step_number\": 3,\n    \"action\": \"安装后加强板和前加强板\",\n    \"description\": \"将图纸上标注为③的后加强板（01.01.01.11519）和④的前加强板（01.01.01.18600）安装在①号左铲板的内侧，按照图纸尺寸定位。先点焊固定。\",\n    \"position_description\": \"③号后加强板和④号前加强板安装在①号左铲板的内侧，沿铲板弧度走向。\",\n    \"parts_used\": [\n      {\n        \"bom_seq\": \"3\",\n        \"bom_name\": \"后加强板 1\",\n        \"quantity\": 1,\n        \"drawing_number\": \"③\",\n        \"node_name\": [\n          \"NAUO3\"\n        ],\n        \"bom_code\": \"01.01.01.11519\"\n      },\n      {\n        \"bom_seq\": \"4\",\n        \"bom_name\": \"前加强板 1\",\n        \"quantity\": 1,\n        \"drawing_number\": \"④\",\n        \"node_name\": [\n          \"NAUO4\"\n        ],\n        \"bom_code\": \"01.01.01.18600\"\n      }\n    ],\n    \"tools\": [\n      \"焊机\",\n      \"卷尺\"\n    ],\n    \"warnings\": [\n      \"确保加强板与铲板贴合紧密，无间隙。\"\n    ]\n  },\n  {\n    \"step_number\": 4,\n    \"action\": \"安装底部连接板和前油缸固定板\",\n    \"description\": \"将6块图纸上标注为⑤的底部连接板（01.01.01.11521）和2块⑥号前油缸固定板（01.01.01.11522）安装在①号左铲板的底部内侧。⑤号连接板需均匀分布，⑥号固定板安装在指定位置，确保油缸安装孔位对齐。\",\n    \"position_description\": \"安装在①号左铲板的底部内侧，靠近铲板边缘。\",\n    \"parts_used\": [\n      {\n        \"bom_seq\": \"5\",\n        \"bom_name\": \"底部连接板 6\",\n        \"quantity\": 6,\n        \"drawing_number\": \"⑤\",\n        \"node_name\": [\n          \"NAUO15\",\n          \"NAUO14\",\n          \"NAUO13\",\n          \"NAUO12\",\n          \"NAUO6\",\n          \"NAUO5\"\n        ],\n        \"bom_code\": \"01.01.01.11521\"\n      },\n      {\n        \"bom_seq\": \"6\",\n        \"bom_name\": \"前油缸固定板 2\",\n        \"quantity\": 2,\n        \"drawing_number\": \"⑥\",\n        \"node_name\": [\n          \"NAUO8\",\n          \"NAUO7\"\n        ],\n        \"bom_code\": \"01.01.01.11522\"\n      }\n    ],\n    \"tools\": [\n      \"焊机\",\n      \"卡尺\"\n    ],\n    \"warnings\": [\n      \"⑥号前油缸固定板的孔位中心距必须符合图纸要求。\"\n    ]\n  },\n  {\n    \"step_number\": 5,\n    \"action\": \"安装弹簧固定板\",\n    \"description\": \"安装1块⑦号前弹簧固定板（01.01.01.11523）和2块⑧号后弹簧固定板（01.01.01.11524）。⑦号固定板安装在铲板内侧中部，⑧号固定板安装在后部，确保弹簧安装孔位朝向正确。\",\n    \"position_description\": \"⑦号安装在内侧中部，⑧号安装在内侧后部。\",\n    \"parts_used\": [\n      {\n        \"bom_seq\": \"7\",\n        \"bom_name\": \"前弹簧固定板 1\",\n        \"quantity\": 1,\n        \"drawing_number\": \"⑦\",\n        \"node_name\": [\n          \"NAUO9\"\n        ],\n        \"bom_code\": \"01.01.01.11523\"\n      },\n      {\n        \"bom_seq\": \"8\",\n        \"bom_name\": \"后弹簧固定板 2\",\n        \"quantity\": 2,\n        \"drawing_number\": \"⑧\",\n        \"node_name\": [\n          \"NAUO11\",\n          \"NAUO10\"\n        ],\n        \"bom_code\": \"01.01.01.11524\"\n      }\n    ],\n    \"tools\": [\n      \"焊机\",\n      \"卷尺\"\n    ],\n    \"warnings\": [\n      \"弹簧固定板的安装位置是关键受力点，焊接必须牢固。\"\n    ]\n  },\n  {\n    \"step_number\": 6,\n    \"action\": \"安装支撑固定板和轴套加强板\",\n    \"description\": \"安装1块⑨号支撑固定板（01.01.01.11525）和2块⑩号轴套加强板（01.01.01.11526）。⑨号固定板安装在铲板内侧的指定位置，⑩号加强板安装在铲板两侧的轴套安装区域。\",\n    \"position_description\": \"⑨号安装在内侧，⑩号安装在两侧边缘。\",\n    \"parts_used\": [\n      {\n        \"bom_seq\": \"9\",\n        \"bom_name\": \"支撑固定板 1\",\n        \"quantity\": 1,\n        \"drawing_number\": \"⑨\",\n        \"node_name\": [\n          \"NAUO16\"\n        ],\n        \"bom_code\": \"01.01.01.11525\"\n      },\n      {\n        \"bom_seq\": \"10\",\n        \"bom_name\": \"轴套加强板 2\",\n        \"quantity\": 2,\n        \"drawing_number\": \"⑩\",\n        \"node_name\": [\n          \"NAUO18\",\n          \"NAUO17\"\n        ],\n        \"bom_code\": \"01.01.01.11526\"\n      }\n    ],\n    \"tools\": [\n      \"焊机\"\n    ],\n    \"warnings\": [\n      \"⑩号轴套加强板的定位精度影响后续轴套安装。\"\n    ]\n  },\n  {\n    \"step_number\": 7,\n    \"action\": \"安装反光片安装板\",\n    \"description\": \"安装1块⑪号反光片安装板（01.01.01.11527）。将其焊接到铲板外侧上部，确保安装板的平面朝外，便于后续安装反光片。\",\n    \"position_description\": \"安装在①号左铲板的外侧上部。\",\n    \"parts_used\": [\n      {\n        \"bom_seq\": \"11\",\n        \"bom_name\": \"反光片安装板 1\",\n        \"quantity\": 1,\n        \"drawing_number\": \"⑪\",\n        \"node_name\": [\n          \"NAUO19\"\n        ],\n        \"bom_code\": \"01.01.01.11527\"\n      }\n    ],\n    \"tools\": [\n      \"焊机\"\n    ],\n    \"warnings\": [\n      \"反光片安装板的焊接位置需避开反光片安装孔。\"\n    ]\n  },\n  {\n    \"step_number\": 8,\n    \"action\": \"安装轴套\",\n    \"description\": \"将2个⑫号轴套（01.01.02.1222）安装到铲板两侧的轴套安装孔位上，并与⑩号轴套加强板对齐。轴套需与铲板和加强板满焊连接。\",\n    \"position_description\": \"安装在铲板两侧的轴承孔位。\",\n    \"parts_used\": [\n      {\n        \"bom_seq\": \"12\",\n        \"bom_name\": \"轴套 2\",\n        \"quantity\": 2,\n        \"drawing_number\": \"⑫\",\n        \"node_name\": [\n          \"NAUO21\",\n          \"NAUO20\"\n        ],\n        \"bom_code\": \"01.01.02.1222\"\n      }\n    ],\n    \"tools\": [\n      \"焊机\",\n      \"塞规\"\n    ],\n    \"warnings\": [\n      \"轴套的内孔不能被焊渣污染，焊接时注意保护。轴套端面需与加强板端面配合，焊缝需饱满。\"\n    ]\n  },\n  {\n    \"step_number\": 9,\n    \"action\": \"安装方形板\",\n    \"description\": \"安装1块⑬号方形板 1（01.01.01.11528）和1块⑭号方形板 3（01.01.01.11529）。这两个方形板安装在铲板内侧的指定位置，用于后续连接，需确保焊接牢固。\",\n    \"position_description\": \"安装在铲板内侧，靠近后部。\",\n    \"parts_used\": [\n      {\n        \"bom_seq\": \"13\",\n        \"bom_name\": \"方形板 1\",\n        \"quantity\": 1,\n        \"drawing_number\": \"⑬\"\n      },\n      {\n        \"bom_seq\": \"14\",\n        \"bom_name\": \"方形板 3\",\n        \"quantity\": 1,\n        \"drawing_number\": \"⑭\",\n        \"node_name\": [\n          \"NAUO24\",\n          \"NAUO23\",\n          \"NAUO22\"\n        ],\n        \"bom_code\": \"01.01.01.11529\"\n      }\n    ],\n    \"tools\": [\n      \"焊机\"\n    ],\n    \"warnings\": [\n      \"确保方形板的安装方向和角度符合图纸要求。\"\n    ]\n  },\n  {\n    \"step_number\": 10,\n    \"action\": \"安装左铲雪板加强板\",\n    \"description\": \"安装2块⑮号左铲雪板加强板 2（01.02.01.4983）。将它们焊接到铲板内侧的指定加强筋位置，以增强铲板的整体刚度。\",\n    \"position_description\": \"安装在铲板内侧，作为加强筋。\",\n    \"parts_used\": [\n      {\n        \"bom_seq\": \"15\",\n        \"bom_name\": \"左铲雪板加强板 2\",\n        \"quantity\": 2,\n        \"drawing_number\": \"⑮\",\n        \"node_name\": [\n          \"NAUO26\",\n          \"NAUO25\"\n        ],\n        \"bom_code\": \"01.02.01.4983\"\n      }\n    ],\n    \"tools\": [\n      \"焊机\"\n    ],\n    \"warnings\": [\n      \"加强板焊接需连续，确保应力均匀分布。\"\n    ]\n  },\n  {\n    \"step_number\": 11,\n    \"action\": \"满焊所有零件\",\n    \"description\": \"对所有已点焊固定的零件（②至⑮）进行满焊。焊接前清理焊缝区域，确保焊缝尺寸和质量符合技术要求。注意图纸上标注的'折弯时内侧焊缝完整'和'此面不焊接'的要求。\",\n    \"position_description\": \"所有连接面。\",\n    \"parts_used\": [],\n    \"tools\": [\n      \"焊机\",\n      \"焊渣锤\",\n      \"钢丝刷\"\n    ],\n    \"warnings\": [\n      \"严格控制焊接变形，必要时采用对称、分段焊接。所有焊缝必须无气孔、夹渣、裂纹等缺陷。\"\n    ]\n  }\n]\n\n## 要求\n\n请按照以下5个步骤思考，为装配步骤添加焊接要点：\n\n### 步骤1：识别焊接步骤\n- 分析每个装配步骤的操作内容\n- 判断是否涉及零件的永久性连接（焊接）\n- 通常包含\"焊接\"、\"点焊\"、\"定位焊\"等关键词的步骤需要焊接\n\n### 步骤2：确定焊接类型\n- 根据零件的连接方式，确定焊接接头类型：\n  * **角焊**：两板材垂直或倾斜连接（最常见）\n  * **对接焊**：板材端面对接\n  * **塞焊/槽焊**：孔内填充焊接\n  * **点焊**：定位焊，临时固定\n\n### 步骤3：分析焊接位置\n- 根据零件的空间位置，确定焊接位置：\n  * **平焊**：最容易操作，焊缝质量最好\n  * **横焊**：需要控制熔池下坠\n  * **立焊**：需要向上或向下焊接\n  * **仰焊**：最困难，需要防止熔池下落\n\n### 步骤4：制定焊接工艺\n- 确定焊接方法（CO2气保焊、手工电弧焊、氩弧焊等）\n- 确定焊缝尺寸（焊脚高度、焊缝长度等）\n- 制定质量要求（焊缝外观、无损检测等）\n\n### 步骤5：添加安全提示\n- 针对每个焊接步骤，添加具体的安全注意事项\n- 包括个人防护、环境安全、设备安全\n\n## ⚠️ 强制自检清单（生成后必须逐项检查）\n\n**在输出JSON之前，你必须完成以下验证：**\n\n1. **焊接步骤识别验证**：\n   - [ ] 所有涉及焊接的步骤都添加了welding字段\n   - [ ] 不需要焊接的步骤没有添加welding字段\n   - [ ] welding.required字段正确设置为true\n\n2. **焊接信息完整性验证**：\n   - [ ] 每个welding字段都包含完整信息（type、method、size、position、quality_requirements、safety_notes）\n   - [ ] 焊接位置具体明确（说明是哪两个零件之间的焊接）\n   - [ ] 焊接方法符合实际（CO2气保焊、手工电弧焊等）\n\n3. **语言通俗性验证**：\n   - [ ] 使用工人能看懂的语言（如\"焊缝高度6mm\"而不是\"焊脚尺寸a=6\"）\n   - [ ] 避免专业术语和英文缩写\n\n4. **原有字段保持验证**：\n   - [ ] 原有步骤的所有字段都保持不变\n   - [ ] 没有修改或删除任何原有字段\n\n**如果自检发现任何问题，必须重新生成！**\n\n现在开始为装配步骤添加焊接要点！\n",
+  "raw_response": "```json\n{\n  \"enhanced_steps\": [\n    {\n      \"step_number\": 1,\n      \"action\": \"放置基准件\",\n      \"description\": \"将图纸上标注为①的左铲板（01.01.01.18598）平稳放置在焊接工作台上，作为装配基准。确保铲板内侧（有安装孔的一侧）朝上。\",\n      \"position_description\": \"铲板内侧朝上，平放于工作台。\",\n      \"parts_used\": [\n        {\n          \"bom_seq\": \"1\",\n          \"bom_name\": \"左铲板 1\",\n          \"quantity\": 1,\n          \"drawing_number\": \"①\",\n          \"node_name\": [\n            \"NAUO1\"\n          ],\n          \"bom_code\": \"01.01.01.18598\"\n        }\n      ],\n      \"tools\": [\n        \"行车/吊具\",\n        \"水平仪\"\n      ],\n      \"warnings\": [\n        \"吊装时注意平衡，防止零件倾倒。\"\n      ]\n    },\n    {\n      \"step_number\": 2,\n      \"action\": \"安装方形板-机加\",\n      \"description\": \"将图纸上标注为②的方形板-机加（01.01.01.18599）放置在①号左铲板的后部边缘，对齐定位孔。该零件用于后续连接，需确保其安装面与铲板垂直。\",\n      \"position_description\": \"安装在①号左铲板的后部边缘，与铲板垂直。\",\n      \"parts_used\": [\n        {\n          \"bom_seq\": \"2\",\n          \"bom_name\": \"方形板-机加 1\",\n          \"quantity\": 1,\n          \"drawing_number\": \"②\",\n          \"node_name\": [\n            \"NAUO2\"\n          ],\n          \"bom_code\": \"01.01.01.18599\"\n        }\n      ],\n      \"tools\": [\n        \"焊机\",\n        \"角尺\"\n      ],\n      \"warnings\": [\n        \"点焊固定前，必须使用角尺检查垂直度。\"\n      ],\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊（定位焊）\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"点焊，焊点长度10-15mm，高度4mm\",\n        \"welding_position\": \"零件②与零件①的连接处，主要为平焊和横焊位置\",\n        \"quality_requirements\": \"点焊位置应均匀分布，确保零件定位准确，垂直度误差小于1mm。\",\n        \"safety_notes\": \"佩戴焊接面罩和防护手套，确保工作区域通风良好，防止火花飞溅。\"\n      }\n    },\n    {\n      \"step_number\": 3,\n      \"action\": \"安装后加强板和前加强板\",\n      \"description\": \"将图纸上标注为③的后加强板（01.01.01.11519）和④的前加强板（01.01.01.18600）安装在①号左铲板的内侧，按照图纸尺寸定位。先点焊固定。\",\n      \"position_description\": \"③号后加强板和④号前加强板安装在①号左铲板的内侧，沿铲板弧度走向。\",\n      \"parts_used\": [\n        {\n          \"bom_seq\": \"3\",\n          \"bom_name\": \"后加强板 1\",\n          \"quantity\": 1,\n          \"drawing_number\": \"③\",\n          \"node_name\": [\n            \"NAUO3\"\n          ],\n          \"bom_code\": \"01.01.01.11519\"\n        },\n        {\n          \"bom_seq\": \"4\",\n          \"bom_name\": \"前加强板 1\",\n          \"quantity\": 1,\n          \"drawing_number\": \"④\",\n          \"node_name\": [\n            \"NAUO4\"\n          ],\n          \"bom_code\": \"01.01.01.18600\"\n        }\n      ],\n      \"tools\": [\n        \"焊机\",\n        \"卷尺\"\n      ],\n      \"warnings\": [\n        \"确保加强板与铲板贴合紧密，无间隙。\"\n      ],\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊（定位焊）\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"点焊，焊点长度10mm，高度4mm\",\n        \"welding_position\": \"零件③、④与零件①的连接处，主要为平焊位置\",\n        \"quality_requirements\": \"点焊应在加强板边缘均匀分布，确保零件贴合紧密，防止焊接变形。\",\n        \"safety_notes\": \"清理焊接区域的油污和锈蚀，防止产生气孔。注意焊机接地良好。\"\n      }\n    },\n    {\n      \"step_number\": 4,\n      \"action\": \"安装底部连接板和前油缸固定板\",\n      \"description\": \"将6块图纸上标注为⑤的底部连接板（01.01.01.11521）和2块⑥号前油缸固定板（01.01.01.11522）安装在①号左铲板的底部内侧。⑤号连接板需均匀分布，⑥号固定板安装在指定位置，确保油缸安装孔位对齐。\",\n      \"position_description\": \"安装在①号左铲板的底部内侧，靠近铲板边缘。\",\n      \"parts_used\": [\n        {\n          \"bom_seq\": \"5\",\n          \"bom_name\": \"底部连接板 6\",\n          \"quantity\": 6,\n          \"drawing_number\": \"⑤\",\n          \"node_name\": [\n            \"NAUO15\",\n            \"NAUO14\",\n            \"NAUO13\",\n            \"NAUO12\",\n            \"NAUO6\",\n            \"NAUO5\"\n          ],\n          \"bom_code\": \"01.01.01.11521\"\n        },\n        {\n          \"bom_seq\": \"6\",\n          \"bom_name\": \"前油缸固定板 2\",\n          \"quantity\": 2,\n          \"drawing_number\": \"⑥\",\n          \"node_name\": [\n            \"NAUO8\",\n            \"NAUO7\"\n          ],\n          \"bom_code\": \"01.01.01.11522\"\n        }\n      ],\n      \"tools\": [\n        \"焊机\",\n        \"卡尺\"\n      ],\n      \"warnings\": [\n        \"⑥号前油缸固定板的孔位中心距必须符合图纸要求。\"\n      ],\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊（定位焊）\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"点焊，焊点长度10mm，高度4mm\",\n        \"welding_position\": \"零件⑤、⑥与零件①的连接处，主要为平焊位置\",\n        \"quality_requirements\": \"⑥号固定板的定位精度要求高，点焊后需复核孔位中心距和垂直度。\",\n        \"safety_notes\": \"注意保护⑥号固定板上的机加工孔，避免焊渣飞溅进入孔内。\"\n      }\n    },\n    {\n      \"step_number\": 5,\n      \"action\": \"安装弹簧固定板\",\n      \"description\": \"安装1块⑦号前弹簧固定板（01.01.01.11523）和2块⑧号后弹簧固定板（01.01.01.11524）。⑦号固定板安装在铲板内侧中部，⑧号固定板安装在后部，确保弹簧安装孔位朝向正确。\",\n      \"position_description\": \"⑦号安装在内侧中部，⑧号安装在内侧后部。\",\n      \"parts_used\": [\n        {\n          \"bom_seq\": \"7\",\n          \"bom_name\": \"前弹簧固定板 1\",\n          \"quantity\": 1,\n          \"drawing_number\": \"⑦\",\n          \"node_name\": [\n            \"NAUO9\"\n          ],\n          \"bom_code\": \"01.01.01.11523\"\n        },\n        {\n          \"bom_seq\": \"8\",\n          \"bom_name\": \"后弹簧固定板 2\",\n          \"quantity\": 2,\n          \"drawing_number\": \"⑧\",\n          \"node_name\": [\n            \"NAUO11\",\n            \"NAUO10\"\n          ],\n          \"bom_code\": \"01.01.01.11524\"\n        }\n      ],\n      \"tools\": [\n        \"焊机\",\n        \"卷尺\"\n      ],\n      \"warnings\": [\n        \"弹簧固定板的安装位置是关键受力点，焊接必须牢固。\"\n      ],\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊（定位焊）\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"点焊，焊点长度10mm，高度4mm\",\n        \"welding_position\": \"零件⑦、⑧与零件①的连接处，主要为平焊位置\",\n        \"quality_requirements\": \"确保固定板与铲板贴合紧密，点焊牢固，防止后续满焊时发生位移。\",\n        \"safety_notes\": \"焊接时注意调整电流和电压，避免烧穿薄板区域。\"\n      }\n    },\n    {\n      \"step_number\": 6,\n      \"action\": \"安装支撑固定板和轴套加强板\",\n      \"description\": \"安装1块⑨号支撑固定板（01.01.01.11525）和2块⑩号轴套加强板（01.01.01.11526）。⑨号固定板安装在铲板内侧的指定位置，⑩号加强板安装在铲板两侧的轴套安装区域。\",\n      \"position_description\": \"⑨号安装在内侧，⑩号安装在两侧边缘。\",\n      \"parts_used\": [\n        {\n          \"bom_seq\": \"9\",\n          \"bom_name\": \"支撑固定板 1\",\n          \"quantity\": 1,\n          \"drawing_number\": \"⑨\",\n          \"node_name\": [\n            \"NAUO16\"\n          ],\n          \"bom_code\": \"01.01.01.11525\"\n        },\n        {\n          \"bom_seq\": \"10\",\n          \"bom_name\": \"轴套加强板 2\",\n          \"quantity\": 2,\n          \"drawing_number\": \"⑩\",\n          \"node_name\": [\n            \"NAUO18\",\n            \"NAUO17\"\n          ],\n          \"bom_code\": \"01.01.01.11526\"\n        }\n      ],\n      \"tools\": [\n        \"焊机\"\n      ],\n      \"warnings\": [\n        \"⑩号轴套加强板的定位精度影响后续轴套安装。\"\n      ],\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊（定位焊）\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"点焊，焊点长度10mm，高度4mm\",\n        \"welding_position\": \"零件⑨、⑩与零件①的连接处，主要为平焊位置\",\n        \"quality_requirements\": \"⑩号加强板的定位必须精确，确保与轴套安装孔同心。\",\n        \"safety_notes\": \"焊接前检查焊机电缆和气管是否完好，防止漏电或漏气。\"\n      }\n    },\n    {\n      \"step_number\": 7,\n      \"action\": \"安装反光片安装板\",\n      \"description\": \"安装1块⑪号反光片安装板（01.01.01.11527）。将其焊接到铲板外侧上部，确保安装板的平面朝外，便于后续安装反光片。\",\n      \"position_description\": \"安装在①号左铲板的外侧上部。\",\n      \"parts_used\": [\n        {\n          \"bom_seq\": \"11\",\n          \"bom_name\": \"反光片安装板 1\",\n          \"quantity\": 1,\n          \"drawing_number\": \"⑪\",\n          \"node_name\": [\n            \"NAUO19\"\n          ],\n          \"bom_code\": \"01.01.01.11527\"\n        }\n      ],\n      \"tools\": [\n        \"焊机\"\n      ],\n      \"warnings\": [\n        \"反光片安装板的焊接位置需避开反光片安装孔。\"\n      ],\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊（定位焊）\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"点焊，焊点长度10mm，高度4mm\",\n        \"welding_position\": \"零件⑪与零件①的连接处，主要为横焊位置\",\n        \"quality_requirements\": \"定位焊后检查安装板的平面度，确保反光片能平整安装。\",\n        \"safety_notes\": \"由于是外侧焊接，注意防止焊渣飞溅到周围已安装的零件上。\"\n      }\n    },\n    {\n      \"step_number\": 8,\n      \"action\": \"安装轴套\",\n      \"description\": \"将2个⑫号轴套（01.01.02.1222）安装到铲板两侧的轴套安装孔位上，并与⑩号轴套加强板对齐。轴套需与铲板和加强板满焊连接。\",\n      \"position_description\": \"安装在铲板两侧的轴承孔位。\",\n      \"parts_used\": [\n        {\n          \"bom_seq\": \"12\",\n          \"bom_name\": \"轴套 2\",\n          \"quantity\": 2,\n          \"drawing_number\": \"⑫\",\n          \"node_name\": [\n            \"NAUO21\",\n            \"NAUO20\"\n          ],\n          \"bom_code\": \"01.01.02.1222\"\n        }\n      ],\n      \"tools\": [\n        \"焊机\",\n        \"塞规\"\n      ],\n      \"warnings\": [\n        \"轴套的内孔不能被焊渣污染，焊接时注意保护。轴套端面需与加强板端面配合，焊缝需饱满。\"\n      ],\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊/环形焊（满焊）\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"焊脚高度6mm，环形连续焊\",\n        \"welding_position\": \"零件⑫与零件①和⑩的连接处，主要为平焊和横焊位置\",\n        \"quality_requirements\": \"焊缝必须连续、饱满，无未焊透、气孔等缺陷。焊后需清理焊渣，并用塞规检查轴套内孔是否变形。\",\n        \"safety_notes\": \"轴套焊接属于关键受力部位，应采用分段、对称焊接，控制热输入，防止轴套变形。焊接时需使用防火材料遮盖轴套内孔。\"\n      }\n    },\n    {\n      \"step_number\": 9,\n      \"action\": \"安装方形板\",\n      \"description\": \"安装1块⑬号方形板 1（01.01.01.11528）和1块⑭号方形板 3（01.01.01.11529）。这两个方形板安装在铲板内侧的指定位置，用于后续连接，需确保焊接牢固。\",\n      \"position_description\": \"安装在铲板内侧，靠近后部。\",\n      \"parts_used\": [\n        {\n          \"bom_seq\": \"13\",\n          \"bom_name\": \"方形板 1\",\n          \"quantity\": 1,\n          \"drawing_number\": \"⑬\"\n        },\n        {\n          \"bom_seq\": \"14\",\n          \"bom_name\": \"方形板 3\",\n          \"quantity\": 1,\n          \"drawing_number\": \"⑭\",\n          \"node_name\": [\n            \"NAUO24\",\n            \"NAUO23\",\n            \"NAUO22\"\n          ],\n          \"bom_code\": \"01.01.01.11529\"\n        }\n      ],\n      \"tools\": [\n        \"焊机\"\n      ],\n      \"warnings\": [\n        \"确保方形板的安装方向和角度符合图纸要求。\"\n      ],\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊（定位焊）\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"点焊，焊点长度10mm，高度4mm\",\n        \"welding_position\": \"零件⑬、⑭与零件①的连接处，主要为平焊位置\",\n        \"quality_requirements\": \"定位焊后检查方形板的相对位置和角度，确保符合装配要求。\",\n        \"safety_notes\": \"注意焊接烟尘的排放，确保排风系统正常工作。\"\n      }\n    },\n    {\n      \"step_number\": 10,\n      \"action\": \"安装左铲雪板加强板\",\n      \"description\": \"安装2块⑮号左铲雪板加强板 2（01.02.01.4983）。将它们焊接到铲板内侧的指定加强筋位置，以增强铲板的整体刚度。\",\n      \"position_description\": \"安装在铲板内侧，作为加强筋。\",\n      \"parts_used\": [\n        {\n          \"bom_seq\": \"15\",\n          \"bom_name\": \"左铲雪板加强板 2\",\n          \"quantity\": 2,\n          \"drawing_number\": \"⑮\",\n          \"node_name\": [\n            \"NAUO26\",\n            \"NAUO25\"\n          ],\n          \"bom_code\": \"01.02.01.4983\"\n        }\n      ],\n      \"tools\": [\n        \"焊机\"\n      ],\n      \"warnings\": [\n        \"加强板焊接需连续，确保应力均匀分布。\"\n      ],\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊（定位焊）\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"点焊，焊点长度10mm，高度4mm\",\n        \"welding_position\": \"零件⑮与零件①的连接处，主要为平焊位置\",\n        \"quality_requirements\": \"加强板与铲板的贴合度要高，点焊时应施加压力，消除间隙。\",\n        \"safety_notes\": \"避免在同一区域连续点焊，防止局部热量集中导致变形。\"\n      }\n    },\n    {\n      \"step_number\": 11,\n      \"action\": \"满焊所有零件\",\n      \"description\": \"对所有已点焊固定的零件（②至⑮）进行满焊。焊接前清理焊缝区域，确保焊缝尺寸和质量符合技术要求。注意图纸上标注的'折弯时内侧焊缝完整'和'此面不焊接'的要求。\",\n      \"position_description\": \"所有连接面。\",\n      \"parts_used\": [],\n      \"tools\": [\n        \"焊机\",\n        \"焊渣锤\",\n        \"钢丝刷\"\n      ],\n      \"warnings\": [\n        \"严格控制焊接变形，必要时采用对称、分段焊接。所有焊缝必须无气孔、夹渣、裂纹等缺陷。\"\n      ],\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊（满焊）\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"焊脚高度6mm（未标注尺寸按6mm执行），连续焊\",\n        \"welding_position\": \"所有加强板、固定板与铲板的连接处，需进行翻转操作以保证平焊位置\",\n        \"quality_requirements\": \"焊缝外观应均匀、成形良好，焊波平整。焊后进行外观检查，关键受力焊缝（如轴套、油缸固定板）需进行磁粉检测（MT）或渗透检测（PT），确保无表面裂纹。\",\n        \"safety_notes\": \"进行大面积满焊时，必须穿戴全套防护服，防止高温烫伤。采用分段跳焊工艺，控制整体温升，防止结构件产生大的角变形。注意图纸要求'此面不焊接'的区域，严禁施焊。\"\n      }\n    }\n  ]\n}\n```",
+  "parsed_result": {
+    "enhanced_steps": [
+      {
+        "step_number": 1,
+        "action": "放置基准件",
+        "description": "将图纸上标注为①的左铲板（01.01.01.18598）平稳放置在焊接工作台上，作为装配基准。确保铲板内侧（有安装孔的一侧）朝上。",
+        "position_description": "铲板内侧朝上，平放于工作台。",
+        "parts_used": [
+          {
+            "bom_seq": "1",
+            "bom_name": "左铲板 1",
+            "quantity": 1,
+            "drawing_number": "①",
+            "node_name": [
+              "NAUO1"
+            ],
+            "bom_code": "01.01.01.18598"
+          }
+        ],
+        "tools": [
+          "行车/吊具",
+          "水平仪"
+        ],
+        "warnings": [
+          "吊装时注意平衡，防止零件倾倒。"
+        ]
+      },
+      {
+        "step_number": 2,
+        "action": "安装方形板-机加",
+        "description": "将图纸上标注为②的方形板-机加（01.01.01.18599）放置在①号左铲板的后部边缘，对齐定位孔。该零件用于后续连接，需确保其安装面与铲板垂直。",
+        "position_description": "安装在①号左铲板的后部边缘，与铲板垂直。",
+        "parts_used": [
+          {
+            "bom_seq": "2",
+            "bom_name": "方形板-机加 1",
+            "quantity": 1,
+            "drawing_number": "②",
+            "node_name": [
+              "NAUO2"
+            ],
+            "bom_code": "01.01.01.18599"
+          }
+        ],
+        "tools": [
+          "焊机",
+          "角尺"
+        ],
+        "warnings": [
+          "点焊固定前，必须使用角尺检查垂直度。"
+        ],
+        "welding": {
+          "required": true,
+          "welding_type": "角焊（定位焊）",
+          "welding_method": "CO2气保焊",
+          "weld_size": "点焊，焊点长度10-15mm，高度4mm",
+          "welding_position": "零件②与零件①的连接处，主要为平焊和横焊位置",
+          "quality_requirements": "点焊位置应均匀分布，确保零件定位准确，垂直度误差小于1mm。",
+          "safety_notes": "佩戴焊接面罩和防护手套，确保工作区域通风良好，防止火花飞溅。"
+        }
+      },
+      {
+        "step_number": 3,
+        "action": "安装后加强板和前加强板",
+        "description": "将图纸上标注为③的后加强板（01.01.01.11519）和④的前加强板（01.01.01.18600）安装在①号左铲板的内侧，按照图纸尺寸定位。先点焊固定。",
+        "position_description": "③号后加强板和④号前加强板安装在①号左铲板的内侧，沿铲板弧度走向。",
+        "parts_used": [
+          {
+            "bom_seq": "3",
+            "bom_name": "后加强板 1",
+            "quantity": 1,
+            "drawing_number": "③",
+            "node_name": [
+              "NAUO3"
+            ],
+            "bom_code": "01.01.01.11519"
+          },
+          {
+            "bom_seq": "4",
+            "bom_name": "前加强板 1",
+            "quantity": 1,
+            "drawing_number": "④",
+            "node_name": [
+              "NAUO4"
+            ],
+            "bom_code": "01.01.01.18600"
+          }
+        ],
+        "tools": [
+          "焊机",
+          "卷尺"
+        ],
+        "warnings": [
+          "确保加强板与铲板贴合紧密，无间隙。"
+        ],
+        "welding": {
+          "required": true,
+          "welding_type": "角焊（定位焊）",
+          "welding_method": "CO2气保焊",
+          "weld_size": "点焊，焊点长度10mm，高度4mm",
+          "welding_position": "零件③、④与零件①的连接处，主要为平焊位置",
+          "quality_requirements": "点焊应在加强板边缘均匀分布，确保零件贴合紧密，防止焊接变形。",
+          "safety_notes": "清理焊接区域的油污和锈蚀，防止产生气孔。注意焊机接地良好。"
+        }
+      },
+      {
+        "step_number": 4,
+        "action": "安装底部连接板和前油缸固定板",
+        "description": "将6块图纸上标注为⑤的底部连接板（01.01.01.11521）和2块⑥号前油缸固定板（01.01.01.11522）安装在①号左铲板的底部内侧。⑤号连接板需均匀分布，⑥号固定板安装在指定位置，确保油缸安装孔位对齐。",
+        "position_description": "安装在①号左铲板的底部内侧，靠近铲板边缘。",
+        "parts_used": [
+          {
+            "bom_seq": "5",
+            "bom_name": "底部连接板 6",
+            "quantity": 6,
+            "drawing_number": "⑤",
+            "node_name": [
+              "NAUO15",
+              "NAUO14",
+              "NAUO13",
+              "NAUO12",
+              "NAUO6",
+              "NAUO5"
+            ],
+            "bom_code": "01.01.01.11521"
+          },
+          {
+            "bom_seq": "6",
+            "bom_name": "前油缸固定板 2",
+            "quantity": 2,
+            "drawing_number": "⑥",
+            "node_name": [
+              "NAUO8",
+              "NAUO7"
+            ],
+            "bom_code": "01.01.01.11522"
+          }
+        ],
+        "tools": [
+          "焊机",
+          "卡尺"
+        ],
+        "warnings": [
+          "⑥号前油缸固定板的孔位中心距必须符合图纸要求。"
+        ],
+        "welding": {
+          "required": true,
+          "welding_type": "角焊（定位焊）",
+          "welding_method": "CO2气保焊",
+          "weld_size": "点焊，焊点长度10mm，高度4mm",
+          "welding_position": "零件⑤、⑥与零件①的连接处，主要为平焊位置",
+          "quality_requirements": "⑥号固定板的定位精度要求高，点焊后需复核孔位中心距和垂直度。",
+          "safety_notes": "注意保护⑥号固定板上的机加工孔，避免焊渣飞溅进入孔内。"
+        }
+      },
+      {
+        "step_number": 5,
+        "action": "安装弹簧固定板",
+        "description": "安装1块⑦号前弹簧固定板（01.01.01.11523）和2块⑧号后弹簧固定板（01.01.01.11524）。⑦号固定板安装在铲板内侧中部，⑧号固定板安装在后部，确保弹簧安装孔位朝向正确。",
+        "position_description": "⑦号安装在内侧中部，⑧号安装在内侧后部。",
+        "parts_used": [
+          {
+            "bom_seq": "7",
+            "bom_name": "前弹簧固定板 1",
+            "quantity": 1,
+            "drawing_number": "⑦",
+            "node_name": [
+              "NAUO9"
+            ],
+            "bom_code": "01.01.01.11523"
+          },
+          {
+            "bom_seq": "8",
+            "bom_name": "后弹簧固定板 2",
+            "quantity": 2,
+            "drawing_number": "⑧",
+            "node_name": [
+              "NAUO11",
+              "NAUO10"
+            ],
+            "bom_code": "01.01.01.11524"
+          }
+        ],
+        "tools": [
+          "焊机",
+          "卷尺"
+        ],
+        "warnings": [
+          "弹簧固定板的安装位置是关键受力点，焊接必须牢固。"
+        ],
+        "welding": {
+          "required": true,
+          "welding_type": "角焊（定位焊）",
+          "welding_method": "CO2气保焊",
+          "weld_size": "点焊，焊点长度10mm，高度4mm",
+          "welding_position": "零件⑦、⑧与零件①的连接处，主要为平焊位置",
+          "quality_requirements": "确保固定板与铲板贴合紧密，点焊牢固，防止后续满焊时发生位移。",
+          "safety_notes": "焊接时注意调整电流和电压，避免烧穿薄板区域。"
+        }
+      },
+      {
+        "step_number": 6,
+        "action": "安装支撑固定板和轴套加强板",
+        "description": "安装1块⑨号支撑固定板（01.01.01.11525）和2块⑩号轴套加强板（01.01.01.11526）。⑨号固定板安装在铲板内侧的指定位置，⑩号加强板安装在铲板两侧的轴套安装区域。",
+        "position_description": "⑨号安装在内侧，⑩号安装在两侧边缘。",
+        "parts_used": [
+          {
+            "bom_seq": "9",
+            "bom_name": "支撑固定板 1",
+            "quantity": 1,
+            "drawing_number": "⑨",
+            "node_name": [
+              "NAUO16"
+            ],
+            "bom_code": "01.01.01.11525"
+          },
+          {
+            "bom_seq": "10",
+            "bom_name": "轴套加强板 2",
+            "quantity": 2,
+            "drawing_number": "⑩",
+            "node_name": [
+              "NAUO18",
+              "NAUO17"
+            ],
+            "bom_code": "01.01.01.11526"
+          }
+        ],
+        "tools": [
+          "焊机"
+        ],
+        "warnings": [
+          "⑩号轴套加强板的定位精度影响后续轴套安装。"
+        ],
+        "welding": {
+          "required": true,
+          "welding_type": "角焊（定位焊）",
+          "welding_method": "CO2气保焊",
+          "weld_size": "点焊，焊点长度10mm，高度4mm",
+          "welding_position": "零件⑨、⑩与零件①的连接处，主要为平焊位置",
+          "quality_requirements": "⑩号加强板的定位必须精确，确保与轴套安装孔同心。",
+          "safety_notes": "焊接前检查焊机电缆和气管是否完好，防止漏电或漏气。"
+        }
+      },
+      {
+        "step_number": 7,
+        "action": "安装反光片安装板",
+        "description": "安装1块⑪号反光片安装板（01.01.01.11527）。将其焊接到铲板外侧上部，确保安装板的平面朝外，便于后续安装反光片。",
+        "position_description": "安装在①号左铲板的外侧上部。",
+        "parts_used": [
+          {
+            "bom_seq": "11",
+            "bom_name": "反光片安装板 1",
+            "quantity": 1,
+            "drawing_number": "⑪",
+            "node_name": [
+              "NAUO19"
+            ],
+            "bom_code": "01.01.01.11527"
+          }
+        ],
+        "tools": [
+          "焊机"
+        ],
+        "warnings": [
+          "反光片安装板的焊接位置需避开反光片安装孔。"
+        ],
+        "welding": {
+          "required": true,
+          "welding_type": "角焊（定位焊）",
+          "welding_method": "CO2气保焊",
+          "weld_size": "点焊，焊点长度10mm，高度4mm",
+          "welding_position": "零件⑪与零件①的连接处，主要为横焊位置",
+          "quality_requirements": "定位焊后检查安装板的平面度，确保反光片能平整安装。",
+          "safety_notes": "由于是外侧焊接，注意防止焊渣飞溅到周围已安装的零件上。"
+        }
+      },
+      {
+        "step_number": 8,
+        "action": "安装轴套",
+        "description": "将2个⑫号轴套（01.01.02.1222）安装到铲板两侧的轴套安装孔位上，并与⑩号轴套加强板对齐。轴套需与铲板和加强板满焊连接。",
+        "position_description": "安装在铲板两侧的轴承孔位。",
+        "parts_used": [
+          {
+            "bom_seq": "12",
+            "bom_name": "轴套 2",
+            "quantity": 2,
+            "drawing_number": "⑫",
+            "node_name": [
+              "NAUO21",
+              "NAUO20"
+            ],
+            "bom_code": "01.01.02.1222"
+          }
+        ],
+        "tools": [
+          "焊机",
+          "塞规"
+        ],
+        "warnings": [
+          "轴套的内孔不能被焊渣污染，焊接时注意保护。轴套端面需与加强板端面配合，焊缝需饱满。"
+        ],
+        "welding": {
+          "required": true,
+          "welding_type": "角焊/环形焊（满焊）",
+          "welding_method": "CO2气保焊",
+          "weld_size": "焊脚高度6mm，环形连续焊",
+          "welding_position": "零件⑫与零件①和⑩的连接处，主要为平焊和横焊位置",
+          "quality_requirements": "焊缝必须连续、饱满，无未焊透、气孔等缺陷。焊后需清理焊渣，并用塞规检查轴套内孔是否变形。",
+          "safety_notes": "轴套焊接属于关键受力部位，应采用分段、对称焊接，控制热输入，防止轴套变形。焊接时需使用防火材料遮盖轴套内孔。"
+        }
+      },
+      {
+        "step_number": 9,
+        "action": "安装方形板",
+        "description": "安装1块⑬号方形板 1（01.01.01.11528）和1块⑭号方形板 3（01.01.01.11529）。这两个方形板安装在铲板内侧的指定位置，用于后续连接，需确保焊接牢固。",
+        "position_description": "安装在铲板内侧，靠近后部。",
+        "parts_used": [
+          {
+            "bom_seq": "13",
+            "bom_name": "方形板 1",
+            "quantity": 1,
+            "drawing_number": "⑬"
+          },
+          {
+            "bom_seq": "14",
+            "bom_name": "方形板 3",
+            "quantity": 1,
+            "drawing_number": "⑭",
+            "node_name": [
+              "NAUO24",
+              "NAUO23",
+              "NAUO22"
+            ],
+            "bom_code": "01.01.01.11529"
+          }
+        ],
+        "tools": [
+          "焊机"
+        ],
+        "warnings": [
+          "确保方形板的安装方向和角度符合图纸要求。"
+        ],
+        "welding": {
+          "required": true,
+          "welding_type": "角焊（定位焊）",
+          "welding_method": "CO2气保焊",
+          "weld_size": "点焊，焊点长度10mm，高度4mm",
+          "welding_position": "零件⑬、⑭与零件①的连接处，主要为平焊位置",
+          "quality_requirements": "定位焊后检查方形板的相对位置和角度，确保符合装配要求。",
+          "safety_notes": "注意焊接烟尘的排放，确保排风系统正常工作。"
+        }
+      },
+      {
+        "step_number": 10,
+        "action": "安装左铲雪板加强板",
+        "description": "安装2块⑮号左铲雪板加强板 2（01.02.01.4983）。将它们焊接到铲板内侧的指定加强筋位置，以增强铲板的整体刚度。",
+        "position_description": "安装在铲板内侧，作为加强筋。",
+        "parts_used": [
+          {
+            "bom_seq": "15",
+            "bom_name": "左铲雪板加强板 2",
+            "quantity": 2,
+            "drawing_number": "⑮",
+            "node_name": [
+              "NAUO26",
+              "NAUO25"
+            ],
+            "bom_code": "01.02.01.4983"
+          }
+        ],
+        "tools": [
+          "焊机"
+        ],
+        "warnings": [
+          "加强板焊接需连续，确保应力均匀分布。"
+        ],
+        "welding": {
+          "required": true,
+          "welding_type": "角焊（定位焊）",
+          "welding_method": "CO2气保焊",
+          "weld_size": "点焊，焊点长度10mm，高度4mm",
+          "welding_position": "零件⑮与零件①的连接处，主要为平焊位置",
+          "quality_requirements": "加强板与铲板的贴合度要高，点焊时应施加压力，消除间隙。",
+          "safety_notes": "避免在同一区域连续点焊，防止局部热量集中导致变形。"
+        }
+      },
+      {
+        "step_number": 11,
+        "action": "满焊所有零件",
+        "description": "对所有已点焊固定的零件（②至⑮）进行满焊。焊接前清理焊缝区域，确保焊缝尺寸和质量符合技术要求。注意图纸上标注的'折弯时内侧焊缝完整'和'此面不焊接'的要求。",
+        "position_description": "所有连接面。",
+        "parts_used": [],
+        "tools": [
+          "焊机",
+          "焊渣锤",
+          "钢丝刷"
+        ],
+        "warnings": [
+          "严格控制焊接变形，必要时采用对称、分段焊接。所有焊缝必须无气孔、夹渣、裂纹等缺陷。"
+        ],
+        "welding": {
+          "required": true,
+          "welding_type": "角焊（满焊）",
+          "welding_method": "CO2气保焊",
+          "weld_size": "焊脚高度6mm（未标注尺寸按6mm执行），连续焊",
+          "welding_position": "所有加强板、固定板与铲板的连接处，需进行翻转操作以保证平焊位置",
+          "quality_requirements": "焊缝外观应均匀、成形良好，焊波平整。焊后进行外观检查，关键受力焊缝（如轴套、油缸固定板）需进行磁粉检测（MT）或渗透检测（PT），确保无表面裂纹。",
+          "safety_notes": "进行大面积满焊时，必须穿戴全套防护服，防止高温烫伤。采用分段跳焊工艺，控制整体温升，防止结构件产生大的角变形。注意图纸要求'此面不焊接'的区域，严禁施焊。"
+        }
+      }
+    ]
+  }
+}

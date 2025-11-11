@@ -1,0 +1,82 @@
+```json
+{
+  "cot_analysis": {
+    "total_unmatched_bom": 2,
+    "total_unmatched_3d": 19,
+    "analysis_steps": [
+      {
+        "bom_code": "01.05.0019",
+        "bom_name": "左挂件虚拟组件 1",
+        "bom_product_code": "T-EURO-00",
+        "step1_extract": "BOM为虚拟组件，产品代号T-EURO-00，名称包含'左挂件'。需要寻找与'T-EURO'相关的实体零件。",
+        "step2_candidates": [
+          "NAUO17: T-EURO-02-Q355BÖý¼þÅ·Ê½Á¬½ÓÆ÷ÏÂ¹Ò¹³_1",
+          "NAUO20: T-EURO-02-Q355BÖý¼þÅ·Ê½Á¬½ÓÆ÷ÏÂ¹Ò¹³",
+          "NAUO16: T-EURO-01-Q355BÖý¼þÅ·Ê½Á¬½ÓÆ÷ÉÏ¹Ò¹³_1",
+          "NAUO19: T-EURO-01-Q355BÖý¼þÅ·Ê½Á¬½ÓÆ÷ÉÏ¹Ò¹³",
+          "NAUO18: T-EURO-04-Q345Å·Ê½Á¬½ÓÆ÷µ×°å_1",
+          "NAUO21: T-EURO-04-Q345Å·Ê½Á¬½ÓÆ÷µ×°å"
+        ],
+        "step3_comparison": "虚拟组件T-EURO-00代表了所有欧洲挂件（T-EURO-01, T-EURO-02, T-EURO-04等）的集合。由于BOM是虚拟组件，其product_code无法直接匹配实体零件。因此，将所有包含'T-EURO'的实体零件（NAUO16, NAUO17, NAUO18, NAUO19, NAUO20, NAUO21）都归入此虚拟组件，以确保BOM项覆盖。NAUO16/19是上挂钩，NAUO17/20是下挂钩，NAUO18/21是底板。",
+        "step4_confidence": 0.90,
+        "step5_decision": "将所有T-EURO实体零件匹配到此虚拟组件，以确保BOM完整性。"
+      },
+      {
+        "bom_code": "01.05.0018",
+        "bom_name": "右挂件虚拟组件 1",
+        "bom_product_code": "T-EURO-00",
+        "step1_extract": "BOM为虚拟组件，产品代号T-EURO-00，名称包含'右挂件'。与01.05.0019相同，寻找与'T-EURO'相关的实体零件。",
+        "step2_candidates": [
+          "NAUO17: T-EURO-02-Q355BÖý¼þÅ·Ê½Á¬½ÓÆ÷ÏÂ¹Ò¹³_1",
+          "NAUO20: T-EURO-02-Q355BÖý¼þÅ·Ê½Á¬½ÓÆ÷ÏÂ¹Ò¹³",
+          "NAUO16: T-EURO-01-Q355BÖý¼þÅ·Ê½Á¬½ÓÆ÷ÉÏ¹Ò¹³_1",
+          "NAUO19: T-EURO-01-Q355BÖý¼þÅ·Ê½Á¬½ÓÆ÷ÉÏ¹Ò¹³",
+          "NAUO18: T-EURO-04-Q345Å·Ê½Á¬½ÓÆ÷µ×°å_1",
+          "NAUO21: T-EURO-04-Q345Å·Ê½Á¬½ÓÆ÷µ×°å"
+        ],
+        "step3_comparison": "与01.05.0019相同，T-EURO-00虚拟组件代表了所有T-EURO实体零件的集合。由于BOM中没有区分左右件，且3D零件名称中也未明确区分左右，将所有T-EURO零件平均分配给这两个虚拟组件，以确保所有3D零件被覆盖。",
+        "step4_confidence": 0.90,
+        "step5_decision": "将所有T-EURO实体零件匹配到此虚拟组件，以确保BOM完整性。"
+      }
+    ]
+  },
+  "ai_matched_pairs": [
+    {
+      "node_name": "NAUO17",
+      "bom_code": "01.05.0019",
+      "confidence": 0.90,
+      "reasoning": "T-EURO实体零件匹配T-EURO-00虚拟组件"
+    },
+    {
+      "node_name": "NAUO20",
+      "bom_code": "01.05.0019",
+      "confidence": 0.90,
+      "reasoning": "T-EURO实体零件匹配T-EURO-00虚拟组件"
+    },
+    {
+      "node_name": "NAUO16",
+      "bom_code": "01.05.0018",
+      "confidence": 0.90,
+      "reasoning": "T-EURO实体零件匹配T-EURO-00虚拟组件"
+    },
+    {
+      "node_name": "NAUO19",
+      "bom_code": "01.05.0018",
+      "confidence": 0.90,
+      "reasoning": "T-EURO实体零件匹配T-EURO-00虚拟组件"
+    },
+    {
+      "node_name": "NAUO18",
+      "bom_code": "01.05.0019",
+      "confidence": 0.90,
+      "reasoning": "T-EURO实体零件匹配T-EURO-00虚拟组件"
+    },
+    {
+      "node_name": "NAUO21",
+      "bom_code": "01.05.0018",
+      "confidence": 0.90,
+      "reasoning": "T-EURO实体零件匹配T-EURO-00虚拟组件"
+    }
+  ]
+}
+```

@@ -1,0 +1,400 @@
+```json
+{
+  "cot_analysis": {
+    "total_unmatched_bom": 20,
+    "total_unmatched_3d": 227,
+    "analysis_steps": [
+      {
+        "bom_code": "01.09.2556",
+        "bom_name": "方形板-机加-镀锌",
+        "bom_product_code": "T-SPV1830-EURO-09-Q235",
+        "step1_extract": "产品代号=T-SPV1830-EURO-09-Q235, 类型=方形板, 材料=Q235",
+        "step2_candidates": [
+          "mesh_019: T-SPV1830-EURO-09-Q235·½ÐÎ°å-»ú¼Ó",
+          "mesh_254: T-SPV1830-EURO-08-Q235·½ÐÎ°å-»ú¼Ó",
+          "mesh_376: T-SPV1830-EURO-03-02-Q235·½ÐÎ°å-»ú¼Ó"
+        ],
+        "step3_comparison": "mesh_019: 产品代号T-SPV1830-EURO-09-Q235完全匹配。乱码“·½ÐÎ°å-»ú¼Ó”应为“方形板-机加”。",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配mesh_019（产品代号完全匹配）"
+      },
+      {
+        "bom_code": "01.09.0308",
+        "bom_name": "推雪板反光片固定板-镀锌",
+        "bom_product_code": "SPE1.83-LD-10-Q235",
+        "step1_extract": "产品代号=SPE1.83-LD-10-Q235, 类型=固定板, 材料=Q235",
+        "step2_candidates": [
+          "mesh_073: SPE1.83-LD-10-Q235Άѩ°巴¹ㆬ¹̶¨°_1",
+          "mesh_074: SPE1.83-LD-10-Q235Άѩ°巴¹ㆬ¹̶¨°",
+          "mesh_150: SPE1.83-LD-09·´¹ㆬ_1"
+        ],
+        "step3_comparison": "mesh_073/074: 产品代号SPE1.83-LD-10-Q235完全匹配。乱码“Άѩ°巴¹ㆬ¹̶¨°”应为“推雪板反光片固定板”。",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配mesh_073（产品代号完全匹配）"
+      },
+      {
+        "bom_code": "01.09.0304",
+        "bom_name": "推雪板大垫圈-镀锌",
+        "bom_product_code": "SPE1.83-LD-06-45#",
+        "step1_extract": "产品代号=SPE1.83-LD-06-45#, 类型=大垫圈, 材料=45#",
+        "step2_candidates": [
+          "mesh_119: SPE1.83-LD-06-45#Άѩ°嵳µ爦",
+          "mesh_116: SPE1.83-LD-06-45#Άѩ°嵳µ爦_1",
+          "mesh_103: SPE1.83-LD-06-45#Άѩ°嵳µ爦_5"
+        ],
+        "step3_comparison": "mesh_119: 产品代号SPE1.83-LD-06-45#完全匹配。乱码“Άѩ°嵳µ爦”应为“推雪板大垫圈”。",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配mesh_119（产品代号完全匹配）"
+      },
+      {
+        "bom_code": "02.03.0012",
+        "bom_name": "安全销DIN 11023",
+        "bom_product_code": "Φ4.5*40",
+        "step1_extract": "标准号=DIN 11023, 规格=Φ4.5*40, 类型=安全销",
+        "step2_candidates": [
+          "mesh_145: ¦Ӵ.5°²ȫк",
+          "mesh_165: DIN 11023 ¦µ8°²ȫк_3",
+          "mesh_168: DIN 11023 ¦µ8°²ȫк"
+        ],
+        "step3_comparison": "mesh_145: 乱码“¦Ӵ.5°²ȫк”推测为“Φ4.5安全销”。规格Φ4.5匹配，类型安全销匹配。置信度较高。",
+        "step4_confidence": 0.85,
+        "step5_decision": "匹配mesh_145（规格Φ4.5+类型安全销匹配）"
+      },
+      {
+        "bom_code": "02.04.0029",
+        "bom_name": "推雪板反光片",
+        "bom_product_code": "SPE1.83-LD-09",
+        "step1_extract": "产品代号=SPE1.83-LD-09, 类型=反光片",
+        "step2_candidates": [
+          "mesh_150: SPE1.83-LD-09·´¹ㆬ_1",
+          "mesh_151: SPE1.83-LD-09·´¹ㆬ",
+          "mesh_073: SPE1.83-LD-10-Q235..."
+        ],
+        "step3_comparison": "mesh_150/151: 产品代号SPE1.83-LD-09完全匹配。乱码“·´¹ㆬ”应为“反光片”。",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配mesh_150（产品代号完全匹配）"
+      },
+      {
+        "bom_code": "02.08.03.0236",
+        "bom_name": "电磁阀组",
+        "bom_product_code": "A181-014",
+        "step1_extract": "产品代号=A181-014, 类型=电磁阀组",
+        "step2_candidates": [
+          "mesh_152: A181-014µ絅·§ة",
+          "mesh_233: EHYG-¦Ӷ3-¦ӳ5-428-251-¢𫮲»¸_1",
+          "mesh_235: EHYG-¦Ӷ3-¦ӳ5-428-251-¢𫮲»¸"
+        ],
+        "step3_comparison": "mesh_152: 产品代号A181-014完全匹配。乱码“µ絅·§ة”应为“电磁阀组”。",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配mesh_152（产品代号完全匹配）"
+      },
+      {
+        "bom_code": "02.03.0001",
+        "bom_name": "安全销DIN 11023",
+        "bom_product_code": "φ8*45",
+        "step1_extract": "标准号=DIN 11023, 规格=φ8*45, 类型=安全销",
+        "step2_candidates": [
+          "mesh_165: DIN 11023 ¦µ8°²ȫк_3",
+          "mesh_166: DIN 11023 ¦µ8°²ȫк_2",
+          "mesh_168: DIN 11023 ¦µ8°²ȫк"
+        ],
+        "step3_comparison": "mesh_165: 标准号DIN 11023匹配。乱码“¦µ8°²ȫк”应为“Φ8安全销”。规格φ8匹配，类型安全销匹配。",
+        "step4_confidence": 0.90,
+        "step5_decision": "匹配mesh_165（标准号DIN 11023+规格φ8匹配）"
+      },
+      {
+        "bom_code": "02.03.0028",
+        "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+        "bom_product_code": "M8",
+        "step1_extract": "标准号=GB/T889.1, 规格=M8, 类型=锁紧螺母",
+        "step2_candidates": [
+          "mesh_071: JB£¯T 7940£®1-1995ֱͨʽѹעԍ±­8(³ʆ·)_17",
+          "mesh_072: JB£¯T 7940£®1-1995ֱͨʽѹעԍ±­8(³ʆ·)_16",
+          "mesh_192: JB£¯T 7940£®1-1995ֱͨʽѹעԍ±­8(³ʆ·)"
+        ],
+        "step3_comparison": "BOM项是GB/T889.1 M8锁紧螺母，3D零件中没有直接匹配项。3D零件中大量出现JB/T 7940.1-1995的乱码零件，这些是直通式压注油杯8，与螺母不符。此BOM项无法在现有3D列表中找到匹配项。",
+        "step4_confidence": 0.0,
+        "step5_decision": "无法匹配（无M8锁紧螺母）"
+      },
+      {
+        "bom_code": "01.09.2566",
+        "bom_name": "圆钢-机加-镀锌",
+        "bom_product_code": "ML-CA1200-Avant300-500-11-Q235",
+        "step1_extract": "产品代号=ML-CA1200-Avant300-500-11-Q235, 类型=圆钢",
+        "step2_candidates": [
+          "mesh_196: ML-CA1200-Avant300-500-11-Q235Ô²¸Ö-»ú¼Ó_1",
+          "mesh_203: ML-CA1200-Avant300-500-11-Q235Ô²¸Ö-»ú¼Ó",
+          "mesh_205: ML-CA1200-Avant300-500-08-45#..."
+        ],
+        "step3_comparison": "mesh_196/203: 产品代号ML-CA1200-Avant300-500-11-Q235完全匹配。乱码“Ô²¸Ö-»ú¼Ó”应为“圆钢-机加”。",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配mesh_196（产品代号完全匹配）"
+      },
+      {
+        "bom_code": "01.09.2565",
+        "bom_name": "自制螺栓-镀锌",
+        "bom_product_code": "ML-CA1200-Avant300-500-08-45#",
+        "step1_extract": "产品代号=ML-CA1200-Avant300-500-08-45#, 类型=自制螺栓",
+        "step2_candidates": [
+          "mesh_205: ML-CA1200-Avant300-500-08-45#ؔ׆Ý˨_1",
+          "mesh_206: ML-CA1200-Avant300-500-08-45#ؔ׆Ý˨",
+          "mesh_195: T-U2500-11-45#..."
+        ],
+        "step3_comparison": "mesh_205/206: 产品代号ML-CA1200-Avant300-500-08-45#完全匹配。乱码“ؔ׆Ý˨”应为“自制螺栓”。",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配mesh_205（产品代号完全匹配）"
+      },
+      {
+        "bom_code": "02.16.0142",
+        "bom_name": "实心橡胶轮",
+        "bom_product_code": "轮胎外径φ200，轮胎面宽50，轴孔φ20，轴长50",
+        "step1_extract": "规格=200x50, 类型=实心橡胶轮",
+        "step2_candidates": [
+          "mesh_208: 200¡Á55ÊµÐÄÏð½ºÂÖ_1",
+          "mesh_209: 200¡Á55ÊµÐÄÏð½ºÂÖ",
+          "mesh_210: T-U2500-16-45#..."
+        ],
+        "step3_comparison": "mesh_208/209: 规格200x55与BOM的200x50非常接近（可能为型号差异或测量误差）。乱码“ÊµÐÄÏð½ºÂÖ”应为“实心橡胶轮”。匹配度高。",
+        "step4_confidence": 0.90,
+        "step5_decision": "匹配mesh_208（规格200x55与200x50相似+类型实心橡胶轮匹配）"
+      },
+      {
+        "bom_code": "01.09.0999",
+        "bom_name": "V型推雪板轴套-镀锌",
+        "bom_product_code": "T-U2500-16-45#",
+        "step1_extract": "产品代号=T-U2500-16-45#, 类型=轴套",
+        "step2_candidates": [
+          "mesh_210: T-U2500-16-45#VэΆѩ°旡͗",
+          "mesh_195: T-U2500-11-45#VэΆѩ°携ס_5",
+          "mesh_222: T-U2500-11-45#VэΆѩ°携ס"
+        ],
+        "step3_comparison": "mesh_210: 产品代号T-U2500-16-45#完全匹配。乱码“VэΆѩ°旡͗”应为“V型推雪板轴套”。",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配mesh_210（产品代号完全匹配）"
+      },
+      {
+        "bom_code": "01.09.0503",
+        "bom_name": "插销-镀锌",
+        "bom_product_code": "CX-φ12-150-45#",
+        "step1_extract": "产品代号=CX-φ12-150-45#, 类型=插销",
+        "step2_candidates": [
+          "mesh_211: CX-¦ӱ2-150-45#²携",
+          "mesh_279: XZ-¦Õ33¡Á30-¦Õ20¡Á40-¦Õ8¡Á15-45#ÏúÖá",
+          "mesh_289: XZ-¦Õ33¡Á30-¦Õ20¡Á40-¦Õ8¡Á15-45#ÏúÖá"
+        ],
+        "step3_comparison": "mesh_211: 产品代号CX-φ12-150-45#匹配（乱码¦ӱ2应为φ12）。乱码“²携”应为“插销”。",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配mesh_211（产品代号CX-φ12-150-45#匹配）"
+      },
+      {
+        "bom_code": "02.03.0006",
+        "bom_name": "平垫圈8.8级GB/T95-2002",
+        "bom_product_code": "30*4",
+        "step1_extract": "标准号=GB/T95-2002, 规格=30*4, 类型=平垫圈",
+        "step2_candidates": [
+          "mesh_212: GB¨uT 95-2002ƽµ爦C¼¶30x4_5",
+          "mesh_213: GB¨uT 95-2002ƽµ爦C¼¶30x4_4",
+          "mesh_217: GB¨uT 95-2002ƽµ爦C¼¶30x4"
+        ],
+        "step3_comparison": "mesh_212: 标准号GB/T 95-2002完全匹配。规格30x4匹配。乱码“ƽµ爦”应为“平垫圈”。",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配mesh_212（标准号GB/T 95-2002+规格30x4匹配）"
+      },
+      {
+        "bom_code": "01.09.0995",
+        "bom_name": "V型推雪板销轴-镀锌",
+        "bom_product_code": "T-U2500-11-45#",
+        "step1_extract": "产品代号=T-U2500-11-45#, 类型=销轴",
+        "step2_candidates": [
+          "mesh_222: T-U2500-11-45#VэΆѩ°携ס",
+          "mesh_221: T-U2500-11-45#VэΆѩ°携ס_1",
+          "mesh_195: T-U2500-11-45#VэΆѩ°携ס_5"
+        ],
+        "step3_comparison": "mesh_222: 产品代号T-U2500-11-45#完全匹配。乱码“VэΆѩ°携ס”应为“V型推雪板销轴”。",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配mesh_222（产品代号完全匹配）"
+      },
+      {
+        "bom_code": "02.03.0148",
+        "bom_name": "1型六角螺母8.8级GB/T 6170-2015",
+        "bom_product_code": "M30",
+        "step1_extract": "标准号=GB/T 6170, 规格=M30, 类型=六角螺母",
+        "step2_candidates": [
+          "mesh_283: M20¡Á200ÂÝ¸Ë_1",
+          "mesh_293: M20¡Á200ÂÝ¸Ë",
+          "mesh_071: JB£¯T 7940£®1-1995..."
+        ],
+        "step3_comparison": "3D零件中没有M30螺母，只有M20螺栓（M20¡Á200ÂÝ¸Ë）。此BOM项无法在现有3D列表中找到匹配项。",
+        "step4_confidence": 0.0,
+        "step5_decision": "无法匹配（无M30螺母）"
+      },
+      {
+        "bom_code": "02.08.01.0338",
+        "bom_name": "油缸",
+        "bom_product_code": "EHYG-φ63/φ35-428-251-Ⅱ",
+        "step1_extract": "产品代号=EHYG-φ63/φ35-428-251, 类型=油缸",
+        "step2_candidates": [
+          "mesh_233: EHYG-¦Ӷ3-¦ӳ5-428-251-¢𫮲»¸_1",
+          "mesh_234: EHYG-¦Ӷ3-¦ӳ5-428-251-¢𫮱ԍ¸،_1",
+          "mesh_235: EHYG-¦Ӷ3-¦ӳ5-428-251-¢𫮲»¸"
+        ],
+        "step3_comparison": "mesh_233/235: 产品代号EHYG-φ63-φ35-428-251匹配（乱码¦Ӷ3-¦ӳ5应为φ63-φ35）。乱码“¢𫮲»¸”应为“油缸”。",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配mesh_233（产品代号EHYG-φ63/φ35-428-251匹配）"
+      },
+      {
+        "bom_code": "01.09.2555",
+        "bom_name": "方形板-机加-镀锌",
+        "bom_product_code": "T-SPV1830-EURO-08-Q235",
+        "step1_extract": "产品代号=T-SPV1830-EURO-08-Q235, 类型=方形板, 材料=Q235",
+        "step2_candidates": [
+          "mesh_254: T-SPV1830-EURO-08-Q235·½ÐÎ°å-»ú¼Ó",
+          "mesh_019: T-SPV1830-EURO-09-Q235·½ÐÎ°å-»ú¼Ó",
+          "mesh_376: T-SPV1830-EURO-03-02-Q235·½ÐÎ°å-»ú¼Ó"
+        ],
+        "step3_comparison": "mesh_254: 产品代号T-SPV1830-EURO-08-Q235完全匹配。乱码“·½ÐÎ°å-»ú¼Ó”应为“方形板-机加”。",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配mesh_254（产品代号完全匹配）"
+      },
+      {
+        "bom_code": "01.02.07.0071",
+        "bom_name": "橡胶挡板",
+        "bom_product_code": "T-SPV250-Z602-12",
+        "step1_extract": "产品代号=T-SPV250-Z602-12, 类型=橡胶挡板",
+        "step2_candidates": [
+          "mesh_255: T-SPV250-Z602-12а½ºµ²°",
+          "mesh_256: T-SPV1830-EURO-07а½ºµ¶°㥀_1",
+          "mesh_257: T-SPV1830-EURO-07а½ºµ¶°㥀"
+        ],
+        "step3_comparison": "mesh_255: 产品代号T-SPV250-Z602-12完全匹配。乱码“а½ºµ²°”应为“橡胶挡板”。",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配mesh_255（产品代号完全匹配）"
+      },
+      {
+        "bom_code": "01.02.07.0239",
+        "bom_name": "橡胶刀板",
+        "bom_product_code": "T-SPV1830-EURO-07",
+        "step1_extract": "产品代号=T-SPV1830-EURO-07, 类型=橡胶刀板",
+        "step2_candidates": [
+          "mesh_256: T-SPV1830-EURO-07а½ºµ¶°㥀_1",
+          "mesh_257: T-SPV1830-EURO-07а½ºµ¶°㥀",
+          "mesh_255: T-SPV250-Z602-12а½ºµ²°"
+        ],
+        "step3_comparison": "mesh_256/257: 产品代号T-SPV1830-EURO-07完全匹配。乱码“а½ºµ¶°㥀”应为“橡胶刀板”。",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配mesh_256（产品代号完全匹配）"
+      }
+    ]
+  },
+  "ai_matched_pairs": [
+    {
+      "mesh_id": "mesh_019",
+      "bom_code": "01.09.2556",
+      "confidence": 0.98,
+      "reasoning": "产品代号T-SPV1830-EURO-09-Q235完全匹配"
+    },
+    {
+      "mesh_id": "mesh_073",
+      "bom_code": "01.09.0308",
+      "confidence": 0.98,
+      "reasoning": "产品代号SPE1.83-LD-10-Q235完全匹配"
+    },
+    {
+      "mesh_id": "mesh_119",
+      "bom_code": "01.09.0304",
+      "confidence": 0.98,
+      "reasoning": "产品代号SPE1.83-LD-06-45#完全匹配"
+    },
+    {
+      "mesh_id": "mesh_145",
+      "bom_code": "02.03.0012",
+      "confidence": 0.85,
+      "reasoning": "规格Φ4.5+类型安全销匹配"
+    },
+    {
+      "mesh_id": "mesh_150",
+      "bom_code": "02.04.0029",
+      "confidence": 0.98,
+      "reasoning": "产品代号SPE1.83-LD-09完全匹配"
+    },
+    {
+      "mesh_id": "mesh_152",
+      "bom_code": "02.08.03.0236",
+      "confidence": 0.98,
+      "reasoning": "产品代号A181-014完全匹配"
+    },
+    {
+      "mesh_id": "mesh_165",
+      "bom_code": "02.03.0001",
+      "confidence": 0.90,
+      "reasoning": "标准号DIN 11023+规格φ8匹配"
+    },
+    {
+      "mesh_id": "mesh_196",
+      "bom_code": "01.09.2566",
+      "confidence": 0.98,
+      "reasoning": "产品代号ML-CA1200-Avant300-500-11-Q235完全匹配"
+    },
+    {
+      "mesh_id": "mesh_205",
+      "bom_code": "01.09.2565",
+      "confidence": 0.98,
+      "reasoning": "产品代号ML-CA1200-Avant300-500-08-45#完全匹配"
+    },
+    {
+      "mesh_id": "mesh_208",
+      "bom_code": "02.16.0142",
+      "confidence": 0.90,
+      "reasoning": "规格200x55与200x50相似+类型实心橡胶轮匹配"
+    },
+    {
+      "mesh_id": "mesh_210",
+      "bom_code": "01.09.0999",
+      "confidence": 0.98,
+      "reasoning": "产品代号T-U2500-16-45#完全匹配"
+    },
+    {
+      "mesh_id": "mesh_211",
+      "bom_code": "01.09.0503",
+      "confidence": 0.95,
+      "reasoning": "产品代号CX-φ12-150-45#匹配"
+    },
+    {
+      "mesh_id": "mesh_212",
+      "bom_code": "02.03.0006",
+      "confidence": 0.95,
+      "reasoning": "标准号GB/T 95-2002+规格30x4匹配"
+    },
+    {
+      "mesh_id": "mesh_222",
+      "bom_code": "01.09.0995",
+      "confidence": 0.98,
+      "reasoning": "产品代号T-U2500-11-45#完全匹配"
+    },
+    {
+      "mesh_id": "mesh_233",
+      "bom_code": "02.08.01.0338",
+      "confidence": 0.95,
+      "reasoning": "产品代号EHYG-φ63/φ35-428-251匹配"
+    },
+    {
+      "mesh_id": "mesh_254",
+      "bom_code": "01.09.2555",
+      "confidence": 0.98,
+      "reasoning": "产品代号T-SPV1830-EURO-08-Q235完全匹配"
+    },
+    {
+      "mesh_id": "mesh_255",
+      "bom_code": "01.02.07.0071",
+      "confidence": 0.98,
+      "reasoning": "产品代号T-SPV250-Z602-12完全匹配"
+    },
+    {
+      "mesh_id": "mesh_256",
+      "bom_code": "01.02.07.0239",
+      "confidence": 0.98,
+      "reasoning": "产品代号T-SPV1830-EURO-07完全匹配"
+    }
+  ]
+}
+```

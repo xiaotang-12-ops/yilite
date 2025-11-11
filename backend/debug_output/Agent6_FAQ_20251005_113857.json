@@ -1,0 +1,322 @@
+{
+  "agent_name": "Agent6_FAQ",
+  "model": "openai/gpt-5-chat",
+  "timestamp": "20251005_113857",
+  "image_count": 0,
+  "temperature": 0.2,
+  "system_prompt": "你是安全工程师李师傅，拥有20年安全管理经验。\n\n你的任务：为每个装配步骤添加安全警告（如果该步骤有安全风险）。\n\n## 核心原则\n\n1. **安全第一**：识别所有潜在的安全风险\n2. **嵌入警告**：为有风险的步骤添加safety_warnings字段\n3. **工人友好**：使用通俗语言，避免专业术语\n\n## 输出格式\n\n严格按照以下JSON格式输出（返回增强后的装配步骤）：\n\n```json\n{\n  \"enhanced_steps\": [\n    {\n      \"step_number\": 1,\n      \"title\": \"步骤标题\",\n      \"parts_used\": [...],\n      \"tools_required\": [...],\n      \"operation\": \"操作说明\",\n      \"quality_check\": \"质量检查\",\n      \"estimated_time_minutes\": 10,\n      \"welding\": {...},\n      \"safety_warnings\": [\n        \"佩戴安全帽和防护眼镜\",\n        \"确保工件固定牢固\",\n        \"注意防止烫伤\"\n      ]\n    }\n  ]\n}\n```\n\n**⚠️ 重要**：\n- 如果步骤没有安全风险，不要添加safety_warnings字段\n- 如果步骤有安全风险，safety_warnings必须是字符串数组\n- 保持原有步骤的所有字段不变，只添加safety_warnings字段\n\n## 重要提醒\n\n- **只输出JSON，不要输出其他内容**\n- **安全警告要具体**：说明具体的风险和预防措施\n- **使用通俗语言**：工人能看懂的语言\n",
+  "user_query": "请为以下装配步骤添加安全警告（如果有安全风险）。\n\n## 装配步骤\n\n[\n  {\n    \"step_number\": 1,\n    \"action\": \"放置基准件\",\n    \"description\": \"取图纸上标注为①的连接板（BOM代号：01.01.01.11509），平放在装配工装上，调平作为装配基准。\",\n    \"position_description\": \"位于组件中心位置，作为整体装配基准。\",\n    \"parts_used\": [\n      {\n        \"bom_code\": \"01.01.01.11509\",\n        \"bom_name\": \"连接板\",\n        \"quantity\": 1,\n        \"drawing_number\": \"1\",\n        \"mesh_id\": [\n          \"mesh_018\"\n        ]\n      }\n    ],\n    \"tools\": [\n      \"水平仪\",\n      \"钢直尺\"\n    ],\n    \"warnings\": [\n      \"放置时注意防止刮伤表面\",\n      \"保证基准平面清洁无油污\"\n    ]\n  },\n  {\n    \"step_number\": 2,\n    \"action\": \"安装左侧矩形管\",\n    \"description\": \"取②号矩形管（BOM代号：01.01.03.2718），对齐连接板①左侧的焊接位置，从内侧定位后与基准焊接定位点点焊固定。\",\n    \"position_description\": \"位于①号连接板左侧，与基准板成直角连接。\",\n    \"parts_used\": [\n      {\n        \"bom_code\": \"01.01.03.2718\",\n        \"bom_name\": \"矩形管 1\",\n        \"quantity\": 1,\n        \"drawing_number\": \"2\"\n      }\n    ],\n    \"tools\": [\n      \"角尺\",\n      \"焊机\",\n      \"卡尺\"\n    ],\n    \"warnings\": [\n      \"焊前检查坡口\",\n      \"定位后先点焊防止变形\"\n    ],\n    \"welding\": {\n      \"required\": true,\n      \"welding_type\": \"角焊\",\n      \"welding_method\": \"CO2气保焊\",\n      \"weld_size\": \"焊缝高度6mm\",\n      \"welding_position\": \"连接板①与矩形管②内角处平焊\",\n      \"quality_requirements\": \"点焊牢固，焊缝均匀无烧穿\",\n      \"safety_notes\": \"佩戴面罩、防护手套，保持通风防止烟气吸入\"\n    }\n  },\n  {\n    \"step_number\": 3,\n    \"action\": \"安装右侧矩形管\",\n    \"description\": \"取⑨号矩形管（BOM代号：01.01.03.2719），放置在①号连接板右侧，对齐焊缝标线并点焊固定。\",\n    \"position_description\": \"与左侧对称，安装在①号连接板右侧。\",\n    \"parts_used\": [\n      {\n        \"bom_code\": \"01.01.03.2719\",\n        \"bom_name\": \"矩形管 2\",\n        \"quantity\": 1,\n        \"drawing_number\": \"9\"\n      }\n    ],\n    \"tools\": [\n      \"角尺\",\n      \"焊机\"\n    ],\n    \"warnings\": [\n      \"保持左右对称\",\n      \"焊接时防止过热变形\"\n    ],\n    \"welding\": {\n      \"required\": true,\n      \"welding_type\": \"角焊\",\n      \"welding_method\": \"CO2气保焊\",\n      \"weld_size\": \"焊缝高度6mm\",\n      \"welding_position\": \"连接板①与矩形管⑨内角处平焊\",\n      \"quality_requirements\": \"点焊牢固，焊缝平滑，无气孔夹渣\",\n      \"safety_notes\": \"焊接时注意保持手稳，防止弧光灼伤眼睛\"\n    }\n  },\n  {\n    \"step_number\": 4,\n    \"action\": \"安装封板\",\n    \"description\": \"取③号封板（BOM代号：01.01.01.16608），将两块封板分别贴合在左右矩形管的外侧端面上，使用夹具固定后满焊。\",\n    \"position_description\": \"安装在矩形管②、⑨外端面，形成封闭结构。\",\n    \"parts_used\": [\n      {\n        \"bom_code\": \"01.01.01.16608\",\n        \"bom_name\": \"封板\",\n        \"quantity\": 2,\n        \"drawing_number\": \"7\",\n        \"mesh_id\": [\n          \"mesh_004\",\n          \"mesh_005\"\n        ]\n      }\n    ],\n    \"tools\": [\n      \"夹具\",\n      \"焊机\"\n    ],\n    \"warnings\": [\n      \"焊接顺序要对称\",\n      \"防止两侧拉弯\"\n    ],\n    \"welding\": {\n      \"required\": true,\n      \"welding_type\": \"角焊\",\n      \"welding_method\": \"CO2气保焊\",\n      \"weld_size\": \"焊缝高度8mm\",\n      \"welding_position\": \"封板③与矩形管外端面四周平焊\",\n      \"quality_requirements\": \"焊缝连续饱满，无未焊透\",\n      \"safety_notes\": \"焊接封口时注意防止飞溅烫伤，操作区保持清洁\"\n    }\n  },\n  {\n    \"step_number\": 5,\n    \"action\": \"安装方形板\",\n    \"description\": \"取⑦号方形板-机加件（BOM代号：01.01.01.6589），对应连接板前表面四个安装孔位置，使用定位销临时固定，然后焊接四周止口。\",\n    \"position_description\": \"安装在组件前表面，居中位置。\",\n    \"parts_used\": [\n      {\n        \"bom_code\": \"01.01.01.6589\",\n        \"bom_name\": \"方形板-机加\",\n        \"quantity\": 4,\n        \"drawing_number\": \"3\",\n        \"mesh_id\": [\n          \"mesh_014\",\n          \"mesh_015\",\n          \"mesh_016\",\n          \"mesh_017\"\n        ]\n      }\n    ],\n    \"tools\": [\n      \"夹具\",\n      \"焊机\",\n      \"定位销\"\n    ],\n    \"warnings\": [\n      \"对齐中心线\",\n      \"焊缝均匀，避免咬边\"\n    ],\n    \"welding\": {\n      \"required\": true,\n      \"welding_type\": \"角焊\",\n      \"welding_method\": \"CO2气保焊\",\n      \"weld_size\": \"焊缝高度4mm\",\n      \"welding_position\": \"方形板⑦与连接板①前表面止口处平焊\",\n      \"quality_requirements\": \"焊缝平滑，外观整齐，无气孔\",\n      \"safety_notes\": \"焊接期间佩戴防护眼镜，避免弧光直射\"\n    }\n  },\n  {\n    \"step_number\": 6,\n    \"action\": \"安装左挂件虚拟组件\",\n    \"description\": \"取⑤号左挂件虚拟组件（BOM代号：01.05.0019），将挂件底部法兰与左侧矩形管的前端面对齐，调整角度后点焊连接。\",\n    \"position_description\": \"位于组件左上方，矩形管②的前端上部位置。\",\n    \"parts_used\": [\n      {\n        \"bom_code\": \"01.05.0019\",\n        \"bom_name\": \"左挂件虚拟组件\",\n        \"quantity\": 1,\n        \"drawing_number\": \"5\",\n        \"mesh_id\": [\n          \"mesh_010\",\n          \"mesh_012\",\n          \"mesh_013\"\n        ]\n      }\n    ],\n    \"tools\": [\n      \"焊机\",\n      \"角尺\"\n    ],\n    \"warnings\": [\n      \"控制角度与水平一致\",\n      \"点焊后检查位置再满焊\"\n    ],\n    \"welding\": {\n      \"required\": true,\n      \"welding_type\": \"角焊\",\n      \"welding_method\": \"CO2气保焊\",\n      \"weld_size\": \"焊缝高度6mm\",\n      \"welding_position\": \"左挂件⑤法兰与矩形管②前端角接处平焊\",\n      \"quality_requirements\": \"点焊位置准确，满焊后焊缝饱满整齐\",\n      \"safety_notes\": \"焊接时保持姿势稳，防止高处坠落或烫伤\"\n    }\n  },\n  {\n    \"step_number\": 7,\n    \"action\": \"安装右挂件虚拟组件\",\n    \"description\": \"取⑥号右挂件虚拟组件（BOM代号：01.05.0018），与左挂件对称安装在右侧矩形管⑨前端上方，同步调整角度后焊牢。\",\n    \"position_description\": \"位于组件右上方，对称于左挂件。\",\n    \"parts_used\": [\n      {\n        \"bom_code\": \"01.05.0018\",\n        \"bom_name\": \"右挂件虚拟组件\",\n        \"quantity\": 1,\n        \"drawing_number\": \"4\",\n        \"mesh_id\": [\n          \"mesh_008\",\n          \"mesh_009\",\n          \"mesh_011\"\n        ]\n      }\n    ],\n    \"tools\": [\n      \"焊机\",\n      \"角尺\",\n      \"水平仪\"\n    ],\n    \"warnings\": [\n      \"保持与左挂件对称\",\n      \"焊接前确认位置一致\"\n    ],\n    \"welding\": {\n      \"required\": true,\n      \"welding_type\": \"角焊\",\n      \"welding_method\": \"CO2气保焊\",\n      \"weld_size\": \"焊缝高度6mm\",\n      \"welding_position\": \"右挂件⑥法兰与矩形管⑨前端角接处平焊\",\n      \"quality_requirements\": \"焊缝均匀饱满，对称一致\",\n      \"safety_notes\": \"施工面层远离易燃物，防止电弧火花引燃\"\n    }\n  },\n  {\n    \"step_number\": 8,\n    \"action\": \"焊接加强筋\",\n    \"description\": \"取⑨号加强筋（BOM代号：01.01.01.17678）两块，分别焊接在背面矩形管与连接板的三角位置处，起加固作用。\",\n    \"position_description\": \"安装在组件背面两侧的上下交角处。\",\n    \"parts_used\": [\n      {\n        \"bom_code\": \"01.01.01.17678\",\n        \"bom_name\": \"加强筋\",\n        \"quantity\": 2,\n        \"drawing_number\": \"9\",\n        \"mesh_id\": [\n          \"mesh_001\",\n          \"mesh_002\"\n        ]\n      }\n    ],\n    \"tools\": [\n      \"焊机\",\n      \"角尺\"\n    ],\n    \"warnings\": [\n      \"焊缝饱满\",\n      \"注意对称，防止翘曲\"\n    ],\n    \"welding\": {\n      \"required\": true,\n      \"welding_type\": \"角焊\",\n      \"welding_method\": \"CO2气保焊\",\n      \"weld_size\": \"焊缝高度8mm\",\n      \"welding_position\": \"加强筋⑨与矩形管及连接板交角处平焊\",\n      \"quality_requirements\": \"焊缝饱满，过渡圆滑，无裂纹气孔\",\n      \"safety_notes\": \"保持工件冷却间隔，防止变形和烫伤\"\n    }\n  }\n]\n\n## 要求\n\n1. **识别风险步骤**：判断哪些步骤有安全风险（吊装、焊接、高空作业、重物搬运等）\n2. **添加安全警告**：为有风险的步骤添加safety_warnings字段\n3. **保持原有字段**：不要修改或删除原有的字段（step_number、title、welding等）\n4. **使用通俗语言**：工人能看懂的语言\n5. **警告要具体**：说明具体的风险和预防措施\n\n## 自检清单\n\n- [ ] 所有有风险的步骤都添加了safety_warnings字段\n- [ ] safety_warnings是字符串数组，每条警告简洁明了\n- [ ] 原有步骤的所有字段都保持不变\n- [ ] 没有风险的步骤没有添加safety_warnings字段\n\n现在开始为装配步骤添加安全警告！\n",
+  "raw_response": "```json\n{\n  \"enhanced_steps\": [\n    {\n      \"step_number\": 1,\n      \"action\": \"放置基准件\",\n      \"description\": \"取图纸上标注为①的连接板（BOM代号：01.01.01.11509），平放在装配工装上，调平作为装配基准。\",\n      \"position_description\": \"位于组件中心位置，作为整体装配基准。\",\n      \"parts_used\": [\n        {\n          \"bom_code\": \"01.01.01.11509\",\n          \"bom_name\": \"连接板\",\n          \"quantity\": 1,\n          \"drawing_number\": \"1\",\n          \"mesh_id\": [\n            \"mesh_018\"\n          ]\n        }\n      ],\n      \"tools\": [\n        \"水平仪\",\n        \"钢直尺\"\n      ],\n      \"warnings\": [\n        \"放置时注意防止刮伤表面\",\n        \"保证基准平面清洁无油污\"\n      ],\n      \"safety_warnings\": [\n        \"搬运连接板时注意防止夹手或砸脚，必要时两人协作\",\n        \"放置工件前检查工装是否稳固，防止滑落\"\n      ]\n    },\n    {\n      \"step_number\": 2,\n      \"action\": \"安装左侧矩形管\",\n      \"description\": \"取②号矩形管（BOM代号：01.01.03.2718），对齐连接板①左侧的焊接位置，从内侧定位后与基准焊接定位点点焊固定。\",\n      \"position_description\": \"位于①号连接板左侧，与基准板成直角连接。\",\n      \"parts_used\": [\n        {\n          \"bom_code\": \"01.01.03.2718\",\n          \"bom_name\": \"矩形管 1\",\n          \"quantity\": 1,\n          \"drawing_number\": \"2\"\n        }\n      ],\n      \"tools\": [\n        \"角尺\",\n        \"焊机\",\n        \"卡尺\"\n      ],\n      \"warnings\": [\n        \"焊前检查坡口\",\n        \"定位后先点焊防止变形\"\n      ],\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"焊缝高度6mm\",\n        \"welding_position\": \"连接板①与矩形管②内角处平焊\",\n        \"quality_requirements\": \"点焊牢固，焊缝均匀无烧穿\",\n        \"safety_notes\": \"佩戴面罩、防护手套，保持通风防止烟气吸入\"\n      },\n      \"safety_warnings\": [\n        \"焊接前确保工件固定牢，防止移动烫伤\",\n        \"佩戴防护面罩、手套，防止弧光灼伤和飞溅烫伤\",\n        \"保持周围通风良好，避免吸入焊烟\"\n      ]\n    },\n    {\n      \"step_number\": 3,\n      \"action\": \"安装右侧矩形管\",\n      \"description\": \"取⑨号矩形管（BOM代号：01.01.03.2719），放置在①号连接板右侧，对齐焊缝标线并点焊固定。\",\n      \"position_description\": \"与左侧对称，安装在①号连接板右侧。\",\n      \"parts_used\": [\n        {\n          \"bom_code\": \"01.01.03.2719\",\n          \"bom_name\": \"矩形管 2\",\n          \"quantity\": 1,\n          \"drawing_number\": \"9\"\n        }\n      ],\n      \"tools\": [\n        \"角尺\",\n        \"焊机\"\n      ],\n      \"warnings\": [\n        \"保持左右对称\",\n        \"焊接时防止过热变形\"\n      ],\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"焊缝高度6mm\",\n        \"welding_position\": \"连接板①与矩形管⑨内角处平焊\",\n        \"quality_requirements\": \"点焊牢固，焊缝平滑，无气孔夹渣\",\n        \"safety_notes\": \"焊接时注意保持手稳，防止弧光灼伤眼睛\"\n      },\n      \"safety_warnings\": [\n        \"焊机接地良好，防止触电\",\n        \"防止电弧光直射眼睛，佩戴防护面罩\",\n        \"工件烫热后勿立即触摸，防止烫伤\"\n      ]\n    },\n    {\n      \"step_number\": 4,\n      \"action\": \"安装封板\",\n      \"description\": \"取③号封板（BOM代号：01.01.01.16608），将两块封板分别贴合在左右矩形管的外侧端面上，使用夹具固定后满焊。\",\n      \"position_description\": \"安装在矩形管②、⑨外端面，形成封闭结构。\",\n      \"parts_used\": [\n        {\n          \"bom_code\": \"01.01.01.16608\",\n          \"bom_name\": \"封板\",\n          \"quantity\": 2,\n          \"drawing_number\": \"7\",\n          \"mesh_id\": [\n            \"mesh_004\",\n            \"mesh_005\"\n          ]\n        }\n      ],\n      \"tools\": [\n        \"夹具\",\n        \"焊机\"\n      ],\n      \"warnings\": [\n        \"焊接顺序要对称\",\n        \"防止两侧拉弯\"\n      ],\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"焊缝高度8mm\",\n        \"welding_position\": \"封板③与矩形管外端面四周平焊\",\n        \"quality_requirements\": \"焊缝连续饱满，无未焊透\",\n        \"safety_notes\": \"焊接封口时注意防止飞溅烫伤，操作区保持清洁\"\n      },\n      \"safety_warnings\": [\n        \"焊接时保持防护面罩佩戴到位，防止飞溅烫伤\",\n        \"操作区周围不要堆放易燃物\",\n        \"夹具固定要牢靠，防止焊接时滑动\"\n      ]\n    },\n    {\n      \"step_number\": 5,\n      \"action\": \"安装方形板\",\n      \"description\": \"取⑦号方形板-机加件（BOM代号：01.01.01.6589），对应连接板前表面四个安装孔位置，使用定位销临时固定，然后焊接四周止口。\",\n      \"position_description\": \"安装在组件前表面，居中位置。\",\n      \"parts_used\": [\n        {\n          \"bom_code\": \"01.01.01.6589\",\n          \"bom_name\": \"方形板-机加\",\n          \"quantity\": 4,\n          \"drawing_number\": \"3\",\n          \"mesh_id\": [\n            \"mesh_014\",\n            \"mesh_015\",\n            \"mesh_016\",\n            \"mesh_017\"\n          ]\n        }\n      ],\n      \"tools\": [\n        \"夹具\",\n        \"焊机\",\n        \"定位销\"\n      ],\n      \"warnings\": [\n        \"对齐中心线\",\n        \"焊缝均匀，避免咬边\"\n      ],\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"焊缝高度4mm\",\n        \"welding_position\": \"方形板⑦与连接板①前表面止口处平焊\",\n        \"quality_requirements\": \"焊缝平滑，外观整齐，无气孔\",\n        \"safety_notes\": \"焊接期间佩戴防护眼镜，避免弧光直射\"\n      },\n      \"safety_warnings\": [\n        \"焊接区域应干燥通风，防止气体聚集\",\n        \"焊后工件高温，禁止徒手触碰\",\n        \"检验焊缝时须待工件冷却\"\n      ]\n    },\n    {\n      \"step_number\": 6,\n      \"action\": \"安装左挂件虚拟组件\",\n      \"description\": \"取⑤号左挂件虚拟组件（BOM代号：01.05.0019），将挂件底部法兰与左侧矩形管的前端面对齐，调整角度后点焊连接。\",\n      \"position_description\": \"位于组件左上方，矩形管②的前端上部位置。\",\n      \"parts_used\": [\n        {\n          \"bom_code\": \"01.05.0019\",\n          \"bom_name\": \"左挂件虚拟组件\",\n          \"quantity\": 1,\n          \"drawing_number\": \"5\",\n          \"mesh_id\": [\n            \"mesh_010\",\n            \"mesh_012\",\n            \"mesh_013\"\n          ]\n        }\n      ],\n      \"tools\": [\n        \"焊机\",\n        \"角尺\"\n      ],\n      \"warnings\": [\n        \"控制角度与水平一致\",\n        \"点焊后检查位置再满焊\"\n      ],\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"焊缝高度6mm\",\n        \"welding_position\": \"左挂件⑤法兰与矩形管②前端角接处平焊\",\n        \"quality_requirements\": \"点焊位置准确，满焊后焊缝饱满整齐\",\n        \"safety_notes\": \"焊接时保持姿势稳，防止高处坠落或烫伤\"\n      },\n      \"safety_warnings\": [\n        \"若需登高操作，使用稳固脚手板或工作台，禁止站在工件上\",\n        \"焊接时防止飞溅物击中面部或衣物，穿防火工作服\",\n        \"焊后待冷却再测量角度，防止烫伤\"\n      ]\n    },\n    {\n      \"step_number\": 7,\n      \"action\": \"安装右挂件虚拟组件\",\n      \"description\": \"取⑥号右挂件虚拟组件（BOM代号：01.05.0018），与左挂件对称安装在右侧矩形管⑨前端上方，同步调整角度后焊牢。\",\n      \"position_description\": \"位于组件右上方，对称于左挂件。\",\n      \"parts_used\": [\n        {\n          \"bom_code\": \"01.05.0018\",\n          \"bom_name\": \"右挂件虚拟组件\",\n          \"quantity\": 1,\n          \"drawing_number\": \"4\",\n          \"mesh_id\": [\n            \"mesh_008\",\n            \"mesh_009\",\n            \"mesh_011\"\n          ]\n        }\n      ],\n      \"tools\": [\n        \"焊机\",\n        \"角尺\",\n        \"水平仪\"\n      ],\n      \"warnings\": [\n        \"保持与左挂件对称\",\n        \"焊接前确认位置一致\"\n      ],\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"焊缝高度6mm\",\n        \"welding_position\": \"右挂件⑥法兰与矩形管⑨前端角接处平焊\",\n        \"quality_requirements\": \"焊缝均匀饱满，对称一致\",\n        \"safety_notes\": \"施工面层远离易燃物，防止电弧火花引燃\"\n      },\n      \"safety_warnings\": [\n        \"焊接前清理周围易燃物，保持消防通道畅通\",\n        \"使用焊机前检查电缆绝缘是否良好，防止触电\",\n        \"登高作业需有防坠措施\"\n      ]\n    },\n    {\n      \"step_number\": 8,\n      \"action\": \"焊接加强筋\",\n      \"description\": \"取⑨号加强筋（BOM代号：01.01.01.17678）两块，分别焊接在背面矩形管与连接板的三角位置处，起加固作用。\",\n      \"position_description\": \"安装在组件背面两侧的上下交角处。\",\n      \"parts_used\": [\n        {\n          \"bom_code\": \"01.01.01.17678\",\n          \"bom_name\": \"加强筋\",\n          \"quantity\": 2,\n          \"drawing_number\": \"9\",\n          \"mesh_id\": [\n            \"mesh_001\",\n            \"mesh_002\"\n          ]\n        }\n      ],\n      \"tools\": [\n        \"焊机\",\n        \"角尺\"\n      ],\n      \"warnings\": [\n        \"焊缝饱满\",\n        \"注意对称，防止翘曲\"\n      ],\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"角焊\",\n        \"welding_method\": \"CO2气保焊\",\n        \"weld_size\": \"焊缝高度8mm\",\n        \"welding_position\": \"加强筋⑨与矩形管及连接板交角处平焊\",\n        \"quality_requirements\": \"焊缝饱满，过渡圆滑，无裂纹气孔\",\n        \"safety_notes\": \"保持工件冷却间隔，防止变形和烫伤\"\n      },\n      \"safety_warnings\": [\n        \"焊接加强筋时注意焊枪角度，防止弧光反射灼伤眼睛\",\n        \"工件焊接区域温度高，等待冷却后再移动\",\n        \"保持通风，减少焊烟吸入\"\n      ]\n    }\n  ]\n}\n```",
+  "parsed_result": {
+    "enhanced_steps": [
+      {
+        "step_number": 1,
+        "action": "放置基准件",
+        "description": "取图纸上标注为①的连接板（BOM代号：01.01.01.11509），平放在装配工装上，调平作为装配基准。",
+        "position_description": "位于组件中心位置，作为整体装配基准。",
+        "parts_used": [
+          {
+            "bom_code": "01.01.01.11509",
+            "bom_name": "连接板",
+            "quantity": 1,
+            "drawing_number": "1",
+            "mesh_id": [
+              "mesh_018"
+            ]
+          }
+        ],
+        "tools": [
+          "水平仪",
+          "钢直尺"
+        ],
+        "warnings": [
+          "放置时注意防止刮伤表面",
+          "保证基准平面清洁无油污"
+        ],
+        "safety_warnings": [
+          "搬运连接板时注意防止夹手或砸脚，必要时两人协作",
+          "放置工件前检查工装是否稳固，防止滑落"
+        ]
+      },
+      {
+        "step_number": 2,
+        "action": "安装左侧矩形管",
+        "description": "取②号矩形管（BOM代号：01.01.03.2718），对齐连接板①左侧的焊接位置，从内侧定位后与基准焊接定位点点焊固定。",
+        "position_description": "位于①号连接板左侧，与基准板成直角连接。",
+        "parts_used": [
+          {
+            "bom_code": "01.01.03.2718",
+            "bom_name": "矩形管 1",
+            "quantity": 1,
+            "drawing_number": "2"
+          }
+        ],
+        "tools": [
+          "角尺",
+          "焊机",
+          "卡尺"
+        ],
+        "warnings": [
+          "焊前检查坡口",
+          "定位后先点焊防止变形"
+        ],
+        "welding": {
+          "required": true,
+          "welding_type": "角焊",
+          "welding_method": "CO2气保焊",
+          "weld_size": "焊缝高度6mm",
+          "welding_position": "连接板①与矩形管②内角处平焊",
+          "quality_requirements": "点焊牢固，焊缝均匀无烧穿",
+          "safety_notes": "佩戴面罩、防护手套，保持通风防止烟气吸入"
+        },
+        "safety_warnings": [
+          "焊接前确保工件固定牢，防止移动烫伤",
+          "佩戴防护面罩、手套，防止弧光灼伤和飞溅烫伤",
+          "保持周围通风良好，避免吸入焊烟"
+        ]
+      },
+      {
+        "step_number": 3,
+        "action": "安装右侧矩形管",
+        "description": "取⑨号矩形管（BOM代号：01.01.03.2719），放置在①号连接板右侧，对齐焊缝标线并点焊固定。",
+        "position_description": "与左侧对称，安装在①号连接板右侧。",
+        "parts_used": [
+          {
+            "bom_code": "01.01.03.2719",
+            "bom_name": "矩形管 2",
+            "quantity": 1,
+            "drawing_number": "9"
+          }
+        ],
+        "tools": [
+          "角尺",
+          "焊机"
+        ],
+        "warnings": [
+          "保持左右对称",
+          "焊接时防止过热变形"
+        ],
+        "welding": {
+          "required": true,
+          "welding_type": "角焊",
+          "welding_method": "CO2气保焊",
+          "weld_size": "焊缝高度6mm",
+          "welding_position": "连接板①与矩形管⑨内角处平焊",
+          "quality_requirements": "点焊牢固，焊缝平滑，无气孔夹渣",
+          "safety_notes": "焊接时注意保持手稳，防止弧光灼伤眼睛"
+        },
+        "safety_warnings": [
+          "焊机接地良好，防止触电",
+          "防止电弧光直射眼睛，佩戴防护面罩",
+          "工件烫热后勿立即触摸，防止烫伤"
+        ]
+      },
+      {
+        "step_number": 4,
+        "action": "安装封板",
+        "description": "取③号封板（BOM代号：01.01.01.16608），将两块封板分别贴合在左右矩形管的外侧端面上，使用夹具固定后满焊。",
+        "position_description": "安装在矩形管②、⑨外端面，形成封闭结构。",
+        "parts_used": [
+          {
+            "bom_code": "01.01.01.16608",
+            "bom_name": "封板",
+            "quantity": 2,
+            "drawing_number": "7",
+            "mesh_id": [
+              "mesh_004",
+              "mesh_005"
+            ]
+          }
+        ],
+        "tools": [
+          "夹具",
+          "焊机"
+        ],
+        "warnings": [
+          "焊接顺序要对称",
+          "防止两侧拉弯"
+        ],
+        "welding": {
+          "required": true,
+          "welding_type": "角焊",
+          "welding_method": "CO2气保焊",
+          "weld_size": "焊缝高度8mm",
+          "welding_position": "封板③与矩形管外端面四周平焊",
+          "quality_requirements": "焊缝连续饱满，无未焊透",
+          "safety_notes": "焊接封口时注意防止飞溅烫伤，操作区保持清洁"
+        },
+        "safety_warnings": [
+          "焊接时保持防护面罩佩戴到位，防止飞溅烫伤",
+          "操作区周围不要堆放易燃物",
+          "夹具固定要牢靠，防止焊接时滑动"
+        ]
+      },
+      {
+        "step_number": 5,
+        "action": "安装方形板",
+        "description": "取⑦号方形板-机加件（BOM代号：01.01.01.6589），对应连接板前表面四个安装孔位置，使用定位销临时固定，然后焊接四周止口。",
+        "position_description": "安装在组件前表面，居中位置。",
+        "parts_used": [
+          {
+            "bom_code": "01.01.01.6589",
+            "bom_name": "方形板-机加",
+            "quantity": 4,
+            "drawing_number": "3",
+            "mesh_id": [
+              "mesh_014",
+              "mesh_015",
+              "mesh_016",
+              "mesh_017"
+            ]
+          }
+        ],
+        "tools": [
+          "夹具",
+          "焊机",
+          "定位销"
+        ],
+        "warnings": [
+          "对齐中心线",
+          "焊缝均匀，避免咬边"
+        ],
+        "welding": {
+          "required": true,
+          "welding_type": "角焊",
+          "welding_method": "CO2气保焊",
+          "weld_size": "焊缝高度4mm",
+          "welding_position": "方形板⑦与连接板①前表面止口处平焊",
+          "quality_requirements": "焊缝平滑，外观整齐，无气孔",
+          "safety_notes": "焊接期间佩戴防护眼镜，避免弧光直射"
+        },
+        "safety_warnings": [
+          "焊接区域应干燥通风，防止气体聚集",
+          "焊后工件高温，禁止徒手触碰",
+          "检验焊缝时须待工件冷却"
+        ]
+      },
+      {
+        "step_number": 6,
+        "action": "安装左挂件虚拟组件",
+        "description": "取⑤号左挂件虚拟组件（BOM代号：01.05.0019），将挂件底部法兰与左侧矩形管的前端面对齐，调整角度后点焊连接。",
+        "position_description": "位于组件左上方，矩形管②的前端上部位置。",
+        "parts_used": [
+          {
+            "bom_code": "01.05.0019",
+            "bom_name": "左挂件虚拟组件",
+            "quantity": 1,
+            "drawing_number": "5",
+            "mesh_id": [
+              "mesh_010",
+              "mesh_012",
+              "mesh_013"
+            ]
+          }
+        ],
+        "tools": [
+          "焊机",
+          "角尺"
+        ],
+        "warnings": [
+          "控制角度与水平一致",
+          "点焊后检查位置再满焊"
+        ],
+        "welding": {
+          "required": true,
+          "welding_type": "角焊",
+          "welding_method": "CO2气保焊",
+          "weld_size": "焊缝高度6mm",
+          "welding_position": "左挂件⑤法兰与矩形管②前端角接处平焊",
+          "quality_requirements": "点焊位置准确，满焊后焊缝饱满整齐",
+          "safety_notes": "焊接时保持姿势稳，防止高处坠落或烫伤"
+        },
+        "safety_warnings": [
+          "若需登高操作，使用稳固脚手板或工作台，禁止站在工件上",
+          "焊接时防止飞溅物击中面部或衣物，穿防火工作服",
+          "焊后待冷却再测量角度，防止烫伤"
+        ]
+      },
+      {
+        "step_number": 7,
+        "action": "安装右挂件虚拟组件",
+        "description": "取⑥号右挂件虚拟组件（BOM代号：01.05.0018），与左挂件对称安装在右侧矩形管⑨前端上方，同步调整角度后焊牢。",
+        "position_description": "位于组件右上方，对称于左挂件。",
+        "parts_used": [
+          {
+            "bom_code": "01.05.0018",
+            "bom_name": "右挂件虚拟组件",
+            "quantity": 1,
+            "drawing_number": "4",
+            "mesh_id": [
+              "mesh_008",
+              "mesh_009",
+              "mesh_011"
+            ]
+          }
+        ],
+        "tools": [
+          "焊机",
+          "角尺",
+          "水平仪"
+        ],
+        "warnings": [
+          "保持与左挂件对称",
+          "焊接前确认位置一致"
+        ],
+        "welding": {
+          "required": true,
+          "welding_type": "角焊",
+          "welding_method": "CO2气保焊",
+          "weld_size": "焊缝高度6mm",
+          "welding_position": "右挂件⑥法兰与矩形管⑨前端角接处平焊",
+          "quality_requirements": "焊缝均匀饱满，对称一致",
+          "safety_notes": "施工面层远离易燃物，防止电弧火花引燃"
+        },
+        "safety_warnings": [
+          "焊接前清理周围易燃物，保持消防通道畅通",
+          "使用焊机前检查电缆绝缘是否良好，防止触电",
+          "登高作业需有防坠措施"
+        ]
+      },
+      {
+        "step_number": 8,
+        "action": "焊接加强筋",
+        "description": "取⑨号加强筋（BOM代号：01.01.01.17678）两块，分别焊接在背面矩形管与连接板的三角位置处，起加固作用。",
+        "position_description": "安装在组件背面两侧的上下交角处。",
+        "parts_used": [
+          {
+            "bom_code": "01.01.01.17678",
+            "bom_name": "加强筋",
+            "quantity": 2,
+            "drawing_number": "9",
+            "mesh_id": [
+              "mesh_001",
+              "mesh_002"
+            ]
+          }
+        ],
+        "tools": [
+          "焊机",
+          "角尺"
+        ],
+        "warnings": [
+          "焊缝饱满",
+          "注意对称，防止翘曲"
+        ],
+        "welding": {
+          "required": true,
+          "welding_type": "角焊",
+          "welding_method": "CO2气保焊",
+          "weld_size": "焊缝高度8mm",
+          "welding_position": "加强筋⑨与矩形管及连接板交角处平焊",
+          "quality_requirements": "焊缝饱满，过渡圆滑，无裂纹气孔",
+          "safety_notes": "保持工件冷却间隔，防止变形和烫伤"
+        },
+        "safety_warnings": [
+          "焊接加强筋时注意焊枪角度，防止弧光反射灼伤眼睛",
+          "工件焊接区域温度高，等待冷却后再移动",
+          "保持通风，减少焊烟吸入"
+        ]
+      }
+    ]
+  }
+}

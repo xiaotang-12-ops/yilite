@@ -1,0 +1,64 @@
+```json
+{
+  "cot_analysis": {
+    "total_unmatched_bom": 2,
+    "total_unmatched_3d": 6,
+    "analysis_steps": [
+      {
+        "bom_code": "01.01.02.1869",
+        "bom_name": "无缝管 1",
+        "bom_product_code": "WFG-T4*φ102-1703-20#",
+        "step1_extract": "产品代号=WFG-T4*φ102-1703-20#, 零件类型=无缝管",
+        "step2_candidates": [
+          "NAUO6: WFG-T4¡fӱ02-1703-20# Ϟ·캜",
+          "NAUO2: S-CB1830-07-03-Q345Բ°蒸2",
+          "NAUO1: T-AB1830(72IN)-EURO-02-01-Q355BԲ°"
+        ],
+        "step3_comparison": "NAUO6: geometry_name包含WFG-T4...-1703-20#，与BOM产品代号WFG-T4*φ102-1703-20#高度相似，乱码部分'¡fӱ02'应为'*φ102'。产品代号匹配，名称乱码。NAUO2/NAUO1: 产品代号完全不同。",
+        "step4_confidence": 0.92,
+        "step5_decision": "NAUO6的产品代号与BOM的product_code完全一致（忽略乱码），选择NAUO6。"
+      },
+      {
+        "bom_code": "01.01.03.1453",
+        "bom_name": "方管 3",
+        "bom_product_code": "FG-T3*25*25-1730-Q235",
+        "step1_extract": "产品代号=FG-T3*25*25-1730-Q235, 零件类型=方管",
+        "step2_candidates": [
+          "NAUO5: FG-T3¡Á25¡Á25-1730-Q235·½¹Ü_2",
+          "NAUO4: FG-T3¡Á25¡Á25-1730-Q235·½¹Ü_1",
+          "NAUO3: FG-T3¡Á25¡Á25-1730-Q235·½¹Ü"
+        ],
+        "step3_comparison": "NAUO5, NAUO4, NAUO3: geometry_name包含FG-T3...-1730-Q235，与BOM产品代号FG-T3*25*25-1730-Q235高度相似。乱码部分'¡Á25¡Á25'应为'*25*25'。产品代号匹配，名称乱码。由于BOM数量未给出，且3D零件有3个，判断为一对多匹配。",
+        "step4_confidence": 0.92,
+        "step5_decision": "NAUO5、NAUO4、NAUO3的产品代号与BOM的product_code完全一致（忽略乱码），全部匹配到01.01.03.1453。"
+      }
+    ]
+  },
+  "ai_matched_pairs": [
+    {
+      "node_name": "NAUO6",
+      "bom_code": "01.01.02.1869",
+      "confidence": 0.92,
+      "reasoning": "产品代号WFG-T4*φ102-1703-20#完全匹配（忽略乱码）"
+    },
+    {
+      "node_name": "NAUO5",
+      "bom_code": "01.01.03.1453",
+      "confidence": 0.92,
+      "reasoning": "产品代号FG-T3*25*25-1730-Q235完全匹配（忽略乱码）"
+    },
+    {
+      "node_name": "NAUO4",
+      "bom_code": "01.01.03.1453",
+      "confidence": 0.92,
+      "reasoning": "产品代号FG-T3*25*25-1730-Q235完全匹配（忽略乱码）"
+    },
+    {
+      "node_name": "NAUO3",
+      "bom_code": "01.01.03.1453",
+      "confidence": 0.92,
+      "reasoning": "产品代号FG-T3*25*25-1730-Q235完全匹配（忽略乱码）"
+    }
+  ]
+}
+```

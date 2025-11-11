@@ -1,0 +1,217 @@
+```json
+{
+  "cot_analysis": {
+    "total_unmatched_bom": 11,
+    "total_unmatched_3d": 177,
+    "analysis_steps": [
+      {
+        "bom_code": "02.03.0012",
+        "bom_name": "安全销DIN 11023",
+        "bom_product_code": "Φ4.5*40",
+        "step1_extract": "标准号=DIN 11023, 规格=Φ4.5*40, 类型=安全销",
+        "step2_candidates": [
+          "mesh_145 | ¦Ӵ.5°²ȫк (乱码，推测为Φ4.5安全销)",
+          "mesh_165 | DIN 11023 ¦µ8°²ȫк_3 (规格不符)",
+          "mesh_168 | DIN 11023 ¦µ8°²ȫк (规格不符)"
+        ],
+        "step3_comparison": "mesh_145: 乱码'¦Ӵ.5°²ȫк'推测为'Φ4.5安全销'。规格Φ4.5匹配，类型安全销匹配。符号'×'和'*'等价。虽然长度信息缺失，但规格和类型高度一致。",
+        "step4_confidence": 0.85,
+        "step5_decision": "匹配mesh_145（规格Φ4.5+类型安全销匹配）"
+      },
+      {
+        "bom_code": "02.03.0001",
+        "bom_name": "安全销DIN 11023",
+        "bom_product_code": "φ8*45",
+        "step1_extract": "标准号=DIN 11023, 规格=φ8*45, 类型=安全销",
+        "step2_candidates": [
+          "mesh_165 | DIN 11023 ¦µ8°²ȫк_3 (乱码推测为Φ8安全销)",
+          "mesh_166 | DIN 11023 ¦µ8°²ȫк_2",
+          "mesh_167 | DIN 11023 ¦µ8°²ȫк_1"
+        ],
+        "step3_comparison": "mesh_165: 3D零件名称包含'DIN 11023'和乱码'¦µ8°²ȫк'，推测为'Φ8安全销'。标准号一致，规格Φ8一致。由于是标准件，规格和标准号匹配度高。",
+        "step4_confidence": 0.90,
+        "step5_decision": "匹配mesh_165（标准号DIN 11023+规格Φ8匹配）"
+      },
+      {
+        "bom_code": "02.03.0028",
+        "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+        "bom_product_code": "M8",
+        "step1_extract": "标准号=GB/T889.1, 规格=M8, 类型=六角锁紧螺母",
+        "step2_candidates": [
+          "mesh_071 | JB£¯T 7940£®1-1995ֱͨʽѹעԍ±­8(³ʆ·)_17 (乱码，推测为压注油杯)",
+          "mesh_072 | JB£¯T 7940£®1-1995ֱͨʽѹעԍ±­8(³ʆ·)_16",
+          "mesh_143 | JB£¯T 7940£®1-1995ֱͨʽѹעԍ±­8(³ʆ·)_15"
+        ],
+        "step3_comparison": "所有候选零件名称乱码严重，且推测为油杯（JB/T 7940），与BOM项（六角锁紧螺母M8）类型完全不符。无法匹配。",
+        "step4_confidence": 0.0,
+        "step5_decision": "无法匹配"
+      },
+      {
+        "bom_code": "02.16.0142",
+        "bom_name": "实心橡胶轮",
+        "bom_product_code": "轮胎外径φ200，轮胎面宽50，轴孔φ20，轴长50",
+        "step1_extract": "规格=200x55, 类型=实心橡胶轮",
+        "step2_candidates": [
+          "mesh_208 | 200¡Á55ÊµÐÄÏð½ºÂÖ_1 (乱码推测为200x55实心橡胶轮)",
+          "mesh_209 | 200¡Á55ÊµÐÄÏð½ºÂÖ"
+        ],
+        "step3_comparison": "mesh_208: 3D零件名称'200¡Á55ÊµÐÄÏð½ºÂÖ'乱码推测为'200x55实心橡胶轮'。规格200x55与BOM的φ200、面宽50接近（55 vs 50），类型实心橡胶轮一致。高度匹配。",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配mesh_208（规格200x55+类型实心橡胶轮匹配）"
+      },
+      {
+        "bom_code": "01.09.0503",
+        "bom_name": "插销-镀锌",
+        "bom_product_code": "CX-φ12-150-45#",
+        "step1_extract": "产品代号=CX-φ12-150-45#, 类型=插销",
+        "step2_candidates": [
+          "mesh_211 | CX-¦ӱ2-150-45#²携 (乱码推测为CX-φ12-150-45#插销)",
+          "mesh_382 | ZT-¦ӵ5-¦ӳ7-35-Q235ס͗ (规格不符)"
+        ],
+        "step3_comparison": "mesh_211: 3D零件名称'CX-¦ӱ2-150-45#²携'乱码推测为'CX-φ12-150-45#插销'。产品代号CX-φ12-150-45#完全匹配。",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配mesh_211（产品代号CX-φ12-150-45#完全匹配）"
+      },
+      {
+        "bom_code": "02.03.0006",
+        "bom_name": "平垫圈8.8级GB/T95-2002",
+        "bom_product_code": "30*4",
+        "step1_extract": "标准号=GB/T95-2002, 规格=30*4, 类型=平垫圈",
+        "step2_candidates": [
+          "mesh_212 | GB¨uT 95-2002ƽµ爦C¼¶30x4_5 (乱码推测为GB/T 95-2002平垫圈30x4)",
+          "mesh_213 | GB¨uT 95-2002ƽµ爦C¼¶30x4_4",
+          "mesh_217 | GB¨uT 95-2002ƽµ爦C¼¶30x4"
+        ],
+        "step3_comparison": "mesh_212: 3D零件名称乱码推测为'GB/T 95-2002平垫圈30x4'。标准号GB/T 95-2002一致，规格30x4一致。高度匹配。",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配mesh_212（标准号GB/T95-2002+规格30x4匹配）"
+      },
+      {
+        "bom_code": "02.03.0148",
+        "bom_name": "1型六角螺母8.8级GB/T 6170-2015",
+        "bom_product_code": "M30",
+        "step1_extract": "规格=M30, 类型=六角螺母",
+        "step2_candidates": [
+          "mesh_283 | M20¡Á200ÂÝ¸Ë_1 (M20螺栓，规格不符)",
+          "mesh_293 | M20¡Á200ÂÝ¸Ë (M20螺栓，规格不符)"
+        ],
+        "step3_comparison": "所有候选零件名称乱码严重，且推测规格为M20螺栓，与BOM项（M30螺母）规格和类型不符。无法匹配。",
+        "step4_confidence": 0.0,
+        "step5_decision": "无法匹配"
+      },
+      {
+        "bom_code": "02.08.01.0338",
+        "bom_name": "油缸",
+        "bom_product_code": "EHYG-φ63/φ35-428-251-Ⅱ",
+        "step1_extract": "产品代号=EHYG-φ63/φ35-428-251-Ⅱ, 类型=油缸",
+        "step2_candidates": [
+          "mesh_233 | EHYG-¦Ӷ3-¦ӳ5-428-251-¢𫮲»¸_1 (乱码推测为EHYG-φ63-φ35-428-251油缸)",
+          "mesh_234 | EHYG-¦Ӷ3-¦ӳ5-428-251-¢𫮱ԍ¸،_1",
+          "mesh_235 | EHYG-¦Ӷ3-¦ӳ5-428-251-¢𫮲»¸"
+        ],
+        "step3_comparison": "mesh_233: 3D零件名称'EHYG-¦Ӷ3-¦ӳ5-428-251-'乱码推测为'EHYG-φ63-φ35-428-251'。产品代号前缀EHYG-φ63/φ35-428-251高度匹配，后缀'Ⅱ'可能在3D名称中被省略或乱码。置信度极高。",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配mesh_233（产品代号EHYG-φ63/φ35-428-251高度匹配）"
+      },
+      {
+        "bom_code": "01.09.2558",
+        "bom_name": "轮胎架内臂组件-镀锌",
+        "bom_product_code": "T-SPV250-Z602-07",
+        "step1_extract": "产品代号=T-SPV250-Z602-07, 类型=组件",
+        "step2_candidates": [
+          "mesh_369 | T-SPV250-Z602-03-07-Q235ǰµ¯»ɹ̶¨° (乱码推测为前臂)",
+          "mesh_339 | T-SPV250-Z602-03-07-Q235ǰµ¯»ɹ̶¨°_1",
+          "mesh_378 | T-U2500-01-09-Q235ºó×ùÖáÌ× (代号不符)"
+        ],
+        "step3_comparison": "BOM项是'T-SPV250-Z602-07'组件，3D零件名称'T-SPV250-Z602-03-07-Q235...'包含'T-SPV250-Z602-03-07'。虽然层级不同（07 vs 03-07），但产品代号前缀高度相似，且名称乱码推测为'前臂'，与'轮胎架内臂'功能相关。选择mesh_369。",
+        "step4_confidence": 0.85,
+        "step5_decision": "匹配mesh_369（产品代号T-SPV250-Z602-07前缀匹配）"
+      },
+      {
+        "bom_code": "01.09.2550",
+        "bom_name": "后座连接架组件-漆后",
+        "bom_product_code": "T-SPV1830-EURO-02",
+        "step1_extract": "产品代号=T-SPV1830-EURO-02, 类型=组件",
+        "step2_candidates": [
+          "mesh_404 | T-EURO-02-Q355BÖý¼þÅ·Ê½Á¬½ÓÆ÷ÏÂ¹Ò¹³_1 (乱码推测为T-EURO-02下挂钩)",
+          "mesh_407 | T-EURO-02-Q355BÖý¼þÅ·Ê½Á¬½ÓÆ÷ÏÂ¹Ò¹³",
+          "mesh_405 | T-EURO-01-Q355BÖý¼þÅ·Ê½Á¬½ÓÆ÷ÉÏ¹Ò¹³_1"
+        ],
+        "step3_comparison": "mesh_404: 3D零件名称包含'T-EURO-02'，与BOM产品代号'T-SPV1830-EURO-02'的后缀高度一致。乱码推测为'下挂钩'，是连接架的组成部分。前缀'T-SPV1830'可能在3D零件中被简化为'T'或省略。选择mesh_404。",
+        "step4_confidence": 0.90,
+        "step5_decision": "匹配mesh_404（产品代号T-EURO-02后缀匹配）"
+      },
+      {
+        "bom_code": "01.09.2549",
+        "bom_name": "连接器后座组件-漆后",
+        "bom_product_code": "T-SPV1830-EURO-01",
+        "step1_extract": "产品代号=T-SPV1830-EURO-01, 类型=组件",
+        "step2_candidates": [
+          "mesh_405 | T-EURO-01-Q355BÖý¼þÅ·Ê½Á¬½ÓÆ÷ÉÏ¹Ò¹³_1 (乱码推测为T-EURO-01上挂钩)",
+          "mesh_408 | T-EURO-01-Q355BÖý¼þÅ·Ê½Á¬½ÓÆ÷ÉÏ¹Ò¹³",
+          "mesh_404 | T-EURO-02-Q355BÖý¼þÅ·Ê½Á¬½ÓÆ÷ÏÂ¹Ò¹³_1"
+        ],
+        "step3_comparison": "mesh_405: 3D零件名称包含'T-EURO-01'，与BOM产品代号'T-SPV1830-EURO-01'的后缀高度一致。乱码推测为'上挂钩'，是连接器后座的组成部分。选择mesh_405。",
+        "step4_confidence": 0.90,
+        "step5_decision": "匹配mesh_405（产品代号T-EURO-01后缀匹配）"
+      }
+    ]
+  },
+  "ai_matched_pairs": [
+    {
+      "mesh_id": "mesh_145",
+      "bom_code": "02.03.0012",
+      "confidence": 0.85,
+      "reasoning": "乱码推测为Φ4.5安全销，规格和类型匹配"
+    },
+    {
+      "mesh_165": "mesh_165",
+      "bom_code": "02.03.0001",
+      "confidence": 0.90,
+      "reasoning": "标准号DIN 11023+规格Φ8匹配"
+    },
+    {
+      "mesh_id": "mesh_208",
+      "bom_code": "02.16.0142",
+      "confidence": 0.95,
+      "reasoning": "规格200x55+类型实心橡胶轮匹配"
+    },
+    {
+      "mesh_id": "mesh_211",
+      "bom_code": "01.09.0503",
+      "confidence": 0.98,
+      "reasoning": "产品代号CX-φ12-150-45#完全匹配"
+    },
+    {
+      "mesh_id": "mesh_212",
+      "bom_code": "02.03.0006",
+      "confidence": 0.95,
+      "reasoning": "标准号GB/T95-2002+规格30x4匹配"
+    },
+    {
+      "mesh_id": "mesh_233",
+      "bom_code": "02.08.01.0338",
+      "confidence": 0.98,
+      "reasoning": "产品代号EHYG-φ63/φ35-428-251高度匹配"
+    },
+    {
+      "mesh_id": "mesh_369",
+      "bom_code": "01.09.2558",
+      "confidence": 0.85,
+      "reasoning": "产品代号T-SPV250-Z602-07前缀匹配"
+    },
+    {
+      "mesh_id": "mesh_404",
+      "bom_code": "01.09.2550",
+      "confidence": 0.90,
+      "reasoning": "产品代号T-EURO-02后缀匹配"
+    },
+    {
+      "mesh_id": "mesh_405",
+      "bom_code": "01.09.2549",
+      "confidence": 0.90,
+      "reasoning": "产品代号T-EURO-01后缀匹配"
+    }
+  ]
+}
+```

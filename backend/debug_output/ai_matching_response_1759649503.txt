@@ -1,0 +1,2427 @@
+好的，我是张工，BOM-3D匹配专家。我将使用COT推理流程，对提供的未匹配BOM项和3D零件进行智能匹配。
+
+我将优先使用产品代号进行精确匹配，其次是标准件的规格匹配。
+
+## 乱码解码提示
+
+根据提供的3D零件名称乱码特征，进行初步解码：
+
+1.  `GB£¯T 70£®2-2000ÄÚÁù½ÇÆ½Ô²Í·ÂÝ¶¤M16¡Á85(8£®8¼¶)` → `GB/T 70.2-2000内六角平圆头螺钉M16×85(8.8级)`
+2.  `GB£¯T95-2002Æ½µæÈ¦C¼¶16¡Á3` → `GB/T95-2002平垫圈C级16×3`
+3.  `GB£¯T889.1-20001ÐÍ·Ç½ðÊôÇ¶¼þÁù½ÇËø½ôÂÝÄ¸M16` → `GB/T889.1-2000 1型非金属嵌件六角锁紧螺母M16`
+4.  `T-SPV1830-EURO-09-Q235·½ÐÎ°å-»ú¼Ó` → `T-SPV1830-EURO-09-Q235方形板-机加`
+5.  `GB£¯T 97£®2-1985Æ½µæÈ¦ µ¹½ÇÐÍ A¼¶6¡Á1£®6(¸Ö)` → `GB/T 97.2-1985平垫圈 倒角型 A级6×1.6(镀锌)`
+6.  `GB£¯T 97£®2-1985Æ½µæÈ¦ µ¹½ÇÐÍ A¼¶20¡Á3(¸Ö)` → `GB/T 97.2-1985平垫圈 倒角型 A级20×3(镀锌)`
+7.  `JB£¯T 7940£®1-1995ֱͨʽѹעԍ±­8(³ʆ·)` → `JB/T 7940.1-1995直通式压注油杯8(铜制)`
+8.  `SPE1.83-LD-10-Q235Άѩ°巴¹ㆬ¹̶¨°` → `SPE1.83-LD-10-Q235推雪板反光片固定板`
+9.  `GB£¯T 889£®1-20001ÐÍ·Ç½ðÊôÇ¶¼þÁù½ÇËø½ôÂÝÄ¸M6(¸Ö)` → `GB/T 889.1-2000 1型非金属嵌件六角锁紧螺母M6(镀锌)`
+10. `GB£¯T 5781-2000Áù½ÇÍ·ÂÝË¨È全ÂÝÎÆ C¼¶M6¡Á16(3£®6¼¶)` → `GB/T 5781-2000六角头螺栓全螺纹 C级M6×16(3.6级)`
+11. `GB£¯T 5781-2000Áù½ÇÍ·ÂÝË¨È全ÂÝÎÆ C¼¶M6¡Á20(3£®6¼¶)` → `GB/T 5781-2000六角头螺栓全螺纹 C级M6×20(3.6级)`
+12. `SPE1.83-LD-06-45#Άѩ°嵳µ爦` → `SPE1.83-LD-06-45#推雪板大垫圈`
+13. `GB£¯T889£®1-20001ÐÍ·Ç½ðÊôÇ¶¼þÁù½ÇËø½ôÂÝÄ¸M30` → `GB/T889.1-2000 1型非金属嵌件六角锁紧螺母M30`
+14. `GB£¯T5781-2000Áù½ÇÍ·ÂÝË¨È全ÂÝÎÆC¼¶M30¡Á60` → `GB/T5781-2000六角头螺栓全螺纹C级M30×60`
+15. `GB£¯T5781-2000Áù½ÇÍ·ÂÝË¨È全ÂÝÎÆ8.8¼¶M8¡Á20` → `GB/T5781-2000六角头螺栓全螺纹8.8级M8×20`
+16. `GB£¯T889£®1-20001ÐÍ·Ç½ðÊôÇ¶¼þÁù½ÇËø½ôÂÝÄ¸M8` → `GB/T889.1-2000 1型非金属嵌件六角锁紧螺母M8`
+17. `GB£¯T 5780-2000Áù½ÇÍ·ÂÝË¨ C¼¶M8¡Á80(3£®6¼¶)` → `GB/T 5780-2000六角头螺栓 C级M8×80(3.6级)`
+18. `GB£¯T 5780-2000Áù½ÇÍ·ÂÝË¨ C¼¶M8¡Á65` → `GB/T 5780-2000六角头螺栓 C级M8×65`
+19. `SPE1.83-LD-09·´¹ㆬ` → `SPE1.83-LD-09反光片`
+20. `A181-014µ絅·§ة` → `A181-014电磁阀组`
+21. `DIN 11023 ¦µ8°²ȫк` → `DIN 11023 φ8安全销`
+22. `GB£¯T 5781-2000Áù½ÇÍ·ÂÝË¨È全ÂÝÎÆ C¼¶M8¡Á40` → `GB/T 5781-2000六角头螺栓全螺纹 C级M8×40`
+23. `T-U2500-11-45#VэΆѩ°携ס` → `T-U2500-11-45#V型推雪板销轴`
+24. `ML-CA1200-Avant300-500-11-Q235Ô²¸Ö-»ú¼Ó` → `ML-CA1200-Avant300-500-11-Q235圆钢-机加`
+25. `ML-CA1200-Avant300-500-08-45#ؔ׆Ý˨` → `ML-CA1200-Avant300-500-08-45#自制螺栓`
+26. `GB£¯T 889£®1-20001ÐÍ·Ç½ðÊôÇ¶¼þÁù½ÇËø½ôÂÝÄ¸M20(¸Ö)` → `GB/T 889.1-2000 1型非金属嵌件六角锁紧螺母M20(镀锌)`
+27. `200¡Á55ÊµÐÄÏð½ºÂÖ` → `200×55实心橡胶轮`
+28. `T-U2500-16-45#VэΆѩ°旡͗` → `T-U2500-16-45#V型推雪板轴套`
+29. `CX-¦ӱ2-150-45#²携` → `CX-φ12-150-45#插销`
+30. `GB¨uT 95-2002ƽµ爦C¼¶30x4` → `GB/T 95-2002平垫圈C级30x4`
+31. `GB£¯T41-20001э¹½Ȃބ¸C¼¶M30` → `GB/T41-2000 1型六角螺母C级M30`
+32. `ML-CA1200-Avant300-500-07-01-Q235ÎÞ·ì¹Ü-»ú¼Ó` → `ML-CA1200-Avant300-500-07-01-Q235无缝管-机加`
+33. `ML-CA1200-Avant300-500-07-02-45#Ô²¸Ö-»ú¼Ó` → `ML-CA1200-Avant300-500-07-02-45#圆钢-机加`
+34. `EHYG-¦Ӷ3-¦ӳ5-428-251-¢𫮲»¸` → `EHYG-φ63-φ35-428-251-油缸` (推测)
+35. `TH-¦Õ10¡Á16¡Á¦Õ56¡Á260-YSµ¯»É` → `TH-φ10×16×φ56×260-YS弹簧`
+36. `XZ-¦Õ35¡Á10-¦Õ25¡Á145-¦Õ10¡Á10-45#ÏúÖá` → `XZ-φ35×10-φ25×145-φ10×10-45#销轴`
+37. `XZ-¦Õ40¡Á10-¦Õ30¡Á87-¦Õ10¡Á10-45#ÏúÖá` → `XZ-φ40×10-φ30×87-φ10×10-45#销轴`
+38. `XZ-¦Õ50¡Á15-¦Õ35¡Á485-¦Õ10¡Á10-45#ÏúÖá` → `XZ-φ50×15-φ35×485-φ10×10-45#销轴`
+39. `T-SPV1830-EURO-08-Q235·½ÐÎ°å-»ú¼Ó` → `T-SPV1830-EURO-08-Q235方形板-机加`
+40. `T-SPV250-Z602-12а½ºµ²°` → `T-SPV250-Z602-12橡胶挡板`
+41. `T-SPV1830-EURO-07а½ºµ¶°` → `T-SPV1830-EURO-07橡胶刀板`
+42. `T-SPV250-Z602-09-01-Q235l½ӹ` → `T-SPV250-Z602-09-01-Q235连接件` (推测)
+43. `T-SPV250-Z602-08-01-45#µ¯»ɵ¼׹` → `T-SPV250-Z602-08-01-45#弹簧导柱`
+44. `T-U2500-06-01-Q235µ¯»ɵ¼׹ס͗` → `T-U2500-06-01-Q235弹簧导柱销轴`
+45. `FXB-T10¡Á100¡Á100-Q345·½ÐÎ°å` → `FXB-T10×100×100-Q345方形板`
+46. `XZ-¦Õ33¡Á30-¦Õ20¡Á40-¦Õ8¡Á15-45#ÏúÖá` → `XZ-φ33×30-φ20×40-φ8×15-45#销轴`
+47. `ML-CA1200-Avant300-500-06-01-02-Q355BԲ·ⱥ` → `ML-CA1200-Avant300-500-06-01-02-圆法兰`
+48. `ML-CA1200-Avant300-500-06-02-Q355BÖ̥¹̶¨°` → `ML-CA1200-Avant300-500-06-02-Q355B轴管`
+49. `M20¡Á200ÂÝ¸Ë` → `M20×200螺杆` (推测)
+50. `ML-CA1200-Avant300-500-06-01-01-Q355B·½ю·ⱥ` → `ML-CA1200-Avant300-500-06-01-01-Q355B方耳法兰`
+51. `WFG-T3.5¡fӴ2-290-Q235Ϟ·캜` → `WFG-T3.5×φ42-290-Q235上法兰`
+52. `FG-T4¡Á50¡Á50-100-Q235·½¹Ü` → `FG-T4×50×50-100-Q235方管`
+53. `ML-CA1200-Avant300-500-05-03-Q355B·½ÐÎ°å-»ú¼Ó` → `ML-CA1200-Avant300-500-05-03-Q355B方形板-机加`
+54. `JXG-T5¡Á100¡Á50-100-Q355B¾ØÐÎ¹Ü` → `JXG-T5×100×50-100-Q355B矩形管`
+55. `T-SPV250-Z602-03-09-Q235֧³Ź̶¨°` → `T-SPV250-Z602-03-09-Q235支撑管`
+56. `T-SPV250-Z602-06-01-Q355B·½¹Ü-»ú¼Ó` → `T-SPV250-Z602-06-01-Q355B方管-机加`
+57. `T-SPV250-Z602-05-02-Q355Bºó×ùÁ¬½Ó°å` → `T-SPV250-Z602-05-02-Q355B后座连接板`
+58. `T-U2500-05-04-Q235µ¶°庌¶¨ס͗` → `T-U2500-05-04-Q235导板固定销轴`
+59. `T-SPV1830-EURO-05-01-Q235ºó×ù¹Ì¶¨°å` → `T-SPV1830-EURO-05-01-Q235后座固定板`
+60. `T-SPV1830-EURO-06-01-Q235ºó×ù¹Ì¶¨°å` → `T-SPV1830-EURO-06-01-Q235后座固定板`
+61. `T-U2500-02-12-Q345×ó²ùÑ©°å¼ÓÇ¿°å` → `T-U2500-02-12-Q345左侧雪板加强板`
+62. `FXB-T8¡Á95¡Á80-Q355B·½ÐÎ°å` → `FXB-T8×95×80-Q355B方形板`
+63. `ZT-¦Ӷ0-¦ӳ5-50-Q235ס͗` → `ZT-φ40-φ25-50-Q235销轴`
+64. `T-SPV250-Z602-03-11-Q235·´¹ㆬ°²װ°` → `T-SPV250-Z602-03-11-Q235反光片安装板`
+65. `T-SPV250-Z602-03-10-Q235ס͗¼ԇ¿°` → `T-SPV250-Z602-03-10-Q235销轴加强板`
+66. `T-SPV250-Z602-03-08-Q235º󵯻ɹ̶¨°` → `T-SPV250-Z602-03-08-Q235后弹簧管`
+67. `T-SPV250-Z602-03-07-Q235ǰµ¯»ɹ̶¨°` → `T-SPV250-Z602-03-07-Q235前弹簧管`
+68. `T-SPV250-Z602-03-06-Q355Bǰԍ¸׹̶¨°㥀>` → `T-SPV250-Z602-03-06-Q355B前加强管`
+69. `T-SPV250-Z602-03-05-Q355Bµײ¿l½Ӱ` → `T-SPV250-Z602-03-05-Q355B挡块连接件`
+70. `T-SPV250-Z602-03-03-Q355Bº󽔇¿°` → `T-SPV250-Z602-03-03-Q355B后加强板`
+71. `T-SPV1830-EURO-03-03-Q355Bǰ¼ԇ¿°` → `T-SPV1830-EURO-03-03-Q355B前加强板`
+72. `T-SPV1830-EURO-03-02-Q235·½ÐÎ°å-»ú¼Ó` → `T-SPV1830-EURO-03-02-Q235方形板-机加`
+73. `T-SPV1830-EURO-04-01-Q235ÓÒ²ù°å` → `T-SPV1830-EURO-04-01-Q235右侧板`
+74. `T-SPV1830-EURO-03-01-Q235×ó²ù°å` → `T-SPV1830-EURO-03-01-Q235左侧板`
+75. `T-U2500-01-09-Q235ºó×ùÖáÌ×` → `T-U2500-01-09-Q235后座轴套`
+76. `T-SPV250-Z602-02-05-Q355Bԍ¸׹̶¨°` → `T-SPV250-Z602-02-05-Q355B加强管`
+77. `T-U2500-01-05-Q235ºó×ùÖáÌ×` → `T-U2500-01-05-Q235后座轴套`
+78. `ZT-¦ӵ5-¦ӳ7-35-Q235ס͗` → `ZT-φ25-φ17-35-Q235销轴`
+79. `T-SPV250-Z602-02-07-Q235½Ç¸Ö-»ú¼Ó` → `T-SPV250-Z602-02-07-Q235角钢-机加`
+80. `T-SPV250-Z602-02-06-Q355B¼ԇ¿°` → `T-SPV250-Z602-02-06-Q355B加强板`
+81. `T-SPV250-Z602-02-04-Q355B֛Τ°` → `T-SPV250-Z602-02-04-Q355B挡板`
+82. `T-SPV250-Z602-02-03-Q355B²ၬ½Ӱ` → `T-SPV250-Z602-02-03-Q355B侧连接件`
+83. `T-SPV250-Z602-02-02-Q355Bʏl½Ӱ` → `T-SPV250-Z602-02-02-Q355B耳连接件`
+84. `T-SPV250-Z602-02-01-Q355B·½ÐÎ°å-»ú¼Ó` → `T-SPV250-Z602-02-01-Q355B方形板-机加`
+85. `CS-ST1070(42IN)-MP910-LDY100D-01-03-Q355B¼ԇ¿½` → `CS-ST1070(42IN)-MP910-LDY100D-01-03-Q355B加强筋`
+86. `JXG-T6¡Á100¡Á50-970-Q355B¾ØÐÎ¹Ü` → `JXG-T6×100×50-970-Q355B矩形管`
+87. `S-SBE2130(84IN)-MP1220-01-01-Q355B·ⱥ` → `S-SBE2130(84IN)-MP1220-01-01-Q355B法兰`
+88. `JXG-T6¡Á100¡Á50-335-Q355B¾ØÐÎ¹Ü` → `JXG-T6×100×50-335-Q355B矩形管`
+89. `T-EURO-04-Q345Å·Ê½Á¬½ÓÆ÷µ×°å` → `T-EURO-04-Q345欧式连接器底板`
+90. `T-EURO-02-Q355BÖý¼þÅ·Ê½Á¬½ÓÆ÷ÏÂ¹Ò¹³` → `T-EURO-02-Q355B附件欧式连接器下挂钩`
+91. `T-EURO-01-Q355BÖý¼þÅ·Ê½Á¬½ÓÆ÷ÉÏ¹Ò¹³` → `T-EURO-01-Q355B附件欧式连接器上挂钩`
+92. `T-SPE-FL-01-SMS-01-Q235·½ÐÎ°å-»ú¼Ó` → `T-SPE-FL-01-SMS-01-Q235方形板-机加`
+93. `T-SPV250-Z602-01-01-Q355Bl½Ӱ` → `T-SPV250-Z602-01-01-Q355B连接件`
+94. `JXG-T6¡Á100¡Á50-1120-Q355B¾ØÐÎ¹Ü` → `JXG-T6×100×50-1120-Q355B矩形管`
+
+---
+
+## COT推理过程
+
+```json
+{
+  "cot_analysis": {
+    "total_unmatched_bom": 53,
+    "total_unmatched_3d": 414,
+    "analysis_steps": [
+      {
+        "bom_code": "01.09.2556",
+        "bom_name": "方形板-机加-镀锌",
+        "bom_product_code": "T-SPV1830-EURO-09-Q235",
+        "step1_extract": "产品代号: T-SPV1830-EURO-09-Q235, 类型: 方形板",
+        "step2_candidates": [
+          "mesh_019: T-SPV1830-EURO-09-Q235·½ÐÎ°å-»ú¼Ó"
+        ],
+        "step3_comparison": "mesh_019解码为'T-SPV1830-EURO-09-Q235方形板-机加'，产品代号完全一致。",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配mesh_019"
+      },
+      {
+        "bom_code": "02.03.0088",
+        "bom_name": "六角头螺栓8.8级GB/T5782-2016",
+        "bom_product_code": "M8*80",
+        "step1_extract": "标准: GB/T5782, 规格: M8*80, 类型: 六角头螺栓",
+        "step2_candidates": [
+          "mesh_038: GB£¯T 5780-2000Áù½ÇÍ·ÂÝË¨ C¼¶M8¡Á80(3£®6¼¶)",
+          "mesh_039: GB£¯T 5780-2000Áù½ÇÍ·ÂÝË¨ C¼¶M8¡Á80(3£®6¼¶)"
+        ],
+        "step3_comparison": "mesh_038/039解码为'GB/T 5780-2000六角头螺栓 C级M8×80'。标准号(GB/T 5780/5782)和等级(C级/8.8级)有差异，但规格M8x80完全一致，且类型为六角头螺栓。GB/T 5780和5782是相似标准，优先规格匹配。",
+        "step4_confidence": 0.85,
+        "step5_decision": "匹配mesh_038和mesh_039"
+      },
+      {
+        "bom_code": "01.09.1240",
+        "bom_name": "电磁阀保护罩组件-漆后",
+        "bom_product_code": "T-SWB1400-SMS-C-LK-04",
+        "step1_extract": "产品代号: T-SWB1400-SMS-C-LK-04, 类型: 组件",
+        "step2_candidates": [
+          "mesh_065: T-SWB1400-SMS-C-LK-04-02-Q235 ·½ÐÎ°å-»ú¼Ó",
+          "mesh_066: T-SWB1400-SMS-C-LK-04-01-Q235 ±£»¤֖׷°"
+        ],
+        "step3_comparison": "mesh_065/066包含产品代号前缀T-SWB1400-SMS-C-LK-04，是该组件的子零件。由于BOM项是组件，且3D零件是其子项，匹配子项之一。",
+        "step4_confidence": 0.80,
+        "step5_decision": "匹配mesh_065"
+      },
+      {
+        "bom_code": "02.03.0610",
+        "bom_name": "平垫圈 倒角型 A级(钢)GB／T 97．2-1985",
+        "bom_product_code": "20*3",
+        "step1_extract": "标准: GB/T 97.2-1985, 规格: 20*3, 类型: 平垫圈",
+        "step2_candidates": [
+          "mesh_067: GB£¯T 97£®2-1985Æ½µæÈ¦ µ¹½ÇÐÍ A¼¶20¡Á3(¸Ö)",
+          "mesh_068: GB£¯T 97£®2-1985Æ½µæÈ¦ µ¹½ÇÐÍ A¼¶20¡Á3(¸Ö)",
+          "mesh_069: GB£¯T 97£®2-1985Æ½µæÈ¦ µ¹½ÇÐÍ A¼¶20¡Á3(¸Ö)"
+        ],
+        "step3_comparison": "mesh_067-070解码为'GB/T 97.2-1985平垫圈 倒角型 A级20×3(镀锌)'，标准号和规格完全一致。",
+        "step4_confidence": 0.90,
+        "step5_decision": "匹配mesh_067"
+      },
+      {
+        "bom_code": "01.09.0308",
+        "bom_name": "推雪板反光片固定板-镀锌",
+        "bom_product_code": "SPE1.83-LD-10-Q235",
+        "step1_extract": "产品代号: SPE1.83-LD-10-Q235, 类型: 固定板",
+        "step2_candidates": [
+          "mesh_073: SPE1.83-LD-10-Q235Άѩ°巴¹ㆬ¹̶¨°",
+          "mesh_074: SPE1.83-LD-10-Q235Άѩ°巴¹ㆬ¹̶¨°"
+        ],
+        "step3_comparison": "mesh_073/074解码为'SPE1.83-LD-10-Q235推雪板反光片固定板'，产品代号完全一致。",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配mesh_073"
+      },
+      {
+        "bom_code": "02.03.0378",
+        "bom_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+        "bom_product_code": "M6*20",
+        "step1_extract": "标准: GB/T5783, 规格: M6*20, 类型: 六角头螺栓",
+        "step2_candidates": [
+          "mesh_080: GB£¯T 5781-2000Áù½ÇÍ·ÂÝË¨È全ÂÝÎÆ C¼¶M6¡Á20(3£®6¼¶)",
+          "mesh_082: GB£¯T 5781-2000Áù½ÇÍ·ÂÝË¨È全ÂÝÎÆ C¼¶M6¡Á20(3£®6¼¶)",
+          "mesh_102: GB£¯T 5781-2000Áù½ÇÍ·ÂÝË¨È全ÂÝÎÆ C¼¶M6¡Á20(3£®6¼¶)"
+        ],
+        "step3_comparison": "mesh_080-102解码为'GB/T 5781-2000六角头螺栓全螺纹 C级M6×20'。标准号(5781/5783)和等级(C级/8.8级)有差异，但规格M6x20完全一致，且类型一致。GB/T 5781/5783是相似标准，优先规格匹配。",
+        "step4_confidence": 0.85,
+        "step5_decision": "匹配mesh_080"
+      },
+      {
+        "bom_code": "02.03.0147",
+        "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+        "bom_product_code": "M30",
+        "step1_extract": "标准: GB/T889.1, 规格: M30, 类型: 锁紧螺母",
+        "step2_candidates": [
+          "mesh_104: GB£¯T889£®1-20001ÐÍ·Ç½ðÊôÇ¶¼þÁù½ÇËø½ôÂÝÄ¸M30",
+          "mesh_107: GB£¯T889£®1-20001ÐÍ·Ç½ðÊôÇ¶¼þÁù½ÇËø½ôÂÝÄ¸M30",
+          "mesh_117: GB£¯T889£®1-20001ÐÍ·Ç½ðÊôÇ¶¼þÁù½ÇËø½ôÂÝÄ¸M30"
+        ],
+        "step3_comparison": "mesh_104-118解码为'GB/T889.1-2000 1型非金属嵌件六角锁紧螺母M30'。标准号和规格M30完全一致(忽略年份2000/2015)。",
+        "step4_confidence": 0.90,
+        "step5_decision": "匹配mesh_104"
+      },
+      {
+        "bom_code": "01.09.0304",
+        "bom_name": "推雪板大垫圈-镀锌",
+        "bom_product_code": "SPE1.83-LD-06-45#",
+        "step1_extract": "产品代号: SPE1.83-LD-06-45#, 类型: 大垫圈",
+        "step2_candidates": [
+          "mesh_103: SPE1.83-LD-06-45#Άѩ°嵳µ爦",
+          "mesh_106: SPE1.83-LD-06-45#Άѩ°嵳µ爦",
+          "mesh_119: SPE1.83-LD-06-45#Άѩ°嵳µ爦"
+        ],
+        "step3_comparison": "mesh_103-119解码为'SPE1.83-LD-06-45#推雪板大垫圈'，产品代号完全一致。",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配mesh_103"
+      },
+      {
+        "bom_code": "02.03.0458",
+        "bom_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+        "bom_product_code": "M30*60",
+        "step1_extract": "标准: GB/T5783, 规格: M30*60, 类型: 六角头螺栓",
+        "step2_candidates": [
+          "mesh_105: GB£¯T5781-2000Áù½ÇÍ·ÂÝË¨È全ÂÝÎÆC¼¶M30¡Á60",
+          "mesh_108: GB£¯T5781-2000Áù½ÇÍ·ÂÝË¨È全ÂÝÎÆC¼¶M30¡Á60",
+          "mesh_120: GB£¯T5781-2000Áù½ÇÍ·ÂÝË¨È全ÂÝÎÆC¼¶M30¡Á60"
+        ],
+        "step3_comparison": "mesh_105-120解码为'GB/T5781-2000六角头螺栓全螺纹C级M30×60'。标准号(5781/5783)和等级有差异，但规格M30x60完全一致，类型一致。",
+        "step4_confidence": 0.85,
+        "step5_decision": "匹配mesh_105"
+      },
+      {
+        "bom_code": "02.03.0379",
+        "bom_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+        "bom_product_code": "M8*20",
+        "step1_extract": "标准: GB/T5783, 规格: M8*20, 类型: 六角头螺栓",
+        "step2_candidates": [
+          "mesh_121: GB£¯T5781-2000Áù½ÇÍ·ÂÝË¨È全ÂÝÎÆ8.8¼¶M8¡Á20",
+          "mesh_123: GB£¯T5781-2000Áù½ÇÍ·ÂÝË¨È全ÂÝÎÆ8.8¼¶M8¡Á20",
+          "mesh_135: GB£¯T5781-2000Áù½ÇÍ·ÂÝË¨È全ÂÝÎÆ8.8¼¶M8¡Á20"
+        ],
+        "step3_comparison": "mesh_121-135解码为'GB/T5781-2000六角头螺栓全螺纹8.8级M8×20'。规格M8x20和等级8.8级完全一致，标准号(5781/5783)相似，匹配度高。",
+        "step4_confidence": 0.90,
+        "step5_decision": "匹配mesh_121"
+      },
+      {
+        "bom_code": "02.03.0019",
+        "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+        "bom_product_code": "M16",
+        "step1_extract": "标准: GB/T889.1, 规格: M16, 类型: 锁紧螺母",
+        "step2_candidates": [
+          "mesh_003: GB£¯T889.1-20001ÐÍ·Ç½ðÊôÇ¶¼þÁù½ÇËø½ôÂÝÄ¸M16",
+          "mesh_014: GB£¯T889.1-20001ÐÍ·Ç½ðÊôÇ¶¼þÁù½ÇËø½ôÂÝÄ¸M16",
+          "mesh_140: GB£¯T889.1-20001ÐÍ·Ç½ðÊôÇ¶¼þÁù½ÇËø½ôÂÝÄ¸M16"
+        ],
+        "step3_comparison": "mesh_003-140解码为'GB/T889.1-2000 1型非金属嵌件六角锁紧螺母M16'。标准号和规格M16完全一致(忽略年份2000/2015)。",
+        "step4_confidence": 0.90,
+        "step5_decision": "匹配mesh_003"
+      },
+      {
+        "bom_code": "02.03.0072",
+        "bom_name": "平垫圈8.8级GB/T95-2002",
+        "bom_product_code": "16*3",
+        "step1_extract": "标准: GB/T95-2002, 规格: 16*3, 类型: 平垫圈",
+        "step2_candidates": [
+          "mesh_002: GB£¯T95-2002Æ½µæÈ¦C¼¶16¡Á3",
+          "mesh_009: GB£¯T95-2002Æ½µæÈ¦C¼¶16¡Á3",
+          "mesh_141: GB£¯T95-2002Æ½µæÈ¦C¼¶16¡Á3"
+        ],
+        "step3_comparison": "mesh_002-141解码为'GB/T95-2002平垫圈C级16×3'。标准号和规格16x3完全一致。",
+        "step4_confidence": 0.90,
+        "step5_decision": "匹配mesh_002"
+      },
+      {
+        "bom_code": "02.03.1035",
+        "bom_name": "内六角平圆头螺钉8.8级GB/T70.2-2015",
+        "bom_product_code": "M16*85",
+        "step1_extract": "标准: GB/T70.2, 规格: M16*85, 类型: 内六角平圆头螺钉",
+        "step2_candidates": [
+          "mesh_001: GB£¯T 70£®2-2000ÄÚÁù½ÇÆ½Ô²Í·ÂÝ¶¤M16¡Á85(8£®8¼¶)",
+          "mesh_004: GB£¯T 70£®2-2000ÄÚÁù½ÇÆ½Ô²Í·ÂÝ¶¤M16¡Á85(8£®8¼¶)",
+          "mesh_142: GB£¯T 70£®2-2000ÄÚÁù½ÇÆ½Ô²Í·ÂÝ¶¤M16¡Á85(8£®8¼¶)"
+        ],
+        "step3_comparison": "mesh_001-142解码为'GB/T 70.2-2000内六角平圆头螺钉M16×85(8.8级)'。标准号、规格M16x85和等级8.8级完全一致(忽略年份2000/2015)。",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配mesh_001"
+      },
+      {
+        "bom_code": "02.03.0012",
+        "bom_name": "安全销DIN 11023",
+        "bom_product_code": "Φ4.5*40",
+        "step1_extract": "标准: DIN 11023, 规格: Φ4.5*40, 类型: 安全销",
+        "step2_candidates": [
+          "mesh_165: DIN 11023 ¦µ8°²ȫк_3",
+          "mesh_166: DIN 11023 ¦µ8°²ȫк_2",
+          "mesh_167: DIN 11023 ¦µ8°²ȫк_1"
+        ],
+        "step3_comparison": "3D零件中没有Φ4.5*40的规格，只有Φ8的安全销(mesh_165-168)。该BOM项无法匹配。",
+        "step4_confidence": 0.0,
+        "step5_decision": "无法匹配"
+      },
+      {
+        "bom_code": "02.03.0102",
+        "bom_name": "六角头螺栓8.8级GB/T 5782-2016",
+        "bom_product_code": "M8*65",
+        "step1_extract": "标准: GB/T 5782, 规格: M8*65, 类型: 六角头螺栓",
+        "step2_candidates": [
+          "mesh_147: GB£¯T 5780-2000Áù½ÇÍ·ÂÝË¨ C¼¶M8¡Á65"
+        ],
+        "step3_comparison": "mesh_147解码为'GB/T 5780-2000六角头螺栓 C级M8×65'。规格M8x65完全一致，标准号(5780/5782)相似，类型一致。",
+        "step4_confidence": 0.85,
+        "step5_decision": "匹配mesh_147"
+      },
+      {
+        "bom_code": "02.03.0383",
+        "bom_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+        "bom_product_code": "M6*16",
+        "step1_extract": "标准: GB/T5783, 规格: M6*16, 类型: 六角头螺栓",
+        "step2_candidates": [
+          "mesh_076: GB£¯T 5781-2000Áù½ÇÍ·ÂÝË¨È全ÂÝÎÆ C¼¶M6¡Á16(3£®6¼¶)",
+          "mesh_149: GB£¯T 5781-2000Áù½ÇÍ·ÂÝË¨È全ÂÝÎÆ C¼¶M6¡Á16(3£®6¼¶)"
+        ],
+        "step3_comparison": "mesh_076/149解码为'GB/T 5781-2000六角头螺栓全螺纹 C级M6×16'。规格M6x16完全一致，标准号(5781/5783)相似，类型一致。",
+        "step4_confidence": 0.85,
+        "step5_decision": "匹配mesh_076"
+      },
+      {
+        "bom_code": "02.04.0029",
+        "bom_name": "推雪板反光片",
+        "bom_product_code": "SPE1.83-LD-09",
+        "step1_extract": "产品代号: SPE1.83-LD-09, 类型: 反光片",
+        "step2_candidates": [
+          "mesh_150: SPE1.83-LD-09·´¹ㆬ",
+          "mesh_151: SPE1.83-LD-09·´¹ㆬ"
+        ],
+        "step3_comparison": "mesh_150/151解码为'SPE1.83-LD-09反光片'，产品代号完全一致。",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配mesh_150"
+      },
+      {
+        "bom_code": "02.08.03.0236",
+        "bom_name": "电磁阀组",
+        "bom_product_code": "A181-014",
+        "step1_extract": "产品代号: A181-014, 类型: 电磁阀组",
+        "step2_candidates": [
+          "mesh_152: A181-014µ絅·§ة"
+        ],
+        "step3_comparison": "mesh_152解码为'A181-014电磁阀组'，产品代号完全一致。",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配mesh_152"
+      },
+      {
+        "bom_code": "02.03.0001",
+        "bom_name": "安全销DIN 11023",
+        "bom_product_code": "φ8*45",
+        "step1_extract": "标准: DIN 11023, 规格: φ8*45, 类型: 安全销",
+        "step2_candidates": [
+          "mesh_165: DIN 11023 ¦µ8°²ȫк_3",
+          "mesh_166: DIN 11023 ¦µ8°²ȫк_2",
+          "mesh_168: DIN 11023 ¦µ8°²ȫк"
+        ],
+        "step3_comparison": "mesh_165-168解码为'DIN 11023 φ8安全销'。规格中只显示了φ8，长度45未显示，但标准和直径一致，类型一致，可视为匹配。",
+        "step4_confidence": 0.82,
+        "step5_decision": "匹配mesh_165"
+      },
+      {
+        "bom_code": "02.08.05.0004",
+        "bom_name": "直通式压注油杯JB/T7940.1-1995",
+        "bom_product_code": "M8",
+        "step1_extract": "标准: JB/T7940.1-1995, 规格: M8, 类型: 压注油杯",
+        "step2_candidates": [
+          "mesh_071: JB£¯T 7940£®1-1995ֱͨʽѹעԍ±­8(³ʆ·)",
+          "mesh_072: JB£¯T 7940£®1-1995ֱͨʽѹעԍ±­8(³ʆ·)",
+          "mesh_192: JB£¯T 7940£®1-1995ֱͨʽѹעԍ±­8(³ʆ·)"
+        ],
+        "step3_comparison": "mesh_071-192解码为'JB/T 7940.1-1995直通式压注油杯8(铜制)'。标准号和规格M8(数字8)完全一致。",
+        "step4_confidence": 0.90,
+        "step5_decision": "匹配mesh_071"
+      },
+      {
+        "bom_code": "02.03.0028",
+        "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+        "bom_product_code": "M8",
+        "step1_extract": "标准: GB/T889.1, 规格: M8, 类型: 锁紧螺母",
+        "step2_candidates": [
+          "mesh_077: GB£¯T889£®1-20001ÐÍ·Ç½ðÊôÇ¶¼þÁù½ÇËø½ôÂÝÄ¸M8",
+          "mesh_193: GB£¯T889£®1-20001ÐÍ·Ç½ðÊôÇ¶¼þÁù½ÇËø½ôÂÝÄ¸M8",
+          "mesh_177: GB£¯T889£®1-20001ÐÍ·Ç½ðÊôÇ¶¼þÁù½ÇËø½ôÂÝÄ¸M8"
+        ],
+        "step3_comparison": "mesh_077-193解码为'GB/T889.1-2000 1型非金属嵌件六角锁紧螺母M8'。标准号和规格M8完全一致(忽略年份2000/2015)。",
+        "step4_confidence": 0.90,
+        "step5_decision": "匹配mesh_077"
+      },
+      {
+        "bom_code": "02.03.0398",
+        "bom_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+        "bom_product_code": "M8*40",
+        "step1_extract": "标准: GB/T5783, 规格: M8*40, 类型: 六角头螺栓",
+        "step2_candidates": [
+          "mesh_154: GB£¯T 5781-2000Áù½ÇÍ·ÂÝË¨È全ÂÝÎÆ C¼¶M8¡Á40",
+          "mesh_178: GB£¯T 5781-2000Áù½ÇÍ·ÂÝË¨È全ÂÝÎÆ C¼¶M8¡Á40",
+          "mesh_194: GB£¯T 5781-2000Áù½ÇÍ·ÂÝË¨È全ÂÝÎÆ C¼¶M8¡Á40"
+        ],
+        "step3_comparison": "mesh_154-194解码为'GB/T 5781-2000六角头螺栓全螺纹 C级M8×40'。规格M8x40完全一致，标准号(5781/5783)相似，类型一致。",
+        "step4_confidence": 0.85,
+        "step5_decision": "匹配mesh_154"
+      },
+      {
+        "bom_code": "02.03.0381",
+        "bom_name": "平垫圈8.8级GB/T95-2002",
+        "bom_product_code": "6*1.6",
+        "step1_extract": "标准: GB/T97.2-1985, 规格: 6*1.6, 类型: 平垫圈",
+        "step2_candidates": [
+          "mesh_198: GB£¯T 97£®2-1985Æ½µæÈ¦ µ¹½ÇÐÍ A¼¶6¡Á1£®6(¸Ö)",
+          "mesh_200: GB£¯T 97£®2-1985Æ½µæÈ¦ µ¹½ÇÐÍ A¼¶6¡Á1£®6(¸Ö)",
+          "mesh_040: GB£¯T 97£®2-1985Æ½µæÈ¦ µ¹½ÇÐÍ A¼¶6¡Á1£®6(¸Ö)"
+        ],
+        "step3_comparison": "BOM为GB/T95，3D零件为GB/T97.2，但规格6x1.6完全一致，且都是平垫圈。GB/T97.2是倒角型，GB/T95是普通型，但尺寸一致，可匹配。",
+        "step4_confidence": 0.80,
+        "step5_decision": "匹配mesh_198"
+      },
+      {
+        "bom_code": "02.03.0146",
+        "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+        "bom_product_code": "M6",
+        "step1_extract": "标准: GB/T889.1, 规格: M6, 类型: 锁紧螺母",
+        "step2_candidates": [
+          "mesh_197: GB£¯T 889£®1-20001ÐÍ·Ç½ðÊôÇ¶¼þÁù½ÇËø½ôÂÝÄ¸M6(¸Ö)",
+          "mesh_201: GB£¯T 889£®1-20001ÐÍ·Ç½ðÊôÇ¶¼þÁù½ÇËø½ôÂÝÄ¸M6(¸Ö)",
+          "mesh_075: GB£¯T 889£®1-20001ÐÍ·Ç½ðÊôÇ¶¼þÁù½ÇËø½ôÂÝÄ¸M6(¸Ö)"
+        ],
+        "step3_comparison": "mesh_197-201解码为'GB/T 889.1-2000 1型非金属嵌件六角锁紧螺母M6'。标准号和规格M6完全一致(忽略年份2000/2015)。",
+        "step4_confidence": 0.90,
+        "step5_decision": "匹配mesh_197"
+      },
+      {
+        "bom_code": "02.03.0442",
+        "bom_name": "内六角圆柱头螺钉8.8级GB/T70.1-2008",
+        "bom_product_code": "M6*40",
+        "step1_extract": "标准: GB/T70.1, 规格: M6*40, 类型: 内六角圆柱头螺钉",
+        "step2_candidates": [
+          "mesh_199: GB£¯T 70£®1-2000ÄÚÁù½ÇÔ²ÖùÍ·ÂÝ¶¤M6¡Á40(8£®8¼¶)",
+          "mesh_202: GB£¯T 70£®1-2000ÄÚÁù½ÇÔ²ÖùÍ·ÂÝ¶¤M6¡Á40(8£®8¼¶)"
+        ],
+        "step3_comparison": "mesh_199/202解码为'GB/T 70.1-2000内六角圆柱头螺钉M6×40(8.8级)'。标准号、规格M6x40和等级8.8级完全一致(忽略年份2000/2008)。",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配mesh_199"
+      },
+      {
+        "bom_code": "01.09.2566",
+        "bom_name": "圆钢-机加-镀锌",
+        "bom_product_code": "ML-CA1200-Avant300-500-11-Q235",
+        "step1_extract": "产品代号: ML-CA1200-Avant300-500-11-Q235, 类型: 圆钢",
+        "step2_candidates": [
+          "mesh_196: ML-CA1200-Avant300-500-11-Q235Ô²¸Ö-»ú¼Ó",
+          "mesh_203: ML-CA1200-Avant300-500-11-Q235Ô²¸Ö-»ú¼Ó"
+        ],
+        "step3_comparison": "mesh_196/203解码为'ML-CA1200-Avant300-500-11-Q235圆钢-机加'，产品代号完全一致。",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配mesh_196"
+      },
+      {
+        "bom_code": "01.09.2565",
+        "bom_name": "自制螺栓-镀锌",
+        "bom_product_code": "ML-CA1200-Avant300-500-08-45#",
+        "step1_extract": "产品代号: ML-CA1200-Avant300-500-08-45#, 类型: 自制螺栓",
+        "step2_candidates": [
+          "mesh_205: ML-CA1200-Avant300-500-08-45#ؔ׆Ý˨",
+          "mesh_206: ML-CA1200-Avant300-500-08-45#ؔ׆Ý˨"
+        ],
+        "step3_comparison": "mesh_205/206解码为'ML-CA1200-Avant300-500-08-45#自制螺栓'，产品代号完全一致。",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配mesh_205"
+      },
+      {
+        "bom_code": "02.03.0612",
+        "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+        "bom_product_code": "M20",
+        "step1_extract": "标准: GB/T889.1, 规格: M20, 类型: 锁紧螺母",
+        "step2_candidates": [
+          "mesh_204: GB£¯T 889£®1-20001ÐÍ·Ç½ðÊôÇ¶¼þÁù½ÇËø½ôÂÝÄ¸M20(¸Ö)",
+          "mesh_207: GB£¯T 889£®1-20001ÐÍ·Ç½ðÊôÇ¶¼þÁù½ÇËø½ôÂÝÄ¸M20(¸Ö)"
+        ],
+        "step3_comparison": "mesh_204/207解码为'GB/T 889.1-2000 1型非金属嵌件六角锁紧螺母M20'。标准号和规格M20完全一致(忽略年份2000/2015)。",
+        "step4_confidence": 0.90,
+        "step5_decision": "匹配mesh_204"
+      },
+      {
+        "bom_code": "02.16.0142",
+        "bom_name": "实心橡胶轮",
+        "bom_product_code": "轮胎外径φ200，轮胎面宽50，轴孔φ20，轴长50",
+        "step1_extract": "规格: 200x50, 类型: 橡胶轮",
+        "step2_candidates": [
+          "mesh_208: 200¡Á55ÊµÐÄÏð½ºÂÖ",
+          "mesh_209: 200¡Á55ÊµÐÄÏð½ºÂÖ"
+        ],
+        "step3_comparison": "mesh_208/209解码为'200×55实心橡胶轮'。外径200一致，面宽55与BOM的50接近，类型一致，可匹配。",
+        "step4_confidence": 0.80,
+        "step5_decision": "匹配mesh_208"
+      },
+      {
+        "bom_code": "01.09.0999",
+        "bom_name": "V型推雪板轴套-镀锌",
+        "bom_product_code": "T-U2500-16-45#",
+        "step1_extract": "产品代号: T-U2500-16-45#, 类型: 轴套",
+        "step2_candidates": [
+          "mesh_210: T-U2500-16-45#VэΆѩ°旡͗"
+        ],
+        "step3_comparison": "mesh_210解码为'T-U2500-16-45#V型推雪板轴套'，产品代号完全一致。",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配mesh_210"
+      },
+      {
+        "bom_code": "01.09.0503",
+        "bom_name": "插销-镀锌",
+        "bom_product_code": "CX-φ12-150-45#",
+        "step1_extract": "产品代号: CX-φ12-150-45#, 类型: 插销",
+        "step2_candidates": [
+          "mesh_211: CX-¦ӱ2-150-45#²携"
+        ],
+        "step3_comparison": "mesh_211解码为'CX-φ12-150-45#插销'，产品代号完全一致。",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配mesh_211"
+      },
+      {
+        "bom_code": "02.03.0006",
+        "bom_name": "平垫圈8.8级GB/T95-2002",
+        "bom_product_code": "30*4",
+        "step1_extract": "标准: GB/T95-2002, 规格: 30*4, 类型: 平垫圈",
+        "step2_candidates": [
+          "mesh_212: GB¨uT 95-2002ƽµ爦C¼¶30x4",
+          "mesh_213: GB¨uT 95-2002ƽµ爦C¼¶30x4",
+          "mesh_217: GB¨uT 95-2002ƽµ爦C¼¶30x4"
+        ],
+        "step3_comparison": "mesh_212-217解码为'GB/T 95-2002平垫圈C级30x4'。标准号和规格30x4完全一致。",
+        "step4_confidence": 0.90,
+        "step5_decision": "匹配mesh_212"
+      },
+      {
+        "bom_code": "01.09.0995",
+        "bom_name": "V型推雪板销轴-镀锌",
+        "bom_product_code": "T-U2500-11-45#",
+        "step1_extract": "产品代号: T-U2500-11-45#, 类型: 销轴",
+        "step2_candidates": [
+          "mesh_218: T-U2500-11-45#VэΆѩ°携ס",
+          "mesh_221: T-U2500-11-45#VэΆѩ°携ס",
+          "mesh_222: T-U2500-11-45#VэΆѩ°携ס"
+        ],
+        "step3_comparison": "mesh_218-222解码为'T-U2500-11-45#V型推雪板销轴'，产品代号完全一致。",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配mesh_218"
+      },
+      {
+        "bom_code": "02.03.0148",
+        "bom_name": "1型六角螺母8.8级GB/T 6170-2015",
+        "bom_product_code": "M30",
+        "step1_extract": "标准: GB/T 6170, 规格: M30, 类型: 六角螺母",
+        "step2_candidates": [
+          "mesh_223: GB£¯T41-20001э¹½Ȃބ¸C¼¶M30",
+          "mesh_226: GB£¯T41-20001э¹½Ȃބ¸C¼¶M30",
+          "mesh_228: GB£¯T41-20001э¹½Ȃބ¸C¼¶M30"
+        ],
+        "step3_comparison": "mesh_223-228解码为'GB/T41-2000 1型六角螺母C级M30'。标准号(GB/T41/6170)不同，但规格M30和类型一致，GB/T41是旧标准，可匹配。",
+        "step4_confidence": 0.80,
+        "step5_decision": "匹配mesh_223"
+      },
+      {
+        "bom_code": "01.09.2564",
+        "bom_name": "把手组件-镀锌",
+        "bom_product_code": "ML-CA1200-Avant300-500-07",
+        "step1_extract": "产品代号: ML-CA1200-Avant300-500-07, 类型: 组件",
+        "step2_candidates": [
+          "mesh_229: ML-CA1200-Avant300-500-07-01-Q235ÎÞ·ì¹Ü-»ú¼Ó",
+          "mesh_230: ML-CA1200-Avant300-500-07-02-45#Ô²¸Ö-»ú¼Ó",
+          "mesh_231: ML-CA1200-Avant300-500-07-01-Q235ÎÞ·ì¹Ü-»ú¼Ó"
+        ],
+        "step3_comparison": "mesh_229-232包含产品代号前缀ML-CA1200-Avant300-500-07，是该组件的子零件，匹配子项之一。",
+        "step4_confidence": 0.80,
+        "step5_decision": "匹配mesh_229"
+      },
+      {
+        "bom_code": "02.08.01.0338",
+        "bom_name": "油缸",
+        "bom_product_code": "EHYG-φ63/φ35-428-251-Ⅱ",
+        "step1_extract": "产品代号: EHYG-φ63/φ35-428-251-Ⅱ, 类型: 油缸",
+        "step2_candidates": [
+          "mesh_233: EHYG-¦Ӷ3-¦ӳ5-428-251-¢𫮲»¸",
+          "mesh_234: EHYG-¦Ӷ3-¦ӳ5-428-251-¢𫮱ԍ¸،",
+          "mesh_235: EHYG-¦Ӷ3-¦ӳ5-428-251-¢𫮲»¸"
+        ],
+        "step3_comparison": "mesh_233-236解码为'EHYG-φ63-φ35-428-251-油缸'，产品代号EHYG-φ63-φ35-428-251完全一致(忽略后缀Ⅱ)。",
+        "step4_confidence": 0.95,
+        "step5_decision": "匹配mesh_233"
+      },
+      {
+        "bom_code": "02.09.0103",
+        "bom_name": "压缩弹簧",
+        "bom_product_code": "TH-φ10*16*φ56*260-YS",
+        "step1_extract": "产品代号: TH-φ10*16*φ56*260-YS, 类型: 弹簧",
+        "step2_candidates": [
+          "mesh_237: TH-¦Õ10¡Á16¡Á¦Õ56¡Á260-YSµ¯»É",
+          "mesh_240: TH-¦Õ10¡Á16¡Á¦Õ56¡Á260-YSµ¯»É",
+          "mesh_242: TH-¦Õ10¡Á16¡Á¦Õ56¡Á260-YSµ¯»É"
+        ],
+        "step3_comparison": "mesh_237-242解码为'TH-φ10×16×φ56×260-YS弹簧'，产品代号完全一致。",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配mesh_237"
+      },
+      {
+        "bom_code": "01.09.2563",
+        "bom_name": "销轴-镀锌",
+        "bom_product_code": "XZ-φ40*10-φ30*87-φ10*10-45#",
+        "step1_extract": "产品代号: XZ-φ40*10-φ30*87-φ10*10-45#, 类型: 销轴",
+        "step2_candidates": [
+          "mesh_248: XZ-¦Õ40¡Á10-¦Õ30¡Á87-¦Õ10¡Á10-45#ÏúÖá",
+          "mesh_250: XZ-¦Õ40¡Á10-¦Õ30¡Á87-¦Õ10¡Á10-45#ÏúÖá",
+          "mesh_251: XZ-¦Õ40¡Á10-¦Õ30¡Á87-¦Õ10¡Á10-45#ÏúÖá"
+        ],
+        "step3_comparison": "mesh_248-251解码为'XZ-φ40×10-φ30×87-φ10×10-45#销轴'，产品代号完全一致。",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配mesh_248"
+      },
+      {
+        "bom_code": "01.09.2562",
+        "bom_name": "销轴-镀锌",
+        "bom_product_code": "XZ-φ35*10-φ25*145-φ10*10-45#",
+        "step1_extract": "产品代号: XZ-φ35*10-φ25*145-φ10*10-45#, 类型: 销轴",
+        "step2_candidates": [
+          "mesh_243: XZ-¦Õ35¡Á10-¦Õ25¡Á145-¦Õ10¡Á10-45#ÏúÖá",
+          "mesh_246: XZ-¦Õ35¡Á10-¦Õ25¡Á145-¦Õ10¡Á10-45#ÏúÖá",
+          "mesh_252: XZ-¦Õ35¡Á10-¦Õ25¡Á145-¦Õ10¡Á10-45#ÏúÖá"
+        ],
+        "step3_comparison": "mesh_243-252解码为'XZ-φ35×10-φ25×145-φ10×10-45#销轴'，产品代号完全一致。",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配mesh_243"
+      },
+      {
+        "bom_code": "01.09.2561",
+        "bom_name": "销轴-镀锌",
+        "bom_product_code": "XZ-φ50*15-φ35*485-φ10*10-45#",
+        "step1_extract": "产品代号: XZ-φ50*15-φ35*485-φ10*10-45#, 类型: 销轴",
+        "step2_candidates": [
+          "mesh_253: XZ-¦Õ50¡Á15-¦Õ35¡Á485-¦Õ10¡Á10-45#ÏúÖá"
+        ],
+        "step3_comparison": "mesh_253解码为'XZ-φ50×15-φ35×485-φ10×10-45#销轴'，产品代号完全一致。",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配mesh_253"
+      },
+      {
+        "bom_code": "01.09.2555",
+        "bom_name": "方形板-机加-镀锌",
+        "bom_product_code": "T-SPV1830-EURO-08-Q235",
+        "step1_extract": "产品代号: T-SPV1830-EURO-08-Q235, 类型: 方形板",
+        "step2_candidates": [
+          "mesh_254: T-SPV1830-EURO-08-Q235·½ÐÎ°å-»ú¼Ó"
+        ],
+        "step3_comparison": "mesh_254解码为'T-SPV1830-EURO-08-Q235方形板-机加'，产品代号完全一致。",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配mesh_254"
+      },
+      {
+        "bom_code": "01.02.07.0071",
+        "bom_name": "橡胶挡板",
+        "bom_product_code": "T-SPV250-Z602-12",
+        "step1_extract": "产品代号: T-SPV250-Z602-12, 类型: 橡胶挡板",
+        "step2_candidates": [
+          "mesh_255: T-SPV250-Z602-12а½ºµ²°"
+        ],
+        "step3_comparison": "mesh_255解码为'T-SPV250-Z602-12橡胶挡板'，产品代号完全一致。",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配mesh_255"
+      },
+      {
+        "bom_code": "01.02.07.0239",
+        "bom_name": "橡胶刀板",
+        "bom_product_code": "T-SPV1830-EURO-07",
+        "step1_extract": "产品代号: T-SPV1830-EURO-07, 类型: 橡胶刀板",
+        "step2_candidates": [
+          "mesh_256: T-SPV1830-EURO-07а½ºµ¶°_1",
+          "mesh_257: T-SPV1830-EURO-07а½ºµ¶°"
+        ],
+        "step3_comparison": "mesh_256/257解码为'T-SPV1830-EURO-07橡胶刀板'，产品代号完全一致。",
+        "step4_confidence": 0.98,
+        "step5_decision": "匹配mesh_256"
+      },
+      {
+        "bom_code": "01.09.2560",
+        "bom_name": "后座支撑架组件-漆后",
+        "bom_product_code": "T-SPV250-Z602-09",
+        "step1_extract": "产品代号: T-SPV250-Z602-09, 类型: 组件",
+        "step2_candidates": [
+          "mesh_259: T-SPV250-Z602-09-01-Q235l½ӹ"
+        ],
+        "step3_comparison": "mesh_259包含产品代号前缀T-SPV250-Z602-09，是该组件的子零件，匹配子项之一。",
+        "step4_confidence": 0.80,
+        "step5_decision": "匹配mesh_259"
+      },
+      {
+        "bom_code": "01.09.2559",
+        "bom_name": "推雪板弹簧导柱组件-镀锌",
+        "bom_product_code": "T-SPV250-Z602-08",
+        "step1_extract": "产品代号: T-SPV250-Z602-08, 类型: 组件",
+        "step2_candidates": [
+          "mesh_260: T-SPV250-Z602-08-01-45#µ¯»ɵ¼׹",
+          "mesh_263: T-SPV250-Z602-08-01-45#µ¯»ɵ¼׹",
+          "mesh_275: T-SPV250-Z602-08-01-45#µ¯»ɵ¼׹"
+        ],
+        "step3_comparison": "mesh_260-275包含产品代号前缀T-SPV250-Z602-08，是该组件的子零件，匹配子项之一。",
+        "step4_confidence": 0.80,
+        "step5_decision": "匹配mesh_260"
+      },
+      {
+        "bom_code": "01.09.2558",
+        "bom_name": "轮胎架内臂组件-镀锌",
+        "bom_product_code": "T-SPV250-Z602-07",
+        "step1_extract": "产品代号: T-SPV250-Z602-07, 类型: 组件",
+        "step2_candidates": [
+          "mesh_229: ML-CA1200-Avant300-500-07-01-Q235ÎÞ·ì¹Ü-»ú¼Ó"
+        ],
+        "step3_comparison": "3D零件中没有T-SPV250-Z602-07的子零件，无法匹配。",
+        "step4_confidence": 0.0,
+        "step5_decision": "无法匹配"
+      },
+      {
+        "bom_code": "01.09.2557",
+        "bom_name": "轮胎架外臂组件-漆后",
+        "bom_product_code": "T-SPV250-Z602-06",
+        "step1_extract": "产品代号: T-SPV250-Z602-06, 类型: 组件",
+        "step2_candidates": [
+          "mesh_301: T-SPV250-Z602-06-01-Q355B·½¹Ü-»ú¼Ó",
+          "mesh_305: T-SPV250-Z602-06-01-Q355B·½¹Ü-»ú¼Ó"
+        ],
+        "step3_comparison": "mesh_301/305包含产品代号前缀T-SPV250-Z602-06，是该组件的子零件，匹配子项之一。",
+        "step4_confidence": 0.80,
+        "step5_decision": "匹配mesh_301"
+      },
+      {
+        "bom_code": "01.09.2553",
+        "bom_name": "右刀板后座组件-漆后",
+        "bom_product_code": "T-SPV1830-EURO-05",
+        "step1_extract": "产品代号: T-SPV1830-EURO-05, 类型: 组件",
+        "step2_candidates": [
+          "mesh_315: T-SPV1830-EURO-05-01-Q235ºó×ù¹Ì¶¨°å"
+        ],
+        "step3_comparison": "mesh_315包含产品代号前缀T-SPV1830-EURO-05，是该组件的子零件，匹配子项之一。",
+        "step4_confidence": 0.80,
+        "step5_decision": "匹配mesh_315"
+      },
+      {
+        "bom_code": "01.09.2554",
+        "bom_name": "左刀板后座组件-漆后",
+        "bom_product_code": "T-SPV1830-EURO-06",
+        "step1_extract": "产品代号: T-SPV1830-EURO-06, 类型: 组件",
+        "step2_candidates": [
+          "mesh_325: T-SPV1830-EURO-06-01-Q235ºó×ù¹Ì¶¨°å"
+        ],
+        "step3_comparison": "mesh_325包含产品代号前缀T-SPV1830-EURO-06，是该组件的子零件，匹配子项之一。",
+        "step4_confidence": 0.80,
+        "step5_decision": "匹配mesh_325"
+      },
+      {
+        "bom_code": "01.09.2552",
+        "bom_name": "右铲雪板组件-漆后",
+        "bom_product_code": "T-SPV1830-EURO-04",
+        "step1_extract": "产品代号: T-SPV1830-EURO-04, 类型: 组件",
+        "step2_candidates": [
+          "mesh_351: T-SPV1830-EURO-04-01-Q235ÓÒ²ù°å"
+        ],
+        "step3_comparison": "mesh_351包含产品代号前缀T-SPV1830-EURO-04，是该组件的子零件，匹配子项之一。",
+        "step4_confidence": 0.80,
+        "step5_decision": "匹配mesh_351"
+      },
+      {
+        "bom_code": "01.09.2551",
+        "bom_name": "左铲雪板组件-漆后",
+        "bom_product_code": "T-SPV1830-EURO-03",
+        "step1_extract": "产品代号: T-SPV1830-EURO-03, 类型: 组件",
+        "step2_candidates": [
+          "mesh_377: T-SPV1830-EURO-03-01-Q235×ó²ù°å",
+          "mesh_376: T-SPV1830-EURO-03-02-Q235·½ÐÎ°å-»ú¼Ó",
+          "mesh_374: T-SPV1830-EURO-03-03-Q355Bǰ¼ԇ¿°"
+        ],
+        "step3_comparison": "mesh_377包含产品代号前缀T-SPV1830-EURO-03，是该组件的子零件，匹配子项之一。",
+        "step4_confidence": 0.80,
+        "step5_decision": "匹配mesh_377"
+      },
+      {
+        "bom_code": "01.09.2550",
+        "bom_name": "后座连接架组件-漆后",
+        "bom_product_code": "T-SPV1830-EURO-02",
+        "step1_extract": "产品代号: T-SPV1830-EURO-02, 类型: 组件",
+        "step2_candidates": [
+          "mesh_407: T-EURO-02-Q355BÖý¼þÅ·Ê½Á¬½ÓÆ÷ÏÂ¹Ò¹³"
+        ],
+        "step3_comparison": "3D零件中没有T-SPV1830-EURO-02的子零件，无法匹配。",
+        "step4_confidence": 0.0,
+        "step5_decision": "无法匹配"
+      },
+      {
+        "bom_code": "01.09.2549",
+        "bom_name": "连接器后座组件-漆后",
+        "bom_product_code": "T-SPV1830-EURO-01",
+        "step1_extract": "产品代号: T-SPV1830-EURO-01, 类型: 组件",
+        "step2_candidates": [
+          "mesh_408: T-EURO-01-Q355BÖý¼þÅ·Ê½Á¬½ÓÆ÷ÉÏ¹Ò¹³"
+        ],
+        "step3_comparison": "3D零件中没有T-SPV1830-EURO-01的子零件，无法匹配。",
+        "step4_confidence": 0.0,
+        "step5_decision": "无法匹配"
+      }
+    ]
+  },
+  "ai_matched_pairs": [
+    {
+      "mesh_id": "mesh_019",
+      "bom_code": "01.09.2556",
+      "confidence": 0.98,
+      "reasoning": "产品代号T-SPV1830-EURO-09-Q235完全匹配"
+    },
+    {
+      "mesh_id": "mesh_038",
+      "bom_code": "02.03.0088",
+      "confidence": 0.85,
+      "reasoning": "规格M8x80和类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_039",
+      "bom_code": "02.03.0088",
+      "confidence": 0.85,
+      "reasoning": "规格M8x80和类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_065",
+      "bom_code": "01.09.1240",
+      "confidence": 0.80,
+      "reasoning": "产品代号前缀匹配，为组件子零件"
+    },
+    {
+      "mesh_id": "mesh_067",
+      "bom_code": "02.03.0610",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T 97.2和规格20x3完全一致"
+    },
+    {
+      "mesh_id": "mesh_068",
+      "bom_code": "02.03.0610",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T 97.2和规格20x3完全一致"
+    },
+    {
+      "mesh_id": "mesh_069",
+      "bom_code": "02.03.0610",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T 97.2和规格20x3完全一致"
+    },
+    {
+      "mesh_id": "mesh_070",
+      "bom_code": "02.03.0610",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T 97.2和规格20x3完全一致"
+    },
+    {
+      "mesh_id": "mesh_073",
+      "bom_code": "01.09.0308",
+      "confidence": 0.98,
+      "reasoning": "产品代号SPE1.83-LD-10-Q235完全匹配"
+    },
+    {
+      "mesh_id": "mesh_074",
+      "bom_code": "01.09.0308",
+      "confidence": 0.98,
+      "reasoning": "产品代号SPE1.83-LD-10-Q235完全匹配"
+    },
+    {
+      "mesh_id": "mesh_080",
+      "bom_code": "02.03.0378",
+      "confidence": 0.85,
+      "reasoning": "规格M6x20和类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_082",
+      "bom_code": "02.03.0378",
+      "confidence": 0.85,
+      "reasoning": "规格M6x20和类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_084",
+      "bom_code": "02.03.0378",
+      "confidence": 0.85,
+      "reasoning": "规格M6x20和类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_086",
+      "bom_code": "02.03.0378",
+      "confidence": 0.85,
+      "reasoning": "规格M6x20和类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_088",
+      "bom_code": "02.03.0378",
+      "confidence": 0.85,
+      "reasoning": "规格M6x20和类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_090",
+      "bom_code": "02.03.0378",
+      "confidence": 0.85,
+      "reasoning": "规格M6x20和类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_092",
+      "bom_code": "02.03.0378",
+      "confidence": 0.85,
+      "reasoning": "规格M6x20和类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_094",
+      "bom_code": "02.03.0378",
+      "confidence": 0.85,
+      "reasoning": "规格M6x20和类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_096",
+      "bom_code": "02.03.0378",
+      "confidence": 0.85,
+      "reasoning": "规格M6x20和类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_098",
+      "bom_code": "02.03.0378",
+      "confidence": 0.85,
+      "reasoning": "规格M6x20和类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_100",
+      "bom_code": "02.03.0378",
+      "confidence": 0.85,
+      "reasoning": "规格M6x20和类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_102",
+      "bom_code": "02.03.0378",
+      "confidence": 0.85,
+      "reasoning": "规格M6x20和类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_104",
+      "bom_code": "02.03.0147",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T889.1和规格M30完全一致"
+    },
+    {
+      "mesh_id": "mesh_107",
+      "bom_code": "02.03.0147",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T889.1和规格M30完全一致"
+    },
+    {
+      "mesh_id": "mesh_110",
+      "bom_code": "02.03.0147",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T889.1和规格M30完全一致"
+    },
+    {
+      "mesh_id": "mesh_113",
+      "bom_code": "02.03.0147",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T889.1和规格M30完全一致"
+    },
+    {
+      "mesh_id": "mesh_117",
+      "bom_code": "02.03.0147",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T889.1和规格M30完全一致"
+    },
+    {
+      "mesh_id": "mesh_118",
+      "bom_code": "02.03.0147",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T889.1和规格M30完全一致"
+    },
+    {
+      "mesh_id": "mesh_103",
+      "bom_code": "01.09.0304",
+      "confidence": 0.98,
+      "reasoning": "产品代号SPE1.83-LD-06-45#完全匹配"
+    },
+    {
+      "mesh_id": "mesh_106",
+      "bom_code": "01.09.0304",
+      "confidence": 0.98,
+      "reasoning": "产品代号SPE1.83-LD-06-45#完全匹配"
+    },
+    {
+      "mesh_id": "mesh_109",
+      "bom_code": "01.09.0304",
+      "confidence": 0.98,
+      "reasoning": "产品代号SPE1.83-LD-06-45#完全匹配"
+    },
+    {
+      "mesh_id": "mesh_112",
+      "bom_code": "01.09.0304",
+      "confidence": 0.98,
+      "reasoning": "产品代号SPE1.83-LD-06-45#完全匹配"
+    },
+    {
+      "mesh_id": "mesh_116",
+      "bom_code": "01.09.0304",
+      "confidence": 0.98,
+      "reasoning": "产品代号SPE1.83-LD-06-45#完全匹配"
+    },
+    {
+      "mesh_id": "mesh_119",
+      "bom_code": "01.09.0304",
+      "confidence": 0.98,
+      "reasoning": "产品代号SPE1.83-LD-06-45#完全匹配"
+    },
+    {
+      "mesh_id": "mesh_105",
+      "bom_code": "02.03.0458",
+      "confidence": 0.85,
+      "reasoning": "规格M30x60和类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_108",
+      "bom_code": "02.03.0458",
+      "confidence": 0.85,
+      "reasoning": "规格M30x60和类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_111",
+      "bom_code": "02.03.0458",
+      "confidence": 0.85,
+      "reasoning": "规格M30x60和类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_114",
+      "bom_code": "02.03.0458",
+      "confidence": 0.85,
+      "reasoning": "规格M30x60和类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_115",
+      "bom_code": "02.03.0458",
+      "confidence": 0.85,
+      "reasoning": "规格M30x60和类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_120",
+      "bom_code": "02.03.0458",
+      "confidence": 0.85,
+      "reasoning": "规格M30x60和类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_121",
+      "bom_code": "02.03.0379",
+      "confidence": 0.90,
+      "reasoning": "规格M8x20和等级8.8级一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_123",
+      "bom_code": "02.03.0379",
+      "confidence": 0.90,
+      "reasoning": "规格M8x20和等级8.8级一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_125",
+      "bom_code": "02.03.0379",
+      "confidence": 0.90,
+      "reasoning": "规格M8x20和等级8.8级一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_127",
+      "bom_code": "02.03.0379",
+      "confidence": 0.90,
+      "reasoning": "规格M8x20和等级8.8级一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_129",
+      "bom_code": "02.03.0379",
+      "confidence": 0.90,
+      "reasoning": "规格M8x20和等级8.8级一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_131",
+      "bom_code": "02.03.0379",
+      "confidence": 0.90,
+      "reasoning": "规格M8x20和等级8.8级一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_133",
+      "bom_code": "02.03.0379",
+      "confidence": 0.90,
+      "reasoning": "规格M8x20和等级8.8级一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_135",
+      "bom_code": "02.03.0379",
+      "confidence": 0.90,
+      "reasoning": "规格M8x20和等级8.8级一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_003",
+      "bom_code": "02.03.0019",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T889.1和规格M16完全一致"
+    },
+    {
+      "mesh_id": "mesh_014",
+      "bom_code": "02.03.0019",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T889.1和规格M16完全一致"
+    },
+    {
+      "mesh_id": "mesh_015",
+      "bom_code": "02.03.0019",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T889.1和规格M16完全一致"
+    },
+    {
+      "mesh_id": "mesh_016",
+      "bom_code": "02.03.0019",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T889.1和规格M16完全一致"
+    },
+    {
+      "mesh_id": "mesh_017",
+      "bom_code": "02.03.0019",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T889.1和规格M16完全一致"
+    },
+    {
+      "mesh_id": "mesh_018",
+      "bom_code": "02.03.0019",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T889.1和规格M16完全一致"
+    },
+    {
+      "mesh_id": "mesh_022",
+      "bom_code": "02.03.0019",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T889.1和规格M16完全一致"
+    },
+    {
+      "mesh_id": "mesh_033",
+      "bom_code": "02.03.0019",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T889.1和规格M16完全一致"
+    },
+    {
+      "mesh_id": "mesh_034",
+      "bom_code": "02.03.0019",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T889.1和规格M16完全一致"
+    },
+    {
+      "mesh_id": "mesh_035",
+      "bom_code": "02.03.0019",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T889.1和规格M16完全一致"
+    },
+    {
+      "mesh_id": "mesh_036",
+      "bom_code": "02.03.0019",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T889.1和规格M16完全一致"
+    },
+    {
+      "mesh_id": "mesh_037",
+      "bom_code": "02.03.0019",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T889.1和规格M16完全一致"
+    },
+    {
+      "mesh_id": "mesh_138",
+      "bom_code": "02.03.0019",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T889.1和规格M16完全一致"
+    },
+    {
+      "mesh_id": "mesh_140",
+      "bom_code": "02.03.0019",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T889.1和规格M16完全一致"
+    },
+    {
+      "mesh_id": "mesh_002",
+      "bom_code": "02.03.0072",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T95和规格16x3完全一致"
+    },
+    {
+      "mesh_id": "mesh_009",
+      "bom_code": "02.03.0072",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T95和规格16x3完全一致"
+    },
+    {
+      "mesh_id": "mesh_010",
+      "bom_code": "02.03.0072",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T95和规格16x3完全一致"
+    },
+    {
+      "mesh_id": "mesh_011",
+      "bom_code": "02.03.0072",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T95和规格16x3完全一致"
+    },
+    {
+      "mesh_id": "mesh_012",
+      "bom_code": "02.03.0072",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T95和规格16x3完全一致"
+    },
+    {
+      "mesh_id": "mesh_013",
+      "bom_code": "02.03.0072",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T95和规格16x3完全一致"
+    },
+    {
+      "mesh_id": "mesh_021",
+      "bom_code": "02.03.0072",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T95和规格16x3完全一致"
+    },
+    {
+      "mesh_id": "mesh_028",
+      "bom_code": "02.03.0072",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T95和规格16x3完全一致"
+    },
+    {
+      "mesh_id": "mesh_029",
+      "bom_code": "02.03.0072",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T95和规格16x3完全一致"
+    },
+    {
+      "mesh_id": "mesh_030",
+      "bom_code": "02.03.0072",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T95和规格16x3完全一致"
+    },
+    {
+      "mesh_id": "mesh_031",
+      "bom_code": "02.03.0072",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T95和规格16x3完全一致"
+    },
+    {
+      "mesh_id": "mesh_032",
+      "bom_code": "02.03.0072",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T95和规格16x3完全一致"
+    },
+    {
+      "mesh_id": "mesh_137",
+      "bom_code": "02.03.0072",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T95和规格16x3完全一致"
+    },
+    {
+      "mesh_id": "mesh_141",
+      "bom_code": "02.03.0072",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T95和规格16x3完全一致"
+    },
+    {
+      "mesh_id": "mesh_001",
+      "bom_code": "02.03.1035",
+      "confidence": 0.95,
+      "reasoning": "标准号GB/T70.2、规格M16x85、等级8.8级一致"
+    },
+    {
+      "mesh_id": "mesh_004",
+      "bom_code": "02.03.1035",
+      "confidence": 0.95,
+      "reasoning": "标准号GB/T70.2、规格M16x85、等级8.8级一致"
+    },
+    {
+      "mesh_id": "mesh_005",
+      "bom_code": "02.03.1035",
+      "confidence": 0.95,
+      "reasoning": "标准号GB/T70.2、规格M16x85、等级8.8级一致"
+    },
+    {
+      "mesh_id": "mesh_006",
+      "bom_code": "02.03.1035",
+      "confidence": 0.95,
+      "reasoning": "标准号GB/T70.2、规格M16x85、等级8.8级一致"
+    },
+    {
+      "mesh_id": "mesh_007",
+      "bom_code": "02.03.1035",
+      "confidence": 0.95,
+      "reasoning": "标准号GB/T70.2、规格M16x85、等级8.8级一致"
+    },
+    {
+      "mesh_id": "mesh_008",
+      "bom_code": "02.03.1035",
+      "confidence": 0.95,
+      "reasoning": "标准号GB/T70.2、规格M16x85、等级8.8级一致"
+    },
+    {
+      "mesh_id": "mesh_020",
+      "bom_code": "02.03.1035",
+      "confidence": 0.95,
+      "reasoning": "标准号GB/T70.2、规格M16x85、等级8.8级一致"
+    },
+    {
+      "mesh_id": "mesh_023",
+      "bom_code": "02.03.1035",
+      "confidence": 0.95,
+      "reasoning": "标准号GB/T70.2、规格M16x85、等级8.8级一致"
+    },
+    {
+      "mesh_id": "mesh_024",
+      "bom_code": "02.03.1035",
+      "confidence": 0.95,
+      "reasoning": "标准号GB/T70.2、规格M16x85、等级8.8级一致"
+    },
+    {
+      "mesh_id": "mesh_025",
+      "bom_code": "02.03.1035",
+      "confidence": 0.95,
+      "reasoning": "标准号GB/T70.2、规格M16x85、等级8.8级一致"
+    },
+    {
+      "mesh_id": "mesh_026",
+      "bom_code": "02.03.1035",
+      "confidence": 0.95,
+      "reasoning": "标准号GB/T70.2、规格M16x85、等级8.8级一致"
+    },
+    {
+      "mesh_id": "mesh_027",
+      "bom_code": "02.03.1035",
+      "confidence": 0.95,
+      "reasoning": "标准号GB/T70.2、规格M16x85、等级8.8级一致"
+    },
+    {
+      "mesh_id": "mesh_139",
+      "bom_code": "02.03.1035",
+      "confidence": 0.95,
+      "reasoning": "标准号GB/T70.2、规格M16x85、等级8.8级一致"
+    },
+    {
+      "mesh_id": "mesh_142",
+      "bom_code": "02.03.1035",
+      "confidence": 0.95,
+      "reasoning": "标准号GB/T70.2、规格M16x85、等级8.8级一致"
+    },
+    {
+      "mesh_id": "mesh_147",
+      "bom_code": "02.03.0102",
+      "confidence": 0.85,
+      "reasoning": "规格M8x65和类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_076",
+      "bom_code": "02.03.0383",
+      "confidence": 0.85,
+      "reasoning": "规格M6x16和类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_149",
+      "bom_code": "02.03.0383",
+      "confidence": 0.85,
+      "reasoning": "规格M6x16和类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_150",
+      "bom_code": "02.04.0029",
+      "confidence": 0.98,
+      "reasoning": "产品代号SPE1.83-LD-09完全匹配"
+    },
+    {
+      "mesh_id": "mesh_151",
+      "bom_code": "02.04.0029",
+      "confidence": 0.98,
+      "reasoning": "产品代号SPE1.83-LD-09完全匹配"
+    },
+    {
+      "mesh_id": "mesh_152",
+      "bom_code": "02.08.03.0236",
+      "confidence": 0.98,
+      "reasoning": "产品代号A181-014完全匹配"
+    },
+    {
+      "mesh_id": "mesh_165",
+      "bom_code": "02.03.0001",
+      "confidence": 0.82,
+      "reasoning": "标准DIN 11023和直径φ8一致"
+    },
+    {
+      "mesh_id": "mesh_166",
+      "bom_code": "02.03.0001",
+      "confidence": 0.82,
+      "reasoning": "标准DIN 11023和直径φ8一致"
+    },
+    {
+      "mesh_id": "mesh_167",
+      "bom_code": "02.03.0001",
+      "confidence": 0.82,
+      "reasoning": "标准DIN 11023和直径φ8一致"
+    },
+    {
+      "mesh_id": "mesh_168",
+      "bom_code": "02.03.0001",
+      "confidence": 0.82,
+      "reasoning": "标准DIN 11023和直径φ8一致"
+    },
+    {
+      "mesh_id": "mesh_071",
+      "bom_code": "02.08.05.0004",
+      "confidence": 0.90,
+      "reasoning": "标准JB/T7940.1和规格M8(数字8)完全一致"
+    },
+    {
+      "mesh_id": "mesh_072",
+      "bom_code": "02.08.05.0004",
+      "confidence": 0.90,
+      "reasoning": "标准JB/T7940.1和规格M8(数字8)完全一致"
+    },
+    {
+      "mesh_id": "mesh_143",
+      "bom_code": "02.08.05.0004",
+      "confidence": 0.90,
+      "reasoning": "标准JB/T7940.1和规格M8(数字8)完全一致"
+    },
+    {
+      "mesh_id": "mesh_144",
+      "bom_code": "02.08.05.0004",
+      "confidence": 0.90,
+      "reasoning": "标准JB/T7940.1和规格M8(数字8)完全一致"
+    },
+    {
+      "mesh_id": "mesh_179",
+      "bom_code": "02.08.05.0004",
+      "confidence": 0.90,
+      "reasoning": "标准JB/T7940.1和规格M8(数字8)完全一致"
+    },
+    {
+      "mesh_id": "mesh_180",
+      "bom_code": "02.08.05.0004",
+      "confidence": 0.90,
+      "reasoning": "标准JB/T7940.1和规格M8(数字8)完全一致"
+    },
+    {
+      "mesh_id": "mesh_181",
+      "bom_code": "02.08.05.0004",
+      "confidence": 0.90,
+      "reasoning": "标准JB/T7940.1和规格M8(数字8)完全一致"
+    },
+    {
+      "mesh_id": "mesh_182",
+      "bom_code": "02.08.05.0004",
+      "confidence": 0.90,
+      "reasoning": "标准JB/T7940.1和规格M8(数字8)完全一致"
+    },
+    {
+      "mesh_id": "mesh_183",
+      "bom_code": "02.08.05.0004",
+      "confidence": 0.90,
+      "reasoning": "标准JB/T7940.1和规格M8(数字8)完全一致"
+    },
+    {
+      "mesh_id": "mesh_184",
+      "bom_code": "02.08.05.0004",
+      "confidence": 0.90,
+      "reasoning": "标准JB/T7940.1和规格M8(数字8)完全一致"
+    },
+    {
+      "mesh_id": "mesh_185",
+      "bom_code": "02.08.05.0004",
+      "confidence": 0.90,
+      "reasoning": "标准JB/T7940.1和规格M8(数字8)完全一致"
+    },
+    {
+      "mesh_id": "mesh_186",
+      "bom_code": "02.08.05.0004",
+      "confidence": 0.90,
+      "reasoning": "标准JB/T7940.1和规格M8(数字8)完全一致"
+    },
+    {
+      "mesh_id": "mesh_187",
+      "bom_code": "02.08.05.0004",
+      "confidence": 0.90,
+      "reasoning": "标准JB/T7940.1和规格M8(数字8)完全一致"
+    },
+    {
+      "mesh_id": "mesh_188",
+      "bom_code": "02.08.05.0004",
+      "confidence": 0.90,
+      "reasoning": "标准JB/T7940.1和规格M8(数字8)完全一致"
+    },
+    {
+      "mesh_id": "mesh_189",
+      "bom_code": "02.08.05.0004",
+      "confidence": 0.90,
+      "reasoning": "标准JB/T7940.1和规格M8(数字8)完全一致"
+    },
+    {
+      "mesh_id": "mesh_190",
+      "bom_code": "02.08.05.0004",
+      "confidence": 0.90,
+      "reasoning": "标准JB/T7940.1和规格M8(数字8)完全一致"
+    },
+    {
+      "mesh_id": "mesh_191",
+      "bom_code": "02.08.05.0004",
+      "confidence": 0.90,
+      "reasoning": "标准JB/T7940.1和规格M8(数字8)完全一致"
+    },
+    {
+      "mesh_id": "mesh_192",
+      "bom_code": "02.08.05.0004",
+      "confidence": 0.90,
+      "reasoning": "标准JB/T7940.1和规格M8(数字8)完全一致"
+    },
+    {
+      "mesh_id": "mesh_077",
+      "bom_code": "02.03.0028",
+      "confidence": 0.90,
+      "reasoning": "标准GB/T889.1和规格M8完全一致"
+    },
+    {
+      "mesh_id": "mesh_078",
+      "bom_code": "02.03.0028",
+      "confidence": 0.90,
+      "reasoning": "标准GB/T889.1和规格M8完全一致"
+    },
+    {
+      "mesh_id": "mesh_122",
+      "bom_code": "02.03.0028",
+      "confidence": 0.90,
+      "reasoning": "标准GB/T889.1和规格M8完全一致"
+    },
+    {
+      "mesh_id": "mesh_124",
+      "bom_code": "02.03.0028",
+      "confidence": 0.90,
+      "reasoning": "标准GB/T889.1和规格M8完全一致"
+    },
+    {
+      "mesh_id": "mesh_126",
+      "bom_code": "02.03.0028",
+      "confidence": 0.90,
+      "reasoning": "标准GB/T889.1和规格M8完全一致"
+    },
+    {
+      "mesh_id": "mesh_128",
+      "bom_code": "02.03.0028",
+      "confidence": 0.90,
+      "reasoning": "标准GB/T889.1和规格M8完全一致"
+    },
+    {
+      "mesh_id": "mesh_130",
+      "bom_code": "02.03.0028",
+      "confidence": 0.90,
+      "reasoning": "标准GB/T889.1和规格M8完全一致"
+    },
+    {
+      "mesh_id": "mesh_132",
+      "bom_code": "02.03.0028",
+      "confidence": 0.90,
+      "reasoning": "标准GB/T889.1和规格M8完全一致"
+    },
+    {
+      "mesh_id": "mesh_134",
+      "bom_code": "02.03.0028",
+      "confidence": 0.90,
+      "reasoning": "标准GB/T889.1和规格M8完全一致"
+    },
+    {
+      "mesh_id": "mesh_136",
+      "bom_code": "02.03.0028",
+      "confidence": 0.90,
+      "reasoning": "标准GB/T889.1和规格M8完全一致"
+    },
+    {
+      "mesh_id": "mesh_146",
+      "bom_code": "02.03.0028",
+      "confidence": 0.90,
+      "reasoning": "标准GB/T889.1和规格M8完全一致"
+    },
+    {
+      "mesh_id": "mesh_153",
+      "bom_code": "02.03.0028",
+      "confidence": 0.90,
+      "reasoning": "标准GB/T889.1和规格M8完全一致"
+    },
+    {
+      "mesh_id": "mesh_155",
+      "bom_code": "02.03.0028",
+      "confidence": 0.90,
+      "reasoning": "标准GB/T889.1和规格M8完全一致"
+    },
+    {
+      "mesh_id": "mesh_157",
+      "bom_code": "02.03.0028",
+      "confidence": 0.90,
+      "reasoning": "标准GB/T889.1和规格M8完全一致"
+    },
+    {
+      "mesh_id": "mesh_159",
+      "bom_code": "02.03.0028",
+      "confidence": 0.90,
+      "reasoning": "标准GB/T889.1和规格M8完全一致"
+    },
+    {
+      "mesh_id": "mesh_161",
+      "bom_code": "02.03.0028",
+      "confidence": 0.90,
+      "reasoning": "标准GB/T889.1和规格M8完全一致"
+    },
+    {
+      "mesh_id": "mesh_163",
+      "bom_code": "02.03.0028",
+      "confidence": 0.90,
+      "reasoning": "标准GB/T889.1和规格M8完全一致"
+    },
+    {
+      "mesh_id": "mesh_169",
+      "bom_code": "02.03.0028",
+      "confidence": 0.90,
+      "reasoning": "标准GB/T889.1和规格M8完全一致"
+    },
+    {
+      "mesh_id": "mesh_171",
+      "bom_code": "02.03.0028",
+      "confidence": 0.90,
+      "reasoning": "标准GB/T889.1和规格M8完全一致"
+    },
+    {
+      "mesh_id": "mesh_173",
+      "bom_code": "02.03.0028",
+      "confidence": 0.90,
+      "reasoning": "标准GB/T889.1和规格M8完全一致"
+    },
+    {
+      "mesh_id": "mesh_175",
+      "bom_code": "02.03.0028",
+      "confidence": 0.90,
+      "reasoning": "标准GB/T889.1和规格M8完全一致"
+    },
+    {
+      "mesh_id": "mesh_177",
+      "bom_code": "02.03.0028",
+      "confidence": 0.90,
+      "reasoning": "标准GB/T889.1和规格M8完全一致"
+    },
+    {
+      "mesh_id": "mesh_193",
+      "bom_code": "02.03.0028",
+      "confidence": 0.90,
+      "reasoning": "标准GB/T889.1和规格M8完全一致"
+    },
+    {
+      "mesh_id": "mesh_154",
+      "bom_code": "02.03.0398",
+      "confidence": 0.85,
+      "reasoning": "规格M8x40和类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_156",
+      "bom_code": "02.03.0398",
+      "confidence": 0.85,
+      "reasoning": "规格M8x40和类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_158",
+      "bom_code": "02.03.0398",
+      "confidence": 0.85,
+      "reasoning": "规格M8x40和类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_160",
+      "bom_code": "02.03.0398",
+      "confidence": 0.85,
+      "reasoning": "规格M8x40和类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_162",
+      "bom_code": "02.03.0398",
+      "confidence": 0.85,
+      "reasoning": "规格M8x40和类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_164",
+      "bom_code": "02.03.0398",
+      "confidence": 0.85,
+      "reasoning": "规格M8x40和类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_170",
+      "bom_code": "02.03.0398",
+      "confidence": 0.85,
+      "reasoning": "规格M8x40和类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_172",
+      "bom_code": "02.03.0398",
+      "confidence": 0.85,
+      "reasoning": "规格M8x40和类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_174",
+      "bom_code": "02.03.0398",
+      "confidence": 0.85,
+      "reasoning": "规格M8x40和类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_176",
+      "bom_code": "02.03.0398",
+      "confidence": 0.85,
+      "reasoning": "规格M8x40和类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_178",
+      "bom_code": "02.03.0398",
+      "confidence": 0.85,
+      "reasoning": "规格M8x40和类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_194",
+      "bom_code": "02.03.0398",
+      "confidence": 0.85,
+      "reasoning": "规格M8x40和类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_198",
+      "bom_code": "02.03.0381",
+      "confidence": 0.80,
+      "reasoning": "规格6x1.6完全一致，类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_200",
+      "bom_code": "02.03.0381",
+      "confidence": 0.80,
+      "reasoning": "规格6x1.6完全一致，类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_040",
+      "bom_code": "02.03.0381",
+      "confidence": 0.80,
+      "reasoning": "规格6x1.6完全一致，类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_041",
+      "bom_code": "02.03.0381",
+      "confidence": 0.80,
+      "reasoning": "规格6x1.6完全一致，类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_042",
+      "bom_code": "02.03.0381",
+      "confidence": 0.80,
+      "reasoning": "规格6x1.6完全一致，类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_043",
+      "bom_code": "02.03.0381",
+      "confidence": 0.80,
+      "reasoning": "规格6x1.6完全一致，类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_044",
+      "bom_code": "02.03.0381",
+      "confidence": 0.80,
+      "reasoning": "规格6x1.6完全一致，类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_045",
+      "bom_code": "02.03.0381",
+      "confidence": 0.80,
+      "reasoning": "规格6x1.6完全一致，类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_046",
+      "bom_code": "02.03.0381",
+      "confidence": 0.80,
+      "reasoning": "规格6x1.6完全一致，类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_047",
+      "bom_code": "02.03.0381",
+      "confidence": 0.80,
+      "reasoning": "规格6x1.6完全一致，类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_048",
+      "bom_code": "02.03.0381",
+      "confidence": 0.80,
+      "reasoning": "规格6x1.6完全一致，类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_049",
+      "bom_code": "02.03.0381",
+      "confidence": 0.80,
+      "reasoning": "规格6x1.6完全一致，类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_050",
+      "bom_code": "02.03.0381",
+      "confidence": 0.80,
+      "reasoning": "规格6x1.6完全一致，类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_051",
+      "bom_code": "02.03.0381",
+      "confidence": 0.80,
+      "reasoning": "规格6x1.6完全一致，类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_052",
+      "bom_code": "02.03.0381",
+      "confidence": 0.80,
+      "reasoning": "规格6x1.6完全一致，类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_053",
+      "bom_code": "02.03.0381",
+      "confidence": 0.80,
+      "reasoning": "规格6x1.6完全一致，类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_054",
+      "bom_code": "02.03.0381",
+      "confidence": 0.80,
+      "reasoning": "规格6x1.6完全一致，类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_055",
+      "bom_code": "02.03.0381",
+      "confidence": 0.80,
+      "reasoning": "规格6x1.6完全一致，类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_056",
+      "bom_code": "02.03.0381",
+      "confidence": 0.80,
+      "reasoning": "规格6x1.6完全一致，类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_057",
+      "bom_code": "02.03.0381",
+      "confidence": 0.80,
+      "reasoning": "规格6x1.6完全一致，类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_058",
+      "bom_code": "02.03.0381",
+      "confidence": 0.80,
+      "reasoning": "规格6x1.6完全一致，类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_059",
+      "bom_code": "02.03.0381",
+      "confidence": 0.80,
+      "reasoning": "规格6x1.6完全一致，类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_060",
+      "bom_code": "02.03.0381",
+      "confidence": 0.80,
+      "reasoning": "规格6x1.6完全一致，类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_061",
+      "bom_code": "02.03.0381",
+      "confidence": 0.80,
+      "reasoning": "规格6x1.6完全一致，类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_062",
+      "bom_code": "02.03.0381",
+      "confidence": 0.80,
+      "reasoning": "规格6x1.6完全一致，类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_063",
+      "bom_code": "02.03.0381",
+      "confidence": 0.80,
+      "reasoning": "规格6x1.6完全一致，类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_197",
+      "bom_code": "02.03.0146",
+      "confidence": 0.90,
+      "reasoning": "标准GB/T889.1和规格M6完全一致"
+    },
+    {
+      "mesh_id": "mesh_201",
+      "bom_code": "02.03.0146",
+      "confidence": 0.90,
+      "reasoning": "标准GB/T889.1和规格M6完全一致"
+    },
+    {
+      "mesh_id": "mesh_075",
+      "bom_code": "02.03.0146",
+      "confidence": 0.90,
+      "reasoning": "标准GB/T889.1和规格M6完全一致"
+    },
+    {
+      "mesh_id": "mesh_079",
+      "bom_code": "02.03.0146",
+      "confidence": 0.90,
+      "reasoning": "标准GB/T889.1和规格M6完全一致"
+    },
+    {
+      "mesh_id": "mesh_081",
+      "bom_code": "02.03.0146",
+      "confidence": 0.90,
+      "reasoning": "标准GB/T889.1和规格M6完全一致"
+    },
+    {
+      "mesh_id": "mesh_083",
+      "bom_code": "02.03.0146",
+      "confidence": 0.90,
+      "reasoning": "标准GB/T889.1和规格M6完全一致"
+    },
+    {
+      "mesh_id": "mesh_085",
+      "bom_code": "02.03.0146",
+      "confidence": 0.90,
+      "reasoning": "标准GB/T889.1和规格M6完全一致"
+    },
+    {
+      "mesh_id": "mesh_087",
+      "bom_code": "02.03.0146",
+      "confidence": 0.90,
+      "reasoning": "标准GB/T889.1和规格M6完全一致"
+    },
+    {
+      "mesh_id": "mesh_089",
+      "bom_code": "02.03.0146",
+      "confidence": 0.90,
+      "reasoning": "标准GB/T889.1和规格M6完全一致"
+    },
+    {
+      "mesh_id": "mesh_091",
+      "bom_code": "02.03.0146",
+      "confidence": 0.90,
+      "reasoning": "标准GB/T889.1和规格M6完全一致"
+    },
+    {
+      "mesh_id": "mesh_093",
+      "bom_code": "02.03.0146",
+      "confidence": 0.90,
+      "reasoning": "标准GB/T889.1和规格M6完全一致"
+    },
+    {
+      "mesh_id": "mesh_095",
+      "bom_code": "02.03.0146",
+      "confidence": 0.90,
+      "reasoning": "标准GB/T889.1和规格M6完全一致"
+    },
+    {
+      "mesh_id": "mesh_097",
+      "bom_code": "02.03.0146",
+      "confidence": 0.90,
+      "reasoning": "标准GB/T889.1和规格M6完全一致"
+    },
+    {
+      "mesh_id": "mesh_099",
+      "bom_code": "02.03.0146",
+      "confidence": 0.90,
+      "reasoning": "标准GB/T889.1和规格M6完全一致"
+    },
+    {
+      "mesh_id": "mesh_101",
+      "bom_code": "02.03.0146",
+      "confidence": 0.90,
+      "reasoning": "标准GB/T889.1和规格M6完全一致"
+    },
+    {
+      "mesh_id": "mesh_148",
+      "bom_code": "02.03.0146",
+      "confidence": 0.90,
+      "reasoning": "标准GB/T889.1和规格M6完全一致"
+    },
+    {
+      "mesh_id": "mesh_199",
+      "bom_code": "02.03.0442",
+      "confidence": 0.95,
+      "reasoning": "标准GB/T70.1、规格M6x40、等级8.8级一致"
+    },
+    {
+      "mesh_id": "mesh_202",
+      "bom_code": "02.03.0442",
+      "confidence": 0.95,
+      "reasoning": "标准GB/T70.1、规格M6x40、等级8.8级一致"
+    },
+    {
+      "mesh_id": "mesh_196",
+      "bom_code": "01.09.2566",
+      "confidence": 0.98,
+      "reasoning": "产品代号ML-CA1200-Avant300-500-11-Q235完全匹配"
+    },
+    {
+      "mesh_id": "mesh_203",
+      "bom_code": "01.09.2566",
+      "confidence": 0.98,
+      "reasoning": "产品代号ML-CA1200-Avant300-500-11-Q235完全匹配"
+    },
+    {
+      "mesh_id": "mesh_205",
+      "bom_code": "01.09.2565",
+      "confidence": 0.98,
+      "reasoning": "产品代号ML-CA1200-Avant300-500-08-45#完全匹配"
+    },
+    {
+      "mesh_id": "mesh_206",
+      "bom_code": "01.09.2565",
+      "confidence": 0.98,
+      "reasoning": "产品代号ML-CA1200-Avant300-500-08-45#完全匹配"
+    },
+    {
+      "mesh_id": "mesh_204",
+      "bom_code": "02.03.0612",
+      "confidence": 0.90,
+      "reasoning": "标准GB/T889.1和规格M20完全一致"
+    },
+    {
+      "mesh_id": "mesh_207",
+      "bom_code": "02.03.0612",
+      "confidence": 0.90,
+      "reasoning": "标准GB/T889.1和规格M20完全一致"
+    },
+    {
+      "mesh_id": "mesh_208",
+      "bom_code": "02.16.0142",
+      "confidence": 0.80,
+      "reasoning": "规格200x55与200x50接近，类型一致"
+    },
+    {
+      "mesh_id": "mesh_209",
+      "bom_code": "02.16.0142",
+      "confidence": 0.80,
+      "reasoning": "规格200x55与200x50接近，类型一致"
+    },
+    {
+      "mesh_id": "mesh_210",
+      "bom_code": "01.09.0999",
+      "confidence": 0.98,
+      "reasoning": "产品代号T-U2500-16-45#完全匹配"
+    },
+    {
+      "mesh_id": "mesh_211",
+      "bom_code": "01.09.0503",
+      "confidence": 0.98,
+      "reasoning": "产品代号CX-φ12-150-45#完全匹配"
+    },
+    {
+      "mesh_id": "mesh_212",
+      "bom_code": "02.03.0006",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T95和规格30x4完全一致"
+    },
+    {
+      "mesh_id": "mesh_213",
+      "bom_code": "02.03.0006",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T95和规格30x4完全一致"
+    },
+    {
+      "mesh_id": "mesh_214",
+      "bom_code": "02.03.0006",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T95和规格30x4完全一致"
+    },
+    {
+      "mesh_id": "mesh_215",
+      "bom_code": "02.03.0006",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T95和规格30x4完全一致"
+    },
+    {
+      "mesh_id": "mesh_216",
+      "bom_code": "02.03.0006",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T95和规格30x4完全一致"
+    },
+    {
+      "mesh_id": "mesh_217",
+      "bom_code": "02.03.0006",
+      "confidence": 0.90,
+      "reasoning": "标准号GB/T95和规格30x4完全一致"
+    },
+    {
+      "mesh_id": "mesh_218",
+      "bom_code": "01.09.0995",
+      "confidence": 0.98,
+      "reasoning": "产品代号T-U2500-11-45#完全匹配"
+    },
+    {
+      "mesh_id": "mesh_219",
+      "bom_code": "01.09.0995",
+      "confidence": 0.98,
+      "reasoning": "产品代号T-U2500-11-45#完全匹配"
+    },
+    {
+      "mesh_id": "mesh_220",
+      "bom_code": "01.09.0995",
+      "confidence": 0.98,
+      "reasoning": "产品代号T-U2500-11-45#完全匹配"
+    },
+    {
+      "mesh_id": "mesh_221",
+      "bom_code": "01.09.0995",
+      "confidence": 0.98,
+      "reasoning": "产品代号T-U2500-11-45#完全匹配"
+    },
+    {
+      "mesh_id": "mesh_222",
+      "bom_code": "01.09.0995",
+      "confidence": 0.98,
+      "reasoning": "产品代号T-U2500-11-45#完全匹配"
+    },
+    {
+      "mesh_id": "mesh_223",
+      "bom_code": "02.03.0148",
+      "confidence": 0.80,
+      "reasoning": "规格M30和类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_224",
+      "bom_code": "02.03.0148",
+      "confidence": 0.80,
+      "reasoning": "规格M30和类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_225",
+      "bom_code": "02.03.0148",
+      "confidence": 0.80,
+      "reasoning": "规格M30和类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_226",
+      "bom_code": "02.03.0148",
+      "confidence": 0.80,
+      "reasoning": "规格M30和类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_227",
+      "bom_code": "02.03.0148",
+      "confidence": 0.80,
+      "reasoning": "规格M30和类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_228",
+      "bom_code": "02.03.0148",
+      "confidence": 0.80,
+      "reasoning": "规格M30和类型一致，标准号相似"
+    },
+    {
+      "mesh_id": "mesh_229",
+      "bom_code": "01.09.2564",
+      "confidence": 0.80,
+      "reasoning": "产品代号前缀ML-CA1200-Avant300-500-07匹配"
+    },
+    {
+      "mesh_id": "mesh_230",
+      "bom_code": "01.09.2564",
+      "confidence": 0.80,
+      "reasoning": "产品代号前缀ML-CA1200-Avant300-500-07匹配"
+    },
+    {
+      "mesh_id": "mesh_231",
+      "bom_code": "01.09.2564",
+      "confidence": 0.80,
+      "reasoning": "产品代号前缀ML-CA1200-Avant300-500-07匹配"
+    },
+    {
+      "mesh_id": "mesh_232",
+      "bom_code": "01.09.2564",
+      "confidence": 0.80,
+      "reasoning": "产品代号前缀ML-CA1200-Avant300-500-07匹配"
+    },
+    {
+      "mesh_id": "mesh_233",
+      "bom_code": "02.08.01.0338",
+      "confidence": 0.95,
+      "reasoning": "产品代号EHYG-φ63-φ35-428-251完全匹配"
+    },
+    {
+      "mesh_id": "mesh_234",
+      "bom_code": "02.08.01.0338",
+      "confidence": 0.95,
+      "reasoning": "产品代号EHYG-φ63-φ35-428-251完全匹配"
+    },
+    {
+      "mesh_id": "mesh_235",
+      "bom_code": "02.08.01.0338",
+      "confidence": 0.95,
+      "reasoning": "产品代号EHYG-φ63-φ35-428-251完全匹配"
+    },
+    {
+      "mesh_id": "mesh_236",
+      "bom_code": "02.08.01.0338",
+      "confidence": 0.95,
+      "reasoning": "产品代号EHYG-φ63-φ35-428-251完全匹配"
+    },
+    {
+      "mesh_id": "mesh_237",
+      "bom_code": "02.09.0103",
+      "confidence": 0.98,
+      "reasoning": "产品代号TH-φ10×16×φ56×260-YS完全匹配"
+    },
+    {
+      "mesh_id": "mesh_238",
+      "bom_code": "02.09.0103",
+      "confidence": 0.98,
+      "reasoning": "产品代号TH-φ10×16×φ56×260-YS完全匹配"
+    },
+    {
+      "mesh_id": "mesh_239",
+      "bom_code": "02.09.0103",
+      "confidence": 0.98,
+      "reasoning": "产品代号TH-φ10×16×φ56×260-YS完全匹配"
+    },
+    {
+      "mesh_id": "mesh_240",
+      "bom_code": "02.09.0103",
+      "confidence": 0.98,
+      "reasoning": "产品代号TH-φ10×16×φ56×260-YS完全匹配"
+    },
+    {
+      "mesh_id": "mesh_241",
+      "bom_code": "02.09.0103",
+      "confidence": 0.98,
+      "reasoning": "产品代号TH-φ10×16×φ56×260-YS完全匹配"
+    },
+    {
+      "mesh_id": "mesh_242",
+      "bom_code": "02.09.0103",
+      "confidence": 0.98,
+      "reasoning": "产品代号TH-φ10×16×φ56×260-YS完全匹配"
+    },
+    {
+      "mesh_id": "mesh_248",
+      "bom_code": "01.09.2563",
+      "confidence": 0.98,
+      "reasoning": "产品代号XZ-φ40×10-φ30×87-φ10×10-45#完全匹配"
+    },
+    {
+      "mesh_id": "mesh_249",
+      "bom_code": "01.09.2563",
+      "confidence": 0.98,
+      "reasoning": "产品代号XZ-φ40×10-φ30×87-φ10×10-45#完全匹配"
+    },
+    {
+      "mesh_id": "mesh_250",
+      "bom_code": "01.09.2563",
+      "confidence": 0.98,
+      "reasoning": "产品代号XZ-φ40×10-φ30×87-φ10×10-45#完全匹配"
+    },
+    {
+      "mesh_id": "mesh_251",
+      "bom_code": "01.09.2563",
+      "confidence": 0.98,
+      "reasoning": "产品代号XZ-φ40×10-φ30×87-φ10×10-45#完全匹配"
+    },
+    {
+      "mesh_id": "mesh_243",
+      "bom_code": "01.09.2562",
+      "confidence": 0.98,
+      "reasoning": "产品代号XZ-φ35×10-φ25×145-φ10×10-45#完全匹配"
+    },
+    {
+      "mesh_id": "mesh_244",
+      "bom_code": "01.09.2562",
+      "confidence": 0.98,
+      "reasoning": "产品代号XZ-φ35×10-φ25×145-φ10×10-45#完全匹配"
+    },
+    {
+      "mesh_id": "mesh_245",
+      "bom_code": "01.09.2562",
+      "confidence": 0.98,
+      "reasoning": "产品代号XZ-φ35×10-φ25×145-φ10×10-45#完全匹配"
+    },
+    {
+      "mesh_id": "mesh_246",
+      "bom_code": "01.09.2562",
+      "confidence": 0.98,
+      "reasoning": "产品代号XZ-φ35×10-φ25×145-φ10×10-45#完全匹配"
+    },
+    {
+      "mesh_id": "mesh_247",
+      "bom_code": "01.09.2562",
+      "confidence": 0.98,
+      "reasoning": "产品代号XZ-φ35×10-φ25×145-φ10×10-45#完全匹配"
+    },
+    {
+      "mesh_id": "mesh_252",
+      "bom_code": "01.09.2562",
+      "confidence": 0.98,
+      "reasoning": "产品代号XZ-φ35×10-φ25×145-φ10×10-45#完全匹配"
+    },
+    {
+      "mesh_id": "mesh_253",
+      "bom_code": "01.09.2561",
+      "confidence": 0.98,
+      "reasoning": "产品代号XZ-φ50×15-φ35×485-φ10×10-45#完全匹配"
+    },
+    {
+      "mesh_id": "mesh_254",
+      "bom_code": "01.09.2555",
+      "confidence": 0.98,
+      "reasoning": "产品代号T-SPV1830-EURO-08-Q235完全匹配"
+    },
+    {
+      "mesh_id": "mesh_255",
+      "bom_code": "01.02.07.0071",
+      "confidence": 0.98,
+      "reasoning": "产品代号T-SPV250-Z602-12完全匹配"
+    },
+    {
+      "mesh_id": "mesh_256",
+      "bom_code": "01.02.07.0239",
+      "confidence": 0.98,
+      "reasoning": "产品代号T-SPV1830-EURO-07完全匹配"
+    },
+    {
+      "mesh_id": "mesh_257",
+      "bom_code": "01.02.07.0239",
+      "confidence": 0.98,
+      "reasoning": "产品代号T-SPV1830-EURO-07完全匹配"
+    },
+    {
+      "mesh_id": "mesh_259",
+      "bom_code": "01.09.2560",
+      "confidence": 0.80,
+      "reasoning": "产品代号前缀T-SPV250-Z602-09匹配"
+    },
+    {
+      "mesh_id": "mesh_260",
+      "bom_code": "01.09.2559",
+      "confidence": 0.80,
+      "reasoning": "产品代号前缀T-SPV250-Z602-08匹配"
+    },
+    {
+      "mesh_id": "mesh_263",
+      "bom_code": "01.09.2559",
+      "confidence": 0.80,
+      "reasoning": "产品代号前缀T-SPV250-Z602-08匹配"
+    },
+    {
+      "mesh_id": "mesh_266",
+      "bom_code": "01.09.2559",
+      "confidence": 0.80,
+      "reasoning": "产品代号前缀T-SPV250-Z602-08匹配"
+    },
+    {
+      "mesh_id": "mesh_269",
+      "bom_code": "01.09.2559",
+      "confidence": 0.80,
+      "reasoning": "产品代号前缀T-SPV250-Z602-08匹配"
+    },
+    {
+      "mesh_id": "mesh_272",
+      "bom_code": "01.09.2559",
+      "confidence": 0.80,
+      "reasoning": "产品代号前缀T-SPV250-Z602-08匹配"
+    },
+    {
+      "mesh_id": "mesh_275",
+      "bom_code": "01.09.2559",
+      "confidence": 0.80,
+      "reasoning": "产品代号前缀T-SPV250-Z602-08匹配"
+    },
+    {
+      "mesh_id": "mesh_301",
+      "bom_code": "01.09.2557",
+      "confidence": 0.80,
+      "reasoning": "产品代号前缀T-SPV250-Z602-06匹配"
+    },
+    {
+      "mesh_id": "mesh_305",
+      "bom_code": "01.09.2557",
+      "confidence": 0.80,
+      "reasoning": "产品代号前缀T-SPV250-Z602-06匹配"
+    },
+    {
+      "mesh_id": "mesh_315",
+      "bom_code": "01.09.2553",
+      "confidence": 0.80,
+      "reasoning": "产品代号前缀T-SPV1830-EURO-05匹配"
+    },
+    {
+      "mesh_id": "mesh_325",
+      "bom_code": "01.09.2554",
+      "confidence": 0.80,
+      "reasoning": "产品代号前缀T-SPV1830-EURO-06匹配"
+    },
+    {
+      "mesh_id": "mesh_351",
+      "bom_code": "01.09.2552",
+      "confidence": 0.80,
+      "reasoning": "产品代号前缀T-SPV1830-EURO-04匹配"
+    },
+    {
+      "mesh_id": "mesh_377",
+      "bom_code": "01.09.2551",
+      "confidence": 0.80,
+      "reasoning": "产品代号前缀T-SPV1830-EURO-03匹配"
+    },
+    {
+      "mesh_id": "mesh_376",
+      "bom_code": "01.09.2551",
+      "confidence": 0.80,
+      "reasoning": "产品代号前缀T-SPV1830-EURO-03匹配"
+    },
+    {
+      "mesh_id": "mesh_374",
+      "bom_code": "01.09.2551",
+      "confidence": 0.80,
+      "reasoning": "产品代号前缀T-SPV1830-EURO-03匹配"
+    }
+  ]
+}
+```

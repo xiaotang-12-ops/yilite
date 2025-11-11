@@ -1,0 +1,389 @@
+{
+  "agent_name": "Agent6_FAQ",
+  "model": "google/gemini-2.5-flash-preview-09-2025",
+  "timestamp": "20251104_142858",
+  "image_count": 0,
+  "temperature": 0.2,
+  "system_prompt": "# 角色定位\n\n你是**李师傅**，一位拥有20年安全管理经验的高级安全工程师。\n\n## 教育背景\n\n- **学历**：安全工程专业本科\n- **职业资格**：注册安全工程师、高级安全评价师\n- **专业培训**：\n  - 机械制造安全管理\n  - 职业健康与安全管理体系（ISO 45001）\n  - 事故调查与分析\n  - 应急预案编制与演练\n\n## 职业背景\n\n- **工作经历**：20年机械制造企业安全管理经验，参与过大型装备制造、钢结构加工等项目\n- **专业领域**：\n  - 机械加工安全（车、铣、刨、磨、钻等）\n  - 焊接作业安全（电焊、气焊、氩弧焊等）\n  - 起重吊装安全（行车、叉车、吊索具等）\n  - 高空作业安全（脚手架、安全带、防坠落等）\n  - 个人防护用品管理（安全帽、防护眼镜、手套、安全鞋等）\n\n## 知识结构（详细）\n\n### 1. 机械伤害风险\n- **夹伤/挤伤**：手指、手臂被运动部件夹住\n- **切割伤**：锋利边缘、毛刺、切削工具\n- **碰撞伤**：头部碰撞、身体碰撞\n- **坠落伤**：零件坠落、工具坠落、人员坠落\n\n### 2. 焊接作业风险\n- **电击伤**：焊机漏电、接地不良\n- **弧光伤**：电弧紫外线灼伤眼睛和皮肤\n- **烫伤**：高温熔池、焊渣飞溅\n- **火灾爆炸**：易燃物引燃、气瓶泄漏\n- **有毒气体**：焊接烟尘、一氧化碳中毒\n\n### 3. 起重吊装风险\n- **吊物坠落**：吊索具断裂、捆绑不牢\n- **吊物摆动**：碰撞人员、设备\n- **超载**：超过起重机额定载荷\n- **指挥失误**：信号不清、违章指挥\n\n### 4. 高空作业风险\n- **人员坠落**：未系安全带、脚手架不牢\n- **物体打击**：工具、零件从高处坠落\n- **脚手架坍塌**：搭设不规范、超载\n\n### 5. 个人防护用品\n- **头部防护**：安全帽（防止碰撞、坠物打击）\n- **眼部防护**：防护眼镜、焊接面罩（防止飞溅、弧光）\n- **手部防护**：防护手套（防止切割、烫伤、化学品）\n- **足部防护**：安全鞋（防砸、防刺穿、防滑）\n- **呼吸防护**：防尘口罩、防毒面具（防止粉尘、有毒气体）\n\n### 6. 应急处理\n- **机械伤害**：立即停机、呼救、止血、固定、送医\n- **电击伤**：切断电源、心肺复苏、送医\n- **烫伤**：冷水冲洗、覆盖无菌纱布、送医\n- **火灾**：使用灭火器、疏散人员、报警\n\n## 任务步骤（Chain of Thought）\n\n你的任务是**为每个装配步骤添加安全警告**（如果该步骤有安全风险）。请按照以下5个步骤思考：\n\n### 步骤1：识别风险步骤\n- 分析每个装配步骤的操作内容\n- 判断是否涉及高风险作业（焊接、吊装、高空、重物搬运等）\n- 识别潜在的伤害类型（机械伤害、电击、烫伤、坠落等）\n\n### 步骤2：分析风险源\n- 确定风险的来源（设备、工具、材料、环境、人员操作等）\n- 评估风险的严重程度（轻微、中等、严重、致命）\n- 考虑风险的发生概率\n\n### 步骤3：制定预防措施\n- 针对每个风险源，制定具体的预防措施\n- 强调个人防护用品的使用\n- 强调安全操作规程的遵守\n\n### 步骤4：添加安全警告\n- 为每个有风险的步骤添加safety_warnings字段\n- 每条警告要简洁明了，说明具体的风险和预防措施\n- 使用工人能看懂的语言\n\n### 步骤5：验证完整性\n- 检查所有高风险步骤是否都添加了安全警告\n- 检查安全警告是否具体、可操作\n- 检查是否遗漏了任何潜在风险\n\n## 核心原则\n\n1. **步骤级嵌入**：为每个有风险的步骤添加safety_warnings字段，而不是单独列出安全警告\n2. **工人友好**：使用通俗语言，避免专业术语\n3. **具体可操作**：说明具体的风险和预防措施，而不是泛泛而谈\n4. **不重复显示**：安全警告只在下方\"安全\"标签页中统一显示，不在当前步骤详情中重复显示\n\n## 输出格式\n\n严格按照以下JSON格式输出（返回增强后的装配步骤）：\n\n```json\n{\n  \"enhanced_steps\": [\n    {\n      \"step_number\": 1,\n      \"title\": \"点焊定位\",\n      \"parts_used\": [...],\n      \"tools_required\": [...],\n      \"operation\": \"操作说明\",\n      \"quality_check\": \"质量检查\",\n      \"estimated_time_minutes\": 10,\n      \"welding\": {\n        \"required\": true,\n        \"welding_type\": \"点焊\",\n        \"welding_method\": \"CO2气保焊\",\n        ...\n      },\n      \"safety_warnings\": [\n        \"佩戴焊接面罩和防护手套，防止弧光灼伤眼睛和皮肤\",\n        \"确保工件夹紧牢固，防止点焊时位移造成伤害\",\n        \"焊接区域周围3米内不得有易燃物，配备灭火器\",\n        \"焊机必须接地良好，防止漏电触电\"\n      ]\n    },\n    {\n      \"step_number\": 2,\n      \"title\": \"螺栓连接\",\n      \"parts_used\": [...],\n      \"operation\": \"操作说明\",\n      \"quality_check\": \"质量检查\",\n      \"estimated_time_minutes\": 15,\n      \"safety_warnings\": [\n        \"佩戴安全帽和防护眼镜，防止零件坠落和飞溅\",\n        \"使用扭力扳手时注意力度，防止扳手滑脱伤人\"\n      ]\n    },\n    {\n      \"step_number\": 3,\n      \"title\": \"简单装配\",\n      \"parts_used\": [...],\n      \"operation\": \"操作说明\",\n      \"quality_check\": \"质量检查\",\n      \"estimated_time_minutes\": 5\n      // ⚠️ 如果没有明显安全风险，不添加safety_warnings字段\n    }\n  ]\n}\n```\n\n**⚠️ 关键要求**：\n\n1. **步骤级嵌入**：\n   - 为每个有风险的步骤添加`safety_warnings`字段\n   - 没有明显风险的步骤不添加`safety_warnings`字段\n   - 保持原有步骤的所有字段不变\n\n2. **安全警告要具体**：\n   - ✅ 说\"佩戴焊接面罩和防护手套，防止弧光灼伤眼睛和皮肤\"\n   - ❌ 不说\"注意安全\"\n   - ✅ 说\"焊接区域周围3米内不得有易燃物，配备灭火器\"\n   - ❌ 不说\"注意防火\"\n\n3. **使用通俗语言**：\n   - 工人能看懂的语言\n   - 避免专业术语和英文缩写\n\n4. **警告要全面**：\n   - 涵盖个人防护、设备安全、环境安全、操作安全\n   - 每条警告说明具体的风险和预防措施\n\n## 重要提醒\n\n- **只输出JSON，不要输出其他内容**\n- **保持原有字段不变**：不要修改或删除原有的字段（包括welding字段）\n- **警告要简洁明了**：每条警告一句话，说明风险和预防措施\n- **不要过度警告**：只针对有明显风险的步骤添加警告\n",
+  "user_query": "请为以下装配步骤添加安全警告（如果有安全风险）。\n\n## 📸 视觉分析任务\n\n**你会看到工程图纸图片，请仔细观察：**\n\n1. **危险作业标识**：\n   - 图纸上的安全警告标识\n   - 特殊作业要求（如高空作业、吊装作业等）\n   - 危险区域标注\n\n2. **零件特征**：\n   - 重型零件（需要吊装）\n   - 锋利边缘（容易割伤）\n   - 高温部件（容易烫伤）\n\n3. **作业环境**：\n   - 狭窄空间（容易碰撞）\n   - 高空位置（容易坠落）\n   - 密闭空间（通风不良）\n\n## 装配步骤\n\n[\n  {\n    \"step_number\": 1,\n    \"title\": \"安装主刷组件\",\n    \"component_code\": \"01.09.0404\",\n    \"component_name\": \"主刷组件-漆后\",\n    \"drawing_number\": \"②\",\n    \"connection_type\": \"螺栓连接/销轴连接\",\n    \"position_description\": \"将主刷组件（②）安装到清扫器主体框架的中心位置，确保其轴线与框架垂直。\",\n    \"components\": [\n      {\n        \"bom_seq\": \"2\",\n        \"bom_name\": \"主刷组件-漆后\",\n        \"quantity\": 1\n      }\n    ],\n    \"fasteners\": [\n      {\n        \"bom_seq\": \"5\",\n        \"bom_name\": \"旋转定位立柱-镀锌\",\n        \"spec\": \"\",\n        \"quantity\": 2,\n        \"torque\": \"\"\n      },\n      {\n        \"bom_seq\": \"6\",\n        \"bom_name\": \"旋转定位座-镀锌\",\n        \"spec\": \"\",\n        \"quantity\": 2,\n        \"torque\": \"\"\n      },\n      {\n        \"bom_seq\": \"7\",\n        \"bom_name\": \"毛刷调整件-漆后\",\n        \"spec\": \"\",\n        \"quantity\": 2,\n        \"torque\": \"\"\n      },\n      {\n        \"bom_seq\": \"8\",\n        \"bom_name\": \"毛刷调整座-漆后\",\n        \"spec\": \"\",\n        \"quantity\": 1,\n        \"torque\": \"\"\n      },\n      {\n        \"bom_seq\": \"9\",\n        \"bom_name\": \"马达固定螺栓-镀锌\",\n        \"spec\": \"\",\n        \"quantity\": 1,\n        \"torque\": \"\"\n      },\n      {\n        \"bom_seq\": \"10\",\n        \"bom_name\": \"销轴-镀锌\",\n        \"spec\": \"\",\n        \"quantity\": 1,\n        \"torque\": \"\"\n      },\n      {\n        \"bom_seq\": \"11\",\n        \"bom_name\": \"方形带座轴承\",\n        \"spec\": \"UCF206\",\n        \"quantity\": 1,\n        \"torque\": \"\"\n      },\n      {\n        \"bom_seq\": \"12\",\n        \"bom_name\": \"带座轴承\",\n        \"spec\": \"6006-RZ\",\n        \"quantity\": 1,\n        \"torque\": \"\"\n      },\n      {\n        \"bom_seq\": \"13\",\n        \"bom_name\": \"液压马达\",\n        \"spec\": \"026-3087-HMR-315\",\n        \"quantity\": 1,\n        \"torque\": \"\"\n      },\n      {\n        \"bom_seq\": \"14\",\n        \"bom_name\": \"螺栓\",\n        \"spec\": \"162 550+BB+钢丝\",\n        \"quantity\": 38,\n        \"torque\": \"\"\n      },\n      {\n        \"bom_seq\": \"15\",\n        \"bom_name\": \"圆柱销\",\n        \"spec\": \"14*6\",\n        \"quantity\": 1,\n        \"torque\": \"\"\n      },\n      {\n        \"bom_seq\": \"16\",\n        \"bom_name\": \"六角头螺栓8.8级\",\n        \"spec\": \"M12*35\",\n        \"quantity\": 6,\n        \"torque\": \"100N·m\"\n      },\n      {\n        \"bom_seq\": \"17\",\n        \"bom_name\": \"六角头螺栓8.8级\",\n        \"spec\": \"M12*25\",\n        \"quantity\": 6,\n        \"torque\": \"100N·m\"\n      },\n      {\n        \"bom_seq\": \"18\",\n        \"bom_name\": \"平垫圈8.8级\",\n        \"spec\": \"12*2.5\",\n        \"quantity\": 6,\n        \"torque\": \"\"\n      },\n      {\n        \"bom_seq\": \"19\",\n        \"bom_name\": \"六角头螺栓8.8级\",\n        \"spec\": \"M10*45\",\n        \"quantity\": 8,\n        \"torque\": \"50N·m\"\n      },\n      {\n        \"bom_seq\": \"20\",\n        \"bom_name\": \"平垫圈8.8级\",\n        \"spec\": \"10*2\",\n        \"quantity\": 12,\n        \"torque\": \"\"\n      },\n      {\n        \"bom_seq\": \"21\",\n        \"bom_name\": \"六角头螺栓8.8级\",\n        \"spec\": \"M10*35\",\n        \"quantity\": 4,\n        \"torque\": \"50N·m\"\n      },\n      {\n        \"bom_seq\": \"22\",\n        \"bom_name\": \"六角头螺栓8.8级\",\n        \"spec\": \"M10*18\",\n        \"quantity\": 8,\n        \"torque\": \"50N·m\"\n      }\n    ],\n    \"operation\": \"使用吊装工具将主刷组件（②）吊装至主体框架的安装位置。首先，安装旋转定位立柱（5）和旋转定位座（6）。然后，使用M12和M10系列螺栓（16, 17, 19, 21, 22）和垫圈（18, 20）将主刷组件的轴承座和马达固定在框架上。确保马达（13）和销轴（10）安装到位。所有M12螺栓拧紧至100N·m，M10螺栓拧紧至50N·m。\",\n    \"quality_check\": \"检查主刷转动是否灵活，无卡滞现象。检查所有M12和M10螺栓是否达到规定扭矩。\",\n    \"estimated_time_minutes\": 45\n  },\n  {\n    \"step_number\": 2,\n    \"title\": \"安装毛刷调整件\",\n    \"component_code\": \"01.09.0402\",\n    \"component_name\": \"毛刷调整件-漆后\",\n    \"drawing_number\": \"④\",\n    \"connection_type\": \"螺栓连接\",\n    \"position_description\": \"将毛刷调整件（④）安装在主刷组件（②）两侧的预留安装孔上。\",\n    \"components\": [\n      {\n        \"bom_seq\": \"4\",\n        \"bom_name\": \"毛刷调整件-漆后\",\n        \"quantity\": 1\n      }\n    ],\n    \"fasteners\": [\n      {\n        \"bom_seq\": \"23\",\n        \"bom_name\": \"标准型垫圈8.8级\",\n        \"spec\": \"10R\",\n        \"quantity\": 4,\n        \"torque\": \"\"\n      },\n      {\n        \"bom_seq\": \"24\",\n        \"bom_name\": \"1型非金属嵌件六角锁紧螺母8.8级\",\n        \"spec\": \"M10\",\n        \"quantity\": 4,\n        \"torque\": \"50N·m\"\n      },\n      {\n        \"bom_seq\": \"25\",\n        \"bom_name\": \"1型非金属嵌件六角锁紧螺母8.8级\",\n        \"spec\": \"M8\",\n        \"quantity\": 6,\n        \"torque\": \"25N·m\"\n      },\n      {\n        \"bom_seq\": \"26\",\n        \"bom_name\": \"平垫圈8.8级\",\n        \"spec\": \"8*1.6\",\n        \"quantity\": 22,\n        \"torque\": \"\"\n      },\n      {\n        \"bom_seq\": \"27\",\n        \"bom_name\": \"六角头螺栓8.8级\",\n        \"spec\": \"M8*20\",\n        \"quantity\": 17,\n        \"torque\": \"25N·m\"\n      }\n    ],\n    \"operation\": \"将毛刷调整件（④）对准主刷组件两侧的安装位置。使用M10锁紧螺母（24）和垫圈（23）进行初步固定。然后使用M8螺栓（27）和平垫圈（26）将调整件的其余部分固定在框架上。M10锁紧螺母拧紧至50N·m，M8螺栓拧紧至25N·m。\",\n    \"quality_check\": \"检查调整件安装位置是否正确，确保调整机构可以顺畅操作。检查所有M10和M8紧固件是否达到规定扭矩。\",\n    \"estimated_time_minutes\": 20\n  },\n  {\n    \"step_number\": 3,\n    \"title\": \"安装毛刷限位板\",\n    \"component_code\": \"01.09.1144\",\n    \"component_name\": \"毛刷限位板-漆后\",\n    \"drawing_number\": \"③\",\n    \"connection_type\": \"螺栓连接\",\n    \"position_description\": \"将毛刷限位板（③）安装在主刷组件（②）的上方，靠近调整件的位置。\",\n    \"components\": [\n      {\n        \"bom_seq\": \"3\",\n        \"bom_name\": \"毛刷限位板-漆后\",\n        \"quantity\": 1\n      }\n    ],\n    \"fasteners\": [\n      {\n        \"bom_seq\": \"28\",\n        \"bom_name\": \"直通式接头\",\n        \"spec\": \"M8\",\n        \"quantity\": 1,\n        \"torque\": \"\"\n      },\n      {\n        \"bom_seq\": \"29\",\n        \"bom_name\": \"六角头螺栓8.8级\",\n        \"spec\": \"M8*80\",\n        \"quantity\": 1,\n        \"torque\": \"25N·m\"\n      },\n      {\n        \"bom_seq\": \"30\",\n        \"bom_name\": \"六角头螺栓8.8级\",\n        \"spec\": \"M8*20\",\n        \"quantity\": 1,\n        \"torque\": \"25N·m\"\n      },\n      {\n        \"bom_seq\": \"31\",\n        \"bom_name\": \"安全销\",\n        \"spec\": \"DIN 11023\",\n        \"quantity\": 3,\n        \"torque\": \"\"\n      },\n      {\n        \"bom_seq\": \"32\",\n        \"bom_name\": \"警告标识\",\n        \"spec\": \"不干胶（100*100）\",\n        \"quantity\": 1,\n        \"torque\": \"\"\n      },\n      {\n        \"bom_seq\": \"33\",\n        \"bom_name\": \"警告标识\",\n        \"spec\": \"不干胶（120*60）\",\n        \"quantity\": 1,\n        \"torque\": \"\"\n      },\n      {\n        \"bom_seq\": \"34\",\n        \"bom_name\": \"标准型垫圈8.8级\",\n        \"spec\": \"8*2.1\",\n        \"quantity\": 12,\n        \"torque\": \"\"\n      },\n      {\n        \"bom_seq\": \"35\",\n        \"bom_name\": \"基板-漆后\",\n        \"spec\": \"H-AB1830(72IN)-Manitou-Q4Z35\",\n        \"quantity\": 1,\n        \"torque\": \"\"\n      }\n    ],\n    \"operation\": \"将毛刷限位板（③）放置在指定位置，使用M8*80（29）和M8*20（30）螺栓，配合垫圈（34）进行固定。安装直通式接头（28）。最后，将安全销（31）插入限位机构的销孔中。粘贴警告标识（32, 33）。M8螺栓拧紧至25N·m。\",\n    \"quality_check\": \"检查限位板安装是否牢固，安全销是否能可靠锁止。检查警告标识粘贴位置是否符合要求。\",\n    \"estimated_time_minutes\": 15\n  },\n  {\n    \"step_number\": 4,\n    \"title\": \"安装盖板及侧板\",\n    \"component_code\": \"01.09.0409\",\n    \"component_name\": \"盖板-漆后\",\n    \"drawing_number\": \"①\",\n    \"connection_type\": \"螺栓连接\",\n    \"position_description\": \"将盖板（①）安装在清扫器主体的顶部，覆盖主刷组件和传动机构。\",\n    \"components\": [\n      {\n        \"bom_seq\": \"1\",\n        \"bom_name\": \"盖板-漆后\",\n        \"quantity\": 1\n      }\n    ],\n    \"fasteners\": [\n      {\n        \"bom_seq\": \"36\",\n        \"bom_name\": \"右侧板-漆后\",\n        \"spec\": \"H-AB1830(72IN)-Manitou-01\",\n        \"quantity\": 1,\n        \"torque\": \"\"\n      },\n      {\n        \"bom_seq\": \"37\",\n        \"bom_name\": \"左侧板-漆后\",\n        \"spec\": \"H-AB1830(72IN)-Manitou-02\",\n        \"quantity\": 1,\n        \"torque\": \"\"\n      },\n      {\n        \"bom_seq\": \"38\",\n        \"bom_name\": \"右侧顶板-漆后\",\n        \"spec\": \"H-AB1830(72IN)-Manitou-07\",\n        \"quantity\": 1,\n        \"torque\": \"\"\n      },\n      {\n        \"bom_seq\": \"39\",\n        \"bom_name\": \"左侧顶板-漆后\",\n        \"spec\": \"H-AB1830(72IN)-Manitou-08\",\n        \"quantity\": 1,\n        \"torque\": \"\"\n      },\n      {\n        \"bom_seq\": \"40\",\n        \"bom_name\": \"固定板-漆后\",\n        \"spec\": \"T-AB1830(72IN)-EURO-01\",\n        \"quantity\": 1,\n        \"torque\": \"\"\n      },\n      {\n        \"bom_seq\": \"41\",\n        \"bom_name\": \"六角头螺栓8.8级\",\n        \"spec\": \"M6*20\",\n        \"quantity\": 4,\n        \"torque\": \"10N·m\"\n      },\n      {\n        \"bom_seq\": \"42\",\n        \"bom_name\": \"平垫圈8.8级\",\n        \"spec\": \"6*1.2\",\n        \"quantity\": 4,\n        \"torque\": \"\"\n      },\n      {\n        \"bom_seq\": \"43\",\n        \"bom_name\": \"1型非金属嵌件六角锁紧螺母8.8级\",\n        \"spec\": \"M6\",\n        \"quantity\": 4,\n        \"torque\": \"10N·m\"\n      }\n    ],\n    \"operation\": \"首先，同步安装左侧板（37）和右侧板（36），以及左侧顶板（39）和右侧顶板（38）。然后，将盖板（①）和固定板（40）放置到位，使用M6螺栓（41）、平垫圈（42）和M6锁紧螺母（43）进行固定。M6螺栓拧紧至10N·m。\",\n    \"quality_check\": \"检查所有盖板和侧板的安装间隙，确保均匀。检查M6紧固件是否达到规定扭矩，防止松动。\",\n    \"estimated_time_minutes\": 25\n  }\n]\n\n## 要求\n\n请按照以下5个步骤思考，为装配步骤添加安全警告：\n\n### 步骤1：识别风险步骤\n- 分析每个装配步骤的操作内容\n- 判断是否涉及高风险作业：\n  * **焊接作业**：电击、弧光、烫伤、火灾\n  * **吊装作业**：吊物坠落、碰撞、超载\n  * **高空作业**：人员坠落、物体打击\n  * **重物搬运**：砸伤、扭伤、夹伤\n  * **机械加工**：切割伤、夹伤、碰撞\n\n### 步骤2：分析风险源\n- 确定风险的来源（设备、工具、材料、环境、人员操作等）\n- 评估风险的严重程度（轻微、中等、严重、致命）\n- 考虑风险的发生概率\n\n### 步骤3：制定预防措施\n- 针对每个风险源，制定具体的预防措施\n- 强调个人防护用品的使用：\n  * **焊接**：焊接面罩、防护手套、防护服\n  * **吊装**：安全帽、安全鞋、手套\n  * **高空**：安全带、安全帽、防滑鞋\n  * **机械**：防护眼镜、手套、安全鞋\n\n### 步骤4：添加安全警告\n- 为每个有风险的步骤添加safety_warnings字段\n- 每条警告要简洁明了，说明具体的风险和预防措施\n- 使用工人能看懂的语言\n\n### 步骤5：验证完整性\n- 检查所有高风险步骤是否都添加了安全警告\n- 检查安全警告是否具体、可操作\n- 检查是否遗漏了任何潜在风险\n\n## ⚠️ 强制自检清单（生成后必须逐项检查）\n\n**在输出JSON之前，你必须完成以下验证：**\n\n1. **风险步骤识别验证**：\n   - [ ] 所有涉及焊接、吊装、高空、重物搬运的步骤都添加了safety_warnings字段\n   - [ ] 没有明显风险的步骤没有添加safety_warnings字段\n\n2. **安全警告完整性验证**：\n   - [ ] 每个safety_warnings字段都是字符串数组\n   - [ ] 每条警告都说明了具体的风险和预防措施\n   - [ ] 涵盖了个人防护、设备安全、环境安全、操作安全\n\n3. **语言通俗性验证**：\n   - [ ] 使用工人能看懂的语言\n   - [ ] 避免专业术语和英文缩写\n   - [ ] 每条警告简洁明了（一句话）\n\n4. **原有字段保持验证**：\n   - [ ] 原有步骤的所有字段都保持不变（包括welding字段）\n   - [ ] 没有修改或删除任何原有字段\n\n**如果自检发现任何问题，必须重新生成！**\n\n现在开始为装配步骤添加安全警告！\n",
+  "raw_response": "```json\n{\n  \"enhanced_steps\": [\n    {\n      \"step_number\": 1,\n      \"title\": \"安装主刷组件\",\n      \"component_code\": \"01.09.0404\",\n      \"component_name\": \"主刷组件-漆后\",\n      \"drawing_number\": \"②\",\n      \"connection_type\": \"螺栓连接/销轴连接\",\n      \"position_description\": \"将主刷组件（②）安装到清扫器主体框架的中心位置，确保其轴线与框架垂直。\",\n      \"components\": [\n        {\n          \"bom_seq\": \"2\",\n          \"bom_name\": \"主刷组件-漆后\",\n          \"quantity\": 1\n        }\n      ],\n      \"fasteners\": [\n        {\n          \"bom_seq\": \"5\",\n          \"bom_name\": \"旋转定位立柱-镀锌\",\n          \"spec\": \"\",\n          \"quantity\": 2,\n          \"torque\": \"\"\n        },\n        {\n          \"bom_seq\": \"6\",\n          \"bom_name\": \"旋转定位座-镀锌\",\n          \"spec\": \"\",\n          \"quantity\": 2,\n          \"torque\": \"\"\n        },\n        {\n          \"bom_seq\": \"7\",\n          \"bom_name\": \"毛刷调整件-漆后\",\n          \"spec\": \"\",\n          \"quantity\": 2,\n          \"torque\": \"\"\n        },\n        {\n          \"bom_seq\": \"8\",\n          \"bom_name\": \"毛刷调整座-漆后\",\n          \"spec\": \"\",\n          \"quantity\": 1,\n          \"torque\": \"\"\n        },\n        {\n          \"bom_seq\": \"9\",\n          \"bom_name\": \"马达固定螺栓-镀锌\",\n          \"spec\": \"\",\n          \"quantity\": 1,\n          \"torque\": \"\"\n        },\n        {\n          \"bom_seq\": \"10\",\n          \"bom_name\": \"销轴-镀锌\",\n          \"spec\": \"\",\n          \"quantity\": 1,\n          \"torque\": \"\"\n        },\n        {\n          \"bom_seq\": \"11\",\n          \"bom_name\": \"方形带座轴承\",\n          \"spec\": \"UCF206\",\n          \"quantity\": 1,\n          \"torque\": \"\"\n        },\n        {\n          \"bom_seq\": \"12\",\n          \"bom_name\": \"带座轴承\",\n          \"spec\": \"6006-RZ\",\n          \"quantity\": 1,\n          \"torque\": \"\"\n        },\n        {\n          \"bom_seq\": \"13\",\n          \"bom_name\": \"液压马达\",\n          \"spec\": \"026-3087-HMR-315\",\n          \"quantity\": 1,\n          \"torque\": \"\"\n        },\n        {\n          \"bom_seq\": \"14\",\n          \"bom_name\": \"螺栓\",\n          \"spec\": \"162 550+BB+钢丝\",\n          \"quantity\": 38,\n          \"torque\": \"\"\n        },\n        {\n          \"bom_seq\": \"15\",\n          \"bom_name\": \"圆柱销\",\n          \"spec\": \"14*6\",\n          \"quantity\": 1,\n          \"torque\": \"\"\n        },\n        {\n          \"bom_seq\": \"16\",\n          \"bom_name\": \"六角头螺栓8.8级\",\n          \"spec\": \"M12*35\",\n          \"quantity\": 6,\n          \"torque\": \"100N·m\"\n        },\n        {\n          \"bom_seq\": \"17\",\n          \"bom_name\": \"六角头螺栓8.8级\",\n          \"spec\": \"M12*25\",\n          \"quantity\": 6,\n          \"torque\": \"100N·m\"\n        },\n        {\n          \"bom_seq\": \"18\",\n          \"bom_name\": \"平垫圈8.8级\",\n          \"spec\": \"12*2.5\",\n          \"quantity\": 6,\n          \"torque\": \"\"\n        },\n        {\n          \"bom_seq\": \"19\",\n          \"bom_name\": \"六角头螺栓8.8级\",\n          \"spec\": \"M10*45\",\n          \"quantity\": 8,\n          \"torque\": \"50N·m\"\n        },\n        {\n          \"bom_seq\": \"20\",\n          \"bom_name\": \"平垫圈8.8级\",\n          \"spec\": \"10*2\",\n          \"quantity\": 12,\n          \"torque\": \"\"\n        },\n        {\n          \"bom_seq\": \"21\",\n          \"bom_name\": \"六角头螺栓8.8级\",\n          \"spec\": \"M10*35\",\n          \"quantity\": 4,\n          \"torque\": \"50N·m\"\n        },\n        {\n          \"bom_seq\": \"22\",\n          \"bom_name\": \"六角头螺栓8.8级\",\n          \"spec\": \"M10*18\",\n          \"quantity\": 8,\n          \"torque\": \"50N·m\"\n        }\n      ],\n      \"operation\": \"使用吊装工具将主刷组件（②）吊装至主体框架的安装位置。首先，安装旋转定位立柱（5）和旋转定位座（6）。然后，使用M12和M10系列螺栓（16, 17, 19, 21, 22）和垫圈（18, 20）将主刷组件的轴承座和马达固定在框架上。确保马达（13）和销轴（10）安装到位。所有M12螺栓拧紧至100N·m，M10螺栓拧紧至50N·m。\",\n      \"quality_check\": \"检查主刷转动是否灵活，无卡滞现象。检查所有M12和M10螺栓是否达到规定扭矩。\",\n      \"estimated_time_minutes\": 45,\n      \"safety_warnings\": [\n        \"主刷组件为重物，必须使用额定载荷足够的吊装工具进行吊运，严禁人力搬运\",\n        \"吊装前检查吊索具是否完好，捆绑位置要确保平衡，防止吊物坠落或摆动伤人\",\n        \"吊装过程中，人员必须佩戴安全帽和安全鞋，并远离吊物下方\",\n        \"在安装螺栓时，注意防止工具或零件掉落，佩戴防护眼镜和手套\"\n      ]\n    },\n    {\n      \"step_number\": 2,\n      \"title\": \"安装毛刷调整件\",\n      \"component_code\": \"01.09.0402\",\n      \"component_name\": \"毛刷调整件-漆后\",\n      \"drawing_number\": \"④\",\n      \"connection_type\": \"螺栓连接\",\n      \"position_description\": \"将毛刷调整件（④）安装在主刷组件（②）两侧的预留安装孔上。\",\n      \"components\": [\n        {\n          \"bom_seq\": \"4\",\n          \"bom_name\": \"毛刷调整件-漆后\",\n          \"quantity\": 1\n        }\n      ],\n      \"fasteners\": [\n        {\n          \"bom_seq\": \"23\",\n          \"bom_name\": \"标准型垫圈8.8级\",\n          \"spec\": \"10R\",\n          \"quantity\": 4,\n          \"torque\": \"\"\n        },\n        {\n          \"bom_seq\": \"24\",\n          \"bom_name\": \"1型非金属嵌件六角锁紧螺母8.8级\",\n          \"spec\": \"M10\",\n          \"quantity\": 4,\n          \"torque\": \"50N·m\"\n        },\n        {\n          \"bom_seq\": \"25\",\n          \"bom_name\": \"1型非金属嵌件六角锁紧螺母8.8级\",\n          \"spec\": \"M8\",\n          \"quantity\": 6,\n          \"torque\": \"25N·m\"\n        },\n        {\n          \"bom_seq\": \"26\",\n          \"bom_name\": \"平垫圈8.8级\",\n          \"spec\": \"8*1.6\",\n          \"quantity\": 22,\n          \"torque\": \"\"\n        },\n        {\n          \"bom_seq\": \"27\",\n          \"bom_name\": \"六角头螺栓8.8级\",\n          \"spec\": \"M8*20\",\n          \"quantity\": 17,\n          \"torque\": \"25N·m\"\n        }\n      ],\n      \"operation\": \"将毛刷调整件（④）对准主刷组件两侧的安装位置。使用M10锁紧螺母（24）和垫圈（23）进行初步固定。然后使用M8螺栓（27）和平垫圈（26）将调整件的其余部分固定在框架上。M10锁紧螺母拧紧至50N·m，M8螺栓拧紧至25N·m。\",\n      \"quality_check\": \"检查调整件安装位置是否正确，确保调整机构可以顺畅操作。检查所有M10和M8紧固件是否达到规定扭矩。\",\n      \"estimated_time_minutes\": 20,\n      \"safety_warnings\": [\n        \"佩戴防护手套，防止在搬运和安装零件时被毛刺或边缘割伤\",\n        \"使用电动工具拧紧螺栓时，注意站稳，防止反作用力导致身体扭伤或工具脱落\"\n      ]\n    },\n    {\n      \"step_number\": 3,\n      \"title\": \"安装毛刷限位板\",\n      \"component_code\": \"01.09.1144\",\n      \"component_name\": \"毛刷限位板-漆后\",\n      \"drawing_number\": \"③\",\n      \"connection_type\": \"螺栓连接\",\n      \"position_description\": \"将毛刷限位板（③）安装在主刷组件（②）的上方，靠近调整件的位置。\",\n      \"components\": [\n        {\n          \"bom_seq\": \"3\",\n          \"bom_name\": \"毛刷限位板-漆后\",\n          \"quantity\": 1\n        }\n      ],\n      \"fasteners\": [\n        {\n          \"bom_seq\": \"28\",\n          \"bom_name\": \"直通式接头\",\n          \"spec\": \"M8\",\n          \"quantity\": 1,\n          \"torque\": \"\"\n        },\n        {\n          \"bom_seq\": \"29\",\n          \"bom_name\": \"六角头螺栓8.8级\",\n          \"spec\": \"M8*80\",\n          \"quantity\": 1,\n          \"torque\": \"25N·m\"\n        },\n        {\n          \"bom_seq\": \"30\",\n          \"bom_name\": \"六角头螺栓8.8级\",\n          \"spec\": \"M8*20\",\n          \"quantity\": 1,\n          \"torque\": \"25N·m\"\n        },\n        {\n          \"bom_seq\": \"31\",\n          \"bom_name\": \"安全销\",\n          \"spec\": \"DIN 11023\",\n          \"quantity\": 3,\n          \"torque\": \"\"\n        },\n        {\n          \"bom_seq\": \"32\",\n          \"bom_name\": \"警告标识\",\n          \"spec\": \"不干胶（100*100）\",\n          \"quantity\": 1,\n          \"torque\": \"\"\n        },\n        {\n          \"bom_seq\": \"33\",\n          \"bom_name\": \"警告标识\",\n          \"spec\": \"不干胶（120*60）\",\n          \"quantity\": 1,\n          \"torque\": \"\"\n        },\n        {\n          \"bom_seq\": \"34\",\n          \"bom_name\": \"标准型垫圈8.8级\",\n          \"spec\": \"8*2.1\",\n          \"quantity\": 12,\n          \"torque\": \"\"\n        },\n        {\n          \"bom_seq\": \"35\",\n          \"bom_name\": \"基板-漆后\",\n          \"spec\": \"H-AB1830(72IN)-Manitou-Q4Z35\",\n          \"quantity\": 1,\n          \"torque\": \"\"\n        }\n      ],\n      \"operation\": \"将毛刷限位板（③）放置在指定位置，使用M8*80（29）和M8*20（30）螺栓，配合垫圈（34）进行固定。安装直通式接头（28）。最后，将安全销（31）插入限位机构的销孔中。粘贴警告标识（32, 33）。M8螺栓拧紧至25N·m。\",\n      \"quality_check\": \"检查限位板安装是否牢固，安全销是否能可靠锁止。检查警告标识粘贴位置是否符合要求。\",\n      \"estimated_time_minutes\": 15,\n      \"safety_warnings\": [\n        \"佩戴防护手套，限位板边缘可能锋利，防止割伤\",\n        \"粘贴警告标识时，确保表面清洁干燥，防止标识脱落导致安全信息缺失\"\n      ]\n    },\n    {\n      \"step_number\": 4,\n      \"title\": \"安装盖板及侧板\",\n      \"component_code\": \"01.09.0409\",\n      \"component_name\": \"盖板-漆后\",\n      \"drawing_number\": \"①\",\n      \"connection_type\": \"螺栓连接\",\n      \"position_description\": \"将盖板（①）安装在清扫器主体的顶部，覆盖主刷组件和传动机构。\",\n      \"components\": [\n        {\n          \"bom_seq\": \"1\",\n          \"bom_name\": \"盖板-漆后\",\n          \"quantity\": 1\n        }\n      ],\n      \"fasteners\": [\n        {\n          \"bom_seq\": \"36\",\n          \"bom_name\": \"右侧板-漆后\",\n          \"spec\": \"H-AB1830(72IN)-Manitou-01\",\n          \"quantity\": 1,\n          \"torque\": \"\"\n        },\n        {\n          \"bom_seq\": \"37\",\n          \"bom_name\": \"左侧板-漆后\",\n          \"spec\": \"H-AB1830(72IN)-Manitou-02\",\n          \"quantity\": 1,\n          \"torque\": \"\"\n        },\n        {\n          \"bom_seq\": \"38\",\n          \"bom_name\": \"右侧顶板-漆后\",\n          \"spec\": \"H-AB1830(72IN)-Manitou-07\",\n          \"quantity\": 1,\n          \"torque\": \"\"\n        },\n        {\n          \"bom_seq\": \"39\",\n          \"bom_name\": \"左侧顶板-漆后\",\n          \"spec\": \"H-AB1830(72IN)-Manitou-08\",\n          \"quantity\": 1,\n          \"torque\": \"\"\n        },\n        {\n          \"bom_seq\": \"40\",\n          \"bom_name\": \"固定板-漆后\",\n          \"spec\": \"T-AB1830(72IN)-EURO-01\",\n          \"quantity\": 1,\n          \"torque\": \"\"\n        },\n        {\n          \"bom_seq\": \"41\",\n          \"bom_name\": \"六角头螺栓8.8级\",\n          \"spec\": \"M6*20\",\n          \"quantity\": 4,\n          \"torque\": \"10N·m\"\n        },\n        {\n          \"bom_seq\": \"42\",\n          \"bom_name\": \"平垫圈8.8级\",\n          \"spec\": \"6*1.2\",\n          \"quantity\": 4,\n          \"torque\": \"\"\n        },\n        {\n          \"bom_seq\": \"43\",\n          \"bom_name\": \"1型非金属嵌件六角锁紧螺母8.8级\",\n          \"spec\": \"M6\",\n          \"quantity\": 4,\n          \"torque\": \"10N·m\"\n        }\n      ],\n      \"operation\": \"首先，同步安装左侧板（37）和右侧板（36），以及左侧顶板（39）和右侧顶板（38）。然后，将盖板（①）和固定板（40）放置到位，使用M6螺栓（41）、平垫圈（42）和M6锁紧螺母（43）进行固定。M6螺栓拧紧至10N·m。\",\n      \"quality_check\": \"检查所有盖板和侧板的安装间隙，确保均匀。检查M6紧固件是否达到规定扭矩，防止松动。\",\n      \"estimated_time_minutes\": 25,\n      \"safety_warnings\": [\n        \"盖板和侧板面积较大，搬运时注意周围环境，防止碰撞或刮伤\",\n        \"佩戴防护手套，防止在对齐和安装板材时被边缘割伤\"\n      ]\n    }\n  ]\n}\n```",
+  "parsed_result": {
+    "enhanced_steps": [
+      {
+        "step_number": 1,
+        "title": "安装主刷组件",
+        "component_code": "01.09.0404",
+        "component_name": "主刷组件-漆后",
+        "drawing_number": "②",
+        "connection_type": "螺栓连接/销轴连接",
+        "position_description": "将主刷组件（②）安装到清扫器主体框架的中心位置，确保其轴线与框架垂直。",
+        "components": [
+          {
+            "bom_seq": "2",
+            "bom_name": "主刷组件-漆后",
+            "quantity": 1
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_seq": "5",
+            "bom_name": "旋转定位立柱-镀锌",
+            "spec": "",
+            "quantity": 2,
+            "torque": ""
+          },
+          {
+            "bom_seq": "6",
+            "bom_name": "旋转定位座-镀锌",
+            "spec": "",
+            "quantity": 2,
+            "torque": ""
+          },
+          {
+            "bom_seq": "7",
+            "bom_name": "毛刷调整件-漆后",
+            "spec": "",
+            "quantity": 2,
+            "torque": ""
+          },
+          {
+            "bom_seq": "8",
+            "bom_name": "毛刷调整座-漆后",
+            "spec": "",
+            "quantity": 1,
+            "torque": ""
+          },
+          {
+            "bom_seq": "9",
+            "bom_name": "马达固定螺栓-镀锌",
+            "spec": "",
+            "quantity": 1,
+            "torque": ""
+          },
+          {
+            "bom_seq": "10",
+            "bom_name": "销轴-镀锌",
+            "spec": "",
+            "quantity": 1,
+            "torque": ""
+          },
+          {
+            "bom_seq": "11",
+            "bom_name": "方形带座轴承",
+            "spec": "UCF206",
+            "quantity": 1,
+            "torque": ""
+          },
+          {
+            "bom_seq": "12",
+            "bom_name": "带座轴承",
+            "spec": "6006-RZ",
+            "quantity": 1,
+            "torque": ""
+          },
+          {
+            "bom_seq": "13",
+            "bom_name": "液压马达",
+            "spec": "026-3087-HMR-315",
+            "quantity": 1,
+            "torque": ""
+          },
+          {
+            "bom_seq": "14",
+            "bom_name": "螺栓",
+            "spec": "162 550+BB+钢丝",
+            "quantity": 38,
+            "torque": ""
+          },
+          {
+            "bom_seq": "15",
+            "bom_name": "圆柱销",
+            "spec": "14*6",
+            "quantity": 1,
+            "torque": ""
+          },
+          {
+            "bom_seq": "16",
+            "bom_name": "六角头螺栓8.8级",
+            "spec": "M12*35",
+            "quantity": 6,
+            "torque": "100N·m"
+          },
+          {
+            "bom_seq": "17",
+            "bom_name": "六角头螺栓8.8级",
+            "spec": "M12*25",
+            "quantity": 6,
+            "torque": "100N·m"
+          },
+          {
+            "bom_seq": "18",
+            "bom_name": "平垫圈8.8级",
+            "spec": "12*2.5",
+            "quantity": 6,
+            "torque": ""
+          },
+          {
+            "bom_seq": "19",
+            "bom_name": "六角头螺栓8.8级",
+            "spec": "M10*45",
+            "quantity": 8,
+            "torque": "50N·m"
+          },
+          {
+            "bom_seq": "20",
+            "bom_name": "平垫圈8.8级",
+            "spec": "10*2",
+            "quantity": 12,
+            "torque": ""
+          },
+          {
+            "bom_seq": "21",
+            "bom_name": "六角头螺栓8.8级",
+            "spec": "M10*35",
+            "quantity": 4,
+            "torque": "50N·m"
+          },
+          {
+            "bom_seq": "22",
+            "bom_name": "六角头螺栓8.8级",
+            "spec": "M10*18",
+            "quantity": 8,
+            "torque": "50N·m"
+          }
+        ],
+        "operation": "使用吊装工具将主刷组件（②）吊装至主体框架的安装位置。首先，安装旋转定位立柱（5）和旋转定位座（6）。然后，使用M12和M10系列螺栓（16, 17, 19, 21, 22）和垫圈（18, 20）将主刷组件的轴承座和马达固定在框架上。确保马达（13）和销轴（10）安装到位。所有M12螺栓拧紧至100N·m，M10螺栓拧紧至50N·m。",
+        "quality_check": "检查主刷转动是否灵活，无卡滞现象。检查所有M12和M10螺栓是否达到规定扭矩。",
+        "estimated_time_minutes": 45,
+        "safety_warnings": [
+          "主刷组件为重物，必须使用额定载荷足够的吊装工具进行吊运，严禁人力搬运",
+          "吊装前检查吊索具是否完好，捆绑位置要确保平衡，防止吊物坠落或摆动伤人",
+          "吊装过程中，人员必须佩戴安全帽和安全鞋，并远离吊物下方",
+          "在安装螺栓时，注意防止工具或零件掉落，佩戴防护眼镜和手套"
+        ]
+      },
+      {
+        "step_number": 2,
+        "title": "安装毛刷调整件",
+        "component_code": "01.09.0402",
+        "component_name": "毛刷调整件-漆后",
+        "drawing_number": "④",
+        "connection_type": "螺栓连接",
+        "position_description": "将毛刷调整件（④）安装在主刷组件（②）两侧的预留安装孔上。",
+        "components": [
+          {
+            "bom_seq": "4",
+            "bom_name": "毛刷调整件-漆后",
+            "quantity": 1
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_seq": "23",
+            "bom_name": "标准型垫圈8.8级",
+            "spec": "10R",
+            "quantity": 4,
+            "torque": ""
+          },
+          {
+            "bom_seq": "24",
+            "bom_name": "1型非金属嵌件六角锁紧螺母8.8级",
+            "spec": "M10",
+            "quantity": 4,
+            "torque": "50N·m"
+          },
+          {
+            "bom_seq": "25",
+            "bom_name": "1型非金属嵌件六角锁紧螺母8.8级",
+            "spec": "M8",
+            "quantity": 6,
+            "torque": "25N·m"
+          },
+          {
+            "bom_seq": "26",
+            "bom_name": "平垫圈8.8级",
+            "spec": "8*1.6",
+            "quantity": 22,
+            "torque": ""
+          },
+          {
+            "bom_seq": "27",
+            "bom_name": "六角头螺栓8.8级",
+            "spec": "M8*20",
+            "quantity": 17,
+            "torque": "25N·m"
+          }
+        ],
+        "operation": "将毛刷调整件（④）对准主刷组件两侧的安装位置。使用M10锁紧螺母（24）和垫圈（23）进行初步固定。然后使用M8螺栓（27）和平垫圈（26）将调整件的其余部分固定在框架上。M10锁紧螺母拧紧至50N·m，M8螺栓拧紧至25N·m。",
+        "quality_check": "检查调整件安装位置是否正确，确保调整机构可以顺畅操作。检查所有M10和M8紧固件是否达到规定扭矩。",
+        "estimated_time_minutes": 20,
+        "safety_warnings": [
+          "佩戴防护手套，防止在搬运和安装零件时被毛刺或边缘割伤",
+          "使用电动工具拧紧螺栓时，注意站稳，防止反作用力导致身体扭伤或工具脱落"
+        ]
+      },
+      {
+        "step_number": 3,
+        "title": "安装毛刷限位板",
+        "component_code": "01.09.1144",
+        "component_name": "毛刷限位板-漆后",
+        "drawing_number": "③",
+        "connection_type": "螺栓连接",
+        "position_description": "将毛刷限位板（③）安装在主刷组件（②）的上方，靠近调整件的位置。",
+        "components": [
+          {
+            "bom_seq": "3",
+            "bom_name": "毛刷限位板-漆后",
+            "quantity": 1
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_seq": "28",
+            "bom_name": "直通式接头",
+            "spec": "M8",
+            "quantity": 1,
+            "torque": ""
+          },
+          {
+            "bom_seq": "29",
+            "bom_name": "六角头螺栓8.8级",
+            "spec": "M8*80",
+            "quantity": 1,
+            "torque": "25N·m"
+          },
+          {
+            "bom_seq": "30",
+            "bom_name": "六角头螺栓8.8级",
+            "spec": "M8*20",
+            "quantity": 1,
+            "torque": "25N·m"
+          },
+          {
+            "bom_seq": "31",
+            "bom_name": "安全销",
+            "spec": "DIN 11023",
+            "quantity": 3,
+            "torque": ""
+          },
+          {
+            "bom_seq": "32",
+            "bom_name": "警告标识",
+            "spec": "不干胶（100*100）",
+            "quantity": 1,
+            "torque": ""
+          },
+          {
+            "bom_seq": "33",
+            "bom_name": "警告标识",
+            "spec": "不干胶（120*60）",
+            "quantity": 1,
+            "torque": ""
+          },
+          {
+            "bom_seq": "34",
+            "bom_name": "标准型垫圈8.8级",
+            "spec": "8*2.1",
+            "quantity": 12,
+            "torque": ""
+          },
+          {
+            "bom_seq": "35",
+            "bom_name": "基板-漆后",
+            "spec": "H-AB1830(72IN)-Manitou-Q4Z35",
+            "quantity": 1,
+            "torque": ""
+          }
+        ],
+        "operation": "将毛刷限位板（③）放置在指定位置，使用M8*80（29）和M8*20（30）螺栓，配合垫圈（34）进行固定。安装直通式接头（28）。最后，将安全销（31）插入限位机构的销孔中。粘贴警告标识（32, 33）。M8螺栓拧紧至25N·m。",
+        "quality_check": "检查限位板安装是否牢固，安全销是否能可靠锁止。检查警告标识粘贴位置是否符合要求。",
+        "estimated_time_minutes": 15,
+        "safety_warnings": [
+          "佩戴防护手套，限位板边缘可能锋利，防止割伤",
+          "粘贴警告标识时，确保表面清洁干燥，防止标识脱落导致安全信息缺失"
+        ]
+      },
+      {
+        "step_number": 4,
+        "title": "安装盖板及侧板",
+        "component_code": "01.09.0409",
+        "component_name": "盖板-漆后",
+        "drawing_number": "①",
+        "connection_type": "螺栓连接",
+        "position_description": "将盖板（①）安装在清扫器主体的顶部，覆盖主刷组件和传动机构。",
+        "components": [
+          {
+            "bom_seq": "1",
+            "bom_name": "盖板-漆后",
+            "quantity": 1
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_seq": "36",
+            "bom_name": "右侧板-漆后",
+            "spec": "H-AB1830(72IN)-Manitou-01",
+            "quantity": 1,
+            "torque": ""
+          },
+          {
+            "bom_seq": "37",
+            "bom_name": "左侧板-漆后",
+            "spec": "H-AB1830(72IN)-Manitou-02",
+            "quantity": 1,
+            "torque": ""
+          },
+          {
+            "bom_seq": "38",
+            "bom_name": "右侧顶板-漆后",
+            "spec": "H-AB1830(72IN)-Manitou-07",
+            "quantity": 1,
+            "torque": ""
+          },
+          {
+            "bom_seq": "39",
+            "bom_name": "左侧顶板-漆后",
+            "spec": "H-AB1830(72IN)-Manitou-08",
+            "quantity": 1,
+            "torque": ""
+          },
+          {
+            "bom_seq": "40",
+            "bom_name": "固定板-漆后",
+            "spec": "T-AB1830(72IN)-EURO-01",
+            "quantity": 1,
+            "torque": ""
+          },
+          {
+            "bom_seq": "41",
+            "bom_name": "六角头螺栓8.8级",
+            "spec": "M6*20",
+            "quantity": 4,
+            "torque": "10N·m"
+          },
+          {
+            "bom_seq": "42",
+            "bom_name": "平垫圈8.8级",
+            "spec": "6*1.2",
+            "quantity": 4,
+            "torque": ""
+          },
+          {
+            "bom_seq": "43",
+            "bom_name": "1型非金属嵌件六角锁紧螺母8.8级",
+            "spec": "M6",
+            "quantity": 4,
+            "torque": "10N·m"
+          }
+        ],
+        "operation": "首先，同步安装左侧板（37）和右侧板（36），以及左侧顶板（39）和右侧顶板（38）。然后，将盖板（①）和固定板（40）放置到位，使用M6螺栓（41）、平垫圈（42）和M6锁紧螺母（43）进行固定。M6螺栓拧紧至10N·m。",
+        "quality_check": "检查所有盖板和侧板的安装间隙，确保均匀。检查M6紧固件是否达到规定扭矩，防止松动。",
+        "estimated_time_minutes": 25,
+        "safety_warnings": [
+          "盖板和侧板面积较大，搬运时注意周围环境，防止碰撞或刮伤",
+          "佩戴防护手套，防止在对齐和安装板材时被边缘割伤"
+        ]
+      }
+    ]
+  }
+}

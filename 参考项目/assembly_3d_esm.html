@@ -1,0 +1,323 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>T-SPV1830-EURO · 3D装配与运动示意 (ESM / Three.js)</title>
+<style>
+  :root { --bg:#0b1020; --fg:#e5e7eb; --muted:#9ca3af; --accent:#22d3ee; --accent2:#a78bfa; }
+  *{box-sizing:border-box}
+  body{margin:0; background:radial-gradient(800px 600px at 70% 20%, rgba(34,211,238,.08), transparent), #0b1020; color:var(--fg); font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;}
+  header{padding:14px 16px; border-bottom:1px solid rgba(255,255,255,.08);}
+  h1{font-size:18px; margin:0 0 4px 0;}
+  .sub{font-size:12px; color:var(--muted)}
+  .wrap{display:grid; grid-template-columns: 320px 1fr; gap:12px; padding:12px;}
+  .panel{background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:12px;}
+  .panel h2{font-size:13px; margin:0 0 8px; color:var(--muted)}
+  #viewport{height:78vh; border-radius:14px; overflow:hidden; border:1px solid rgba(255,255,255,.08);}
+  .row{display:grid; grid-template-columns: 1fr auto; align-items:center; gap:10px; margin:8px 0;}
+  .ctrls button{padding:8px 10px; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.06); color:var(--fg); cursor:pointer; font-weight:600;}
+  .ctrls button:hover{background:rgba(255,255,255,.12)}
+  .note{font-size:12px; color:#cbd5e1; margin-top:8px;}
+  .legend{display:grid; gap:6px; font-size:12px; color:var(--muted); margin-top:6px;}
+  .legend div{display:flex; align-items:center; gap:8px;}
+  .dot{width:10px; height:10px; border-radius:50%;}
+  .d-base{background:#60a5fa}
+  .d-link{background:#34d399}
+  .d-bladeL{background:#f472b6}
+  .d-bladeR{background:#f59e0b}
+  .d-cyl{background:#22d3ee}
+  .d-spring{background:#eab308}
+  .d-wheel{background:#a78bfa}
+  input[type=range]{width:100%}
+</style>
+</head>
+<body>
+<header>
+  <h1>T-SPV1830-EURO V型推雪板 · 3D装配示意（ES Module版）</h1>
+  <div class="sub">名义总宽 1830mm、左右标注 28°、开合演示 ~50°（±25°）。注意：此为近似参数化；需严谨复原请提供完整尺寸/公差。</div>
+</header>
+<div class="wrap">
+  <aside class="panel">
+    <h2>参数 & 控制</h2>
+    <div class="row"><div>开合角（单侧，°）</div><div id="angleVal">0</div></div>
+    <input id="angle" type="range" min="-25" max="25" step="0.1" value="0" />
+    <div class="row"><div>爆炸视图（%）</div><div id="explodeVal">0</div></div>
+    <input id="explode" type="range" min="0" max="100" step="1" value="0" />
+    <div class="ctrls" style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+      <button id="btnPlay">▶ 开合动画</button>
+      <button id="btnStop">⏸ 停止</button>
+      <button id="btnReset">⟲ 重置视图</button>
+      <button id="btnExplode">💥 展开/合拢</button>
+      <button id="btnWire">🧵 线框切换</button>
+    </div>
+
+    <div class="legend">
+      <div><span class="dot d-base"></span> -01 连接器后座组件（骨架）</div>
+      <div><span class="dot d-link"></span> -02 后座连接架（枢纽）</div>
+      <div><span class="dot d-bladeL"></span> -03 左铲雪板组件</div>
+      <div><span class="dot d-bladeR"></span> -04 右铲雪板组件（对称）</div>
+      <div><span class="dot d-cyl"></span> 油缸（×2，行程示意）</div>
+      <div><span class="dot d-spring"></span> 压缩弹簧（×6，示意）</div>
+      <div><span class="dot d-wheel"></span> 轮架/轮子（×2，示意）</div>
+    </div>
+
+    <div class="note">
+      本页以 ES Modules 方式加载 Three.js。请用本地服务器访问（如 <code>python -m http.server 8000</code>），在浏览器打开 <code>http://localhost:8000/assembly_3d_esm.html</code>。
+    </div>
+  </aside>
+
+  <main class="panel">
+    <div id="viewport"></div>
+  </main>
+</div>
+
+<script type="module">
+  import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+  import { OrbitControls } from "https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js";
+
+  const viewport = document.getElementById('viewport');
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0b1020);
+
+  const camera = new THREE.PerspectiveCamera(50, viewport.clientWidth / viewport.clientHeight, 0.1, 5000);
+  camera.position.set(0, 350, 1200);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(viewport.clientWidth, viewport.clientHeight);
+  renderer.setPixelRatio(Math.min(2, window.devicePixelRatio));
+  viewport.appendChild(renderer.domElement);
+
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.target.set(0, 100, 0);
+  controls.update();
+
+  // Lights
+  const hemi = new THREE.HemisphereLight(0xffffff, 0x222233, 0.6);
+  scene.add(hemi);
+  const dir = new THREE.DirectionalLight(0xffffff, 0.8);
+  dir.position.set(500, 800, 400);
+  scene.add(dir);
+
+  // Ground grid
+  const grid = new THREE.GridHelper(4000, 40, 0x223344, 0x1b2736);
+  grid.position.y = 0;
+  scene.add(grid);
+
+  const group = new THREE.Group();
+  scene.add(group);
+
+  // Scale: 1 unit = 1 mm
+  const totalWidth = 1830;
+  const bladeHeight = 300;
+  const bladeThickness = 20;
+  const baseWidth = 900, baseDepth = 80, baseHeight = 80;
+  const linkPlate = {w:120, h:120, t:30};
+  const wheelDia = 200, wheelWidth = 50;
+  const bladeOffsetY = 100;
+
+  const materials = {
+    base:   new THREE.MeshPhysicalMaterial({color:0x60a5fa, metalness:.4, roughness:.6}),
+    link:   new THREE.MeshPhysicalMaterial({color:0x34d399, metalness:.3, roughness:.7}),
+    bladeL: new THREE.MeshPhysicalMaterial({color:0xf472b6, metalness:.2, roughness:.7}),
+    bladeR: new THREE.MeshPhysicalMaterial({color:0xf59e0b, metalness:.2, roughness:.7}),
+    cyl:    new THREE.MeshPhysicalMaterial({color:0x22d3ee, metalness:.5, roughness:.4}),
+    spring: new THREE.MeshPhysicalMaterial({color:0xeab308, metalness:.2, roughness:.5}),
+    wheel:  new THREE.MeshPhysicalMaterial({color:0xa78bfa, metalness:.2, roughness:.6}),
+  };
+
+  // Base (-01)
+  const base = new THREE.Group(); group.add(base);
+  const baseBeam = new THREE.Mesh(new THREE.BoxGeometry(baseWidth, baseHeight, baseDepth), materials.base);
+  baseBeam.position.set(0, 100, 0);
+  base.add(baseBeam);
+  const basePlateL = new THREE.Mesh(new THREE.BoxGeometry(140, 30, 60), materials.base);
+  basePlateL.position.set(-320, 130, 0); base.add(basePlateL);
+  const basePlateR = basePlateL.clone(); basePlateR.position.x = 320; base.add(basePlateR);
+
+  // Link (-02)
+  const link = new THREE.Group(); group.add(link);
+  const linkCenter = new THREE.Mesh(new THREE.BoxGeometry(linkPlate.w, linkPlate.h, linkPlate.t), materials.link);
+  linkCenter.position.set(0, 120, 0);
+  link.add(linkCenter);
+  const linkSideL = new THREE.Mesh(new THREE.BoxGeometry(200, 40, 30), materials.link);
+  linkSideL.position.set(-200, 110, 0); link.add(linkSideL);
+  const linkSideR = linkSideL.clone(); linkSideR.position.x = 200; link.add(linkSideR);
+
+  // Blades (-03/-04) approximate profile
+  function createBlade(material, mirror=false){
+    const shape = new THREE.Shape();
+    const w = totalWidth/2 + 80;
+    const h = bladeHeight;
+    shape.moveTo(0,0);
+    shape.bezierCurveTo(w*0.25, -h*0.6, w*0.6, -h*0.6, w, 0);
+    shape.lineTo(w, h*0.7);
+    shape.bezierCurveTo(w*0.6, h*0.9, w*0.25, h*0.9, 0, h*0.7);
+    shape.lineTo(0,0);
+    const geo = new THREE.ExtrudeGeometry(shape, {depth: bladeThickness, bevelEnabled:false, steps:20});
+    geo.center();
+    const mesh = new THREE.Mesh(geo, material);
+    mesh.rotation.x = -Math.PI/2;
+    if(mirror){ mesh.scale.x *= -1; }
+    mesh.scale.set(0.75, 1.0, 1.0);
+    return mesh;
+  }
+
+  const pivotL = new THREE.Group(); group.add(pivotL);
+  pivotL.position.set(-200, bladeOffsetY, 0);
+  const bladeL = createBlade(materials.bladeL, false);
+  pivotL.add(bladeL);
+
+  const pivotR = new THREE.Group(); group.add(pivotR);
+  pivotR.position.set(200, bladeOffsetY, 0);
+  const bladeR = createBlade(materials.bladeR, true);
+  pivotR.add(bladeR);
+
+  // Cutting edge (simple rectangular strip)
+  const edgeMatL = new THREE.MeshPhysicalMaterial({color:0xbe185d, metalness:.2, roughness:.6});
+  const edgeMatR = new THREE.MeshPhysicalMaterial({color:0xb45309, metalness:.2, roughness:.6});
+  const edgeL = new THREE.Mesh(new THREE.BoxGeometry(800, 12, 40), edgeMatL);
+  edgeL.position.set(100, -5, 0);
+  bladeL.add(edgeL);
+  const edgeR = new THREE.Mesh(new THREE.BoxGeometry(800, 12, 40), edgeMatR);
+  edgeR.position.set(-100, -5, 0);
+  bladeR.add(edgeR);
+
+  // Cylinders (approx) between link and blades
+  function createCylinderBar(x1,y1,z1, x2,y2,z2){
+    const start = new THREE.Vector3(x1,y1,z1);
+    const end   = new THREE.Vector3(x2,y2,z2);
+    const dirV = new THREE.Vector3().subVectors(end, start);
+    const len = dirV.length();
+    const geo = new THREE.CylinderGeometry(8,8,len,12);
+    const mesh = new THREE.Mesh(geo, materials.cyl);
+    const mid = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
+    mesh.position.copy(mid);
+    mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dirV.clone().normalize());
+    return mesh;
+  }
+  let cylL = createCylinderBar(-20,110,0, -260, bladeOffsetY+10, 0);
+  let cylR = createCylinderBar( 20,110,0,  260, bladeOffsetY+10, 0);
+  scene.add(cylL, cylR);
+
+  // Springs (simple boxes as placeholders)
+  const springs = new THREE.Group(); group.add(springs);
+  function springBox(x,y,z){ const m=new THREE.Mesh(new THREE.BoxGeometry(80,16,16), materials.spring); m.position.set(x,y,z); return m; }
+  springs.add(springBox(-360, bladeOffsetY+40, 40));
+  springs.add(springBox(-300, bladeOffsetY+65, 20));
+  springs.add(springBox(-240, bladeOffsetY+90, 0));
+  springs.add(springBox( 360, bladeOffsetY+40,-40));
+  springs.add(springBox( 300, bladeOffsetY+65,-20));
+  springs.add(springBox( 240, bladeOffsetY+90,  0));
+
+  // Wheels
+  function createWheel(x,y,z){
+    const t = new THREE.Mesh(new THREE.CylinderGeometry(wheelDia/2, wheelDia/2, wheelWidth, 32), materials.wheel);
+    t.position.set(x,y,z); t.rotation.z = Math.PI/2;
+    return t;
+  }
+  const wheelL = createWheel(-350, 60, 0);
+  const wheelR = createWheel( 350, 60, 0);
+  scene.add(wheelL, wheelR);
+
+  // Explode control
+  const explode = document.getElementById('explode');
+  const explodeVal = document.getElementById('explodeVal');
+  function applyExplode(v){
+    explodeVal.textContent = v;
+    base.position.set(0, 0, 0);
+    link.position.set(0, v*0.8, 0);
+    pivotL.position.set(-200 - v*1.2, bladeOffsetY + v*0.4, -v*0.6);
+    pivotR.position.set( 200 + v*1.2, bladeOffsetY + v*0.4,  v*0.6);
+    cylL.position.z = -v*0.4;
+    cylR.position.z =  v*0.4;
+    springs.position.y = bladeOffsetY + 20 + v*0.5;
+    wheelL.position.z = -v*0.5;
+    wheelR.position.z =  v*0.5;
+  }
+  explode.addEventListener('input', e=>applyExplode(parseFloat(e.target.value)));
+
+  // Open/close control
+  const angle = document.getElementById('angle');
+  const angleVal = document.getElementById('angleVal');
+  function applyAngle(aDeg){
+    angleVal.textContent = aDeg.toFixed(1);
+    const rad = THREE.MathUtils.degToRad(aDeg);
+    pivotL.rotation.y =  rad;
+    pivotR.rotation.y = -rad;
+    // recompute cylinders
+    scene.remove(cylL, cylR);
+    const leftTip = new THREE.Vector3().setFromMatrixPosition(pivotL.matrixWorld);
+    const rightTip = new THREE.Vector3().setFromMatrixPosition(pivotR.matrixWorld);
+    cylL = createCylinderBar(-20,110,0, leftTip.x-60*Math.cos(rad), bladeOffsetY+10, leftTip.z-60*Math.sin(rad));
+    cylR = createCylinderBar( 20,110,0, rightTip.x+60*Math.cos(rad), bladeOffsetY+10, rightTip.z+60*Math.sin(rad));
+    scene.add(cylL, cylR);
+  }
+  angle.addEventListener('input', e=>applyAngle(parseFloat(e.target.value)));
+
+  // Wireframe toggle
+  const btnWire = document.getElementById('btnWire');
+  let wireOn = false;
+  btnWire.addEventListener('click', ()=>{
+    wireOn = !wireOn;
+    [base, link, pivotL, pivotR, springs, wheelL, wheelR].forEach(g=>{
+      g.traverse(obj=>{ if(obj.isMesh){ obj.material.wireframe = wireOn; }});
+    });
+    [cylL, cylR].forEach(m=>{ m.material.wireframe = wireOn; });
+  });
+
+  // Play/stop and reset
+  const btnPlay = document.getElementById('btnPlay');
+  const btnStop = document.getElementById('btnStop');
+  const btnReset = document.getElementById('btnReset');
+  const btnExplode = document.getElementById('btnExplode');
+
+  let playing = false, t0 = 0;
+  btnPlay.addEventListener('click', ()=>{ playing = true; t0 = performance.now(); });
+  btnStop.addEventListener('click', ()=>{ playing = false; });
+  btnReset.addEventListener('click', ()=>{
+    playing = false;
+    camera.position.set(0,350,1200); controls.target.set(0,100,0); controls.update();
+    applyAngle(0); angle.value = 0; angle.dispatchEvent(new Event('input'));
+    applyExplode(0); explode.value = 0; explode.dispatchEvent(new Event('input'));
+  });
+  btnExplode.addEventListener('click', ()=>{
+    const v = parseFloat(explode.value);
+    const target = v>0 ? 0 : 100;
+    let start = null;
+    function anima(ts){
+      if(!start) start = ts;
+      const t = Math.min(1, (ts - start) / 600);
+      const cur = v + (target - v) * t;
+      explode.value = cur.toFixed(1);
+      applyExplode(cur);
+      if(t<1) requestAnimationFrame(anima);
+    }
+    requestAnimationFrame(anima);
+  });
+
+  function animate(ts){
+    requestAnimationFrame(animate);
+    if(playing){
+      const a = (ts - t0) / 3000; // 3s period
+      const deg = Math.sin(a*2*Math.PI) * 25;
+      angle.value = deg.toFixed(2);
+      applyAngle(deg);
+    }
+    renderer.render(scene, camera);
+  }
+  // init
+  applyAngle(0);
+  applyExplode(0);
+  animate();
+
+  window.addEventListener('resize', ()=>{
+    const W2 = viewport.clientWidth;
+    const H2 = viewport.clientHeight;
+    camera.aspect = W2/H2; camera.updateProjectionMatrix();
+    renderer.setSize(W2,H2);
+  });
+</script>
+</body>
+</html>
