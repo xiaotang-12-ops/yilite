@@ -52,15 +52,7 @@
           </div>
         </div>
 
-        <!-- 🔍 调试按钮 -->
-        <el-button
-          type="info"
-          size="small"
-          @click="diagnoseData"
-          style="margin-left: 12px"
-        >
-          🔍 数据诊断
-        </el-button>
+
       </div>
     </div>
 
@@ -146,21 +138,6 @@
       <!-- 右侧：当前步骤详情 -->
       <div class="right-sidebar">
         <el-scrollbar height="100%">
-          <!-- 🔍 调试信息 - 显示当前步骤的完整数据 -->
-          <div style="background: #e3f2fd; padding: 12px; margin: 8px; border-radius: 4px; font-size: 12px; font-family: monospace;">
-            <div style="font-weight: bold; margin-bottom: 8px; color: #1976d2;">🔍 调试信息 - 当前步骤数据</div>
-            <div>步骤索引: {{ currentStepIndex }}</div>
-            <div>步骤号: {{ currentStepData?.step_number }}</div>
-            <div>动作: {{ currentStepData?.action }}</div>
-            <div>组件名称: {{ currentStepData?.component_name }}</div>
-            <div>章节类型: {{ currentStepData?.chapter_type }}</div>
-            <div>标题: {{ currentStepData?.title }}</div>
-            <div>描述: {{ currentStepData?.description?.substring(0, 50) }}...</div>
-            <div>操作: {{ currentStepData?.operation?.substring(0, 50) }}...</div>
-            <div style="margin-top: 8px; color: #d32f2f;">
-              <strong>所有字段:</strong> {{ Object.keys(currentStepData || {}).join(', ') }}
-            </div>
-          </div>
 
           <!-- 当前步骤 -->
           <div class="step-detail-card" v-if="currentStepData">
@@ -232,13 +209,7 @@
             <el-tabs v-model="activeTab" type="border-card">
               <el-tab-pane label="焊接" name="welding">
                 <div class="tab-content-scroll">
-                  <!-- 🔍 调试信息 -->
-                  <div style="background: #fff3cd; padding: 8px; margin-bottom: 8px; font-size: 12px;">
-                    <div>📊 调试信息：</div>
-                    <div>- 焊接数据数量: {{ currentStepWeldingRequirements.length }}</div>
-                    <div>- 当前步骤号: {{ currentStepData?.step_number }}</div>
-                    <div>- 当前组件: {{ currentStepData?.component_name }}</div>
-                  </div>
+
 
                   <div
                     v-for="(req, index) in currentStepWeldingRequirements"
@@ -262,17 +233,13 @@
 
               <el-tab-pane label="质检" name="quality">
                 <div class="tab-content-scroll">
-                  <div
-                    v-for="(checkpoint, index) in qualityCheckpoints.slice(0, 3)"
-                    :key="index"
-                    class="ref-item"
-                  >
+                  <div v-if="currentStepQualityCheck && currentStepQualityCheck.quality_check" class="ref-item">
                     <div class="ref-header">
-                      <strong>步骤{{ checkpoint.step_number }} - {{ checkpoint.component }}</strong>
+                      <strong>步骤{{ currentStepQualityCheck.step_number }} - {{ currentStepQualityCheck.component }}</strong>
                     </div>
-                    <p>{{ checkpoint.quality_check }}</p>
+                    <p>{{ currentStepQualityCheck.quality_check }}</p>
                   </div>
-                  <el-empty v-if="!qualityCheckpoints.length" description="暂无质检要求" />
+                  <el-empty v-else description="当前步骤无质检要求" />
                 </div>
               </el-tab-pane>
 
@@ -371,11 +338,15 @@
               type="primary"
               size="small"
               @click="addWeldingRequirement"
+              :disabled="editData.welding_requirements.length >= 1"
               style="margin-bottom: 12px"
             >
               <el-icon><Plus /></el-icon>
               添加焊接要求
             </el-button>
+            <el-text v-if="editData.welding_requirements.length >= 1" type="info" size="small" style="margin-left: 8px;">
+              每个步骤只能有一个焊接要求，如需修改请先删除现有要求
+            </el-text>
 
             <div
               v-for="(req, index) in editData.welding_requirements"
@@ -413,11 +384,9 @@
                     <el-input
                       v-model="req.component"
                       placeholder="例如：固定座组件"
-                      disabled
-                      style="background-color: #f5f7fa;"
                     />
                     <el-text type="info" size="small" style="margin-left: 8px;">
-                      组件名称由当前步骤自动确定，不可修改
+                      修改组件名称会同步更新到当前步骤
                     </el-text>
                   </el-form-item>
 
@@ -515,11 +484,9 @@
                     <el-input
                       v-model="warning.component"
                       placeholder="例如：固定座组件"
-                      disabled
-                      style="background-color: #f5f7fa;"
                     />
                     <el-text type="info" size="small" style="margin-left: 8px;">
-                      组件名称由当前步骤自动确定，不可修改
+                      修改组件名称会同步更新到当前步骤
                     </el-text>
                   </el-form-item>
 
@@ -633,6 +600,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 
 // 焊接要求编辑类型
 interface WeldingRequirementEdit {
+  step_id: string
   step_number: number
   component: string
   welding_info: {
@@ -972,75 +940,32 @@ const toggleDrawingZoom = (index: number) => {
   }
 }
 
-// ✅ 过滤当前步骤的焊接信息
+// ✅ 过滤当前步骤的焊接信息（只从步骤内嵌字段读取）
 const currentStepWeldingRequirements = computed(() => {
-  const allWelding = manualData.value?.welding_requirements || []
   const currentStep = currentStepData.value
+  if (!currentStep?.welding?.required) return []
 
-  // 🔍 调试日志
-  console.log('🔍 [焊接数据调试]')
-  console.log('  - 所有焊接数据数量:', allWelding.length)
-  console.log('  - 所有焊接数据:', allWelding)
-  console.log('  - 当前步骤:', currentStep?.step_number, currentStep?.action)
-  console.log('  - 当前组件:', currentStep?.component_name)
-
-  if (!currentStep) {
-    console.log('  ❌ 当前步骤为空，返回空数组')
-    return []
-  }
-
-  // 获取当前步骤的步骤号和组件名称
-  const currentStepNumber = currentStep.step_number
-  const currentComponentName = currentStep.component_name
-
-  console.log('  - 🎯 过滤条件: step_number =', currentStepNumber, ', component =', currentComponentName)
-
-  // 🔥 核心逻辑：必须同时匹配步骤号和组件名称
-  // 原因：每个组件都有自己的步骤序列（步骤1, 2, 3...），如果只按步骤号过滤会混乱
-  // 例如：主框架组件的步骤2 和 挂架组件的步骤2 是完全不同的步骤
-  const filtered = allWelding.filter(req => {
-    const stepMatch = req.step_number === currentStepNumber
-    const componentMatch = currentComponentName ? req.component === currentComponentName : false
-
-    console.log(`    - 检查焊接数据 [步骤${req.step_number}, 组件${req.component}]:`,
-      `stepMatch=${stepMatch}, componentMatch=${componentMatch}, 结果=${stepMatch && componentMatch}`)
-
-    return stepMatch && componentMatch
-  })
-  console.log('  - ✅ 过滤后的焊接数据:', filtered)
-  console.log('  - ✅ 过滤后的数据数量:', filtered.length)
-
-  return filtered
+  // 将步骤内嵌的 welding 字段转换为数组格式（保持UI兼容性）
+  return [{
+    step_id: currentStep.step_id,
+    step_number: currentStep.step_number,
+    component: currentStep.component_name || '',
+    welding_info: currentStep.welding
+  }]
 })
 
-// ✅ 过滤当前步骤的安全警告
+// ✅ 过滤当前步骤的安全警告（只从步骤内嵌字段读取）
 const currentStepSafetyWarnings = computed(() => {
-  const allSafetyWarnings = manualData.value?.safety_and_faq?.safety_warnings || manualData.value?.safety_warnings || []
   const currentStep = currentStepData.value
-
-  // 🔍 调试日志
-  console.log('🔍 [安全警告调试]')
-  console.log('  - 所有安全警告数量:', allSafetyWarnings.length)
-  console.log('  - 所有安全警告:', allSafetyWarnings)
-  console.log('  - 当前步骤:', currentStep?.step_number, currentStep?.action)
-  console.log('  - 当前组件:', currentStep?.component_name)
-
   if (!currentStep) return []
 
-  // 获取当前步骤的步骤号和组件名称
-  const currentStepNumber = currentStep.step_number
-  const currentComponentName = currentStep.component_name
-
-  // 🔥 核心逻辑：必须同时匹配步骤号和组件名称
-  // 原因同焊接数据：每个组件都有自己的步骤序列
-  const filtered = allSafetyWarnings.filter(warning => {
-    const stepMatch = warning.step_number === currentStepNumber
-    const componentMatch = currentComponentName ? warning.component === currentComponentName : false
-    return stepMatch && componentMatch
-  })
-  console.log('  - 当前步骤的安全警告:', filtered)
-
-  return filtered
+  // 从步骤内嵌字段读取（字符串数组），转换为对象数组（用于显示）
+  const warnings = currentStep.safety_warnings || []
+  return warnings.map((warning: string) => ({
+    step_number: currentStep.step_number,
+    component: currentStep.component_name || '',
+    warning: warning
+  }))
 })
 
 // ✅ 从所有步骤中提取质检要求
@@ -1074,14 +999,19 @@ const qualityCheckpoints = computed(() => {
     }
   }
 
-  // 🔍 调试日志
-  console.log('🔍 [质检数据调试]')
-  console.log('  - 组件装配数量:', componentAssembly.length)
-  console.log('  - 产品装配步骤数量:', productSteps.length)
-  console.log('  - 质检要求总数:', checkpoints.length)
-  console.log('  - 质检要求详情:', checkpoints)
-
   return checkpoints
+})
+
+// ✅ 当前步骤的质检要求
+const currentStepQualityCheck = computed(() => {
+  const currentStep = currentStepData.value
+  if (!currentStep) return null
+
+  return {
+    step_number: currentStep.step_number,
+    component: currentStep.component_name || '产品总装',
+    quality_check: currentStep.quality_check || ''
+  }
 })
 
 const progressPercentage = computed(() => {
@@ -1144,36 +1074,46 @@ const logout = () => {
 }
 
 // 打开编辑Dialog时初始化数据（只加载当前步骤的数据）
-// 🔧 修复：记住原始步骤号，用于保存时精确删除
+// 🔧 修复：记住原始 step_id，用于保存时精确删除
 watch(showEditDialog, (newVal) => {
   if (newVal && manualData.value && currentStepData.value) {
     const currentStep = currentStepData.value
+    const currentStepId = currentStep.step_id
     const currentStepNumber = currentStep.step_number
+    const currentComponentName = currentStep.component_name
 
-    // 🔧 记住原始步骤号
+    // 🔧 记住原始步骤号（兼容性）
     originalStepNumber.value = currentStepNumber
 
-    // 只加载当前步骤的焊接要求
-    const allWelding = manualData.value.welding_requirements || []
-    editData.value.welding_requirements = allWelding
-      .filter((w: any) => w.step_number === currentStepNumber)
-      .map((w: any) => JSON.parse(JSON.stringify(w)))
+    // 从步骤内嵌字段加载焊接数据
+    if (currentStep.welding && currentStep.welding.required) {
+      editData.value.welding_requirements = [{
+        step_id: currentStepId,
+        step_number: currentStepNumber,
+        component: currentComponentName || '',
+        welding_info: JSON.parse(JSON.stringify(currentStep.welding))
+      }]
+    } else {
+      editData.value.welding_requirements = []
+    }
 
-    // 只加载当前步骤的安全警告
-    const safetyAndFaq = manualData.value.safety_and_faq || {}
-    const allSafetyWarnings = safetyAndFaq.safety_warnings || []
-    editData.value.safety_warnings = allSafetyWarnings
-      .filter((w: any) => w.step_number === currentStepNumber)
-      .map((w: any) => JSON.parse(JSON.stringify(w)))
+    // 从步骤内嵌字段加载安全警告
+    editData.value.safety_warnings = (currentStep.safety_warnings || []).map((warning: string) => ({
+      step_number: currentStepNumber,
+      component: currentComponentName,
+      warning: warning
+    }))
 
     // 加载当前步骤的质检要求
     editData.value.quality_check = currentStep.quality_check || ''
 
     // FAQ是全局的，不按步骤过滤
+    const safetyAndFaq = manualData.value.safety_and_faq || {}
     editData.value.faq_items = JSON.parse(JSON.stringify(safetyAndFaq.faq_items || []))
 
-    console.log('📝 [编辑数据初始化]')
+    console.log('📝 [编辑数据初始化完成]')
     console.log('  - 原始步骤号:', originalStepNumber.value)
+    console.log('  - 当前组件名称:', currentComponentName)
     console.log('  - 当前步骤焊接要求数量:', editData.value.welding_requirements.length)
     console.log('  - 当前步骤安全警告数量:', editData.value.safety_warnings.length)
     console.log('  - 当前步骤质检要求:', editData.value.quality_check)
@@ -1183,14 +1123,16 @@ watch(showEditDialog, (newVal) => {
 // 添加/删除焊接要求
 const addWeldingRequirement = () => {
   const currentStep = currentStepData.value
+  const stepId = currentStep?.step_id || ''
   const stepNumber = currentStep?.step_number || 1
   const componentName = currentStep?.component_name || ''
 
-  console.log('➕ [添加焊接要求]', { stepNumber, componentName })
+  console.log('➕ [添加焊接要求]', { stepId, stepNumber, componentName })
 
   editData.value.welding_requirements.push({
-    step_number: stepNumber,
-    component: componentName,  // 🔥 修复：使用 component_name 而不是 action
+    step_id: stepId,  // ⭐ 使用 step_id
+    step_number: stepNumber,  // 保留（兼容性）
+    component: componentName,  // 保留（兼容性）
     welding_info: {
       required: true,
       welding_type: '',
@@ -1249,128 +1191,157 @@ const saveManualData = async () => {
     // 更新manualData
     const updatedData = { ...manualData.value }
 
-    // ========== 更新焊接要求（基于原始步骤号精确删除） ==========
-    console.log('💾 [保存数据 - 焊接要求]')
-    console.log('  - 原始步骤号:', originalStepNumber.value)
-    console.log('  - 当前步骤号:', currentStepNumber)
-    console.log('  - 当前组件名称:', currentStep.component_name)
+    // ========== 更新焊接要求（只保存到步骤内嵌字段） ==========
+    const currentStepId = currentStep.step_id || ''
 
-    // 🔥 修复：强制使用当前步骤的步骤号和组件名称
-    const currentComponentName = currentStep.component_name || ''
+    // 获取用户修改后的组件名称（如果有修改）
+    const updatedComponentName = editData.value.welding_requirements.length > 0
+      ? editData.value.welding_requirements[0].component
+      : currentStep.component_name || ''
 
-    // 1. 过滤掉空的焊接要求，并强制修正步骤号和组件名称
+    console.log('💾 [保存组件名称]')
+    console.log('  - 当前步骤ID:', currentStepId)
+    console.log('  - 原组件名称:', currentStep.component_name)
+    console.log('  - 新组件名称:', updatedComponentName)
+    console.log('  - 焊接要求数量:', editData.value.welding_requirements.length)
+
+    // 过滤有效的焊接数据
     const validWeldingReqs = editData.value.welding_requirements
       .filter(r => r.welding_info && (r.welding_info.welding_type || r.welding_info.weld_size || r.welding_info.welding_position))
-      .map(r => ({
-        ...r,
-        step_number: currentStepNumber,  // 🔥 强制使用当前步骤号
-        component: currentComponentName   // 🔥 强制使用当前组件名称
-      }))
 
-    console.log('  - 编辑后的有效数据数量:', validWeldingReqs.length)
-    console.log('  - 编辑后的数据:', validWeldingReqs.map(r => ({ step: r.step_number, component: r.component })))
+    // 更新步骤内嵌的 welding 字段和 component_name
+    let stepUpdated = false
 
-    // 2. 更新逻辑：
-    //    - 从manualData中删除"原始步骤号 + 当前组件名称"的数据
-    //    - 添加所有"编辑后的数据"
-    const allWelding = updatedData.welding_requirements || []
-    console.log('  - 保存前总数据量:', allWelding.length)
+    // 更新组件装配步骤
+    if (updatedData.component_assembly) {
+      for (const component of updatedData.component_assembly) {
+        if (component.steps) {
+          for (const step of component.steps) {
+            if (step.step_id === currentStepId) {
+              console.log('  ✅ 找到匹配的步骤，准备更新...')
+              console.log('  - 更新前 component.component_name:', component.component_name)
 
-    // 🔥 修复：按步骤号+组件名称删除（避免删除其他组件的相同步骤号数据）
-    const filteredWelding = allWelding.filter((w: any) => {
-      const shouldKeep = !(w.step_number === originalStepNumber.value && w.component === currentComponentName)
-      if (!shouldKeep) {
-        console.log('  - 删除原始数据:', { step: w.step_number, component: w.component })
+              // 更新焊接数据
+              if (validWeldingReqs.length > 0) {
+                step.welding = validWeldingReqs[0].welding_info
+              } else {
+                delete step.welding
+              }
+
+              // ✅ 更新组件级别的 component_name（前端显示用的是这个）
+              component.component_name = updatedComponentName
+
+              console.log('  - 更新后 component.component_name:', component.component_name)
+              stepUpdated = true
+              break
+            }
+          }
+        }
+        if (stepUpdated) break
       }
-      return shouldKeep
-    })
-    console.log('  - 删除后数据量:', filteredWelding.length)
-
-    // 添加编辑后的数据
-    updatedData.welding_requirements = [
-      ...filteredWelding,
-      ...validWeldingReqs
-    ]
-    console.log('  - 保存后总数据量:', updatedData.welding_requirements.length)
-
-    // ========== 更新安全警告（基于原始步骤号+组件名称精确删除） ==========
-    console.log('💾 [保存数据 - 安全警告]')
-
-    if (!updatedData.safety_and_faq) {
-      updatedData.safety_and_faq = {}
     }
 
-    // 🔥 修复：强制使用当前步骤的步骤号和组件名称
-    // 1. 过滤掉空的安全警告，并强制修正步骤号和组件名称
-    const validSafetyWarnings = editData.value.safety_warnings
-      .filter(w => w.warning && w.warning.trim())
-      .map(w => ({
-        ...w,
-        step_number: currentStepNumber,  // 🔥 强制使用当前步骤号
-        component: currentComponentName   // 🔥 强制使用当前组件名称
-      }))
-
-    console.log('  - 编辑后的有效数据数量:', validSafetyWarnings.length)
-    console.log('  - 编辑后的数据:', validSafetyWarnings.map(w => ({ step: w.step_number, component: w.component })))
-
-    // 2. 更新逻辑：删除"原始步骤号 + 当前组件名称"的数据，添加编辑后的数据
-    const allSafetyWarnings = updatedData.safety_and_faq.safety_warnings || []
-    console.log('  - 保存前总数据量:', allSafetyWarnings.length)
-
-    // 🔥 修复：按步骤号+组件名称删除（避免删除其他组件的相同步骤号数据）
-    const filteredSafety = allSafetyWarnings.filter((w: any) => {
-      const shouldKeep = !(w.step_number === originalStepNumber.value && w.component === currentComponentName)
-      if (!shouldKeep) {
-        console.log('  - 删除原始数据:', { step: w.step_number, component: w.component })
-      }
-      return shouldKeep
-    })
-    console.log('  - 删除后数据量:', filteredSafety.length)
-
-    // 添加编辑后的数据
-    updatedData.safety_and_faq.safety_warnings = [
-      ...filteredSafety,
-      ...validSafetyWarnings
-    ]
-    console.log('  - 保存后总数据量:', updatedData.safety_and_faq.safety_warnings.length)
-
-    // ========== 更新质检要求 ==========
-    // 找到当前步骤并更新quality_check字段
-    const updateQualityCheck = (steps: any[]) => {
-      for (const step of steps) {
-        if (step.step_number === currentStepNumber) {
-          step.quality_check = editData.value.quality_check
+    // 更新产品装配步骤
+    if (!stepUpdated && updatedData.product_assembly?.steps) {
+      for (const step of updatedData.product_assembly.steps) {
+        if (step.step_id === currentStepId) {
+          // 更新焊接数据
+          if (validWeldingReqs.length > 0) {
+            step.welding = validWeldingReqs[0].welding_info
+          } else {
+            delete step.welding
+          }
+          // 更新组件名称（如果用户修改了）
+          step.component_name = updatedComponentName
+          stepUpdated = true
+          break
         }
       }
     }
+
+    // ========== 更新安全警告（只保存到步骤内嵌字段） ==========
+    // 获取用户修改后的组件名称（如果有修改）
+    const updatedComponentNameFromSafety = editData.value.safety_warnings.length > 0
+      ? editData.value.safety_warnings[0].component
+      : updatedComponentName
+
+    // 过滤有效的安全警告
+    const validSafetyWarnings = editData.value.safety_warnings
+      .filter(w => w.warning && w.warning.trim())
+      .map(w => w.warning)
+
+    // 更新步骤内嵌的 safety_warnings 字段和 component_name
+    stepUpdated = false
+
+    // 更新组件装配步骤
+    if (updatedData.component_assembly) {
+      for (const component of updatedData.component_assembly) {
+        if (component.steps) {
+          for (const step of component.steps) {
+            if (step.step_id === currentStepId) {
+              step.safety_warnings = validSafetyWarnings
+              // ✅ 更新组件级别的 component_name（前端显示用的是这个）
+              component.component_name = updatedComponentNameFromSafety
+              stepUpdated = true
+              break
+            }
+          }
+        }
+        if (stepUpdated) break
+      }
+    }
+
+    // 更新产品装配步骤
+    if (!stepUpdated && updatedData.product_assembly?.steps) {
+      for (const step of updatedData.product_assembly.steps) {
+        if (step.step_id === currentStepId) {
+          step.safety_warnings = validSafetyWarnings
+          // 更新组件名称（优先使用安全警告中的组件名称）
+          step.component_name = updatedComponentNameFromSafety
+          stepUpdated = true
+          break
+        }
+      }
+    }
+
+    // ========== 更新质检要求 ==========
+    // 使用 step_id 精确匹配当前步骤
+    stepUpdated = false
 
     // 更新组件装配步骤中的质检要求
     if (updatedData.component_assembly) {
       for (const component of updatedData.component_assembly) {
         if (component.steps) {
-          updateQualityCheck(component.steps)
+          for (const step of component.steps) {
+            if (step.step_id === currentStepId) {
+              step.quality_check = editData.value.quality_check
+              stepUpdated = true
+              break
+            }
+          }
         }
+        if (stepUpdated) break
       }
     }
 
     // 更新产品装配步骤中的质检要求
-    if (updatedData.product_assembly?.steps) {
-      updateQualityCheck(updatedData.product_assembly.steps)
+    if (!stepUpdated && updatedData.product_assembly?.steps) {
+      for (const step of updatedData.product_assembly.steps) {
+        if (step.step_id === currentStepId) {
+          step.quality_check = editData.value.quality_check
+          stepUpdated = true
+          break
+        }
+      }
     }
 
     // ========== 更新FAQ（全局） ==========
+    if (!updatedData.safety_and_faq) {
+      updatedData.safety_and_faq = {}
+    }
     updatedData.safety_and_faq.faq_items = editData.value.faq_items.filter(
       f => f.question.trim() && f.answer.trim()
     )
-
-    console.log('💾 [保存数据 - 最终汇总]')
-    console.log('  - 原始步骤号:', originalStepNumber.value)
-    console.log('  - 当前步骤号:', currentStepNumber)
-    console.log('  - 编辑的焊接要求数量:', validWeldingReqs.length)
-    console.log('  - 更新后焊接要求总数:', updatedData.welding_requirements.length)
-    console.log('  - 编辑的安全警告数量:', validSafetyWarnings.length)
-    console.log('  - 更新后安全警告总数:', updatedData.safety_and_faq.safety_warnings.length)
-    console.log('  - 当前步骤质检要求:', editData.value.quality_check)
 
     // 调用后端API保存
     const response = await axios.put(`/api/manual/${props.taskId}`, updatedData)
@@ -1397,42 +1368,6 @@ const saveManualData = async () => {
   }
 }
 
-// 🔍 全局数据诊断函数
-const diagnoseData = () => {
-  console.log('🔍 ========== 数据诊断报告 ==========')
-  console.log('📊 说明书数据:', manualData.value)
-  console.log('')
-
-  console.log('📋 焊接要求 (welding_requirements):')
-  console.log('  - 数据类型:', typeof manualData.value?.welding_requirements)
-  console.log('  - 是否为数组:', Array.isArray(manualData.value?.welding_requirements))
-  console.log('  - 数量:', manualData.value?.welding_requirements?.length || 0)
-  console.log('  - 第一条数据示例:', manualData.value?.welding_requirements?.[0])
-  console.log('')
-
-  console.log('⚠️ 安全警告 (safety_and_faq.safety_warnings):')
-  console.log('  - safety_and_faq 存在:', !!manualData.value?.safety_and_faq)
-  console.log('  - 数据类型:', typeof manualData.value?.safety_and_faq?.safety_warnings)
-  console.log('  - 是否为数组:', Array.isArray(manualData.value?.safety_and_faq?.safety_warnings))
-  console.log('  - 数量:', manualData.value?.safety_and_faq?.safety_warnings?.length || 0)
-  console.log('  - 第一条数据示例:', manualData.value?.safety_and_faq?.safety_warnings?.[0])
-  console.log('')
-
-  console.log('❓ FAQ (safety_and_faq.faq_items):')
-  console.log('  - 数据类型:', typeof manualData.value?.safety_and_faq?.faq_items)
-  console.log('  - 是否为数组:', Array.isArray(manualData.value?.safety_and_faq?.faq_items))
-  console.log('  - 数量:', manualData.value?.safety_and_faq?.faq_items?.length || 0)
-  console.log('  - 数据:', manualData.value?.safety_and_faq?.faq_items)
-  console.log('')
-
-  console.log('✅ 质检要求 (从步骤中提取):')
-  console.log('  - 组件装配数量:', manualData.value?.component_assembly?.length || 0)
-  console.log('  - 产品装配存在:', !!manualData.value?.product_assembly)
-  console.log('  - 质检要求总数:', qualityCheckpoints.value.length)
-  console.log('')
-
-  console.log('🔍 ========== 诊断完成 ==========')
-}
 
 // ✅ 优先从 localStorage 加载，如果没有再从 API 加载
 const loadLocalJSON = async () => {

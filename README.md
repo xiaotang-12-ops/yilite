@@ -1,14 +1,21 @@
 # 智能装配说明书生成系统
 
-[![Version](https://img.shields.io/badge/version-v1.1.4-blue.svg)](https://github.com/xiaotang-12-ops/yilite/releases)
+[![Version](https://img.shields.io/badge/version-v1.1.5-blue.svg)](https://github.com/xiaotang-12-ops/Mecagent/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Docker](https://img.shields.io/badge/docker-ready-brightgreen.svg)](DEPLOYMENT.md)
+[![Docker](https://img.shields.io/badge/docker-ready-brightgreen.svg)](DOCKER_DEPLOYMENT.md)
 
 > **让普通工人看完说明书也能进行加工**
 
 一个基于AI的智能装配说明书生成系统，能够自动解析PDF工程图纸和3D模型，生成工人友好的交互式HTML装配说明书。
 
-**当前版本**: v1.1.4 | [查看版本历史](https://github.com/xiaotang-12-ops/yilite/releases) | [部署指南](DEPLOYMENT.md)
+**当前版本**: v1.1.5 | [查看版本历史](https://github.com/xiaotang-12-ops/Mecagent/releases) | [部署指南](DOCKER_DEPLOYMENT.md)
+
+## 🆕 v1.1.5 新增功能
+
+- ✅ **管理员登录功能**：支持管理员登录后编辑说明书内容
+- ✅ **在线编辑**：可直接修改焊接要求、安全警告、质检要求
+- ✅ **组件名称修改**：支持修改组件名称并实时同步
+- ✅ **数据持久化**：编辑内容自动保存到后端文件
 
 ## ✨ 核心特性
 
@@ -28,26 +35,28 @@ PDF工程图纸 + 3D模型 → AI解析引擎 → 装配规程生成 → HTML说
 
 ## 🚀 快速开始
 
-### 使用 Docker 部署（推荐）
+### 使用 Docker 部署（推荐）⭐
+
+**只需 3 步，5 分钟完成部署！**
 
 ```bash
 # 1. 克隆项目
-git clone https://github.com/xiaotang-12-ops/yilite.git
-cd yilite/Mecagent
+git clone https://github.com/xiaotang-12-ops/Mecagent.git
+cd Mecagent
 
-# 2. 配置环境变量
+# 2. 配置 API 密钥
 cp .env.example .env
 # 编辑 .env 文件，填入你的 OPENROUTER_API_KEY
 
 # 3. 启动服务
 docker-compose up -d
-
-# 4. 访问系统
-# 前端: http://localhost:3008
-# 后端: http://localhost:8008/api/docs
 ```
 
-**详细部署说明**: 请查看 [DEPLOYMENT.md](DEPLOYMENT.md)
+**访问系统**：
+- 🌐 前端界面: http://localhost:3008
+- 📚 API 文档: http://localhost:8008/api/docs
+
+**详细部署说明**: 请查看 [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md)
 
 ### 本地开发环境
 
@@ -55,8 +64,8 @@ docker-compose up -d
 
 ```bash
 # 克隆项目
-git clone https://github.com/xiaotang-12-ops/yilite.git
-cd yilite/Mecagent
+git clone https://github.com/xiaotang-12-ops/Mecagent.git
+cd Mecagent
 
 # 安装依赖
 pip install -r requirements.txt
