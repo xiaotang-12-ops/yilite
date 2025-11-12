@@ -189,6 +189,7 @@ PRODUCT_ASSEMBLY_SYSTEM_PROMPT = """# 🎯 角色定位
   },
   "assembly_steps": [
     {
+      "step_id": "product_step_步骤号（如：product_step_1，全局唯一ID）",
       "step_number": 1,
       "title": "步骤标题（10字以内）",
       "component_code": "组件BOM代号",
@@ -241,6 +242,7 @@ PRODUCT_ASSEMBLY_SYSTEM_PROMPT = """# 🎯 角色定位
   "total_steps": 2,
   "assembly_steps": [
     {
+      "step_id": "product_step_1",
       "step_number": 1,
       "title": "安装立柱",
       "component_code": "01.01.0002",
@@ -281,6 +283,7 @@ PRODUCT_ASSEMBLY_SYSTEM_PROMPT = """# 🎯 角色定位
       "estimated_time_minutes": 20
     },
     {
+      "step_id": "product_step_2",
       "step_number": 2,
       "title": "安装平台",
       "component_code": "01.01.0003",

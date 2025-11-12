@@ -65,20 +65,17 @@ class ManualIntegratorV2:
                 image_hierarchy,
                 task_id
             ),
-            "welding_requirements": self._build_welding(welding_result, component_assembly_results, product_assembly_result),
-            "safety_and_faq": self._build_safety_faq(safety_faq_result, component_assembly_results, product_assembly_result),
+            "safety_and_faq": self._build_safety_faq(safety_faq_result),
             "3d_resources": self._build_3d_resources(
                 bom_to_mesh_mapping,
                 component_to_glb_mapping,
                 component_level_mappings  # ✅ 传递组件级别映射
             )
         }
-        
+
         print(f"\n :")
         print(f"   - : {len(manual['component_assembly'])} ")
         print(f"   - : {len(manual['product_assembly']['steps'])} ")
-        print(f"   - : {len(manual['welding_requirements'])} ")
-        print(f"   - : {len(manual['safety_and_faq']['safety_warnings'])} ")
         print(f"   - FAQ: {len(manual['safety_and_faq']['faq_items'])} ")
         
         return manual
@@ -157,6 +154,9 @@ class ManualIntegratorV2:
             steps = result.get("assembly_steps", [])
             enhanced_steps = self._add_drawings_to_steps(steps, component_images, task_id)
 
+            # ✅ 为每个步骤添加 step_id
+            enhanced_steps = self._add_step_ids(enhanced_steps, component_code, "component")
+
             chapter = {
                 "chapter_type": "component_assembly",
                 "component_code": component_code,
@@ -198,6 +198,9 @@ class ManualIntegratorV2:
         steps = product_result.get("assembly_steps", [])
         enhanced_steps = self._add_drawings_to_steps(steps, product_images, task_id)
 
+        # ✅ 为每个步骤添加 step_id
+        enhanced_steps = self._add_step_ids(enhanced_steps, None, "product")
+
         return {
             "chapter_type": "product_assembly",
             "product_name": product_result.get("product_name", ""),
@@ -206,124 +209,28 @@ class ManualIntegratorV2:
             "3d_display_mode": "component_level_explosion"
         }
     
-    def _build_welding(
-        self,
-        welding_result: Dict = None,
-        component_assembly_results: List[Dict] = None,
-        product_assembly_result: Dict = None
-    ) -> List[Dict]:
-        """
-        构建焊接要求列表
-
-        策略：
-        1. 优先使用welding_result（如果有）
-        2. 否则从组件装配和产品装配步骤中提取焊接信息
-
-        Args:
-            welding_result: 焊接Agent的结果
-            component_results: 组件装配结果列表
-            product_result: 产品装配结果
-
-        Returns:
-            焊接要求列表
-        """
-        welding_list = []
-
-        # 方法1: 从welding_result提取
-        if welding_result and welding_result.get("success"):
-            welding_list.extend(welding_result.get("welding_requirements", []))
-
-        # 方法2: 从组件装配步骤中提取
-        if component_assembly_results:
-            for comp_result in component_assembly_results:
-                if not comp_result.get("success"):
-                    continue
-
-                steps = comp_result.get("assembly_steps", [])
-                for step in steps:
-                    welding_info = step.get("welding")
-                    if welding_info:
-                        welding_list.append({
-                            "step_number": step.get("step_number"),
-                            "component": comp_result.get("component_name", ""),
-                            "welding_info": welding_info
-                        })
-
-        # 方法3: 从产品装配步骤中提取
-        if product_assembly_result and product_assembly_result.get("success"):
-            steps = product_assembly_result.get("assembly_steps", [])
-            for step in steps:
-                welding_info = step.get("welding")
-                if welding_info:
-                    welding_list.append({
-                        "step_number": step.get("step_number"),
-                        "component": "产品总装",
-                        "welding_info": welding_info
-                    })
-
-        return welding_list
-    
     def _build_safety_faq(
         self,
-        safety_faq_result: Dict = None,
-        component_assembly_results: List[Dict] = None,
-        product_assembly_result: Dict = None
+        safety_faq_result: Dict = None
     ) -> Dict:
         """
-        构建安全警告和FAQ
+        构建FAQ列表
 
-        策略：
-        1. 优先使用safety_faq_result（如果有）
-        2. 否则从组件装配和产品装配步骤中提取安全警告
+        注意：安全警告已经内嵌在步骤中，这里只提取FAQ
 
         Args:
             safety_faq_result: 安全FAQ Agent的结果
-            component_results: 组件装配结果列表
-            product_result: 产品装配结果
 
         Returns:
-            包含safety_warnings和faq_items的字典
+            包含faq_items的字典
         """
-        safety_warnings = []
         faq_items = []
 
-        # 方法1: 从safety_faq_result提取
+        # 从safety_faq_result提取FAQ
         if safety_faq_result and safety_faq_result.get("success"):
-            safety_warnings.extend(safety_faq_result.get("safety_warnings", []))
             faq_items.extend(safety_faq_result.get("faq_items", []))
 
-        # 方法2: 从组件装配步骤中提取安全警告
-        if component_assembly_results:
-            for comp_result in component_assembly_results:
-                if not comp_result.get("success"):
-                    continue
-
-                steps = comp_result.get("assembly_steps", [])
-                for step in steps:
-                    step_warnings = step.get("safety_warnings", [])
-                    if step_warnings:
-                        for warning in step_warnings:
-                            safety_warnings.append({
-                                "step_number": step.get("step_number"),
-                                "component": comp_result.get("component_name", ""),
-                                "warning": warning
-                            })
-
-        # 方法3: 从产品装配步骤中提取安全警告
-        if product_assembly_result and product_assembly_result.get("success"):
-            steps = product_assembly_result.get("assembly_steps", [])
-            for step in steps:
-                step_warnings = step.get("safety_warnings", [])
-                if step_warnings:
-                    for warning in step_warnings:
-                        safety_warnings.append({
-                            "step_number": step.get("step_number"),
-                            "component": "产品总装",
-                            "warning": warning
-                        })
-
         return {
-            "safety_warnings": safety_warnings,
             "faq_items": faq_items
         }
     
@@ -387,6 +294,44 @@ class ManualIntegratorV2:
             # ✅ 修改策略：所有步骤都显示所有图纸（用户可以在前端查看所有图纸）
             step_copy["drawings"] = api_image_paths
 
+            enhanced_steps.append(step_copy)
+
+        return enhanced_steps
+
+    def _add_step_ids(
+        self,
+        steps: List[Dict],
+        component_code: str = None,
+        step_type: str = "component"
+    ) -> List[Dict]:
+        """
+        为每个步骤添加全局唯一的 step_id
+
+        规则：
+        - 组件装配步骤：{component_code}_step_{step_number}
+        - 产品装配步骤：product_step_{step_number}
+
+        Args:
+            steps: 装配步骤列表
+            component_code: 组件代号（组件装配时需要）
+            step_type: 步骤类型（"component" 或 "product"）
+
+        Returns:
+            添加了 step_id 的步骤列表
+        """
+        enhanced_steps = []
+
+        for step in steps:
+            step_copy = step.copy()
+            step_number = step.get("step_number", 1)
+
+            # 生成 step_id
+            if step_type == "component":
+                step_id = f"{component_code}_step_{step_number}"
+            else:  # product
+                step_id = f"product_step_{step_number}"
+
+            step_copy["step_id"] = step_id
             enhanced_steps.append(step_copy)
 
         return enhanced_steps

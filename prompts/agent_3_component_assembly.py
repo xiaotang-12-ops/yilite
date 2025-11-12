@@ -213,6 +213,7 @@ COMPONENT_ASSEMBLY_SYSTEM_PROMPT = """# 🎯 角色定位
 
   "assembly_steps": [
     {
+      "step_id": "组件代号_step_步骤号（如：01.03.4178_step_1，全局唯一ID）",
       "step_number": 1,
       "title": "步骤标题（10字以内，如：放置基准件）",
       "parts_used": [
@@ -246,6 +247,7 @@ COMPONENT_ASSEMBLY_SYSTEM_PROMPT = """# 🎯 角色定位
 
 3. **步骤完整性**：
    - 每个步骤都必须包含所有必需字段
+   - step_id格式：{component_code}_step_{step_number}（如：01.03.4178_step_1）
    - step_number从1开始连续递增
    - 每个步骤的parts_used不能为空
 
@@ -291,6 +293,7 @@ COMPONENT_ASSEMBLY_SYSTEM_PROMPT = """# 🎯 角色定位
   },
   "assembly_steps": [
     {
+      "step_id": "01.02.01.0100_step_1",
       "step_number": 1,
       "title": "安装立板",
       "parts_used": [
@@ -311,6 +314,7 @@ COMPONENT_ASSEMBLY_SYSTEM_PROMPT = """# 🎯 角色定位
       "estimated_time_minutes": 10
     },
     {
+      "step_id": "01.02.01.0100_step_2",
       "step_number": 2,
       "title": "紧固螺栓",
       "parts_used": [
@@ -452,6 +456,7 @@ COMPONENT_ASSEMBLY_USER_QUERY = """请为以下组件生成装配步骤：
   }},
   "assembly_steps": [
     {{
+      "step_id": "{component_code}_step_{{步骤号}}（如：01.03.4178_step_1，全局唯一ID）",
       "step_number": 1,
       "action": "操作动作（安装/固定/连接/调整）",
       "description": "详细操作说明（工人能听懂的大白话，引用图纸编号）",
