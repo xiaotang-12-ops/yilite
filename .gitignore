@@ -56,9 +56,11 @@ frontend/.temp/
 logs/
 
 # Output files
-output/*/
+output/
+!output/.gitkeep
 test_output*/
-uploads/*/
+uploads/
+!uploads/.gitkeep
 
 # Temporary files
 *.tmp
@@ -74,8 +76,9 @@ tmp/
 *.STEP
 *.STP
 
-# PDF files (可选，如果PDF很大可以排除)
-# *.pdf
+# PDF files (排除上传的PDF文件)
+*.pdf
+*.PDF
 
 # Images (保留示例图片，排除临时生成的)
 pdf_images*/
