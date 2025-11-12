@@ -61,6 +61,8 @@ output/
 test_output*/
 uploads/
 !uploads/.gitkeep
+debug_output/
+pipeline_output/
 
 # Temporary files
 *.tmp
