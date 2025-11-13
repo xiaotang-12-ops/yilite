@@ -385,8 +385,9 @@
                       v-model="req.component"
                       placeholder="例如：固定座组件"
                     />
-                    <el-text type="info" size="small" style="margin-left: 8px;">
-                      修改组件名称会同步更新到当前步骤
+                    <el-text type="warning" size="small" style="margin-left: 8px;">
+                      <el-icon><Warning /></el-icon>
+                      修改组件名称会同步更新到当前步骤和安全警告模块
                     </el-text>
                   </el-form-item>
 
@@ -484,9 +485,11 @@
                     <el-input
                       v-model="warning.component"
                       placeholder="例如：固定座组件"
+                      disabled
+                      style="background-color: #f5f7fa;"
                     />
                     <el-text type="info" size="small" style="margin-left: 8px;">
-                      修改组件名称会同步更新到当前步骤
+                      组件名称由焊接模块自动同步，不可单独修改
                     </el-text>
                   </el-form-item>
 
@@ -585,7 +588,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Loading, ArrowLeft, ArrowRight, Picture, Box,
-  Refresh, View, Grid, Clock, Lock, Edit, Plus
+  Refresh, View, Grid, Clock, Lock, Edit, Plus, Warning
 } from '@element-plus/icons-vue'
 import axios from 'axios'
 import * as THREE from 'three'
@@ -931,6 +934,86 @@ const currentStepHighlightMeshes = computed(() => {
   return highlightMeshes
 })
 
+// ✅ 判断当前是否是产品总装章节
+const isProductAssembly = computed(() => {
+  return currentStepData.value?.chapter_type === 'product_assembly'
+})
+
+// ✅ 计算已装配的零件（绿色）
+const assembledMeshes = computed(() => {
+  const assembled: string[] = []
+
+  console.log(`🔍 [计算已装配零件] 当前步骤索引: ${currentStepIndex.value}`)
+
+  // ✅ 产品总装：所有组件的零件都是绿色
+  if (isProductAssembly.value) {
+    console.log('  📦 [产品总装] 收集所有组件的零件')
+
+    const componentAssembly = manualData.value?.component_assembly || []
+    for (const component of componentAssembly) {
+      const steps = component.steps || []
+      for (const step of steps) {
+        if (step.parts_used) {
+          step.parts_used.forEach((part: any) => {
+            if (part.node_name) {
+              if (Array.isArray(part.node_name)) {
+                assembled.push(...part.node_name)
+              } else {
+                assembled.push(part.node_name)
+              }
+            }
+          })
+        }
+      }
+    }
+
+    // 加上前面步骤的紧固件
+    const componentStepsCount = componentAssembly.reduce((sum: number, chapter: any) => sum + chapter.steps.length, 0)
+    for (let i = componentStepsCount; i < currentStepIndex.value; i++) {
+      const step = allSteps.value[i]
+      if (step?.fasteners) {
+        step.fasteners.forEach((fastener: any) => {
+          if (fastener.node_name) {
+            if (Array.isArray(fastener.node_name)) {
+              assembled.push(...fastener.node_name)
+            } else {
+              assembled.push(fastener.node_name)
+            }
+          }
+        })
+      }
+    }
+  } else {
+    // ✅ 组件装配：只累积当前组件内前面步骤的零件
+    console.log('  🔧 [组件装配] 只累积当前组件内的前面步骤')
+
+    // 只累积索引 < currentStepIndex 的步骤
+    for (let i = 0; i < currentStepIndex.value; i++) {
+      const step = allSteps.value[i]
+
+      // ✅ 关键：只累积当前组件的步骤
+      if (step?.component_code === currentStepData.value?.component_code) {
+        if (step.parts_used) {
+          step.parts_used.forEach((part: any) => {
+            if (part.node_name) {
+              if (Array.isArray(part.node_name)) {
+                assembled.push(...part.node_name)
+                console.log(`    🟢 [步骤${i+1}] 添加零件 ${part.bom_code}: ${part.node_name.join(', ')}`)
+              } else {
+                assembled.push(part.node_name)
+                console.log(`    🟢 [步骤${i+1}] 添加零件 ${part.bom_code}: ${part.node_name}`)
+              }
+            }
+          })
+        }
+      }
+    }
+  }
+
+  console.log(`🟢 已装配零件总数: ${assembled.length}个`, assembled)
+  return assembled
+})
+
 // 图纸点击放大功能
 const toggleDrawingZoom = (index: number) => {
   if (zoomedDrawingIndex.value === index) {
@@ -1119,6 +1202,22 @@ watch(showEditDialog, (newVal) => {
     console.log('  - 当前步骤质检要求:', editData.value.quality_check)
   }
 })
+
+// ✅ 监听焊接模块的组件名称变化，自动同步到安全警告模块
+watch(
+  () => editData.value.welding_requirements.length > 0
+    ? editData.value.welding_requirements[0].component
+    : null,
+  (newComponentName) => {
+    if (newComponentName && editData.value.safety_warnings.length > 0) {
+      // 同步到所有安全警告
+      editData.value.safety_warnings.forEach(warning => {
+        warning.component = newComponentName
+      })
+      console.log('🔄 [组件名称同步] 焊接模块 → 安全警告模块:', newComponentName)
+    }
+  }
+)
 
 // 添加/删除焊接要求
 const addWeldingRequirement = () => {
@@ -1395,9 +1494,6 @@ const loadLocalJSON = async () => {
           console.log('✅ 从缓存加载说明书成功 (版本一致):', manualData.value)
           console.log('📋 manualData的所有字段:', Object.keys(manualData.value))
 
-          // 🔍 加载后立即诊断
-          diagnoseData()
-
           ElMessage.success('装配说明书加载成功！')
 
           // ✅ 数据加载完成后初始化3D
@@ -1425,9 +1521,6 @@ const loadLocalJSON = async () => {
 
     console.log('✅ 从API加载说明书成功:', manualData.value)
     console.log('📋 manualData的所有字段:', Object.keys(manualData.value))
-
-    // 🔍 加载后立即诊断
-    diagnoseData()
 
     ElMessage.success('装配说明书加载成功！')
 
@@ -1933,19 +2026,22 @@ const switchGLBModel = async (glbFile: string) => {
   }
 }
 
-// 高亮当前步骤的零件
+// 高亮当前步骤的零件（三色方案：黄色=正在装配，绿色=已装配，灰色=未装配）
 const highlightStepParts = () => {
   if (!model || !currentStepData.value) {
     console.log('⚠️ 无法高亮：model或currentStepData不存在')
     return
   }
 
-  // ✅ 优先使用步骤中的3d_highlight，否则使用自动生成的高亮列表
-  const highlightNodes: string[] = currentStepData.value['3d_highlight'] || currentStepHighlightMeshes.value
-  console.log('🎯 步骤', currentStepIndex.value + 1, '高亮node列表:', highlightNodes)
+  // ✅ 获取当前步骤要装配的零件（黄色）
+  const currentNodes: string[] = currentStepData.value['3d_highlight'] || currentStepHighlightMeshes.value
+  console.log('🟡 步骤', currentStepIndex.value + 1, '正在装配的零件:', currentNodes)
 
-  // ✅ 不再需要转换！直接使用node_name（如NAUO2）
-  // 兼容旧数据：如果是mesh_xxx格式，转换为NAUOxxx
+  // ✅ 获取已装配的零件（绿色）
+  const assembledNodes: string[] = assembledMeshes.value
+  console.log('🟢 已装配的零件:', assembledNodes)
+
+  // ✅ 兼容旧数据：如果是mesh_xxx格式，转换为NAUOxxx
   const normalizeNodeName = (nodeName: string): string => {
     if (nodeName.startsWith('mesh_')) {
       const number = nodeName.replace('mesh_', '')
@@ -1955,57 +2051,63 @@ const highlightStepParts = () => {
     return nodeName
   }
 
-  // 收集模型中所有mesh的名称（用于调试）
-  const allMeshNames: string[] = []
-  model.traverse((child: any) => {
-    if (child.isMesh) {
-      allMeshNames.push(child.name)
-    }
-  })
-  console.log('📦 模型中的所有mesh (前10个):', allMeshNames.slice(0, 10))
+  const normalizedCurrentNodes = currentNodes.map(normalizeNodeName)
+  const normalizedAssembledNodes = assembledNodes.map(normalizeNodeName)
 
-  // 重置所有mesh的材质
+  // 统计
+  let currentCount = 0
+  let assembledCount = 0
+  let unassembledCount = 0
+
+  // 遍历模型，设置三种颜色
   model.traverse((child: any) => {
     if (child.isMesh) {
-      const originalMaterial = meshOriginalMaterials.get(child.name)
-      if (originalMaterial) {
-        child.material = originalMaterial.clone()
+      const nodeName = child.name
+
+      if (normalizedCurrentNodes.includes(nodeName)) {
+        // 🟡 正在装配：黄色高亮
+        child.material = new THREE.MeshStandardMaterial({
+          color: 0xffff00,        // 亮黄色
+          emissive: 0xffaa00,     // 橙黄色发光
+          emissiveIntensity: 0.8,
+          metalness: 0.3,
+          roughness: 0.4,
+          transparent: false,
+          opacity: 1.0
+        })
+        currentCount++
+      } else if (normalizedAssembledNodes.includes(nodeName)) {
+        // 🟢 已装配：绿色
+        child.material = new THREE.MeshStandardMaterial({
+          color: 0x4CAF50,        // 绿色
+          emissive: 0x2E7D32,     // 深绿色发光
+          emissiveIntensity: 0.3,
+          metalness: 0.4,
+          roughness: 0.5,
+          transparent: false,
+          opacity: 1.0
+        })
+        assembledCount++
+      } else {
+        // ⚪ 未装配：浅灰色半透明
+        const originalMaterial = meshOriginalMaterials.get(nodeName)
+        if (originalMaterial) {
+          child.material = originalMaterial.clone()
+        } else {
+          child.material = new THREE.MeshStandardMaterial({
+            color: 0xCCCCCC,      // 浅灰色
+            metalness: 0.3,
+            roughness: 0.6
+          })
+        }
         child.material.transparent = true
         child.material.opacity = 0.3
+        unassembledCount++
       }
     }
   })
 
-  // 高亮指定的mesh
-  if (highlightNodes.length > 0) {
-    let highlightedCount = 0
-    const normalizedNodeNames = highlightNodes.map(normalizeNodeName)
-    console.log('🔄 标准化后的node名称:', normalizedNodeNames)
-
-    const allMeshNames: string[] = []
-    model.traverse((child: any) => {
-      if (child.isMesh) {
-        allMeshNames.push(child.name)
-        if (normalizedNodeNames.includes(child.name)) {
-          console.log('✅ 找到并高亮node:', child.name)
-          // 创建高亮材质（黄色发光）
-          const highlightMaterial = new THREE.MeshStandardMaterial({
-            color: 0xffff00,
-            emissive: 0xffaa00,
-            emissiveIntensity: 0.8,
-            metalness: 0.3,
-            roughness: 0.4
-          })
-          child.material = highlightMaterial
-          highlightedCount++
-        }
-      }
-    })
-
-    console.log('🔍 模型中所有mesh名称（前50个）:', allMeshNames.slice(0, 50))
-    console.log('🔍 需要匹配的node名称:', normalizedNodeNames.slice(0, 10))
-    console.log(`💡 成功高亮 ${highlightedCount}/${highlightNodes.length} 个零件`)
-  }
+  console.log(`✅ 三色渲染完成: 🟡正在装配=${currentCount}, 🟢已装配=${assembledCount}, ⚪未装配=${unassembledCount}`)
 }
 
 // 应用爆炸效果（按装配步骤层级爆炸）
