@@ -322,6 +322,36 @@
       :close-on-click-modal="false"
     >
       <el-tabs v-model="editActiveTab">
+        <!-- ⭐ 步骤描述（新增） -->
+        <el-tab-pane label="步骤描述" name="description">
+          <div class="edit-section">
+            <el-alert
+              title="提示"
+              type="info"
+              :closable="false"
+              style="margin-bottom: 12px"
+            >
+              当前步骤的操作描述（步骤{{ currentStepData?.step_number }}）
+            </el-alert>
+
+            <el-form label-width="100px">
+              <el-form-item label="步骤描述">
+                <el-input
+                  v-model="editData.description"
+                  type="textarea"
+                  :rows="10"
+                  placeholder="例如：将底部加强筋作为基准件放置在工作平台上，确保水平位置正确"
+                  maxlength="500"
+                  show-word-limit
+                />
+                <el-text type="info" size="small" style="margin-top: 8px; display: block;">
+                  💡 这段描述会显示在装配说明书的步骤标题下方，建议简洁明了
+                </el-text>
+              </el-form-item>
+            </el-form>
+          </div>
+        </el-tab-pane>
+
         <!-- 焊接注意事项 -->
         <el-tab-pane label="焊接注意事项" name="welding">
           <div class="edit-section">
@@ -635,7 +665,7 @@ const modelContainer = ref<HTMLElement | null>(null)
 const isAdmin = ref(false)
 const showLoginDialog = ref(false)
 const showEditDialog = ref(false)
-const editActiveTab = ref('welding')
+const editActiveTab = ref('description')  // ⭐ 默认显示"步骤描述"标签页
 const saving = ref(false)
 
 const loginForm = ref({
@@ -645,6 +675,7 @@ const loginForm = ref({
 
 // 编辑数据（使用新的类型定义）
 const editData = ref({
+  description: '' as string,  // ⭐ 新增：步骤描述
   welding_requirements: [] as WeldingRequirementEdit[],
   safety_warnings: [] as SafetyWarningEdit[],
   quality_check: '' as string,
@@ -1202,6 +1233,9 @@ watch(showEditDialog, (newVal) => {
     // 加载当前步骤的质检要求
     editData.value.quality_check = currentStep.quality_check || ''
 
+    // ⭐ 加载当前步骤的描述
+    editData.value.description = currentStep.description || ''
+
     // FAQ是全局的，不按步骤过滤
     const safetyAndFaq = manualData.value.safety_and_faq || {}
     editData.value.faq_items = JSON.parse(JSON.stringify(safetyAndFaq.faq_items || []))
@@ -1212,6 +1246,7 @@ watch(showEditDialog, (newVal) => {
     console.log('  - 当前步骤焊接要求数量:', editData.value.welding_requirements.length)
     console.log('  - 当前步骤安全警告数量:', editData.value.safety_warnings.length)
     console.log('  - 当前步骤质检要求:', editData.value.quality_check)
+    console.log('  - 当前步骤描述:', editData.value.description)  // ⭐ 新增日志
   }
 })
 
@@ -1440,6 +1475,37 @@ const saveManualData = async () => {
       for (const step of updatedData.product_assembly.steps) {
         if (step.step_id === currentStepId) {
           step.quality_check = editData.value.quality_check
+          stepUpdated = true
+          break
+        }
+      }
+    }
+
+    // ========== 更新步骤描述 ========== ⭐ 新增
+    // 使用 step_id 精确匹配当前步骤
+    stepUpdated = false
+
+    // 更新组件装配步骤中的描述
+    if (updatedData.component_assembly) {
+      for (const component of updatedData.component_assembly) {
+        if (component.steps) {
+          for (const step of component.steps) {
+            if (step.step_id === currentStepId) {
+              step.description = editData.value.description
+              stepUpdated = true
+              break
+            }
+          }
+        }
+        if (stepUpdated) break
+      }
+    }
+
+    // 更新产品装配步骤中的描述
+    if (!stepUpdated && updatedData.product_assembly?.steps) {
+      for (const step of updatedData.product_assembly.steps) {
+        if (step.step_id === currentStepId) {
+          step.description = editData.value.description
           stepUpdated = true
           break
         }
