@@ -311,7 +311,10 @@ class GeminiAssemblyPipeline:
                 sys.stdout.flush()
 
             except Exception as e:
+                import traceback
+                error_detail = traceback.format_exc()
                 print_warning(f"   ⚠️  {pdf_name} 读取失败: {e}", indent=1)
+                print_warning(f"   错误详情: {error_detail[:200]}...", indent=1)
                 pdf_bom_counts[pdf_name] = 0
                 sys.stdout.flush()
 
@@ -390,48 +393,101 @@ class GeminiAssemblyPipeline:
         for i, img_base64 in enumerate(images):
             print_info(f"      正在分析第 {i+1}/{len(images)} 页...", indent=1)
 
-            try:
-                # 调用Gemini Vision API
-                from openai import OpenAI
-                client = OpenAI(
-                    base_url="https://openrouter.ai/api/v1",
-                    api_key=self.api_key
-                )
+            # ✅ 添加重试机制（最多重试2次）
+            max_retries = 2
+            retry_count = 0
+            success = False
+            response = None
 
-                completion = client.chat.completions.create(
-                    extra_headers={
-                        "HTTP-Referer": "https://mecagent.com",
-                        "X-Title": "MecAgent BOM Extraction"
-                    },
-                    model=self.model_name,
-                    messages=[
-                        {
-                            "role": "user",
-                            "content": [
-                                {"type": "text", "text": prompt},
-                                {
-                                    "type": "image_url",
-                                    "image_url": {"url": f"data:image/png;base64,{img_base64}"}
-                                }
-                            ]
-                        }
-                    ],
-                    temperature=0.0,
-                    max_tokens=4096
-                )
-
-                response = {"content": completion.choices[0].message.content}
-
-                # 解析响应
-                content = response.get("content", "").strip()
-
-                # 尝试提取JSON数组
-                import json
-                import re
-
-                # 方法1: 直接解析
+            while retry_count <= max_retries and not success:
                 try:
-                    bom_items = json.loads(content)
+                    if retry_count > 0:
+                        print_info(f"         第 {retry_count} 次重试...", indent=1)
+
+                    # 调用Gemini Vision API
+                    from openai import OpenAI
+                    client = OpenAI(
+                        base_url="https://openrouter.ai/api/v1",
+                        api_key=self.api_key
+                    )
+
+                    completion = client.chat.completions.create(
+                        extra_headers={
+                            "HTTP-Referer": "https://mecagent.com",
+                            "X-Title": "MecAgent BOM Extraction"
+                        },
+                        model=self.model_name,
+                        messages=[
+                            {
+                                "role": "user",
+                                "content": [
+                                    {"type": "text", "text": prompt},
+                                    {
+                                        "type": "image_url",
+                                        "image_url": {"url": f"data:image/png;base64,{img_base64}"}
+                                    }
+                                ]
+                            }
+                        ],
+                        temperature=0.0,
+                        max_tokens=4096
+                    )
+
+                    # ✅ 检查API响应是否有效
+                    if not completion or not hasattr(completion, 'choices') or not completion.choices:
+                        print_warning(f"         API返回了空响应", indent=1)
+                        retry_count += 1
+                        continue
+
+                    if not completion.choices[0] or not hasattr(completion.choices[0], 'message'):
+                        print_warning(f"         API响应格式异常", indent=1)
+                        retry_count += 1
+                        continue
+
+                    response = {"content": completion.choices[0].message.content}
+                    success = True  # ✅ 成功获取响应
+
+                except Exception as e:
+                    import traceback
+                    error_detail = traceback.format_exc()
+                    print_warning(f"         第 {i+1} 页分析失败 (尝试 {retry_count + 1}/{max_retries + 1}): {e}", indent=1)
+                    if retry_count == max_retries:
+                        # 最后一次重试也失败了，打印详细错误
+                        print_warning(f"         错误详情: {error_detail[:200]}...", indent=1)
+                    retry_count += 1
+                    import time
+                    time.sleep(1)  # 等待1秒后重试
+
+            # ✅ 如果所有重试都失败，跳过这一页
+            if not success or not response:
+                print_warning(f"      第 {i+1} 页分析失败，已重试 {max_retries} 次，跳过该页", indent=1)
+                continue
+
+            # ✅ 解析响应
+            content = response.get("content", "").strip()
+
+            # 尝试提取JSON数组
+            import json
+            import re
+
+            # 方法1: 直接解析
+            try:
+                bom_items = json.loads(content)
+                if isinstance(bom_items, list):
+                    # ✅ 添加source_pdf字段
+                    for item in bom_items:
+                        item["source_pdf"] = pdf_name
+                    all_bom_items.extend(bom_items)
+                    print_info(f"         找到 {len(bom_items)} 个零件", indent=1)
+                    continue
+            except:
+                pass
+
+            # 方法2: 提取JSON数组
+            json_match = re.search(r'\[.*\]', content, re.DOTALL)
+            if json_match:
+                try:
+                    bom_items = json.loads(json_match.group(0))
                     if isinstance(bom_items, list):
                         # ✅ 添加source_pdf字段
                         for item in bom_items:
@@ -442,26 +498,7 @@ class GeminiAssemblyPipeline:
                 except:
                     pass
 
-                # 方法2: 提取JSON数组
-                json_match = re.search(r'\[.*\]', content, re.DOTALL)
-                if json_match:
-                    try:
-                        bom_items = json.loads(json_match.group(0))
-                        if isinstance(bom_items, list):
-                            # ✅ 添加source_pdf字段
-                            for item in bom_items:
-                                item["source_pdf"] = pdf_name
-                            all_bom_items.extend(bom_items)
-                            print_info(f"         找到 {len(bom_items)} 个零件", indent=1)
-                            continue
-                    except:
-                        pass
-
-                print_info(f"         未找到BOM表", indent=1)
-
-            except Exception as e:
-                print_warning(f"      第 {i+1} 页分析失败: {e}", indent=1)
-                continue
+            print_info(f"         未找到BOM表", indent=1)
 
         return all_bom_items
 
@@ -642,26 +679,41 @@ class GeminiAssemblyPipeline:
                 bom_to_mesh = component_level_mappings[comp_code].get("bom_to_mesh", {})
                 bom_mapping_table = component_level_mappings[comp_code].get("bom_mapping_table", None)
 
-            # 调用Agent 3
+            # ✅ 检查BOM数据是否为空
             print_info(f"   📖 他正在研究【{comp_name}】的图纸", indent=1)
             print_info(f"   📋 组件BOM: {len(component_bom)} 个零件", indent=1)
             sys.stdout.flush()
 
-            result = self.component_agent.process(
-                component_plan=comp_plan,
-                component_images=component_images,
-                parts_list=component_bom,  # ✅ 传入组件的BOM列表
-                bom_to_mesh_mapping=bom_to_mesh,  # 兼容旧代码
-                bom_mapping_table=bom_mapping_table  # ✅ 新增：传入BOM映射宽表
-            )
-
-            if result["success"]:
-                step_count = len(result.get("assembly_steps", []))
-                print_success(f"   ✅ 生成了 {step_count} 个装配步骤", indent=1)
+            if not component_bom or len(component_bom) == 0:
+                # ✅ BOM数据为空，跳过Agent 3
+                print_warning(f"   ⚠️  【{comp_name}】的BOM数据为空，跳过装配步骤生成", indent=1)
+                print_warning(f"   💡 建议：请检查组件图{drawing_index}.PDF的BOM表是否正确", indent=1)
                 sys.stdout.flush()
-                self.log_agent_call(f"组件装配工 #{i}", f"完成了【{comp_name}】的装配说明", "success")
+
+                result = {
+                    "success": False,
+                    "skipped": True,
+                    "reason": "BOM数据为空",
+                    "assembly_steps": []
+                }
+                self.log_agent_call(f"组件装配工 #{i}", f"【{comp_name}】BOM数据缺失，已跳过", "warning")
             else:
-                self.log_agent_call(f"组件装配工 #{i}", "装配步骤编写", "error")
+                # 调用Agent 3
+                result = self.component_agent.process(
+                    component_plan=comp_plan,
+                    component_images=component_images,
+                    parts_list=component_bom,  # ✅ 传入组件的BOM列表
+                    bom_to_mesh_mapping=bom_to_mesh,  # 兼容旧代码
+                    bom_mapping_table=bom_mapping_table  # ✅ 新增：传入BOM映射宽表
+                )
+
+                if result["success"]:
+                    step_count = len(result.get("assembly_steps", []))
+                    print_success(f"   ✅ 生成了 {step_count} 个装配步骤", indent=1)
+                    sys.stdout.flush()
+                    self.log_agent_call(f"组件装配工 #{i}", f"完成了【{comp_name}】的装配说明", "success")
+                else:
+                    self.log_agent_call(f"组件装配工 #{i}", "装配步骤编写", "error")
 
             # ✅ 添加组件代号、装配顺序和图纸序号到结果中（供后续步骤使用）
             result["component_code"] = comp_code
@@ -680,6 +732,17 @@ class GeminiAssemblyPipeline:
         print_info(f"   总组件数: {total_components}", indent=1)
         print_info(f"   成功处理: {successful_components}", indent=1)
         print_info(f"   跳过: {skipped_components}", indent=1)
+
+        # ✅ 列出跳过的组件
+        if skipped_components > 0:
+            print_warning(f"\n⚠️  以下组件因BOM数据缺失而被跳过:", indent=1)
+            for r in component_results:
+                if r.get("skipped", False):
+                    comp_name = r.get("component_name", "未知组件")
+                    drawing_idx = r.get("drawing_index", "?")
+                    print_warning(f"   - {comp_name} (组件图{drawing_idx}.PDF)", indent=1)
+            print_warning(f"   💡 建议：请检查这些组件图的BOM表是否正确提取", indent=1)
+
         sys.stdout.flush()
 
         # 保存结果
@@ -726,16 +789,39 @@ class GeminiAssemblyPipeline:
         product_bom_to_mesh = matching_result.get("product_level_mapping", {}).get("bom_to_mesh", {})
         product_bom_mapping_table = matching_result.get("product_level_mapping", {}).get("bom_mapping_table", None)
 
+        # ✅ 新增：分离组件BOM和零件BOM
+        # 获取所有子组件的代号列表
+        component_codes = set()
+        for comp in planning_result.get("component_assembly_plan", []):
+            comp_code = comp.get("component_code", "")
+            if comp_code:
+                component_codes.add(comp_code)
+
+        # 分离product_bom为component_bom_items和part_bom_items
+        component_bom_items = []
+        part_bom_items = []
+
+        for bom_item in product_bom:
+            bom_code = bom_item.get("code", "")
+            if bom_code in component_codes:
+                # 这是子组件
+                component_bom_items.append(bom_item)
+            else:
+                # 这是零件
+                part_bom_items.append(bom_item)
+
         import sys
         print_info(f"📋 他正在研究产品总图", indent=1)
-        print_info(f"📋 产品级BOM: {len(product_bom)} 个零件", indent=1)
+        print_info(f"📋 产品级BOM: {len(product_bom)} 个（{len(component_bom_items)} 个组件 + {len(part_bom_items)} 个零件）", indent=1)
         sys.stdout.flush()
 
         result = self.product_agent.process(
             product_plan=planning_result,
             product_images=product_images,
             components_list=planning_result.get("component_assembly_plan", []),
-            product_bom=product_bom,  # ✅ 传入产品级BOM
+            product_bom=product_bom,  # ✅ 传入产品级BOM（完整的）
+            component_bom_items=component_bom_items,  # ✅ 新增：子组件的BOM项
+            part_bom_items=part_bom_items,  # ✅ 新增：零件的BOM项
             bom_to_mesh_mapping=product_bom_to_mesh,  # 兼容旧代码
             bom_mapping_table=product_bom_mapping_table  # ✅ 新增：传入BOM映射宽表
         )

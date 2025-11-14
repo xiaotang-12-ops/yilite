@@ -86,17 +86,32 @@ class HierarchicalBOMMatcher:
             file_index = comp_file_info.get("index")  # 文件序号（组件图X 中的 X）
             file_name = comp_file_info.get("name", f"组件图{file_index}")
 
-            # 查找对应的 AI 规划（通过 assembly_order 匹配）
+            # ✅ 新策略：通过base_part_code匹配组件规划
+            # 步骤1：先获取该组件图的BOM数据
+            component_bom_for_matching = self._get_component_bom_by_file_index(bom_data, file_index)
+
+            if not component_bom_for_matching:
+                print_warning(f"组件图{file_index}没有BOM数据，跳过", indent=1)
+                continue
+
+            # 步骤2：提取第一个零件的code（base_part）
+            base_part_code = component_bom_for_matching[0].get("code", "")
+
+            if not base_part_code:
+                print_warning(f"组件图{file_index}的第一个零件没有code，跳过", indent=1)
+                continue
+
+            # 步骤3：在component_plans中查找base_part_code匹配的组件
             comp_plan = None
             for plan in component_plans:
-                # 尝试通过 assembly_order 匹配
-                if plan.get("assembly_order") == file_index:
+                if plan.get("base_part_code") == base_part_code:
                     comp_plan = plan
+                    print_info(f"✅ 通过base_part匹配成功: 组件图{file_index} -> {plan.get('component_name')} (base_part: {base_part_code})", indent=1)
                     break
 
             if not comp_plan:
                 # 如果找不到匹配的规划，跳过
-                print_warning(f"未找到组件图{file_index}对应的AI规划，跳过", indent=1)
+                print_warning(f"未找到组件图{file_index}对应的AI规划（base_part_code={base_part_code}），跳过", indent=1)
                 continue
 
             comp_code = comp_plan.get("component_code", "")
@@ -516,6 +531,34 @@ class HierarchicalBOMMatcher:
 
         print_info(f"   BOM数据中的所有source_pdf: {', '.join(sorted(all_source_pdfs))}", indent=1)
         print_info(f"   匹配到的BOM数量: {len(component_bom)}", indent=1)
+
+        return component_bom
+
+    def _get_component_bom_by_file_index(self, bom_data: List[Dict], file_index: int) -> List[Dict]:
+        """
+        根据文件序号获取组件的BOM数据（用于base_part匹配）
+
+        Args:
+            bom_data: 完整的BOM数据
+            file_index: 文件序号（组件图X 中的 X）
+
+        Returns:
+            组件的BOM数据列表
+        """
+        # 可能的文件名格式（不区分大小写）
+        possible_names = [
+            f"组件图{file_index}.pdf",
+            f"组件图{file_index}.PDF",
+            f"组件{file_index}.pdf",
+            f"组件{file_index}.PDF"
+        ]
+
+        # 根据source_pdf过滤BOM数据
+        component_bom = []
+        for bom_item in bom_data:
+            source_pdf = bom_item.get("source_pdf", "")
+            if source_pdf in possible_names:
+                component_bom.append(bom_item)
 
         return component_bom
 

@@ -832,9 +832,11 @@ const currentStepHighlightMeshes = computed(() => {
     allParts.push(...currentStepData.value.parts_used.filter((p: any) => p))
   }
 
-  // ✅ 3. 从描述中提取BOM序号（如"4、5号矩形管"中的4和5，或"⑨号加强筋"中的9）
+  // ✅ 3. 从描述中提取BOM序号（备用方案：只有当allParts为空时才使用）
+  // 这样可以避免用户修改description时影响3D高亮
   const description: string = (currentStepData.value as any)?.description || ''
-  if (description) {
+  if (allParts.length === 0 && description) {
+    console.log('  ⚠️  parts_used为空，尝试从description中提取BOM序号（备用方案）')
     // 圆圈数字到普通数字的映射
     const circleToNumber: { [key: string]: string } = {
       '①': '1', '②': '2', '③': '3', '④': '4', '⑤': '5',
@@ -947,41 +949,51 @@ const assembledMeshes = computed(() => {
 
   // ✅ 产品总装：所有组件的零件都是绿色
   if (isProductAssembly.value) {
-    console.log('  📦 [产品总装] 收集所有组件的零件')
+    console.log('  📦 [产品总装] 收集所有子组件的零件')
 
-    const componentAssembly = manualData.value?.component_assembly || []
-    for (const component of componentAssembly) {
-      const steps = component.steps || []
-      for (const step of steps) {
-        if (step.parts_used) {
-          step.parts_used.forEach((part: any) => {
-            if (part.node_name) {
-              if (Array.isArray(part.node_name)) {
-                assembled.push(...part.node_name)
-              } else {
-                assembled.push(part.node_name)
-              }
-            }
-          })
+    // ✅ 修复：从product_assembly的步骤1的components中收集子组件的正确node_name
+    // 原因：product_total.glb中的子组件node_name（NAUO38-NAUO84）与component_assembly中的node_name（NAUO1-NAUO36）不同
+    const productSteps = manualData.value?.product_assembly?.steps || []
+    const step1 = productSteps.find((s: any) => s.step_number === 1)
+
+    if (step1 && step1.components) {
+      console.log('  ✅ [从步骤1收集子组件] 步骤1标题:', step1.title)
+      let subcomponentNodeCount = 0
+
+      step1.components.forEach((comp: any) => {
+        if (comp.node_name) {
+          const nodes = Array.isArray(comp.node_name) ? comp.node_name : [comp.node_name]
+          assembled.push(...nodes)
+          subcomponentNodeCount += nodes.length
+          console.log(`    - ${comp.bom_name}: ${nodes.length}个node_name`)
         }
-      }
+      })
+
+      console.log(`  ✅ [子组件总计] 收集了${subcomponentNodeCount}个子组件node_name`)
+    } else {
+      console.warn('  ⚠️ [警告] 未找到product_assembly的步骤1，无法收集子组件node_name')
     }
 
-    // 加上前面步骤的紧固件
+    // ✅ 加上前面步骤的紧固件（产品级别的零件）
+    const componentAssembly = manualData.value?.component_assembly || []
     const componentStepsCount = componentAssembly.reduce((sum: number, chapter: any) => sum + chapter.steps.length, 0)
+
+    let fastenersNodeCount = 0
     for (let i = componentStepsCount; i < currentStepIndex.value; i++) {
       const step = allSteps.value[i]
       if (step?.fasteners) {
         step.fasteners.forEach((fastener: any) => {
           if (fastener.node_name) {
-            if (Array.isArray(fastener.node_name)) {
-              assembled.push(...fastener.node_name)
-            } else {
-              assembled.push(fastener.node_name)
-            }
+            const nodes = Array.isArray(fastener.node_name) ? fastener.node_name : [fastener.node_name]
+            assembled.push(...nodes)
+            fastenersNodeCount += nodes.length
           }
         })
       }
+    }
+
+    if (fastenersNodeCount > 0) {
+      console.log(`  ✅ [产品级零件] 收集了${fastenersNodeCount}个之前步骤的紧固件node_name`)
     }
   } else {
     // ✅ 组件装配：只累积当前组件内前面步骤的零件
@@ -2035,6 +2047,14 @@ const highlightStepParts = () => {
 
   // ✅ 获取当前步骤要装配的零件（黄色）
   const currentNodes: string[] = currentStepData.value['3d_highlight'] || currentStepHighlightMeshes.value
+
+  // 添加日志，帮助调试
+  if (currentStepData.value['3d_highlight']) {
+    console.log('✅ 使用3d_highlight字段:', currentStepData.value['3d_highlight'])
+  } else {
+    console.log('⚠️ 3d_highlight字段不存在，回退到currentStepHighlightMeshes')
+  }
+
   console.log('🟡 步骤', currentStepIndex.value + 1, '正在装配的零件:', currentNodes)
 
   // ✅ 获取已装配的零件（绿色）

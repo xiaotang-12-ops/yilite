@@ -109,13 +109,23 @@ class BaseGeminiAgent:
             result = self.call_gemini(system_prompt, user_query, images)
 
             if result["success"]:
+                # ✅ 检查响应长度
+                raw_response = result.get("raw_response", "")
+                response_length = len(raw_response)
+
+                # ⚠️ 如果响应超过50000字符，可能是AI生成了过多内容
+                if response_length > 50000:
+                    print(f"⚠️ 警告：AI响应过长（{response_length}字符），可能包含大量重复的node_name")
+                    print(f"   这通常是因为AI误解了提示词，生成了不必要的内容")
+                    print(f"   建议：检查提示词是否明确，或者优化AI的输出格式")
+
                 # 检查JSON是否有效
                 parsed = result["result"]
                 if parsed and not parsed.get("parse_error") and not parsed.get("raw_content"):
-                    print(f"✅ 调用成功，JSON解析正常")
+                    print(f"✅ 调用成功，JSON解析正常（响应长度: {response_length}字符）")
                     return result
                 else:
-                    print(f"⚠️ JSON解析失败，准备重试...")
+                    print(f"⚠️ JSON解析失败（响应长度: {response_length}字符），准备重试...")
                     if attempt < max_retries - 1:
                         print(f"⏳ 等待2秒后重试...")
                         time.sleep(2)

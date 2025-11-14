@@ -132,6 +132,28 @@ class ComponentAssemblyAgent(BaseGeminiAgent):
             print(f"\n✅ 生成结果:")
             print(f"   - 步骤数: {len(assembly_steps)}")
 
+            # ✅ 验证3d_highlight字段
+            missing_highlight_steps = []
+            for step in assembly_steps:
+                if "3d_highlight" not in step or not step["3d_highlight"]:
+                    missing_highlight_steps.append(step.get("step_number", "?"))
+
+            if missing_highlight_steps:
+                print(f"   ⚠️  以下步骤缺少3d_highlight字段: {missing_highlight_steps}")
+            else:
+                print(f"   ✅ 所有步骤都包含3d_highlight字段")
+
+            # ✅ 验证parts_used不为空
+            empty_parts_steps = []
+            for step in assembly_steps:
+                if not step.get("parts_used"):
+                    empty_parts_steps.append(step.get("step_number", "?"))
+
+            if empty_parts_steps:
+                print(f"   ⚠️  以下步骤的parts_used为空: {empty_parts_steps}")
+            else:
+                print(f"   ✅ 所有步骤的parts_used都不为空")
+
             # 检查BOM覆盖率
             if check_coverage:
                 covered_bom_seqs = set()
@@ -272,6 +294,64 @@ class ComponentAssemblyAgent(BaseGeminiAgent):
                     actual_name = self.normalize_bom_name(seq_to_name.get(bom_seq, ""))
                     if ai_name != actual_name:
                         print(f"   ⚠️  BOM序号{bom_seq}的名称不匹配: AI生成='{part.get('bom_name')}', 实际='{seq_to_name.get(bom_seq)}'")
+
+        # ✅ 验证和修正3d_highlight字段（强制验证所有步骤）
+        print(f"\n  🎨 验证和修正3D高亮字段...")
+        for i, step in enumerate(assembly_steps):
+            step_number = step.get('step_number', i+1)
+
+            # 自动生成正确的3d_highlight
+            correct_highlight_nodes = []
+
+            # 收集当前步骤新引入的零件的node_name
+            current_parts = set()
+            for part in step.get("parts_used", []):
+                bom_seq = str(part.get("bom_seq", ""))
+                if bom_seq:
+                    current_parts.add(bom_seq)
+
+            # 收集前面步骤已经使用的零件
+            previous_parts = set()
+            for j in range(i):
+                for part in assembly_steps[j].get("parts_used", []):
+                    bom_seq = str(part.get("bom_seq", ""))
+                    if bom_seq:
+                        previous_parts.add(bom_seq)
+
+            # 新零件 = 当前步骤的零件 - 前面步骤的零件
+            new_parts = current_parts - previous_parts
+
+            # 提取新零件的node_name
+            for part in step.get("parts_used", []):
+                bom_seq = str(part.get("bom_seq", ""))
+                if bom_seq in new_parts and "node_name" in part:
+                    node_names = part["node_name"]
+                    if isinstance(node_names, list):
+                        correct_highlight_nodes.extend(node_names)
+                    else:
+                        correct_highlight_nodes.append(node_names)
+
+            # 如果没有新零件（如点焊步骤），使用上一个步骤的3d_highlight
+            if not correct_highlight_nodes and i > 0:
+                correct_highlight_nodes = assembly_steps[i-1].get("3d_highlight", [])
+
+            # 检查AI生成的3d_highlight是否正确
+            ai_highlight = step.get("3d_highlight", [])
+
+            # 比较AI生成的和正确的3d_highlight（使用集合比较，忽略顺序）
+            if set(ai_highlight) != set(correct_highlight_nodes):
+                # 不一致，需要修正
+                print(f"   ⚠️  步骤{step_number}的3d_highlight不正确，已自动修正")
+                print(f"      - AI生成的({len(ai_highlight)}个): {ai_highlight[:5]}{'...' if len(ai_highlight) > 5 else ''}")
+                print(f"      - 正确的({len(correct_highlight_nodes)}个): {correct_highlight_nodes[:5]}{'...' if len(correct_highlight_nodes) > 5 else ''}")
+                step["3d_highlight"] = correct_highlight_nodes
+            else:
+                # 一致，无需修正
+                if ai_highlight:
+                    print(f"   ✅ 步骤{step_number}的3d_highlight正确({len(ai_highlight)}个node_name)")
+                else:
+                    print(f"   ✅ 步骤{step_number}自动生成3d_highlight({len(correct_highlight_nodes)}个node_name)")
+                    step["3d_highlight"] = correct_highlight_nodes
 
         return assembly_steps
 

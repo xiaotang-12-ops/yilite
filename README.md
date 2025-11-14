@@ -1,6 +1,6 @@
 # 智能装配说明书生成系统
 
-[![Version](https://img.shields.io/badge/version-v1.1.5-blue.svg)](https://github.com/xiaotang-12-ops/Mecagent/releases)
+[![Version](https://img.shields.io/badge/version-v1.1.7-blue.svg)](https://github.com/xiaotang-12-ops/yilite/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Docker](https://img.shields.io/badge/docker-ready-brightgreen.svg)](DOCKER_DEPLOYMENT.md)
 
@@ -8,14 +8,22 @@
 
 一个基于AI的智能装配说明书生成系统，能够自动解析PDF工程图纸和3D模型，生成工人友好的交互式HTML装配说明书。
 
-**当前版本**: v1.1.5 | [查看版本历史](https://github.com/xiaotang-12-ops/Mecagent/releases) | [部署指南](DOCKER_DEPLOYMENT.md)
+**当前版本**: v1.1.7 | [查看版本历史](https://github.com/xiaotang-12-ops/yilite/releases) | [部署指南](DOCKER_DEPLOYMENT.md)
 
-## 🆕 v1.1.5 新增功能
+## 🆕 v1.1.7 新增功能
 
-- ✅ **管理员登录功能**：支持管理员登录后编辑说明书内容
-- ✅ **在线编辑**：可直接修改焊接要求、安全警告、质检要求
-- ✅ **组件名称修改**：支持修改组件名称并实时同步
-- ✅ **数据持久化**：编辑内容自动保存到后端文件
+- ✅ **三色高亮显示**：3D模型支持三种颜色区分零件状态
+  - 🟡 **黄色**：当前步骤正在装配的零件
+  - 🟢 **绿色**：已完成装配的零件
+  - ⚪ **灰色**：尚未装配的零件
+- ✅ **单零件步骤**：每个装配步骤只涉及一个零件，操作更清晰
+- ✅ **智能高亮计算**：自动识别新零件，避免重复高亮
+- ✅ **视觉优化**：高对比度材质，车间环境下清晰可见
+
+## 📋 待开发功能
+
+- ⏳ **颜色自定义**：允许用户自定义三种状态的颜色
+- ⏳ **描述编辑**：支持在线编辑装配步骤描述
 
 ## ✨ 核心特性
 
@@ -41,8 +49,8 @@ PDF工程图纸 + 3D模型 → AI解析引擎 → 装配规程生成 → HTML说
 
 ```bash
 # 1. 克隆项目
-git clone https://github.com/xiaotang-12-ops/Mecagent.git
-cd Mecagent
+git clone https://github.com/xiaotang-12-ops/yilite.git
+cd yilite
 
 # 2. 配置 API 密钥
 cp .env.example .env
@@ -64,8 +72,8 @@ docker-compose up -d
 
 ```bash
 # 克隆项目
-git clone https://github.com/xiaotang-12-ops/Mecagent.git
-cd Mecagent
+git clone https://github.com/xiaotang-12-ops/yilite.git
+cd yilite
 
 # 安装依赖
 pip install -r requirements.txt
