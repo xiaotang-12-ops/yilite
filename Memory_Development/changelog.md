@@ -5,6 +5,577 @@
 
 ---
 
+## v1.7.2 (2025-11-14) - 修复零件列表BOM名称查找错误 🐛⭐⭐
+
+### 🎯 修复的BUG
+
+**问题描述**:
+1. **不同组件使用了相同的 node_name**：
+   - 第一个组件（叉套组焊，component_2.glb）：NAUO1 = "方形板-机加"
+   - 第二个组件（斗组焊，component_1.glb）：NAUO1 = "斗主板"
+
+2. **`allPartsList` 从所有步骤中查找BOM名称**：
+   - 查看第一个组件时，加载的是 component_2.glb
+   - component_2.glb 中有一个mesh叫 NAUO1（实际是"方形板-机加"）
+   - `allPartsList` 遍历这个mesh，从**所有步骤**中查找BOM名称
+   - 找到了第二个组件的步骤，发现 NAUO1 对应"斗主板"
+   - **所以显示为"斗主板"，而不是"方形板-机加"**
+
+3. **用户反馈的问题**：
+   - "倾翻斗的第一个怎么会出现开口梢？"
+   - "斗主板我记得是下一个组件的零件"
+   - "颜色管理"标签页显示了错误的零件名称
+
+### 📝 技术分析
+
+**数据结构说明**:
+```json
+// 第一个组件（叉套组焊）
+{
+  "component_code": "01.09.0506",
+  "component_name": "叉套组焊-漆后",
+  "glb_file": "component_2.glb",
+  "step_number": 1,
+  "parts_used": [
+    {
+      "bom_name": "方形板-机加",
+      "node_name": ["NAUO17", "NAUO1"]  // ← NAUO1 是"方形板-机加"
+    }
+  ]
+}
+
+// 第二个组件（斗组焊）
+{
+  "component_code": "01.09.0507",
+  "component_name": "斗组焊-漆后",
+  "glb_file": "component_1.glb",
+  "step_number": 1,
+  "parts_used": [
+    {
+      "bom_name": "斗主板",
+      "node_name": ["NAUO1"]  // ← NAUO1 是"斗主板"
+    }
+  ]
+}
+```
+
+**错误的逻辑**:
+- `allPartsList` 从**所有步骤**中查找BOM名称
+- 导致不同组件的相同 node_name 被错误识别
+
+**正确的逻辑**:
+- 组件装配：只从**当前组件的步骤**中查找BOM名称
+- 产品总装：从**所有步骤**中查找BOM名称（因为产品总装包含所有组件）
+
+### 📝 修改文件
+
+**`frontend/src/views/ManualViewer.vue`**（第1315-1393行，约79行修改）
+
+**修改前**:
+```typescript
+const allPartsList = computed(() => {
+  const parts: Array<{ nodeName: string; bomName: string; currentColor: string }> = []
+
+  if (!model) return parts
+
+  // 遍历3D模型的所有mesh
+  model.traverse((child: any) => {
+    if (child.isMesh) {
+      const nodeName = child.name
+
+      // ❌ 错误：从所有步骤中查找BOM名称
+      let bomName = nodeName
+      allSteps.value.forEach((step: any) => {
+        // 从parts_used、components、fasteners中查找
+        // ...
+      })
+
+      parts.push({ nodeName, bomName, currentColor })
+    }
+  })
+
+  return parts
+})
+```
+
+**修改后**:
+```typescript
+const allPartsList = computed(() => {
+  const parts: Array<{ nodeName: string; bomName: string; currentColor: string }> = []
+
+  if (!model) return parts
+
+  // ✅ 获取当前应该搜索的步骤范围
+  let stepsToSearch: any[] = []
+
+  if (isProductAssembly.value) {
+    // 产品总装：从所有步骤中查找（因为产品总装包含所有组件）
+    stepsToSearch = allSteps.value
+    console.log('🔍 [allPartsList] 产品总装模式：从所有步骤中查找BOM名称')
+  } else {
+    // 组件装配：只从当前组件的步骤中查找
+    const currentComponentCode = currentStepData.value?.component_code
+    stepsToSearch = allSteps.value.filter((step: any) => step.component_code === currentComponentCode)
+    console.log(`🔍 [allPartsList] 组件装配模式：只从组件 ${currentComponentCode} 的 ${stepsToSearch.length} 个步骤中查找BOM名称`)
+  }
+
+  // 遍历3D模型的所有mesh
+  model.traverse((child: any) => {
+    if (child.isMesh) {
+      const nodeName = child.name
+
+      // ✅ 只从当前组件的步骤中查找零件名称
+      let bomName = nodeName
+      stepsToSearch.forEach((step: any) => {
+        // 从parts_used、components、fasteners中查找
+        // ...
+      })
+
+      parts.push({ nodeName, bomName, currentColor })
+    }
+  })
+
+  console.log(`🔍 [allPartsList] 提取了 ${parts.length} 个零件`)
+  return parts
+})
+```
+
+### 🎯 修复效果
+
+**修复前**:
+- 查看第一个组件（叉套组焊）时，NAUO1 显示为"斗主板"（错误）
+- "颜色管理"标签页显示了其他组件的零件名称
+
+**修复后**:
+- 查看第一个组件时，NAUO1 正确显示为"方形板-机加"
+- 查看第二个组件时，NAUO1 正确显示为"斗主板"
+- "颜色管理"标签页只显示当前组件的零件
+
+### 💡 经验教训
+
+1. **理解数据的作用域**：
+   - 不同组件可能使用相同的 node_name
+   - 查找BOM名称时必须限定在当前组件的范围内
+
+2. **不要基于假设进行开发**：
+   - 我之前假设 node_name 在整个项目中是唯一的
+   - 实际上不同组件的 node_name 可能重复
+
+3. **仔细分析用户反馈**：
+   - 小糖说"斗主板是下一个组件的零件"，这是关键线索
+   - 说明显示的零件名称来自错误的组件
+
+4. **日志大法好**：
+   - 添加详细的日志，方便调试和问题排查
+   - 在关键步骤打印中间变量
+
+---
+
+## v1.7.1 (2025-11-14) - 修复三色渲染逻辑错误 🐛⭐
+
+### 🎯 修复的BUG
+
+**问题描述**:
+1. **组件装配的"已装配零件"计算错误**：
+   - 累加前面步骤的 `parts_used` 导致绿色零件越来越多
+   - `parts_used` 包含了所有参与步骤的零件（已装配+正在装配）
+   - 应该累加 `3d_highlight`（只包含正在装配的零件）
+
+2. **产品总装的"已装配零件"计算错误**：
+   - 只收集步骤1的 components，导致绿色零件不会增加
+   - 应该收集前面所有步骤的 components 和 fasteners
+
+3. **用户反馈的问题**：
+   - "第一个组件的第3步显示正在装配的零件有6个，但斗主板应该是下一个组件才有的"
+   - "第三步出现了很多正在装配的，越往后越离谱"
+   - "最后一个总组件的绿色已装配就没变过"
+
+### 📝 技术分析
+
+**数据结构说明**:
+```json
+{
+  "step_number": 3,
+  "parts_used": [
+    // ❌ 包含所有参与步骤的零件（已装配+正在装配）
+    {"bom_name": "方形板-机加", "node_name": ["NAUO17", "NAUO1"]},  // 前面步骤已装配
+    {"bom_name": "槽钢-机加", "node_name": ["NAUO18", "NAUO2"]},    // 前面步骤已装配
+    {"bom_name": "方形板", "node_name": ["NAUO21", "NAUO20", "NAUO19", "NAUO5", "NAUO4", "NAUO3"]}  // 当前步骤正在装配
+  ],
+  "3d_highlight": [
+    // ✅ 只包含当前步骤正在装配的零件
+    "NAUO21", "NAUO20", "NAUO19", "NAUO5", "NAUO4", "NAUO3"
+  ]
+}
+```
+
+**错误的逻辑**:
+- 组件装配：累加前面步骤的 `parts_used` → 绿色零件越来越多，甚至包含当前步骤的零件
+- 产品总装：只收集步骤1的 components → 绿色零件不会随步骤增加
+
+**正确的逻辑**:
+- 组件装配：累加前面步骤的 `3d_highlight` → 只累加真正装配的零件
+- 产品总装：收集前面所有步骤的 components 和 fasteners → 绿色零件随步骤增加
+
+### 📝 修改文件
+
+**`frontend/src/views/ManualViewer.vue`**（第1167-1226行，约60行修改）
+
+**修改前（组件装配）**:
+```typescript
+for (let i = 0; i < currentStepIndex.value; i++) {
+  const step = allSteps.value[i]
+  if (step?.component_code === currentStepData.value?.component_code) {
+    if (step.parts_used) {  // ❌ 错误：parts_used 包含所有零件
+      step.parts_used.forEach((part: any) => {
+        if (part.node_name) {
+          assembled.push(...part.node_name)
+        }
+      })
+    }
+  }
+}
+```
+
+**修改后（组件装配）**:
+```typescript
+for (let i = 0; i < currentStepIndex.value; i++) {
+  const step = allSteps.value[i]
+  if (step?.component_code === currentStepData.value?.component_code) {
+    if (step['3d_highlight']) {  // ✅ 正确：3d_highlight 只包含正在装配的零件
+      const highlights = Array.isArray(step['3d_highlight']) ? step['3d_highlight'] : [step['3d_highlight']]
+      assembled.push(...highlights)
+      console.log(`    🟢 [步骤${step.step_number}] 添加 3d_highlight: ${highlights.join(', ')}`)
+    }
+  }
+}
+```
+
+**修改前（产品总装）**:
+```typescript
+// ❌ 错误：只收集步骤1的 components
+const step1 = productSteps.find((s: any) => s.step_number === 1)
+if (step1 && step1.components) {
+  step1.components.forEach((comp: any) => {
+    if (comp.node_name) {
+      assembled.push(...comp.node_name)
+    }
+  })
+}
+```
+
+**修改后（产品总装）**:
+```typescript
+// ✅ 正确：收集前面所有步骤的 components 和 fasteners
+for (let i = componentStepsCount; i < currentStepIndex.value; i++) {
+  const step = allSteps.value[i]
+
+  // 收集 components
+  if (step?.components) {
+    step.components.forEach((comp: any) => {
+      if (comp.node_name) {
+        const nodes = Array.isArray(comp.node_name) ? comp.node_name : [comp.node_name]
+        assembled.push(...nodes)
+        console.log(`    🟢 [步骤${step.step_number}] 添加组件 ${comp.bom_name}: ${nodes.length}个node_name`)
+      }
+    })
+  }
+
+  // 收集 fasteners
+  if (step?.fasteners) {
+    step.fasteners.forEach((fastener: any) => {
+      if (fastener.node_name) {
+        const nodes = Array.isArray(fastener.node_name) ? fastener.node_name : [fastener.node_name]
+        assembled.push(...nodes)
+        console.log(`    🟢 [步骤${step.step_number}] 添加紧固件 ${fastener.bom_name}: ${nodes.length}个node_name`)
+      }
+    })
+  }
+}
+```
+
+### 🎯 修复效果
+
+**修复前**:
+- 组件装配第3步：绿色零件包含了前面步骤的所有零件（NAUO1, NAUO2, NAUO17, NAUO18, NAUO21, NAUO20...）
+- 产品总装第3步：绿色零件只有步骤1的组件，不会增加
+
+**修复后**:
+- 组件装配第3步：绿色零件只包含前面步骤的 3d_highlight（NAUO1, NAUO2, NAUO17, NAUO18）
+- 产品总装第3步：绿色零件包含步骤1和步骤2的所有组件和紧固件
+
+### 💡 经验教训
+
+1. **理解数据结构的真实含义**：
+   - `parts_used` 不是"新增的零件"，而是"参与步骤的所有零件"
+   - `3d_highlight` 才是"当前步骤正在装配的零件"
+
+2. **不要基于假设进行开发**：
+   - 应该先查看实际数据，理解字段含义
+   - 不要凭直觉猜测字段的用途
+
+3. **日志大法好**：
+   - 通过 console.log 打印中间变量，快速定位问题
+   - 在关键步骤添加日志，方便调试
+
+---
+
+## v1.7.0 (2025-11-14) - 3D模型颜色自定义管理功能 🎨⭐
+
+### 🎯 核心功能
+
+**新功能**:
+- ✅ 管理员可以手动设置每个零件的颜色（黄色/绿色/灰色）
+- ✅ 自定义颜色优先级最高，覆盖系统自动计算的颜色
+- ✅ 从3D模型中提取所有零件列表，不依赖BOM数据
+- ✅ 按颜色分组显示零件（灰色/黄色/绿色）
+- ✅ 支持搜索和过滤功能
+- ✅ 实时预览功能，立即查看颜色修改效果
+- ✅ 清除/恢复功能，方便管理
+
+**解决的问题**:
+1. **AI生成的高亮颜色不准确**：应该黄色的变绿色，不该高亮的高亮了
+2. **产品总图3D模型缺失零件映射**：应该是绿色的零件显示为灰色
+3. **无法手动修正颜色错误**：现在可以强制设置任何零件的颜色
+
+### 📝 技术实现
+
+**数据结构**:
+- 在每个步骤中增加 `custom_colors` 字段
+- 类型：`Record<string, 'yellow' | 'green' | 'gray'>`
+- 示例：
+```json
+{
+  "step_number": 1,
+  "custom_colors": {
+    "NAUO46": "green",
+    "NAUO47": "green",
+    "NAUO2": "yellow",
+    "NAUO10": "gray"
+  }
+}
+```
+
+**渲染优先级**:
+1. **优先级1（最高）**: `custom_colors` - 用户自定义颜色
+2. **优先级2**: `3d_highlight` - 当前步骤正在装配的零件（黄色）
+3. **优先级3**: `assembledMeshes` - 前面步骤已装配的零件（绿色）
+4. **优先级4（最低）**: 默认灰色 - 未装配的零件
+
+**零件列表提取逻辑**:
+- 直接遍历3D模型的所有mesh（`model.traverse()`）
+- 不依赖 `parts_used` 字段，解决BOM映射缺失的问题
+- 尝试从所有步骤的 `parts_used`/`components`/`fasteners` 中查找零件名称
+- 如果找不到，使用 `node_name` 作为显示名称
+
+**UI设计**:
+- 使用 `el-collapse` 折叠面板按颜色分组显示
+- 默认展开灰色零件组（最常用的场景）
+- 提供搜索框和颜色过滤器
+- 每个零件显示：零件名称 + node_name + 颜色选择器
+- 操作按钮：实时预览、清除所有自定义颜色、恢复默认
+
+### 📝 修改文件
+
+**`frontend/src/views/ManualViewer.vue`**（约200行新增代码）
+
+1. **修改点1：数据结构（第684行）**
+   ```typescript
+   const editData = ref({
+     description: '' as string,
+     welding_requirements: [] as WeldingRequirementEdit[],
+     safety_warnings: [] as SafetyWarningEdit[],
+     quality_check: '' as string,
+     faq_items: [] as Array<{ question: string; answer: string }>,
+     custom_colors: {} as Record<string, 'yellow' | 'green' | 'gray'>  // ⭐ 新增
+   })
+   ```
+
+2. **修改点2：响应式数据（第717行）**
+   ```typescript
+   const searchKeyword = ref('')  // 搜索关键词
+   const colorFilter = ref('')  // 颜色过滤
+   const activeGroups = ref(['gray'])  // 默认展开灰色零件组
+   ```
+
+3. **修改点3：零件列表提取（第1149-1276行，约128行）**
+   - `allPartsList`: 从3D模型中提取所有零件
+   - `getCurrentPartColor`: 计算零件的当前颜色
+   - `grayPartsList`, `yellowPartsList`, `greenPartsList`: 按颜色分组
+   - `filteredPartsList`: 搜索和过滤
+
+4. **修改点4：数据初始化（第1240行）**
+   ```typescript
+   // ⭐ 加载当前步骤的自定义颜色
+   editData.value.custom_colors = JSON.parse(JSON.stringify(currentStep.custom_colors || {}))
+   ```
+
+5. **修改点5：颜色管理函数（第1450-1494行，约44行）**
+   - `previewColors()`: 实时预览颜色
+   - `clearCustomColors()`: 清除所有自定义颜色
+   - `resetCustomColors()`: 恢复到保存的状态
+   - `onColorChange()`: 颜色变更回调
+
+6. **修改点6：保存逻辑（第1551-1593行，约42行）**
+   ```typescript
+   // ========== 更新自定义颜色 ==========
+   // 更新组件装配步骤中的自定义颜色
+   if (updatedData.component_assembly) {
+     for (const component of updatedData.component_assembly) {
+       if (component.steps) {
+         for (const step of component.steps) {
+           if (step.step_id === currentStepId) {
+             step.custom_colors = editData.value.custom_colors
+             stepUpdated = true
+             break
+           }
+         }
+       }
+       if (stepUpdated) break
+     }
+   }
+   // 更新产品装配步骤中的自定义颜色
+   if (!stepUpdated && updatedData.product_assembly?.steps) {
+     for (const step of updatedData.product_assembly.steps) {
+       if (step.step_id === currentStepId) {
+         step.custom_colors = editData.value.custom_colors
+         stepUpdated = true
+         break
+       }
+     }
+   }
+   ```
+
+7. **修改点7：渲染逻辑（第2150-2276行，约126行修改）**
+   ```typescript
+   // ⭐ 获取自定义颜色（最高优先级）
+   const customColors: Record<string, string> = currentStepData.value.custom_colors || {}
+
+   // 遍历模型，设置三种颜色（优先级：custom_colors > 3d_highlight > assembledMeshes > 默认灰色）
+   model.traverse((child: any) => {
+     if (child.isMesh) {
+       const nodeName = child.name
+
+       // ⭐ 优先级1：用户自定义颜色（最高优先级）
+       if (customColors[nodeName]) {
+         const color = customColors[nodeName]
+         if (color === 'yellow') {
+           // 设置黄色材质
+         } else if (color === 'green') {
+           // 设置绿色材质
+         } else if (color === 'gray') {
+           // 设置灰色材质
+         }
+         customCount++
+       }
+       // ⭐ 优先级2：3d_highlight（黄色）
+       else if (normalizedCurrentNodes.includes(nodeName)) {
+         // 设置黄色材质
+         currentCount++
+       }
+       // ⭐ 优先级3：assembledMeshes（绿色）
+       else if (normalizedAssembledNodes.includes(nodeName)) {
+         // 设置绿色材质
+         assembledCount++
+       }
+       // ⭐ 优先级4：默认灰色
+       else {
+         // 设置灰色材质
+         unassembledCount++
+       }
+     }
+   })
+   ```
+
+8. **修改点8：UI界面（第604-786行，约182行）**
+   - 增加"颜色管理"标签页
+   - 说明文字和提示信息
+   - 搜索框和颜色过滤器
+   - 按颜色分组的折叠面板（灰色/黄色/绿色）
+   - 每个零件的颜色选择器
+   - 操作按钮（实时预览、清除、恢复）
+
+9. **修改点9：图标导入（第798-802行）**
+   ```typescript
+   import {
+     Loading, ArrowLeft, ArrowRight, Picture, Box,
+     Refresh, View, Grid, Clock, Lock, Edit, Plus, Warning,
+     Search, Delete, RefreshLeft  // ⭐ 新增
+   } from '@element-plus/icons-vue'
+   ```
+
+10. **修改点10：CSS样式（第3353-3393行，约40行）**
+    ```scss
+    .parts-color-list {
+      max-height: 400px;
+      overflow-y: auto;
+
+      .part-color-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px;
+        border-bottom: 1px solid #eee;
+
+        &:hover {
+          background-color: #f5f7fa;
+        }
+
+        .part-info {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+
+          .part-name {
+            font-weight: 500;
+            color: #303133;
+          }
+
+          .node-name {
+            font-size: 12px;
+            color: #909399;
+          }
+        }
+      }
+    }
+    ```
+
+### 🎯 使用场景
+
+**场景1：修正AI生成的错误高亮**
+1. 打开管理员编辑对话框
+2. 切换到"颜色管理"标签页
+3. 在黄色零件组中找到错误高亮的零件
+4. 将其颜色改为绿色或灰色
+5. 点击"实时预览"查看效果
+6. 点击"保存"按钮保存修改
+
+**场景2：补充缺失的零件映射**
+1. 打开管理员编辑对话框
+2. 切换到"颜色管理"标签页
+3. 在灰色零件组中找到应该是绿色的零件
+4. 将其颜色改为绿色
+5. 点击"实时预览"查看效果
+6. 点击"保存"按钮保存修改
+
+**场景3：批量查找和修改**
+1. 使用搜索框输入零件名称或node_name
+2. 使用颜色过滤器筛选特定颜色的零件
+3. 逐个修改零件颜色
+4. 点击"实时预览"查看效果
+5. 点击"保存"按钮保存修改
+
+### 💡 技术亮点
+
+1. **不依赖BOM数据**：直接从3D模型提取零件列表，解决BOM映射缺失的问题
+2. **优先级清晰**：用户自定义 > 自动计算，保证用户的修改永远生效
+3. **实时预览**：修改后立即在3D视图中查看效果，无需保存
+4. **向后兼容**：旧数据没有 `custom_colors` 字段，仍然使用自动计算的颜色
+5. **用户体验好**：按颜色分组、搜索过滤、清除恢复等功能齐全
+
+---
+
 ## v1.6.0 (2025-11-14) - 支持步骤描述编辑功能
 
 ### 🎯 核心功能

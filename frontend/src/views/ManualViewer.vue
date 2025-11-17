@@ -604,6 +604,184 @@
             <el-empty v-if="!editData.faq_items.length" description="暂无常见问题" />
           </div>
         </el-tab-pane>
+
+        <el-tab-pane label="颜色管理" name="colors" v-if="false">
+          <div class="edit-section">
+            <!-- 说明 -->
+            <el-alert type="info" :closable="false" style="margin-bottom: 20px;">
+              <template #title>
+                <strong>颜色管理说明</strong>
+              </template>
+              <div>
+                <p>• 🟡 <strong>黄色</strong>：正在装配的零件（当前步骤）</p>
+                <p>• 🟢 <strong>绿色</strong>：已装配的零件（前面步骤）</p>
+                <p>• ⚪ <strong>灰色</strong>：未装配的零件</p>
+                <p>• 下方列表显示<strong>3D模型中的所有零件</strong>，您可以手动设置每个零件的颜色</p>
+                <p>• 自定义颜色的优先级最高，会覆盖系统自动计算的颜色</p>
+              </div>
+            </el-alert>
+
+            <!-- 工具栏 -->
+            <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+              <!-- 搜索框 -->
+              <el-input
+                v-model="searchKeyword"
+                placeholder="搜索零件名称或node_name"
+                clearable
+                style="flex: 1; min-width: 200px;"
+              >
+                <template #prefix>
+                  <el-icon><Search /></el-icon>
+                </template>
+              </el-input>
+
+              <!-- 颜色过滤 -->
+              <el-select
+                v-model="colorFilter"
+                placeholder="按颜色过滤"
+                clearable
+                style="width: 150px;"
+              >
+                <el-option label="全部" value="" />
+                <el-option label="🟡 黄色" value="yellow" />
+                <el-option label="🟢 绿色" value="green" />
+                <el-option label="⚪ 灰色" value="gray" />
+              </el-select>
+
+              <!-- 统计信息 -->
+              <el-tag type="info">
+                共 {{ allPartsList.length }} 个零件
+              </el-tag>
+            </div>
+
+            <!-- 零件列表（按颜色分组） -->
+            <el-collapse v-model="activeGroups" style="margin-bottom: 20px;">
+              <!-- ⭐ 灰色零件组（默认展开，最常用的场景） -->
+              <el-collapse-item name="gray" v-if="grayPartsList.length > 0">
+                <template #title>
+                  <div style="display: flex; align-items: center; gap: 10px;">
+                    <el-tag type="info" size="small">⚪ 灰色</el-tag>
+                    <span>未装配的零件 ({{ grayPartsList.length }})</span>
+                  </div>
+                </template>
+
+                <div class="parts-color-list">
+                  <div
+                    v-for="part in grayPartsList"
+                    :key="part.nodeName"
+                    class="part-color-item"
+                  >
+                    <div class="part-info">
+                      <span class="part-name">{{ part.bomName }}</span>
+                      <span class="node-name">({{ part.nodeName }})</span>
+                    </div>
+
+                    <el-select
+                      v-model="editData.custom_colors[part.nodeName]"
+                      placeholder="自动计算"
+                      clearable
+                      size="small"
+                      style="width: 150px;"
+                      @change="onColorChange"
+                    >
+                      <el-option label="🟡 黄色" value="yellow" />
+                      <el-option label="🟢 绿色" value="green" />
+                      <el-option label="⚪ 灰色" value="gray" />
+                    </el-select>
+                  </div>
+                </div>
+              </el-collapse-item>
+
+              <!-- 黄色零件组 -->
+              <el-collapse-item name="yellow" v-if="yellowPartsList.length > 0">
+                <template #title>
+                  <div style="display: flex; align-items: center; gap: 10px;">
+                    <el-tag type="warning" size="small">🟡 黄色</el-tag>
+                    <span>正在装配的零件 ({{ yellowPartsList.length }})</span>
+                  </div>
+                </template>
+
+                <div class="parts-color-list">
+                  <div
+                    v-for="part in yellowPartsList"
+                    :key="part.nodeName"
+                    class="part-color-item"
+                  >
+                    <div class="part-info">
+                      <span class="part-name">{{ part.bomName }}</span>
+                      <span class="node-name">({{ part.nodeName }})</span>
+                    </div>
+
+                    <el-select
+                      v-model="editData.custom_colors[part.nodeName]"
+                      placeholder="自动计算"
+                      clearable
+                      size="small"
+                      style="width: 150px;"
+                      @change="onColorChange"
+                    >
+                      <el-option label="🟡 黄色" value="yellow" />
+                      <el-option label="🟢 绿色" value="green" />
+                      <el-option label="⚪ 灰色" value="gray" />
+                    </el-select>
+                  </div>
+                </div>
+              </el-collapse-item>
+
+              <!-- 绿色零件组 -->
+              <el-collapse-item name="green" v-if="greenPartsList.length > 0">
+                <template #title>
+                  <div style="display: flex; align-items: center; gap: 10px;">
+                    <el-tag type="success" size="small">🟢 绿色</el-tag>
+                    <span>已装配的零件 ({{ greenPartsList.length }})</span>
+                  </div>
+                </template>
+
+                <div class="parts-color-list">
+                  <div
+                    v-for="part in greenPartsList"
+                    :key="part.nodeName"
+                    class="part-color-item"
+                  >
+                    <div class="part-info">
+                      <span class="part-name">{{ part.bomName }}</span>
+                      <span class="node-name">({{ part.nodeName }})</span>
+                    </div>
+
+                    <el-select
+                      v-model="editData.custom_colors[part.nodeName]"
+                      placeholder="自动计算"
+                      clearable
+                      size="small"
+                      style="width: 150px;"
+                      @change="onColorChange"
+                    >
+                      <el-option label="🟡 黄色" value="yellow" />
+                      <el-option label="🟢 绿色" value="green" />
+                      <el-option label="⚪ 灰色" value="gray" />
+                    </el-select>
+                  </div>
+                </div>
+              </el-collapse-item>
+            </el-collapse>
+
+            <!-- 操作按钮 -->
+            <div style="display: flex; gap: 10px;">
+              <el-button @click="previewColors" type="primary">
+                <el-icon><View /></el-icon>
+                实时预览
+              </el-button>
+              <el-button @click="clearCustomColors">
+                <el-icon><Delete /></el-icon>
+                清除所有自定义颜色
+              </el-button>
+              <el-button @click="resetCustomColors">
+                <el-icon><RefreshLeft /></el-icon>
+                恢复默认
+              </el-button>
+            </div>
+          </div>
+        </el-tab-pane>
       </el-tabs>
       <template #footer>
         <el-button @click="showEditDialog = false">取消</el-button>
@@ -618,7 +796,8 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Loading, ArrowLeft, ArrowRight, Picture, Box,
-  Refresh, View, Grid, Clock, Lock, Edit, Plus, Warning
+  Refresh, View, Grid, Clock, Lock, Edit, Plus, Warning,
+  Search, Delete, RefreshLeft
 } from '@element-plus/icons-vue'
 import axios from 'axios'
 import * as THREE from 'three'
@@ -679,7 +858,8 @@ const editData = ref({
   welding_requirements: [] as WeldingRequirementEdit[],
   safety_warnings: [] as SafetyWarningEdit[],
   quality_check: '' as string,
-  faq_items: [] as Array<{ question: string; answer: string }>
+  faq_items: [] as Array<{ question: string; answer: string }>,
+  custom_colors: {} as Record<string, 'yellow' | 'green' | 'gray'>  // ⭐ 新增：自定义颜色
 })
 
 // 🔧 记录编辑前的原始步骤号（用于保存时精确删除）
@@ -709,6 +889,11 @@ const explodeScale = ref(25) // 爆炸比例（0-50，默认25）
 
 // 图纸缩放相关
 const zoomedDrawingIndex = ref<number | null>(null)
+
+// ⭐ 颜色管理相关（新增）
+const searchKeyword = ref('')  // 搜索关键词
+const colorFilter = ref('')  // 颜色过滤
+const activeGroups = ref(['gray'])  // 默认展开灰色零件组
 
 // 获取当前步骤的图纸列表
 const drawingImages = computed(() => {
@@ -978,57 +1163,50 @@ const assembledMeshes = computed(() => {
 
   console.log(`🔍 [计算已装配零件] 当前步骤索引: ${currentStepIndex.value}`)
 
-  // ✅ 产品总装：所有组件的零件都是绿色
+  // ✅ 产品总装：累加前面步骤的 components 和 fasteners
   if (isProductAssembly.value) {
-    console.log('  📦 [产品总装] 收集所有子组件的零件')
+    console.log('  📦 [产品总装] 收集前面步骤的所有组件和紧固件')
 
-    // ✅ 修复：从product_assembly的步骤1的components中收集子组件的正确node_name
-    // 原因：product_total.glb中的子组件node_name（NAUO38-NAUO84）与component_assembly中的node_name（NAUO1-NAUO36）不同
-    const productSteps = manualData.value?.product_assembly?.steps || []
-    const step1 = productSteps.find((s: any) => s.step_number === 1)
-
-    if (step1 && step1.components) {
-      console.log('  ✅ [从步骤1收集子组件] 步骤1标题:', step1.title)
-      let subcomponentNodeCount = 0
-
-      step1.components.forEach((comp: any) => {
-        if (comp.node_name) {
-          const nodes = Array.isArray(comp.node_name) ? comp.node_name : [comp.node_name]
-          assembled.push(...nodes)
-          subcomponentNodeCount += nodes.length
-          console.log(`    - ${comp.bom_name}: ${nodes.length}个node_name`)
-        }
-      })
-
-      console.log(`  ✅ [子组件总计] 收集了${subcomponentNodeCount}个子组件node_name`)
-    } else {
-      console.warn('  ⚠️ [警告] 未找到product_assembly的步骤1，无法收集子组件node_name')
-    }
-
-    // ✅ 加上前面步骤的紧固件（产品级别的零件）
+    // ✅ 修复：收集前面所有步骤的 components 和 fasteners
     const componentAssembly = manualData.value?.component_assembly || []
     const componentStepsCount = componentAssembly.reduce((sum: number, chapter: any) => sum + chapter.steps.length, 0)
 
+    let componentsNodeCount = 0
     let fastenersNodeCount = 0
+
+    // 遍历前面的产品总装步骤
     for (let i = componentStepsCount; i < currentStepIndex.value; i++) {
       const step = allSteps.value[i]
+
+      // 收集 components
+      if (step?.components) {
+        step.components.forEach((comp: any) => {
+          if (comp.node_name) {
+            const nodes = Array.isArray(comp.node_name) ? comp.node_name : [comp.node_name]
+            assembled.push(...nodes)
+            componentsNodeCount += nodes.length
+            console.log(`    🟢 [步骤${step.step_number}] 添加组件 ${comp.bom_name}: ${nodes.length}个node_name`)
+          }
+        })
+      }
+
+      // 收集 fasteners
       if (step?.fasteners) {
         step.fasteners.forEach((fastener: any) => {
           if (fastener.node_name) {
             const nodes = Array.isArray(fastener.node_name) ? fastener.node_name : [fastener.node_name]
             assembled.push(...nodes)
             fastenersNodeCount += nodes.length
+            console.log(`    🟢 [步骤${step.step_number}] 添加紧固件 ${fastener.bom_name}: ${nodes.length}个node_name`)
           }
         })
       }
     }
 
-    if (fastenersNodeCount > 0) {
-      console.log(`  ✅ [产品级零件] 收集了${fastenersNodeCount}个之前步骤的紧固件node_name`)
-    }
+    console.log(`  ✅ [产品总装] 收集了${componentsNodeCount}个组件node_name + ${fastenersNodeCount}个紧固件node_name`)
   } else {
-    // ✅ 组件装配：只累积当前组件内前面步骤的零件
-    console.log('  🔧 [组件装配] 只累积当前组件内的前面步骤')
+    // ✅ 组件装配：累加前面步骤的 3d_highlight
+    console.log('  🔧 [组件装配] 累加前面步骤的 3d_highlight')
 
     // 只累积索引 < currentStepIndex 的步骤
     for (let i = 0; i < currentStepIndex.value; i++) {
@@ -1036,18 +1214,11 @@ const assembledMeshes = computed(() => {
 
       // ✅ 关键：只累积当前组件的步骤
       if (step?.component_code === currentStepData.value?.component_code) {
-        if (step.parts_used) {
-          step.parts_used.forEach((part: any) => {
-            if (part.node_name) {
-              if (Array.isArray(part.node_name)) {
-                assembled.push(...part.node_name)
-                console.log(`    🟢 [步骤${i+1}] 添加零件 ${part.bom_code}: ${part.node_name.join(', ')}`)
-              } else {
-                assembled.push(part.node_name)
-                console.log(`    🟢 [步骤${i+1}] 添加零件 ${part.bom_code}: ${part.node_name}`)
-              }
-            }
-          })
+        // ✅ 修复：从 3d_highlight 中提取零件，而不是 parts_used
+        if (step['3d_highlight']) {
+          const highlights = Array.isArray(step['3d_highlight']) ? step['3d_highlight'] : [step['3d_highlight']]
+          assembled.push(...highlights)
+          console.log(`    🟢 [步骤${step.step_number}] 添加 3d_highlight: ${highlights.join(', ')}`)
         }
       }
     }
@@ -1138,6 +1309,147 @@ const currentStepQualityCheck = computed(() => {
     component: currentStep.component_name || '产品总装',
     quality_check: currentStep.quality_check || ''
   }
+})
+
+// ⭐ 从3D模型中提取所有零件列表（用于颜色管理）
+const allPartsList = computed(() => {
+  const parts: Array<{ nodeName: string; bomName: string; currentColor: string }> = []
+
+  if (!model) return parts
+
+  // ✅ 获取当前应该搜索的步骤范围
+  let stepsToSearch: any[] = []
+
+  if (isProductAssembly.value) {
+    // 产品总装：从所有步骤中查找（因为产品总装包含所有组件）
+    stepsToSearch = allSteps.value
+    console.log('🔍 [allPartsList] 产品总装模式：从所有步骤中查找BOM名称')
+  } else {
+    // 组件装配：只从当前组件的步骤中查找
+    const currentComponentCode = currentStepData.value?.component_code
+    stepsToSearch = allSteps.value.filter((step: any) => step.component_code === currentComponentCode)
+    console.log(`🔍 [allPartsList] 组件装配模式：只从组件 ${currentComponentCode} 的 ${stepsToSearch.length} 个步骤中查找BOM名称`)
+  }
+
+  // 遍历3D模型的所有mesh
+  model.traverse((child: any) => {
+    if (child.isMesh) {
+      const nodeName = child.name
+
+      // ✅ 只从当前组件的步骤中查找零件名称
+      let bomName = nodeName  // 默认使用node_name
+
+      stepsToSearch.forEach((step: any) => {
+        // 组件装配：从parts_used中查找
+        if (step.parts_used) {
+          step.parts_used.forEach((part: any) => {
+            if (part.node_name) {
+              const nodes = Array.isArray(part.node_name) ? part.node_name : [part.node_name]
+              if (nodes.includes(nodeName)) {
+                bomName = part.bom_name
+              }
+            }
+          })
+        }
+
+        // 产品总装：从components和fasteners中查找
+        if (step.components) {
+          step.components.forEach((comp: any) => {
+            if (comp.node_name) {
+              const nodes = Array.isArray(comp.node_name) ? comp.node_name : [comp.node_name]
+              if (nodes.includes(nodeName)) {
+                bomName = comp.bom_name
+              }
+            }
+          })
+        }
+
+        if (step.fasteners) {
+          step.fasteners.forEach((fastener: any) => {
+            if (fastener.node_name) {
+              const nodes = Array.isArray(fastener.node_name) ? fastener.node_name : [fastener.node_name]
+              if (nodes.includes(nodeName)) {
+                bomName = fastener.bom_name
+              }
+            }
+          })
+        }
+      })
+
+      // 计算当前颜色
+      const currentColor = getCurrentPartColor(nodeName)
+
+      parts.push({
+        nodeName,
+        bomName,
+        currentColor
+      })
+    }
+  })
+
+  console.log(`🔍 [allPartsList] 提取了 ${parts.length} 个零件`)
+  return parts
+})
+
+// ⭐ 计算零件的当前颜色
+const getCurrentPartColor = (nodeName: string): string => {
+  if (!currentStepData.value) return 'gray'
+
+  const customColors = editData.value.custom_colors || {}
+  const currentHighlight = currentStepData.value['3d_highlight'] || []
+  const assembled = assembledMeshes.value
+
+  // 优先级1：用户自定义颜色
+  if (customColors[nodeName]) {
+    return customColors[nodeName]
+  }
+
+  // 优先级2：3d_highlight（黄色）
+  if (currentHighlight.includes(nodeName)) {
+    return 'yellow'
+  }
+
+  // 优先级3：assembledMeshes（绿色）
+  if (assembled.includes(nodeName)) {
+    return 'green'
+  }
+
+  // 优先级4：默认灰色
+  return 'gray'
+}
+
+// ⭐ 按颜色分组
+const grayPartsList = computed(() => {
+  return allPartsList.value.filter(part => part.currentColor === 'gray')
+})
+
+const yellowPartsList = computed(() => {
+  return allPartsList.value.filter(part => part.currentColor === 'yellow')
+})
+
+const greenPartsList = computed(() => {
+  return allPartsList.value.filter(part => part.currentColor === 'green')
+})
+
+// ⭐ 搜索和过滤
+const filteredPartsList = computed(() => {
+  let filtered = allPartsList.value
+
+  // 按颜色过滤
+  if (colorFilter.value) {
+    filtered = filtered.filter(part => part.currentColor === colorFilter.value)
+  }
+
+  // 按关键词搜索
+  if (searchKeyword.value) {
+    const keyword = searchKeyword.value.toLowerCase()
+    filtered = filtered.filter(part =>
+      part.bomName.toLowerCase().includes(keyword) ||
+      part.nodeName.toLowerCase().includes(keyword)
+    )
+  }
+
+  return filtered
 })
 
 const progressPercentage = computed(() => {
@@ -1236,6 +1548,9 @@ watch(showEditDialog, (newVal) => {
     // ⭐ 加载当前步骤的描述
     editData.value.description = currentStep.description || ''
 
+    // ⭐ 加载当前步骤的自定义颜色
+    editData.value.custom_colors = JSON.parse(JSON.stringify(currentStep.custom_colors || {}))
+
     // FAQ是全局的，不按步骤过滤
     const safetyAndFaq = manualData.value.safety_and_faq || {}
     editData.value.faq_items = JSON.parse(JSON.stringify(safetyAndFaq.faq_items || []))
@@ -1247,6 +1562,7 @@ watch(showEditDialog, (newVal) => {
     console.log('  - 当前步骤安全警告数量:', editData.value.safety_warnings.length)
     console.log('  - 当前步骤质检要求:', editData.value.quality_check)
     console.log('  - 当前步骤描述:', editData.value.description)  // ⭐ 新增日志
+    console.log('  - 当前步骤自定义颜色数量:', Object.keys(editData.value.custom_colors).length)  // ⭐ 新增日志
   }
 })
 
@@ -1318,6 +1634,41 @@ const addFaqItem = () => {
 
 const removeFaqItem = (index: number) => {
   editData.value.faq_items.splice(index, 1)
+}
+
+// ⭐ 颜色管理相关函数（新增）
+// 实时预览颜色
+const previewColors = () => {
+  // 临时保存到currentStepData，触发渲染更新
+  if (currentStepData.value) {
+    currentStepData.value.custom_colors = { ...editData.value.custom_colors }
+    // 触发重新渲染
+    highlightStepParts()
+  }
+  ElMessage.success('预览已更新，请查看3D视图')
+}
+
+// 清除所有自定义颜色
+const clearCustomColors = () => {
+  editData.value.custom_colors = {}
+  if (currentStepData.value) {
+    currentStepData.value.custom_colors = {}
+    highlightStepParts()
+  }
+  ElMessage.success('已清除所有自定义颜色')
+}
+
+// 恢复默认（恢复到保存的状态）
+const resetCustomColors = () => {
+  if (currentStepData.value) {
+    editData.value.custom_colors = JSON.parse(JSON.stringify(currentStepData.value.custom_colors || {}))
+  }
+  ElMessage.success('已恢复到保存的状态')
+}
+
+// 颜色变更时的回调
+const onColorChange = () => {
+  console.log('🎨 颜色已修改:', editData.value.custom_colors)
 }
 
 // 保存修改（只更新当前步骤的数据）
@@ -1506,6 +1857,37 @@ const saveManualData = async () => {
       for (const step of updatedData.product_assembly.steps) {
         if (step.step_id === currentStepId) {
           step.description = editData.value.description
+          stepUpdated = true
+          break
+        }
+      }
+    }
+
+    // ========== 更新自定义颜色 ========== ⭐ 新增
+    // 使用 step_id 精确匹配当前步骤
+    stepUpdated = false
+
+    // 更新组件装配步骤中的自定义颜色
+    if (updatedData.component_assembly) {
+      for (const component of updatedData.component_assembly) {
+        if (component.steps) {
+          for (const step of component.steps) {
+            if (step.step_id === currentStepId) {
+              step.custom_colors = editData.value.custom_colors
+              stepUpdated = true
+              break
+            }
+          }
+        }
+        if (stepUpdated) break
+      }
+    }
+
+    // 更新产品装配步骤中的自定义颜色
+    if (!stepUpdated && updatedData.product_assembly?.steps) {
+      for (const step of updatedData.product_assembly.steps) {
+        if (step.step_id === currentStepId) {
+          step.custom_colors = editData.value.custom_colors
           stepUpdated = true
           break
         }
@@ -2111,6 +2493,10 @@ const highlightStepParts = () => {
     return
   }
 
+  // ⭐ 获取自定义颜色（最高优先级）
+  const customColors: Record<string, string> = currentStepData.value.custom_colors || {}
+  console.log('🎨 自定义颜色:', customColors)
+
   // ✅ 获取当前步骤要装配的零件（黄色）
   const currentNodes: string[] = currentStepData.value['3d_highlight'] || currentStepHighlightMeshes.value
 
@@ -2144,13 +2530,49 @@ const highlightStepParts = () => {
   let currentCount = 0
   let assembledCount = 0
   let unassembledCount = 0
+  let customCount = 0
 
-  // 遍历模型，设置三种颜色
+  // 遍历模型，设置三种颜色（优先级：custom_colors > 3d_highlight > assembledMeshes > 默认灰色）
   model.traverse((child: any) => {
     if (child.isMesh) {
       const nodeName = child.name
 
-      if (normalizedCurrentNodes.includes(nodeName)) {
+      // ⭐ 优先级1：用户自定义颜色（最高优先级）
+      if (customColors[nodeName]) {
+        const color = customColors[nodeName]
+        if (color === 'yellow') {
+          child.material = new THREE.MeshStandardMaterial({
+            color: 0xffff00,
+            emissive: 0xffaa00,
+            emissiveIntensity: 0.8,
+            metalness: 0.3,
+            roughness: 0.4,
+            transparent: false,
+            opacity: 1.0
+          })
+        } else if (color === 'green') {
+          child.material = new THREE.MeshStandardMaterial({
+            color: 0x4CAF50,
+            emissive: 0x2E7D32,
+            emissiveIntensity: 0.3,
+            metalness: 0.3,
+            roughness: 0.5,
+            transparent: false,
+            opacity: 1.0
+          })
+        } else if (color === 'gray') {
+          child.material = new THREE.MeshStandardMaterial({
+            color: 0xCCCCCC,
+            metalness: 0.2,
+            roughness: 0.7,
+            transparent: true,
+            opacity: 0.3
+          })
+        }
+        customCount++
+      }
+      // ⭐ 优先级2：3d_highlight（黄色）
+      else if (normalizedCurrentNodes.includes(nodeName)) {
         // 🟡 正在装配：黄色高亮
         child.material = new THREE.MeshStandardMaterial({
           color: 0xffff00,        // 亮黄色
@@ -2162,7 +2584,9 @@ const highlightStepParts = () => {
           opacity: 1.0
         })
         currentCount++
-      } else if (normalizedAssembledNodes.includes(nodeName)) {
+      }
+      // ⭐ 优先级3：assembledMeshes（绿色）
+      else if (normalizedAssembledNodes.includes(nodeName)) {
         // 🟢 已装配：绿色
         child.material = new THREE.MeshStandardMaterial({
           color: 0x4CAF50,        // 绿色
@@ -2174,7 +2598,9 @@ const highlightStepParts = () => {
           opacity: 1.0
         })
         assembledCount++
-      } else {
+      }
+      // ⭐ 优先级4：默认灰色
+      else {
         // ⚪ 未装配：浅灰色半透明
         const originalMaterial = meshOriginalMaterials.get(nodeName)
         if (originalMaterial) {
@@ -2193,7 +2619,7 @@ const highlightStepParts = () => {
     }
   })
 
-  console.log(`✅ 三色渲染完成: 🟡正在装配=${currentCount}, 🟢已装配=${assembledCount}, ⚪未装配=${unassembledCount}`)
+  console.log(`✅ 三色渲染完成: 🎨自定义=${customCount}, 🟡正在装配=${currentCount}, 🟢已装配=${assembledCount}, ⚪未装配=${unassembledCount}`)
 }
 
 // 应用爆炸效果（按装配步骤层级爆炸）
@@ -2927,6 +3353,41 @@ onUnmounted(() => {
   p {
     font-size: 18px;
     color: #666;
+  }
+}
+
+// ⭐ 颜色管理相关样式（新增）
+.parts-color-list {
+  max-height: 400px;
+  overflow-y: auto;
+
+  .part-color-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+
+    &:hover {
+      background-color: #f5f7fa;
+    }
+
+    .part-info {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .part-name {
+        font-weight: 500;
+        color: #303133;
+      }
+
+      .node-name {
+        font-size: 12px;
+        color: #909399;
+      }
+    }
   }
 }
 </style>
