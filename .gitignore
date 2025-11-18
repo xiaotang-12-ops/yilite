@@ -45,6 +45,7 @@ frontend/.temp/
 *.swo
 *~
 .DS_Store
+.augment/rules/rules.md
 
 # Environment variables
 .env

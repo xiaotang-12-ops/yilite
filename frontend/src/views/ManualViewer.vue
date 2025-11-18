@@ -196,8 +196,8 @@
                 <p>{{ currentStepData.quality_check }}</p>
               </div>
 
-              <!-- 预计时间 -->
-              <div class="time-section">
+              <!-- 预计时间（隐藏展示，保留字段供后续使用） -->
+              <div class="time-section" v-if="false">
                 <el-icon><Clock /></el-icon>
                 <span>预计时间: {{ currentStepData.estimated_time_minutes }} 分钟</span>
               </div>
@@ -315,17 +315,30 @@
     </el-dialog>
 
     <!-- 内容编辑Dialog -->
-    <el-dialog
-      v-model="showEditDialog"
-      :title="`编辑步骤${currentStepData?.step_number} - ${currentStepData?.action}`"
-      width="800px"
-      :close-on-click-modal="false"
-    >
-      <el-tabs v-model="editActiveTab">
-        <!-- 焊接注意事项 -->
-        <el-tab-pane label="焊接注意事项" name="welding">
-          <div class="edit-section">
-            <el-alert
+  <el-dialog
+    v-model="showEditDialog"
+    :title="`编辑步骤${currentStepData?.step_number} - ${currentStepData?.action}`"
+    width="800px"
+    :close-on-click-modal="false"
+  >
+    <!-- 当前步骤组件名称（统一入口，避免分散在焊接/安全表单里导致遗漏） -->
+    <el-form label-width="100px" style="margin-bottom: 12px">
+      <el-form-item label="组件名称">
+        <el-input
+          v-model="componentNameInput"
+          placeholder="例如：固定座组件"
+        />
+        <el-text type="info" size="small" style="margin-left: 8px;">
+          这里修改的名称会同步到当前步骤及所属组件
+        </el-text>
+      </el-form-item>
+    </el-form>
+
+    <el-tabs v-model="editActiveTab">
+      <!-- 焊接注意事项 -->
+      <el-tab-pane label="焊接注意事项" name="welding">
+        <div class="edit-section">
+          <el-alert
               title="提示"
               type="info"
               :closable="false"
@@ -382,7 +395,7 @@
 
                   <el-form-item label="组件名称">
                     <el-input
-                      v-model="req.component"
+                      v-model="componentNameInput"
                       placeholder="例如：固定座组件"
                     />
                     <el-text type="info" size="small" style="margin-left: 8px;">
@@ -482,7 +495,7 @@
 
                   <el-form-item label="组件名称">
                     <el-input
-                      v-model="warning.component"
+                      v-model="componentNameInput"
                       placeholder="例如：固定座组件"
                     />
                     <el-text type="info" size="small" style="margin-left: 8px;">
@@ -634,6 +647,7 @@ const showLoginDialog = ref(false)
 const showEditDialog = ref(false)
 const editActiveTab = ref('welding')
 const saving = ref(false)
+const componentNameInput = ref('')
 
 const loginForm = ref({
   username: '',
@@ -1084,13 +1098,14 @@ watch(showEditDialog, (newVal) => {
 
     // 🔧 记住原始步骤号（兼容性）
     originalStepNumber.value = currentStepNumber
+    componentNameInput.value = currentComponentName || ''
 
     // 从步骤内嵌字段加载焊接数据
     if (currentStep.welding && currentStep.welding.required) {
       editData.value.welding_requirements = [{
         step_id: currentStepId,
         step_number: currentStepNumber,
-        component: currentComponentName || '',
+        component: currentComponentName || componentNameInput.value,
         welding_info: JSON.parse(JSON.stringify(currentStep.welding))
       }]
     } else {
@@ -1100,7 +1115,7 @@ watch(showEditDialog, (newVal) => {
     // 从步骤内嵌字段加载安全警告
     editData.value.safety_warnings = (currentStep.safety_warnings || []).map((warning: string) => ({
       step_number: currentStepNumber,
-      component: currentComponentName,
+      component: currentComponentName || componentNameInput.value,
       warning: warning
     }))
 
@@ -1132,7 +1147,7 @@ const addWeldingRequirement = () => {
   editData.value.welding_requirements.push({
     step_id: stepId,  // ⭐ 使用 step_id
     step_number: stepNumber,  // 保留（兼容性）
-    component: componentName,  // 保留（兼容性）
+    component: componentNameInput.value || componentName,  // 统一使用输入框的名称
     welding_info: {
       required: true,
       welding_type: '',
@@ -1156,7 +1171,7 @@ const addSafetyWarning = () => {
 
   editData.value.safety_warnings.push({
     step_number: stepNumber,
-    component: componentName,  // 🔥 修复：使用 component_name 而不是 action
+    component: componentNameInput.value || componentName,  // 🔥 修复：使用 component_name 而不是 action
     warning: ''
   })
 }
@@ -1187,22 +1202,28 @@ const saveManualData = async () => {
     }
 
     const currentStepNumber = currentStep.step_number
+    const newComponentName = componentNameInput.value.trim() || currentStep.component_name || ''
 
     // 更新manualData
     const updatedData = { ...manualData.value }
 
+    // 统一同步名称到编辑表单，避免多个来源不一致
+    editData.value.welding_requirements = editData.value.welding_requirements.map(req => ({
+      ...req,
+      component: newComponentName
+    }))
+    editData.value.safety_warnings = editData.value.safety_warnings.map(w => ({
+      ...w,
+      component: newComponentName
+    }))
+
     // ========== 更新焊接要求（只保存到步骤内嵌字段） ==========
     const currentStepId = currentStep.step_id || ''
-
-    // 获取用户修改后的组件名称（如果有修改）
-    const updatedComponentName = editData.value.welding_requirements.length > 0
-      ? editData.value.welding_requirements[0].component
-      : currentStep.component_name || ''
 
     console.log('💾 [保存组件名称]')
     console.log('  - 当前步骤ID:', currentStepId)
     console.log('  - 原组件名称:', currentStep.component_name)
-    console.log('  - 新组件名称:', updatedComponentName)
+    console.log('  - 新组件名称:', newComponentName)
     console.log('  - 焊接要求数量:', editData.value.welding_requirements.length)
 
     // 过滤有效的焊接数据
@@ -1229,7 +1250,7 @@ const saveManualData = async () => {
               }
 
               // ✅ 更新组件级别的 component_name（前端显示用的是这个）
-              component.component_name = updatedComponentName
+              component.component_name = newComponentName
 
               console.log('  - 更新后 component.component_name:', component.component_name)
               stepUpdated = true
@@ -1252,7 +1273,7 @@ const saveManualData = async () => {
             delete step.welding
           }
           // 更新组件名称（如果用户修改了）
-          step.component_name = updatedComponentName
+          step.component_name = newComponentName
           stepUpdated = true
           break
         }
@@ -1260,11 +1281,6 @@ const saveManualData = async () => {
     }
 
     // ========== 更新安全警告（只保存到步骤内嵌字段） ==========
-    // 获取用户修改后的组件名称（如果有修改）
-    const updatedComponentNameFromSafety = editData.value.safety_warnings.length > 0
-      ? editData.value.safety_warnings[0].component
-      : updatedComponentName
-
     // 过滤有效的安全警告
     const validSafetyWarnings = editData.value.safety_warnings
       .filter(w => w.warning && w.warning.trim())
@@ -1281,7 +1297,7 @@ const saveManualData = async () => {
             if (step.step_id === currentStepId) {
               step.safety_warnings = validSafetyWarnings
               // ✅ 更新组件级别的 component_name（前端显示用的是这个）
-              component.component_name = updatedComponentNameFromSafety
+              component.component_name = newComponentName
               stepUpdated = true
               break
             }
@@ -1297,7 +1313,7 @@ const saveManualData = async () => {
         if (step.step_id === currentStepId) {
           step.safety_warnings = validSafetyWarnings
           // 更新组件名称（优先使用安全警告中的组件名称）
-          step.component_name = updatedComponentNameFromSafety
+          step.component_name = newComponentName
           stepUpdated = true
           break
         }
@@ -1396,7 +1412,7 @@ const loadLocalJSON = async () => {
           console.log('📋 manualData的所有字段:', Object.keys(manualData.value))
 
           // 🔍 加载后立即诊断
-          diagnoseData()
+          // diagnoseData()
 
           ElMessage.success('装配说明书加载成功！')
 
@@ -1427,7 +1443,7 @@ const loadLocalJSON = async () => {
     console.log('📋 manualData的所有字段:', Object.keys(manualData.value))
 
     // 🔍 加载后立即诊断
-    diagnoseData()
+    // diagnoseData()
 
     ElMessage.success('装配说明书加载成功！')
 

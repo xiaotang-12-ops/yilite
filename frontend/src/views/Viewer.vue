@@ -74,7 +74,7 @@
               </template>
             </el-table-column>
             
-            <el-table-column prop="fileCount" label="文件数量" width="120">
+            <el-table-column prop="fileCount" label="文件数量" width="120" v-if="false">
               <template #default="{ row }">
                 <span class="file-count">
                   {{ row.pdfCount }}PDF + {{ row.stepCount }}STEP
@@ -82,7 +82,7 @@
               </template>
             </el-table-column>
             
-            <el-table-column prop="processingTime" label="处理时间" width="120">
+            <el-table-column prop="processingTime" label="处理时间" width="120" v-if="false">
               <template #default="{ row }">
                 {{ row.processingTime }}s
               </template>

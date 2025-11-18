@@ -3,10 +3,12 @@ name: assembly-manual
 services:
   # 后端服务
   backend:
+    image: assembly-manual-backend:v2.0.0
+    
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: assembly-backend
+    container_name: assembly-backend-v2.0.0
     restart: unless-stopped
     environment:
       # API密钥 - 从.env文件读取
@@ -37,10 +39,12 @@ services:
 
   # 前端服务
   frontend:
+    image: assembly-manual-frontend:v2.0.0
+    
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: assembly-frontend
+    container_name: assembly-frontend-v2.0.0
     restart: unless-stopped
     ports:
       - "3008:80"

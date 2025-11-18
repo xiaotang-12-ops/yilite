@@ -4,11 +4,9 @@
     <nav class="app-nav">
       <div class="nav-content">
         <div class="nav-brand">
-          <div class="brand-icon">
-            <el-icon size="24"><Setting /></el-icon>
-          </div>
+          <img class="brand-icon" src="/image.png" alt="品牌Logo" />
           <div class="brand-text">
-            <h1>智能装配说明书</h1>
+            <h1>易力特AI智能装配平台</h1>
             <span>AI Assembly Manual Generator</span>
           </div>
         </div>
@@ -154,12 +152,10 @@ const showHelp = () => {
     .brand-icon {
       width: 40px;
       height: 40px;
-      background: linear-gradient(135deg, #409eff, #67c23a);
       border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
+      object-fit: contain;
+      display: block;
+      background: none;
     }
     
     .brand-text {

@@ -2,7 +2,7 @@
 
 本文档说明如何从 GitHub 克隆项目并使用 Docker 部署智能装配说明书生成系统。
 
-**当前版本**: v1.1.4 | [查看所有版本](https://github.com/xiaotang-12-ops/yilite/releases)
+**当前版本**: v2.0.0 | [查看所有版本](https://github.com/xiaotang-12-ops/yilite/releases)
 
 ---
 

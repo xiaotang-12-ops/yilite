@@ -1,6 +1,6 @@
 # 智能装配说明书生成系统
 
-[![Version](https://img.shields.io/badge/version-v1.1.5-blue.svg)](https://github.com/xiaotang-12-ops/Mecagent/releases)
+[![Version](https://img.shields.io/badge/version-v2.0.0-blue.svg)](https://github.com/xiaotang-12-ops/yilite/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Docker](https://img.shields.io/badge/docker-ready-brightgreen.svg)](DOCKER_DEPLOYMENT.md)
 
@@ -8,14 +8,13 @@
 
 一个基于AI的智能装配说明书生成系统，能够自动解析PDF工程图纸和3D模型，生成工人友好的交互式HTML装配说明书。
 
-**当前版本**: v1.1.5 | [查看版本历史](https://github.com/xiaotang-12-ops/Mecagent/releases) | [部署指南](DOCKER_DEPLOYMENT.md)
+**当前版本**: v2.0.0 | [查看版本历史](https://github.com/xiaotang-12-ops/yilite/releases) | [部署指南](DOCKER_DEPLOYMENT.md)
 
-## 🆕 v1.1.5 新增功能
+## 🆕 v2.0.0 更新
 
-- ✅ **管理员登录功能**：支持管理员登录后编辑说明书内容
-- ✅ **在线编辑**：可直接修改焊接要求、安全警告、质检要求
-- ✅ **组件名称修改**：支持修改组件名称并实时同步
-- ✅ **数据持久化**：编辑内容自动保存到后端文件
+- ✅ 管理员编辑：组件名称统一入口，保存时同步到步骤与组件并落盘 `assembly_manual.json`。
+- ✅ 查看端优化：手册“预计时间”模块隐藏展示（字段仍保留数据）。
+- ✅ 品牌与文档：导航品牌图标改为 `public/image.png`；新增管理员修改流程简明文档，完善 Memory 记录。
 
 ## ✨ 核心特性
 
