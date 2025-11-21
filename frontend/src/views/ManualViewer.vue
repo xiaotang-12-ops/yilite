@@ -57,228 +57,320 @@
     </div>
 
     <!-- 主工作区 -->
-    <div class="main-workspace" v-if="manualData">
-      <!-- 左侧：图纸参考（全屏显示） -->
-      <div class="left-sidebar">
-        <div class="drawing-section-full">
-          <div class="section-title">
-            📐 图纸参考
-            <span v-if="drawingImages.length > 1" class="page-indicator">
-              共{{ drawingImages.length }}张
-            </span>
+    <template v-if="manualData">
+      <div class="main-workspace">
+        <!-- 左侧：图纸参考（全屏显示） -->
+        <div class="left-sidebar">
+          <div class="drawing-section-full">
+            <div class="section-title">
+              📐 图纸参考
+              <span v-if="drawingImages.length > 1" class="page-indicator">
+                共{{ drawingImages.length }}张
+              </span>
+            </div>
+            <el-scrollbar class="drawings-container">
+              <div class="drawings-list">
+                <div
+                  v-for="(drawingUrl, index) in drawingImages"
+                  :key="index"
+                  class="drawing-item"
+                  :class="{ 'zoomed': zoomedDrawingIndex === index }"
+                  @click="toggleDrawingZoom(index)"
+                >
+                  <img
+                    :src="drawingUrl"
+                    :alt="`工程图纸 ${index + 1}`"
+                    class="drawing-image"
+                    @dragstart.prevent
+                  />
+                </div>
+                <div v-if="drawingImages.length === 0" class="drawing-placeholder">
+                  <el-icon :size="64" color="#ccc"><Picture /></el-icon>
+                  <p>暂无图纸</p>
+                </div>
+              </div>
+            </el-scrollbar>
           </div>
-          <el-scrollbar class="drawings-container">
-            <div class="drawings-list">
-              <div
-                v-for="(drawingUrl, index) in drawingImages"
-                :key="index"
-                class="drawing-item"
-                :class="{ 'zoomed': zoomedDrawingIndex === index }"
-                @click="toggleDrawingZoom(index)"
-              >
-                <img
-                  :src="drawingUrl"
-                  :alt="`工程图纸 ${index + 1}`"
-                  class="drawing-image"
-                  @dragstart.prevent
-                />
+        </div>
+
+        <!-- 中间：3D模型 -->
+        <div class="center-viewer">
+          <div class="model-container" ref="modelContainer">
+            <!-- Three.js 渲染区域 -->
+          </div>
+
+          <!-- 3D控制 -->
+          <div class="model-controls">
+            <div class="controls-row">
+              <el-button-group>
+                <el-button :icon="Refresh" @click="resetCamera">重置视角</el-button>
+                <el-button
+                  :icon="View"
+                  :type="isExploded ? 'primary' : ''"
+                  @click="toggleExplode"
+                >
+                  {{ isExploded ? '收起' : '爆炸' }}视图
+                </el-button>
+                <el-button
+                  :icon="Grid"
+                  :type="isWireframe ? 'primary' : ''"
+                  @click="toggleWireframe"
+                >
+                  线框模式
+                </el-button>
+              </el-button-group>
+            </div>
+
+            <!-- 爆炸比例滑块 -->
+            <div v-if="isExploded" class="explode-slider">
+              <span class="slider-label">爆炸程度:</span>
+              <el-slider
+                v-model="explodeScale"
+                :min="0"
+                :max="50"
+                :step="1"
+                style="width: 300px; margin: 0 12px;"
+              />
+              <span class="slider-value">{{ explodeScale }}%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右侧：当前步骤详情 -->
+        <div class="right-sidebar">
+          <el-scrollbar height="100%">
+
+            <!-- 当前步骤 -->
+            <div class="step-detail-card" v-if="currentStepData">
+              <div class="step-header">
+                <div class="step-badge">{{ currentStepIndex + 1 }}</div>
+                <h2>{{ currentStepData.title }}</h2>
               </div>
-              <div v-if="drawingImages.length === 0" class="drawing-placeholder">
-                <el-icon :size="64" color="#ccc"><Picture /></el-icon>
-                <p>暂无图纸</p>
+
+              <div class="step-content">
+                <div class="highlight-edit-entry">
+                  <el-button type="primary" plain size="small" @click="openHighlightDrawer">
+                    <el-icon><Edit /></el-icon>
+                    高亮编辑
+                  </el-button>
+                  <el-text type="info" size="small" class="highlight-edit-hint">
+                    点选零件或在列表中切换当前/已装/隐藏
+                  </el-text>
+                </div>
+
+                <!-- 描述 -->
+                <div class="description-section">
+                  <p class="description-text">{{ currentStepData.operation || currentStepData.description }}</p>
+                </div>
+
+                <!-- 操作步骤 -->
+                <div class="operations-section" v-if="currentStepData.operation_steps">
+                  <h3>📝 操作步骤</h3>
+                  <ol class="operation-list">
+                    <li v-for="(op, index) in currentStepData.operation_steps" :key="index">
+                      {{ op }}
+                    </li>
+                  </ol>
+                </div>
+
+                <!-- 所需工具 -->
+                <div class="tools-section" v-if="currentStepData.tools_required && currentStepData.tools_required.length">
+                  <h3>🔧 所需工具</h3>
+                  <div class="tools-tags">
+                    <el-tag
+                      v-for="tool in currentStepData.tools_required"
+                      :key="tool"
+                      type="info"
+                      size="large"
+                      effect="plain"
+                    >
+                      {{ tool }}
+                    </el-tag>
+                  </div>
+                </div>
+
+                <!-- 关键点 -->
+                <div class="keypoints-section" v-if="currentStepData.key_points && currentStepData.key_points.length">
+                  <h3>💡 关键点</h3>
+                  <ul class="keypoints-list">
+                    <li v-for="(point, index) in currentStepData.key_points" :key="index">
+                      {{ point }}
+                    </li>
+                  </ul>
+                </div>
+
+                <!-- ✅ 移除：安全警告已在下方"安全"标签页中统一显示 -->
+
+                <!-- 质检要求 -->
+                <div class="operations-section" v-if="currentStepData.quality_check">
+                  <h3>✅ 质检要求</h3>
+                  <p>{{ currentStepData.quality_check }}</p>
+                </div>
+
+                <!-- 预计时间 -->
+                <div class="time-section">
+                  <el-icon><Clock /></el-icon>
+                  <span>预计时间: {{ currentStepData.estimated_time_minutes }} 分钟</span>
+                </div>
               </div>
+            </div>
+
+            <!-- 快速参考标签页 -->
+            <div class="quick-reference-tabs">
+              <el-tabs v-model="activeTab" type="border-card">
+                <el-tab-pane label="焊接" name="welding">
+                  <div class="tab-content-scroll">
+
+
+                    <div
+                      v-for="(req, index) in currentStepWeldingRequirements"
+                      :key="index"
+                      class="ref-item"
+                    >
+                      <div class="ref-header">
+                        <strong>步骤{{ req.step_number }} - {{ req.component }}</strong>
+                        <el-tag type="warning" size="small" v-if="req.welding_info?.required">
+                          需要焊接
+                        </el-tag>
+                      </div>
+                      <p v-if="req.welding_info?.welding_position">📍 {{ req.welding_info.welding_position }}</p>
+                      <el-text type="info" size="small" v-if="req.welding_info">
+                        {{ req.welding_info.welding_type || req.welding_info.welding_method }} - {{ req.welding_info.weld_size }}
+                      </el-text>
+                    </div>
+                    <el-empty v-if="!currentStepWeldingRequirements.length" description="当前步骤无焊接要求" />
+                  </div>
+                </el-tab-pane>
+
+                <el-tab-pane label="质检" name="quality">
+                  <div class="tab-content-scroll">
+                    <div v-if="currentStepQualityCheck && currentStepQualityCheck.quality_check" class="ref-item">
+                      <div class="ref-header">
+                        <strong>步骤{{ currentStepQualityCheck.step_number }} - {{ currentStepQualityCheck.component }}</strong>
+                      </div>
+                      <p>{{ currentStepQualityCheck.quality_check }}</p>
+                    </div>
+                    <el-empty v-else description="当前步骤无质检要求" />
+                  </div>
+                </el-tab-pane>
+
+                <el-tab-pane label="安全" name="safety">
+                  <div class="tab-content-scroll">
+                    <el-alert
+                      v-for="(warning, index) in currentStepSafetyWarnings"
+                      :key="index"
+                      :title="`步骤${warning.step_number} - ${warning.component}`"
+                      type="warning"
+                      :description="warning.warning"
+                      show-icon
+                      :closable="false"
+                      style="margin-bottom: 8px"
+                    />
+                    <el-empty v-if="!currentStepSafetyWarnings.length" description="当前步骤无安全警告" />
+                  </div>
+                </el-tab-pane>
+
+                <el-tab-pane label="FAQ" name="faq">
+                  <div class="tab-content-scroll">
+                    <div
+                      v-for="(faq, index) in (manualData.safety_and_faq?.faq_items || manualData.faq_items || []).slice(0, 2)"
+                      :key="index"
+                      class="ref-item"
+                    >
+                      <div class="ref-header">
+                        <strong>Q: {{ faq.question }}</strong>
+                      </div>
+                      <p>A: {{ faq.answer?.substring(0, 80) }}...</p>
+                    </div>
+                    <el-empty v-if="!(manualData.safety_and_faq?.faq_items || manualData.faq_items || []).length" description="暂无常见问题" />
+                  </div>
+                </el-tab-pane>
+              </el-tabs>
             </div>
           </el-scrollbar>
         </div>
       </div>
 
-      <!-- 中间：3D模型 -->
-      <div class="center-viewer">
-        <div class="model-container" ref="modelContainer">
-          <!-- Three.js 渲染区域 -->
-        </div>
-
-        <!-- 3D控制 -->
-        <div class="model-controls">
-          <div class="controls-row">
-            <el-button-group>
-              <el-button :icon="Refresh" @click="resetCamera">重置视角</el-button>
-              <el-button
-                :icon="View"
-                :type="isExploded ? 'primary' : ''"
-                @click="toggleExplode"
-              >
-                {{ isExploded ? '收起' : '爆炸' }}视图
-              </el-button>
-              <el-button
-                :icon="Grid"
-                :type="isWireframe ? 'primary' : ''"
-                @click="toggleWireframe"
-              >
-                线框模式
-              </el-button>
-            </el-button-group>
-          </div>
-
-          <!-- 爆炸比例滑块 -->
-          <div v-if="isExploded" class="explode-slider">
-            <span class="slider-label">爆炸程度:</span>
-            <el-slider
-              v-model="explodeScale"
-              :min="0"
-              :max="50"
-              :step="1"
-              style="width: 300px; margin: 0 12px;"
-            />
-            <span class="slider-value">{{ explodeScale }}%</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- 右侧：当前步骤详情 -->
-      <div class="right-sidebar">
-        <el-scrollbar height="100%">
-
-          <!-- 当前步骤 -->
-          <div class="step-detail-card" v-if="currentStepData">
-            <div class="step-header">
-              <div class="step-badge">{{ currentStepIndex + 1 }}</div>
-              <h2>{{ currentStepData.title }}</h2>
-            </div>
-
-            <div class="step-content">
-              <!-- 描述 -->
-              <div class="description-section">
-                <p class="description-text">{{ currentStepData.operation || currentStepData.description }}</p>
-              </div>
-
-              <!-- 操作步骤 -->
-              <div class="operations-section" v-if="currentStepData.operation_steps">
-                <h3>📝 操作步骤</h3>
-                <ol class="operation-list">
-                  <li v-for="(op, index) in currentStepData.operation_steps" :key="index">
-                    {{ op }}
-                  </li>
-                </ol>
-              </div>
-
-              <!-- 所需工具 -->
-              <div class="tools-section" v-if="currentStepData.tools_required && currentStepData.tools_required.length">
-                <h3>🔧 所需工具</h3>
-                <div class="tools-tags">
-                  <el-tag
-                    v-for="tool in currentStepData.tools_required"
-                    :key="tool"
-                    type="info"
-                    size="large"
-                    effect="plain"
-                  >
-                    {{ tool }}
-                  </el-tag>
-                </div>
-              </div>
-
-              <!-- 关键点 -->
-              <div class="keypoints-section" v-if="currentStepData.key_points && currentStepData.key_points.length">
-                <h3>💡 关键点</h3>
-                <ul class="keypoints-list">
-                  <li v-for="(point, index) in currentStepData.key_points" :key="index">
-                    {{ point }}
-                  </li>
-                </ul>
-              </div>
-
-              <!-- ✅ 移除：安全警告已在下方"安全"标签页中统一显示 -->
-
-              <!-- 质检要求 -->
-              <div class="operations-section" v-if="currentStepData.quality_check">
-                <h3>✅ 质检要求</h3>
-                <p>{{ currentStepData.quality_check }}</p>
-              </div>
-
-              <!-- 预计时间 -->
-              <div class="time-section">
-                <el-icon><Clock /></el-icon>
-                <span>预计时间: {{ currentStepData.estimated_time_minutes }} 分钟</span>
+      <el-drawer
+        v-model="highlightDrawerVisible"
+        title="高亮编辑"
+        size="420px"
+        direction="rtl"
+        destroy-on-close
+      >
+        <div class="highlight-drawer">
+            <div class="drawer-tip">
+              <p>点选 3D 零件或使用列表，覆盖当前步骤的三色显示。</p>
+              <div class="drawer-actions">
+                <el-button size="small" type="primary" plain disabled>
+                  <el-icon><View /></el-icon>
+                  拾取已开启
+                </el-button>
+                <el-button size="small" @click="resetCurrentStepNodeStates" :disabled="!currentStepHasOverrides">
+                  恢复自动颜色
+                </el-button>
               </div>
             </div>
+
+          <el-input
+            v-model="nodeSearchKeyword"
+            placeholder="搜索 node_name"
+            clearable
+            size="small"
+            class="node-search"
+          />
+
+          <el-scrollbar height="60vh">
+            <div
+              v-for="node in filteredNodeList"
+              :key="node.name"
+              class="node-state-row"
+              :class="{ picked: node.name === lastPickedNodeName }"
+              @click="focusNodeInView(node.name)"
+            >
+              <div class="node-state-row__info">
+                <span class="node-name">{{ node.name }}</span>
+                <el-tag size="small" :type="node.isOverridden ? 'warning' : 'info'">
+                  {{ node.isOverridden ? '已覆盖' : '自动' }}
+                </el-tag>
+                <el-tag size="small" :type="stateTagType(node.finalState)">
+                  {{ stateLabel(node.finalState) }}
+                </el-tag>
+              </div>
+              <el-radio-group
+                size="small"
+                :model-value="nodeStateValue(node.name)"
+                @update:model-value="(val:any) => updateNodeState(node.name, val as NodeStateType)"
+              >
+                <el-radio-button label="current">当前</el-radio-button>
+                <el-radio-button label="done">已装</el-radio-button>
+                <el-radio-button label="none">隐藏</el-radio-button>
+              </el-radio-group>
+            </div>
+            <el-empty v-if="!filteredNodeList.length" description="当前步骤没有可编辑的节点" />
+          </el-scrollbar>
+
+          <div class="drawer-footer">
+            <div class="footer-status">
+              <el-tag v-if="nodeStateTouched" type="danger" size="small">有未保存更改</el-tag>
+              <el-tag v-if="currentStepHasOverrides" type="warning" size="small">
+                已覆盖 {{ currentStepOverrideCount }} 个节点
+              </el-tag>
+              <el-text v-else type="info" size="small">未对该步骤做覆盖</el-text>
+              <el-text v-if="lastPickedNodeName" type="success" size="small">
+                上次点选: {{ lastPickedNodeName }}
+              </el-text>
+            </div>
+            <div class="footer-actions">
+              <el-button @click="highlightDrawerVisible = false">关闭</el-button>
+              <el-button type="primary" :loading="highlightSaving" @click="saveNodeStateOverrides">
+                保存更改
+              </el-button>
+            </div>
           </div>
-
-          <!-- 快速参考标签页 -->
-          <div class="quick-reference-tabs">
-            <el-tabs v-model="activeTab" type="border-card">
-              <el-tab-pane label="焊接" name="welding">
-                <div class="tab-content-scroll">
-
-
-                  <div
-                    v-for="(req, index) in currentStepWeldingRequirements"
-                    :key="index"
-                    class="ref-item"
-                  >
-                    <div class="ref-header">
-                      <strong>步骤{{ req.step_number }} - {{ req.component }}</strong>
-                      <el-tag type="warning" size="small" v-if="req.welding_info?.required">
-                        需要焊接
-                      </el-tag>
-                    </div>
-                    <p v-if="req.welding_info?.welding_position">📍 {{ req.welding_info.welding_position }}</p>
-                    <el-text type="info" size="small" v-if="req.welding_info">
-                      {{ req.welding_info.welding_type || req.welding_info.welding_method }} - {{ req.welding_info.weld_size }}
-                    </el-text>
-                  </div>
-                  <el-empty v-if="!currentStepWeldingRequirements.length" description="当前步骤无焊接要求" />
-                </div>
-              </el-tab-pane>
-
-              <el-tab-pane label="质检" name="quality">
-                <div class="tab-content-scroll">
-                  <div v-if="currentStepQualityCheck && currentStepQualityCheck.quality_check" class="ref-item">
-                    <div class="ref-header">
-                      <strong>步骤{{ currentStepQualityCheck.step_number }} - {{ currentStepQualityCheck.component }}</strong>
-                    </div>
-                    <p>{{ currentStepQualityCheck.quality_check }}</p>
-                  </div>
-                  <el-empty v-else description="当前步骤无质检要求" />
-                </div>
-              </el-tab-pane>
-
-              <el-tab-pane label="安全" name="safety">
-                <div class="tab-content-scroll">
-                  <el-alert
-                    v-for="(warning, index) in currentStepSafetyWarnings"
-                    :key="index"
-                    :title="`步骤${warning.step_number} - ${warning.component}`"
-                    type="warning"
-                    :description="warning.warning"
-                    show-icon
-                    :closable="false"
-                    style="margin-bottom: 8px"
-                  />
-                  <el-empty v-if="!currentStepSafetyWarnings.length" description="当前步骤无安全警告" />
-                </div>
-              </el-tab-pane>
-
-              <el-tab-pane label="FAQ" name="faq">
-                <div class="tab-content-scroll">
-                  <div
-                    v-for="(faq, index) in (manualData.safety_and_faq?.faq_items || manualData.faq_items || []).slice(0, 2)"
-                    :key="index"
-                    class="ref-item"
-                  >
-                    <div class="ref-header">
-                      <strong>Q: {{ faq.question }}</strong>
-                    </div>
-                    <p>A: {{ faq.answer?.substring(0, 80) }}...</p>
-                  </div>
-                  <el-empty v-if="!(manualData.safety_and_faq?.faq_items || manualData.faq_items || []).length" description="暂无常见问题" />
-                </div>
-              </el-tab-pane>
-            </el-tabs>
-          </div>
-        </el-scrollbar>
-      </div>
-    </div>
+        </div>
+      </el-drawer>
+    </template>
 
     <!-- 加载中 -->
     <div v-else class="loading-screen">
@@ -287,6 +379,25 @@
       </el-icon>
       <p>加载装配说明书中...</p>
     </div>
+
+    <el-dialog
+      v-model="nodeStateDialogVisible"
+      title="设置零件状态"
+      width="380px"
+      :close-on-click-modal="false"
+      @closed="pendingNodeName = ''"
+    >
+      <p>节点 {{ pendingNodeName }} 的显示状态</p>
+      <el-radio-group v-model="nodeStateSelection" style="margin-top: 12px;">
+        <el-radio-button label="current">当前（黄）</el-radio-button>
+        <el-radio-button label="done">已装（绿）</el-radio-button>
+        <el-radio-button label="none">隐藏/灰</el-radio-button>
+      </el-radio-group>
+      <template #footer>
+        <el-button @click="nodeStateDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="confirmNodeStateSelection">应用</el-button>
+      </template>
+    </el-dialog>
 
     <!-- 管理员登录Dialog -->
     <el-dialog
@@ -626,8 +737,52 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 
 // ============ 辅助函数 ============
+type NodeStateType = 'current' | 'done' | 'none'
+type StepNodeStateMap = Record<string, Record<string, NodeStateType>>
 
+const normalizeNodeName = (nodeName: string): string => {
+  if (!nodeName) return ''
+  const trimmed = nodeName.trim()
+  if (trimmed.startsWith('mesh_')) {
+    const number = trimmed.replace('mesh_', '')
+    const numericValue = parseInt(number, 10)
+    return `NAUO${numericValue}`
+  }
+  return trimmed
+}
 
+const normalizeNodeStateValue = (state: string | undefined | null): NodeStateType | null => {
+  if (state === 'current' || state === 'done' || state === 'none') {
+    return state
+  }
+  return null
+}
+
+const normalizeStateMap = (raw: Record<string, any> | undefined): Record<string, NodeStateType> => {
+  const normalized: Record<string, NodeStateType> = {}
+  if (!raw) return normalized
+  Object.entries(raw).forEach(([key, value]) => {
+    const name = normalizeNodeName(key)
+    const state = normalizeNodeStateValue(value as string)
+    if (name && state) {
+      normalized[name] = state
+    }
+  })
+  return normalized
+}
+
+const normalizeNodeList = (nodes: string[] = []) => {
+  return nodes
+    .filter((n) => !!n)
+    .map(n => normalizeNodeName(n))
+}
+
+const getStepKey = (step: any, chapterHint?: string, componentHint?: string) => {
+  if (!step) return ''
+  const chapter = step.chapter_type || chapterHint || 'step'
+  const component = step.component_code || componentHint || step.component_name || 'unknown'
+  return step.step_id || `${chapter}-${component}-${step.step_number}`
+}
 
 // ============ 类型定义 ============
 
@@ -657,9 +812,19 @@ const props = defineProps<{
 }>()
 
 const manualData = ref<any>(null)
+const stepNodeStateMap = ref<StepNodeStateMap>({})
 const currentStepIndex = ref(0)
 const activeTab = ref('welding')
 const modelContainer = ref<HTMLElement | null>(null)
+const highlightDrawerVisible = ref(false)
+const highlightSessionBackup = ref<StepNodeStateMap | null>(null)
+const highlightSaving = ref(false)
+const nodeStateTouched = ref(false)
+const nodeSearchKeyword = ref('')
+const lastPickedNodeName = ref('')
+const pendingNodeName = ref('')
+const nodeStateDialogVisible = ref(false)
+const nodeStateSelection = ref<NodeStateType>('current')
 
 // 管理员相关
 const isAdmin = ref(false)
@@ -692,6 +857,7 @@ let renderer: THREE.WebGLRenderer | null = null
 let controls: OrbitControls | null = null
 let model: THREE.Group | null = null
 let gridHelper: THREE.GridHelper | null = null
+let selectionHelper: THREE.BoxHelper | null = null
 
 // 保存每个mesh的原始位置、材质和爆炸方向
 let meshOriginalPositions: Map<string, THREE.Vector3> = new Map()
@@ -701,6 +867,11 @@ let meshExplodeDirections: Map<string, THREE.Vector3> = new Map()
 // ✅ 使用世界坐标系存储，以避免层级导致的局部位置重合问题
 let meshWorldOriginalPositions: Map<string, THREE.Vector3> = new Map()
 let meshWorldExplodeDirections: Map<string, THREE.Vector3> = new Map()
+const raycaster = new THREE.Raycaster()
+const pointer = new THREE.Vector2()
+const pointerDownPos = { x: 0, y: 0 }
+let pointerDragged = false
+let hasBoundRaycastHandler = false
 
 
 const isExploded = ref(false)
@@ -1057,6 +1228,267 @@ const assembledMeshes = computed(() => {
   return assembled
 })
 
+const currentStepKey = computed(() => getStepKey(currentStepData.value))
+const autoCurrentNodes = computed(() => {
+  const raw = currentStepData.value?.['3d_highlight'] || currentStepHighlightMeshes.value
+  return normalizeNodeList(raw || [])
+})
+const autoDoneNodes = computed(() => normalizeNodeList(assembledMeshes.value))
+const autoCurrentSet = computed(() => new Set(autoCurrentNodes.value))
+const autoDoneSet = computed(() => new Set(autoDoneNodes.value))
+
+const currentStepNodeOverrides = computed<Record<string, NodeStateType>>(() => {
+  return stepNodeStateMap.value[currentStepKey.value] || {}
+})
+
+const currentStepCandidateNodes = computed(() => {
+  const names = new Set<string>()
+  autoCurrentNodes.value.forEach(n => names.add(n))
+  autoDoneNodes.value.forEach(n => names.add(n))
+  Object.keys(currentStepNodeOverrides.value).forEach(n => names.add(n))
+  return Array.from(names)
+})
+
+const currentStepNodeList = computed(() => {
+  const order: Record<NodeStateType, number> = { current: 0, done: 1, none: 2 }
+  return currentStepCandidateNodes.value
+    .map(name => {
+      const overrideState = currentStepNodeOverrides.value[name]
+      const autoState = autoCurrentSet.value.has(name)
+        ? 'current'
+        : autoDoneSet.value.has(name)
+          ? 'done'
+          : 'none'
+      const finalState: NodeStateType = overrideState || autoState
+      return {
+        name,
+        autoState,
+        finalState,
+        isOverridden: !!overrideState
+      }
+    })
+    .sort((a, b) => {
+      if (order[a.finalState] !== order[b.finalState]) {
+        return order[a.finalState] - order[b.finalState]
+      }
+      return a.name.localeCompare(b.name)
+    })
+})
+
+const filteredNodeList = computed(() => {
+  const keyword = nodeSearchKeyword.value.trim().toLowerCase()
+  if (!keyword) return currentStepNodeList.value
+  return currentStepNodeList.value.filter(node => node.name.toLowerCase().includes(keyword))
+})
+
+const currentStepHasOverrides = computed(() => Object.keys(currentStepNodeOverrides.value).length > 0)
+const currentStepOverrideCount = computed(() => Object.keys(currentStepNodeOverrides.value).length)
+
+const stateLabel = (state: NodeStateType) => {
+  if (state === 'current') return '当前'
+  if (state === 'done') return '已装'
+  return '隐藏'
+}
+
+const stateTagType = (state: NodeStateType) => {
+  if (state === 'current') return 'warning'
+  if (state === 'done') return 'success'
+  return 'info'
+}
+
+const getAutoState = (nodeName: string): NodeStateType => {
+  if (autoCurrentSet.value.has(nodeName)) return 'current'
+  if (autoDoneSet.value.has(nodeName)) return 'done'
+  return 'none'
+}
+
+const nodeStateValue = (nodeName: string): NodeStateType => {
+  const normalized = normalizeNodeName(nodeName)
+  return currentStepNodeOverrides.value[normalized] || getAutoState(normalized)
+}
+
+const updateStepNodeStatesInManualData = (stepKey: string, states: Record<string, NodeStateType>) => {
+  if (!manualData.value || !stepKey) return
+  let updated = false
+
+  const applyToStep = (step: any, chapterHint?: string, componentHint?: string) => {
+    if (getStepKey(step, chapterHint, componentHint) === stepKey) {
+      if (states && Object.keys(states).length > 0) {
+        step.step_node_states = states
+      } else {
+        delete step.step_node_states
+      }
+      updated = true
+    }
+  }
+
+  manualData.value?.component_assembly?.forEach((component: any) => {
+    component.steps?.forEach((step: any) => {
+      if (!updated) applyToStep(step, 'component_assembly', component.component_code || component.component_name)
+    })
+  })
+
+  manualData.value?.product_assembly?.steps?.forEach((step: any) => {
+    if (!updated) applyToStep(step, 'product_assembly', step.component_code || step.component_name)
+  })
+}
+
+const updateNodeState = (nodeName: string, state: NodeStateType) => {
+  const normalizedName = normalizeNodeName(nodeName)
+  const stepKey = currentStepKey.value
+  if (!normalizedName || !stepKey) return
+
+  const autoState = getAutoState(normalizedName)
+  const currentStates = { ...(stepNodeStateMap.value[stepKey] || {}) }
+
+  if (state === 'current' && autoState === 'done') {
+    ElMessageBox.alert(
+      '此零件已在前序步骤标记为已装配，已按你的设置改为当前步骤零件。',
+      '提醒',
+      { type: 'warning', confirmButtonText: '知道了' }
+    )
+  }
+
+  if (state === autoState) {
+    delete currentStates[normalizedName]
+  } else {
+    currentStates[normalizedName] = state
+  }
+
+  const nextMap = { ...stepNodeStateMap.value }
+  if (Object.keys(currentStates).length > 0) {
+    nextMap[stepKey] = currentStates
+  } else {
+    delete nextMap[stepKey]
+  }
+  stepNodeStateMap.value = nextMap
+  updateStepNodeStatesInManualData(stepKey, currentStates)
+
+  nodeStateTouched.value = true
+  highlightStepParts()
+}
+
+const resetCurrentStepNodeStates = () => {
+  const stepKey = currentStepKey.value
+  if (!stepKey) return
+  const nextMap = { ...stepNodeStateMap.value }
+  delete nextMap[stepKey]
+  stepNodeStateMap.value = nextMap
+  updateStepNodeStatesInManualData(stepKey, {})
+  nodeStateTouched.value = true
+  highlightStepParts()
+}
+
+const openHighlightDrawer = () => {
+  highlightDrawerVisible.value = true
+  setTimeout(() => {
+    ElMessage.info('点击模型拾取零件或在列表中切换状态')
+  }, 50)
+}
+
+const focusNodeInView = (nodeName: string) => {
+  if (!model || !camera || !controls) return
+  let target = model.getObjectByName(nodeName)
+  if (!target && nodeName.startsWith('NAUO')) {
+    const meshName = `mesh_${nodeName.replace('NAUO', '')}`
+    target = model.getObjectByName(meshName)
+  }
+  if (!target) return
+
+  // 更新选中高亮框
+  showSelectionHighlight(target)
+
+  const box = new THREE.Box3().setFromObject(target)
+  const center = box.getCenter(new THREE.Vector3())
+  const size = box.getSize(new THREE.Vector3())
+  const maxDim = Math.max(size.x, size.y, size.z) || 1
+  const distance = maxDim * 4
+
+  camera.position.set(center.x + distance, center.y + distance, center.z + distance)
+  controls.target.copy(center)
+  controls.update()
+}
+
+const handleCanvasPick = async (event: PointerEvent) => {
+  if (!renderer || !camera || !model || !currentStepData.value) return
+
+
+  // 若抽屉未打开，自动唤起并准备编辑会话
+  if (!highlightDrawerVisible.value) {
+    highlightDrawerVisible.value = true
+    // 抽屉打开时的备份交给 watcher 处理
+  }
+
+  const rect = renderer.domElement.getBoundingClientRect()
+  pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
+  pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
+
+  raycaster.setFromCamera(pointer, camera)
+  const intersects = raycaster.intersectObjects(model.children, true)
+
+  if (!intersects.length) {
+    console.warn('⚠️ 未命中任何零件')
+    return
+  }
+
+  const mesh = intersects[0].object as THREE.Mesh
+  const nodeName = normalizeNodeName(mesh.name)
+  if (!nodeName) {
+    ElMessage.warning('命中的节点名称为空，无法设置状态')
+    return
+  }
+
+  lastPickedNodeName.value = nodeName
+  highlightDrawerVisible.value = true
+  showSelectionHighlight(mesh)
+
+  const candidateSet = new Set(currentStepCandidateNodes.value)
+  if (!candidateSet.has(nodeName)) {
+    try {
+      await ElMessageBox.confirm(
+        `节点 ${nodeName} 不在当前步骤列表，是否添加并标记为当前？`,
+        '提示',
+        { type: 'warning', confirmButtonText: '添加', cancelButtonText: '取消' }
+      )
+      pendingNodeName.value = nodeName
+      nodeStateSelection.value = 'current'
+      nodeStateDialogVisible.value = true
+    } catch {
+      return
+    }
+    return
+  }
+
+  pendingNodeName.value = nodeName
+  nodeStateSelection.value = nodeStateValue(nodeName)
+  nodeStateDialogVisible.value = true
+}
+
+const confirmNodeStateSelection = () => {
+  if (!pendingNodeName.value) {
+    nodeStateDialogVisible.value = false
+    return
+  }
+  updateNodeState(pendingNodeName.value, nodeStateSelection.value)
+  nodeStateDialogVisible.value = false
+  pendingNodeName.value = ''
+}
+
+const showSelectionHighlight = (target: THREE.Object3D) => {
+  if (!scene) return
+  clearSelectionHighlight()
+  selectionHelper = new THREE.BoxHelper(target, 0xff4d4f)
+  const mat: any = selectionHelper.material
+  if (mat) {
+    mat.depthTest = false
+    mat.transparent = true
+    mat.opacity = 0.95
+  }
+  selectionHelper.name = '__selection_box__'
+  selectionHelper.update()
+  scene.add(selectionHelper)
+}
+
 // 图纸点击放大功能
 const toggleDrawingZoom = (index: number) => {
   if (zoomedDrawingIndex.value === index) {
@@ -1151,6 +1583,120 @@ const progressColor = computed(() => {
   if (percentage < 70) return '#e6a23c'
   return '#67c23a'
 })
+
+const syncStepNodeStatesFromManual = () => {
+  const data = manualData.value
+  if (!data) return
+
+  const map: StepNodeStateMap = {}
+  const collect = (step: any, chapterHint?: string, componentHint?: string) => {
+    const key = getStepKey(step, chapterHint, componentHint)
+    const normalizedStates = normalizeStateMap(step?.step_node_states)
+    if (key && Object.keys(normalizedStates).length > 0) {
+      map[key] = normalizedStates
+    }
+  }
+
+  data.component_assembly?.forEach((component: any) => {
+    component.steps?.forEach((step: any) => collect(step, 'component_assembly', component.component_code || component.component_name))
+  })
+  data.product_assembly?.steps?.forEach((step: any) => collect(step, 'product_assembly', step.component_code || step.component_name))
+
+  stepNodeStateMap.value = map
+  nodeStateTouched.value = false
+  if (model) {
+    highlightStepParts()
+  }
+  highlightSessionBackup.value = null
+}
+
+const writeStateMapToManual = (data: any) => {
+  if (!data) return
+  const applyToStep = (step: any, chapterHint?: string, componentHint?: string) => {
+    const key = getStepKey(step, chapterHint, componentHint)
+    const states = stepNodeStateMap.value[key]
+    if (states && Object.keys(states).length > 0) {
+      step.step_node_states = states
+    } else {
+      delete step.step_node_states
+    }
+  }
+
+  data.component_assembly?.forEach((component: any) => {
+    component.steps?.forEach((step: any) => applyToStep(step, 'component_assembly', component.component_code || component.component_name))
+  })
+  data.product_assembly?.steps?.forEach((step: any) => applyToStep(step, 'product_assembly', step.component_code || step.component_name))
+}
+
+const saveNodeStateOverrides = async () => {
+  if (!manualData.value) {
+    ElMessage.error('装配说明书未加载')
+    return
+  }
+
+  try {
+    highlightSaving.value = true
+    const updatedData = JSON.parse(JSON.stringify(manualData.value))
+    writeStateMapToManual(updatedData)
+    const response = await axios.put(`/api/manual/${props.taskId}`, updatedData)
+    if (response.data.success) {
+      if (response.data.version) {
+        updatedData.version = response.data.version
+      }
+      if (response.data.lastUpdated) {
+        updatedData.lastUpdated = response.data.lastUpdated
+      }
+      manualData.value = updatedData
+      localStorage.setItem('current_manual', JSON.stringify(updatedData))
+      nodeStateTouched.value = false
+      highlightSessionBackup.value = JSON.parse(JSON.stringify(stepNodeStateMap.value))
+      ElMessage.success('高亮覆盖已保存')
+    }
+  } catch (error: any) {
+    console.error('❌ 保存高亮覆盖失败:', error)
+    ElMessage.error('保存高亮失败: ' + (error.response?.data?.detail || error.message || '未知错误'))
+  } finally {
+    highlightSaving.value = false
+  }
+}
+
+const handlePointerMove = (event: PointerEvent) => {
+  if (!renderer || !camera || !model) return
+  if (event.buttons === 1) {
+    const dx = event.clientX - pointerDownPos.x
+    const dy = event.clientY - pointerDownPos.y
+    if (Math.abs(dx) + Math.abs(dy) > 5) {
+      pointerDragged = true
+    }
+    return // 拖拽旋转时不更新 hover 框
+  }
+
+  const rect = renderer.domElement.getBoundingClientRect()
+  pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
+  pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
+
+  raycaster.setFromCamera(pointer, camera)
+  const intersects = raycaster.intersectObjects(model.children, true)
+
+  if (!intersects.length) {
+    clearSelectionHighlight()
+    return
+  }
+
+  const mesh = intersects[0].object as THREE.Object3D
+  showSelectionHighlight(mesh)
+}
+
+const handlePointerDown = (event: PointerEvent) => {
+  pointerDownPos.x = event.clientX
+  pointerDownPos.y = event.clientY
+  pointerDragged = false
+}
+
+const handlePointerUp = (event: PointerEvent) => {
+  if (pointerDragged) return
+  handleCanvasPick(event)
+}
 
 // ✅ 初始化3D查看器和模型
 const init3DViewerAndModel = async () => {
@@ -1250,6 +1796,32 @@ watch(showEditDialog, (newVal) => {
   }
 })
 
+// 高亮抽屉开关：打开时备份，关闭且未保存时回滚
+watch(highlightDrawerVisible, (visible, prev) => {
+  if (visible) {
+    highlightSessionBackup.value = JSON.parse(JSON.stringify(stepNodeStateMap.value))
+    nodeStateTouched.value = false
+    return
+  }
+
+  // 抽屉关闭
+  pendingNodeName.value = ''
+  nodeStateDialogVisible.value = false
+  clearSelectionHighlight()
+
+  if (prev && highlightSessionBackup.value && nodeStateTouched.value) {
+    stepNodeStateMap.value = JSON.parse(JSON.stringify(highlightSessionBackup.value))
+    highlightSessionBackup.value = null
+    if (manualData.value) {
+      writeStateMapToManual(manualData.value)
+    }
+    nodeStateTouched.value = false
+    highlightStepParts()
+  } else {
+    highlightSessionBackup.value = null
+  }
+})
+
 // ✅ 监听焊接模块的组件名称变化，自动同步到安全警告模块
 watch(
   () => editData.value.welding_requirements.length > 0
@@ -1336,6 +1908,7 @@ const saveManualData = async () => {
 
     // 更新manualData
     const updatedData = { ...manualData.value }
+    writeStateMapToManual(updatedData)
 
     // ========== 更新焊接要求（只保存到步骤内嵌字段） ==========
     const currentStepId = currentStep.step_id || ''
@@ -1526,6 +2099,7 @@ const saveManualData = async () => {
     if (response.data.success) {
       // 更新本地数据
       manualData.value = updatedData
+      syncStepNodeStatesFromManual()
 
       // 更新localStorage缓存
       localStorage.setItem('current_manual', JSON.stringify(updatedData))
@@ -1569,6 +2143,7 @@ const loadLocalJSON = async () => {
         if (cached.version === serverVersion) {
           // 版本一致,使用缓存
           manualData.value = cached
+          syncStepNodeStatesFromManual()
           console.log('✅ 从缓存加载说明书成功 (版本一致):', manualData.value)
           console.log('📋 manualData的所有字段:', Object.keys(manualData.value))
 
@@ -1583,6 +2158,7 @@ const loadLocalJSON = async () => {
       } catch (error) {
         console.warn('版本检查失败,使用缓存数据', error)
         manualData.value = cached
+        syncStepNodeStatesFromManual()
         console.log('✅ 从缓存加载说明书成功 (版本检查失败):', manualData.value)
         ElMessage.success('装配说明书加载成功！')
         await init3DViewerAndModel()
@@ -1593,6 +2169,7 @@ const loadLocalJSON = async () => {
     // 2. 版本不一致或无缓存，从后端 API 获取
     const response = await axios.get(`/api/manual/${props.taskId}`)
     manualData.value = response.data
+    syncStepNodeStatesFromManual()
 
     // 保存到 localStorage
     localStorage.setItem('current_manual', JSON.stringify(manualData.value))
@@ -1670,6 +2247,13 @@ const init3DViewer = () => {
   renderer.setPixelRatio(window.devicePixelRatio)
   container.appendChild(renderer.domElement)
   console.log('✅ 渲染器创建成功，已添加到DOM')
+
+  if (!hasBoundRaycastHandler) {
+    renderer.domElement.addEventListener('pointerdown', handlePointerDown)
+    renderer.domElement.addEventListener('pointerup', handlePointerUp)
+    renderer.domElement.addEventListener('pointermove', handlePointerMove)
+    hasBoundRaycastHandler = true
+  }
 
   // 添加光源（增强亮度）
   const ambientLight = new THREE.AmbientLight(0xffffff, 1.2)  // 环境光增强到1.2
@@ -2111,46 +2695,32 @@ const highlightStepParts = () => {
     return
   }
 
-  // ✅ 获取当前步骤要装配的零件（黄色）
-  const currentNodes: string[] = currentStepData.value['3d_highlight'] || currentStepHighlightMeshes.value
-
-  // 添加日志，帮助调试
-  if (currentStepData.value['3d_highlight']) {
-    console.log('✅ 使用3d_highlight字段:', currentStepData.value['3d_highlight'])
-  } else {
-    console.log('⚠️ 3d_highlight字段不存在，回退到currentStepHighlightMeshes')
-  }
-
-  console.log('🟡 步骤', currentStepIndex.value + 1, '正在装配的零件:', currentNodes)
-
-  // ✅ 获取已装配的零件（绿色）
-  const assembledNodes: string[] = assembledMeshes.value
-  console.log('🟢 已装配的零件:', assembledNodes)
-
-  // ✅ 兼容旧数据：如果是mesh_xxx格式，转换为NAUOxxx
-  const normalizeNodeName = (nodeName: string): string => {
-    if (nodeName.startsWith('mesh_')) {
-      const number = nodeName.replace('mesh_', '')
-      const numericValue = parseInt(number, 10)
-      return `NAUO${numericValue}`
-    }
-    return nodeName
-  }
-
-  const normalizedCurrentNodes = currentNodes.map(normalizeNodeName)
-  const normalizedAssembledNodes = assembledNodes.map(normalizeNodeName)
-
-  // 统计
   let currentCount = 0
   let assembledCount = 0
   let unassembledCount = 0
+  let overrideCount = 0
+
+  const normalizedCurrentNodes = autoCurrentNodes.value
+  const normalizedAssembledNodes = autoDoneNodes.value
+  const overrideStates = currentStepNodeOverrides.value
+  console.log('🟡 自动当前节点:', normalizedCurrentNodes)
+  console.log('🟢 自动已装节点:', normalizedAssembledNodes)
+  console.log('🎨 覆盖状态:', overrideStates)
 
   // 遍历模型，设置三种颜色
   model.traverse((child: any) => {
     if (child.isMesh) {
-      const nodeName = child.name
+      const rawName = child.name
+      const nodeName = normalizeNodeName(rawName)
+      const overrideState = overrideStates[nodeName]
+      const autoState = getAutoState(nodeName)
+      const finalState: NodeStateType = overrideState || autoState
 
-      if (normalizedCurrentNodes.includes(nodeName)) {
+      if (overrideState) {
+        overrideCount++
+      }
+
+      if (finalState === 'current') {
         // 🟡 正在装配：黄色高亮
         child.material = new THREE.MeshStandardMaterial({
           color: 0xffff00,        // 亮黄色
@@ -2162,7 +2732,7 @@ const highlightStepParts = () => {
           opacity: 1.0
         })
         currentCount++
-      } else if (normalizedAssembledNodes.includes(nodeName)) {
+      } else if (finalState === 'done') {
         // 🟢 已装配：绿色
         child.material = new THREE.MeshStandardMaterial({
           color: 0x4CAF50,        // 绿色
@@ -2176,7 +2746,7 @@ const highlightStepParts = () => {
         assembledCount++
       } else {
         // ⚪ 未装配：浅灰色半透明
-        const originalMaterial = meshOriginalMaterials.get(nodeName)
+        const originalMaterial = meshOriginalMaterials.get(rawName)
         if (originalMaterial) {
           child.material = originalMaterial.clone()
         } else {
@@ -2193,7 +2763,17 @@ const highlightStepParts = () => {
     }
   })
 
-  console.log(`✅ 三色渲染完成: 🟡正在装配=${currentCount}, 🟢已装配=${assembledCount}, ⚪未装配=${unassembledCount}`)
+  console.log(
+    `✅ 三色渲染完成: 🟡当前=${currentCount}, 🟢已装=${assembledCount}, ⚪隐藏=${unassembledCount}, 覆盖=${overrideCount}`
+  )
+}
+
+const clearSelectionHighlight = () => {
+  if (selectionHelper && scene) {
+    scene.remove(selectionHelper)
+    selectionHelper.geometry.dispose()
+    selectionHelper = null
+  }
 }
 
 // 应用爆炸效果（按装配步骤层级爆炸）
@@ -2338,6 +2918,15 @@ const resetCamera = () => {
 watch(currentStepIndex, async (newIndex, oldIndex) => {
   const newStep = allSteps.value[newIndex]
   const oldStep = allSteps.value[oldIndex]
+  nodeSearchKeyword.value = ''
+  lastPickedNodeName.value = ''
+  pendingNodeName.value = ''
+  nodeStateDialogVisible.value = false
+  if (selectionHelper && scene) {
+    scene.remove(selectionHelper)
+    selectionHelper.geometry.dispose()
+    selectionHelper = null
+  }
 
   // 检查是否需要切换GLB文件
   const newGlbFile = newStep?.glb_file
@@ -2379,6 +2968,12 @@ onMounted(() => {
 
 onUnmounted(() => {
   if (renderer) {
+    if (hasBoundRaycastHandler) {
+      renderer.domElement.removeEventListener('pointerdown', handlePointerDown)
+      renderer.domElement.removeEventListener('pointerup', handlePointerUp)
+      renderer.domElement.removeEventListener('pointermove', handlePointerMove)
+      hasBoundRaycastHandler = false
+    }
     renderer.dispose()
   }
   if (controls) {
@@ -2801,6 +3396,17 @@ onUnmounted(() => {
         color: #333;
       }
 
+      .highlight-edit-entry {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+
+        .highlight-edit-hint {
+          color: #888;
+        }
+      }
+
       .description-text {
         font-size: 15px;
         line-height: 1.8;
@@ -2872,6 +3478,83 @@ onUnmounted(() => {
           color: #555;
         }
       }
+    }
+  }
+}
+
+.highlight-drawer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  .drawer-tip {
+    background: #f6f8fb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 13px;
+    color: #555;
+
+    .drawer-actions {
+      margin-top: 8px;
+      display: flex;
+      gap: 8px;
+    }
+  }
+
+  .node-search {
+    margin-top: 4px;
+  }
+
+  .node-state-row {
+    padding: 10px 8px;
+    border: 1px solid #edf0f5;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    background: #fafbff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+
+    &.picked {
+      border-color: #8b5cf6;
+      box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.15);
+    }
+
+    &:hover {
+      border-color: #b3c0d1;
+    }
+
+    .node-state-row__info {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+
+      .node-name {
+        font-weight: 600;
+      }
+    }
+  }
+
+  .drawer-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 4px;
+    border-top: 1px solid #e5e7eb;
+
+    .footer-status {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .footer-actions {
+      display: flex;
+      gap: 8px;
     }
   }
 }

@@ -11,8 +11,8 @@
       <!-- 左侧主标题区域 -->
       <div class="main-title-section">
         <h1 class="main-title">
-          <div class="title-line">智能装配</div>
-          <div class="title-line">说明书平台</div>
+          <div class="title-line">易力特1</div>
+          <div class="title-line">AI智能装配平台</div>
         </h1>
         
         <div class="feature-list">

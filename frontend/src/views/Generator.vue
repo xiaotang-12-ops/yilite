@@ -36,7 +36,7 @@
                   <div class="file-item" v-for="file in pdfFiles" :key="file.uid">
                     <el-icon><Document /></el-icon>
                     <span class="file-name">{{ file.name }}</span>
-                    <span class="file-size">{{ formatFileSize(file.size) }}</span>
+                    <span class="file-size">{{ formatFileSize(file.size || 0) }}</span>
                     <el-button 
                       type="danger" 
                       text 
@@ -76,7 +76,7 @@
                   <div class="file-item" v-for="file in modelFiles" :key="file.uid">
                     <el-icon><Box /></el-icon>
                     <span class="file-name">{{ file.name }}</span>
-                    <span class="file-size">{{ formatFileSize(file.size) }}</span>
+                    <span class="file-size">{{ formatFileSize(file.size || 0) }}</span>
                     <el-button 
                       type="danger" 
                       text 
@@ -288,12 +288,26 @@ const config = reactive({
 })
 
 // 文件验证相关
-const validationResult = ref(null)
+interface ValidationResult {
+  isValid: boolean;
+  errors: string[];
+}
+const validationResult = ref<ValidationResult | null>(null);
 
 // Agent协作相关
+interface Agent {
+  id: string;
+  name: string;
+  icon: string;
+  currentTask: string;
+  status: 'idle' | 'working' | 'completed';
+  progress: number;
+  results: string[];
+}
+
 // 6个AI智能体（根据 docs/AGENT_ARCHITECTURE.md）
 // ✅ 基于实际日志的 8 个 AI 员工
-const agents = ref([
+const agents = ref<Agent[]>([
   {
     id: 'file-manager',
     name: '📂 文件管理员',
@@ -498,7 +512,7 @@ const updateAgentStatus = (message: string) => {
 }
 
 // ✅ 日志容器引用
-const logsContainer = ref(null)
+const logsContainer = ref<HTMLElement | null>(null)
 
 // ✅ 查看说明书（带重试逻辑）
 const viewManual = async () => {
@@ -630,18 +644,33 @@ const resetGenerator = () => {
   ElMessage.info('已重置，可以重新上传文件')
 }
 
-const agentDialogs = ref([])
-const typingAgent = ref(null)
-const dialogContainer = ref(null)
+const agentDialogs = ref<any[]>([])
+const typingAgent = ref<any>(null)
+const dialogContainer = ref<HTMLElement | null>(null)
 
 const processingProgress = ref(0)
 const processingStatus = ref<'success' | 'exception' | undefined>()
 const processingText = ref('')
 
 // 新增：可视化处理相关数据
+interface ProcessingData {
+  parallel_progress?: any;
+  stage_data?: any;
+  pdf_bom?: any;
+  pdf_deep?: any;
+  step_extract?: any;
+  matching?: any;
+  generate?: any;
+  files?: any[];
+  models?: any[];
+  aiProgress?: { vision: number; expert: number };
+  visionResults?: any[];
+  expertInsights?: any[];
+  logs?: any[];
+}
 const currentProcessingStage = ref('pdf_bom') // pdf_bom, parallel, matching, generate
-const processingData = ref({})
-const processingStepsRef = ref()
+const processingData = ref<ProcessingData>({})
+const processingStepsRef = ref<any>()
 const taskId = ref('')
 const generatedManualUrl = ref('')
 
@@ -705,10 +734,10 @@ const validateFileCorrespondence = () => {
     return
   }
 
-  const pdfNames = pdfFiles.value.map(f => f.name.replace(/\.pdf$/i, ''))
-  const stepNames = modelFiles.value.map(f => f.name.replace(/\.(step|stp)$/i, ''))
+  const pdfNames = pdfFiles.value.map((f: UploadFile) => f.name.replace(/\.pdf$/i, ''))
+  const stepNames = modelFiles.value.map((f: UploadFile) => f.name.replace(/\.(step|stp)$/i, ''))
 
-  const errors = []
+  const errors: string[] = []
 
   // 检查PDF文件是否有对应的STEP文件
   pdfNames.forEach(pdfName => {
@@ -1175,7 +1204,7 @@ const parseAgentLog = (message: string, level: string) => {
   const agentStartMatch = message.match(/👷 (.+?)AI员工加入工作，他开始(.+?)\.\.\./)
   if (agentStartMatch) {
     const agentName = mapAgentName(agentStartMatch[1])
-    updateAgentStatus(agentName, 'working', `正在${agentStartMatch[2]}...`)
+    // Note: updateAgentStatus is now handled by the main log processing logic
 
     return {
       id: generateDialogId(),
@@ -1191,7 +1220,7 @@ const parseAgentLog = (message: string, level: string) => {
   const agentSuccessMatch = message.match(/✅ (.+?)AI员工完成了工作，他(.+)/)
   if (agentSuccessMatch) {
     const agentName = mapAgentName(agentSuccessMatch[1])
-    updateAgentStatus(agentName, 'completed', '任务完成')
+    // Note: updateAgentStatus is now handled by the main log processing logic
 
     return {
       id: generateDialogId(),
@@ -1232,8 +1261,8 @@ const parseAgentLog = (message: string, level: string) => {
   return null
 }
 
-const mapAgentName = (rawName: string) => {
-  const nameMap = {
+const mapAgentName = (rawName: string): string => {
+  const nameMap: Record<string, string> = {
     '文件管理': '文件管理员',
     'Qwen-VL': 'Qwen-VL视觉智能体',
     'DeepSeek': 'DeepSeek推理智能体',
@@ -1243,8 +1272,8 @@ const mapAgentName = (rawName: string) => {
   return nameMap[rawName] || rawName
 }
 
-const getAgentIcon = (agentName: string) => {
-  const iconMap = {
+const getAgentIcon = (agentName: string): string => {
+  const iconMap: Record<string, string> = {
     '文件管理员': '📁',
     'Qwen-VL视觉智能体': '👁️',
     'DeepSeek推理智能体': '🧠',
@@ -1255,7 +1284,7 @@ const getAgentIcon = (agentName: string) => {
 }
 
 const generateDialogId = () => {
-  return Date.now() + Math.random().toString(36).substr(2, 9)
+  return Date.now() + Math.random().toString(36).substring(2, 11)
 }
 
 const addAgentDialog = (dialog: any) => {

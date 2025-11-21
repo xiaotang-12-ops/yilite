@@ -8,7 +8,7 @@
             <el-icon size="24"><Setting /></el-icon>
           </div>
           <div class="brand-text">
-            <h1>智能装配说明书</h1>
+            <h1>易力特AI智能装配平台</h1>
             <span>AI Assembly Manual Generator</span>
           </div>
         </div>
@@ -71,6 +71,7 @@
 <script setup lang="ts">
 import { watch } from 'vue'
 import { useDark, useToggle } from '@vueuse/core'
+import { ElMessageBox } from 'element-plus'
 import { Sunny, Moon, House, DocumentAdd, View, Setting, QuestionFilled } from '@element-plus/icons-vue'
 
 const isDark = useDark()

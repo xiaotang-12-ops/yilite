@@ -399,7 +399,7 @@ async def list_manuals():
     ✅ 扫描output目录，返回所有包含assembly_manual.json的任务
     """
     try:
-        output_base = Path("output")
+        output_base = OUTPUT_DIR
         if not output_base.exists():
             return {"manuals": [], "total": 0}
 
@@ -461,7 +461,7 @@ async def get_glb_file(task_id: str, glb_filename: str):
     获取任务的GLB 3D模型文件
     """
     try:
-        output_dir = Path("output") / task_id
+        output_dir = OUTPUT_DIR / task_id
 
         # ✅ 尝试多个可能的路径
         possible_paths = [
@@ -502,7 +502,7 @@ async def get_pdf_image(task_id: str, image_path: str):
     - /api/manual/{task_id}/pdf_images/组件1/page_001.png
     """
     try:
-        output_dir = Path("output") / task_id
+        output_dir = OUTPUT_DIR / task_id
 
         # ✅ Bug修复：统一使用 pdf_images/{pdf_name}/page_xxx.png 结构
         full_image_path = output_dir / "pdf_images" / image_path
@@ -536,7 +536,7 @@ async def get_manual(task_id: str):
     """
     try:
         # ✅ 直接检查输出目录（不依赖tasks字典）
-        output_dir = Path("output") / task_id
+        output_dir = OUTPUT_DIR / task_id
 
         if not output_dir.exists():
             raise HTTPException(
@@ -589,7 +589,7 @@ async def update_manual(task_id: str, manual_data: dict):
     - 保存到output/{task_id}/assembly_manual.json
     """
     try:
-        output_dir = Path("output") / task_id
+        output_dir = OUTPUT_DIR / task_id
         if not output_dir.exists():
             raise HTTPException(status_code=404, detail=f"任务不存在: {task_id}")
 

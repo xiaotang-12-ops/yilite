@@ -74,7 +74,7 @@
               </template>
             </el-table-column>
             
-            <el-table-column prop="fileCount" label="文件数量" width="120">
+            <el-table-column prop="fileCount" label="文件数量" width="120" v-if="false">
               <template #default="{ row }">
                 <span class="file-count">
                   {{ row.pdfCount }}PDF + {{ row.stepCount }}STEP
@@ -82,7 +82,7 @@
               </template>
             </el-table-column>
             
-            <el-table-column prop="processingTime" label="处理时间" width="120">
+            <el-table-column prop="processingTime" label="处理时间" width="120" v-if="false">
               <template #default="{ row }">
                 {{ row.processingTime }}s
               </template>
@@ -209,6 +209,18 @@ import {
 import { ElMessage, ElMessageBox } from 'element-plus'
 import axios from 'axios'
 
+interface Project {
+  id: string;
+  projectName: string;
+  status: string;
+  createdAt: string;
+  pdfCount: number;
+  stepCount: number;
+  processingTime: number;
+  description: string;
+  data?: any;
+}
+
 const router = useRouter()
 
 // 响应式数据
@@ -216,12 +228,12 @@ const showProjectDialog = ref(true)
 const loading = ref(false)
 const searchQuery = ref('')
 const statusFilter = ref('')
-const dateRange = ref([])
+const dateRange = ref<[Date, Date] | []>([])
 const currentPage = ref(1)
 const pageSize = ref(20)
 
 // ✅ 从 localStorage 加载项目数据
-const projects = ref<any[]>([])
+const projects = ref<Project[]>([])
 
 // 加载历史记录
 const loadHistory = async () => {
@@ -337,17 +349,17 @@ const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleString('zh-CN')
 }
 
-const getStatusType = (status: string) => {
-  const types = {
+const getStatusType = (status: string): 'success' | 'warning' | 'danger' | 'info' => {
+  const types: Record<string, 'success' | 'warning' | 'danger'> = {
     completed: 'success',
-    processing: 'warning', 
+    processing: 'warning',
     failed: 'danger'
   }
   return types[status] || 'info'
 }
 
 const getStatusText = (status: string) => {
-  const texts = {
+  const texts: Record<string, string> = {
     completed: '已完成',
     processing: '处理中',
     failed: '失败'
@@ -355,13 +367,13 @@ const getStatusText = (status: string) => {
   return texts[status] || '未知'
 }
 
-const selectProject = (row: any) => {
+const selectProject = (row: Project) => {
   if (row.status === 'completed') {
     viewProject(row)
   }
 }
 
-const viewProject = async (project: any) => {
+const viewProject = async (project: Project) => {
   if (project.status !== 'completed') {
     ElMessage.warning('项目尚未完成，无法查看说明书')
     return

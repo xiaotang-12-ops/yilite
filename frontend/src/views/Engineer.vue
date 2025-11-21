@@ -166,11 +166,30 @@ const agents = ref([
   }
 ])
 
+// 定义日志类型
+interface SystemLog {
+  id: number
+  level: 'info' | 'success' | 'warning' | 'error'
+  message: string
+  timestamp: string
+}
+
+// 定义对话类型
+interface AgentDialog {
+  id: number
+  agent: string
+  agentIcon: string
+  message: string
+  timestamp: string
+  type: string
+  status: string
+}
+
 // Agent对话数据
-const agentDialogs = ref([])
-const systemLogs = ref([])
+const agentDialogs = ref<AgentDialog[]>([])
+const systemLogs = ref<SystemLog[]>([])
 const autoScroll = ref(true)
-const dialogContainer = ref(null)
+const dialogContainer = ref<HTMLElement | null>(null)
 
 // 统计数据
 const stats = reactive({
@@ -182,7 +201,7 @@ const stats = reactive({
 
 // 方法
 const getStatusText = (status: string) => {
-  const statusMap = {
+  const statusMap: Record<string, string> = {
     idle: '待机中',
     working: '工作中',
     completed: '已完成',
@@ -260,12 +279,14 @@ const updateAgentStatus = (agentName: string, status: string, message: string) =
 const scrollToBottom = () => {
   if (autoScroll.value && dialogContainer.value) {
     nextTick(() => {
-      dialogContainer.value.scrollTop = dialogContainer.value.scrollHeight
+      if (dialogContainer.value) {
+        dialogContainer.value.scrollTop = dialogContainer.value.scrollHeight
+      }
     })
   }
 }
 
-const addSystemLog = (level: string, message: string) => {
+const addSystemLog = (level: 'info' | 'success' | 'warning' | 'error', message: string) => {
   systemLogs.value.unshift({
     id: Date.now(),
     level,
@@ -280,7 +301,7 @@ const addSystemLog = (level: string, message: string) => {
 }
 
 // WebSocket连接（用于接收后端Agent日志）
-let ws = null
+const ws = ref<WebSocket | null>(null)
 
 const connectWebSocket = () => {
   // 这里可以连接到后端WebSocket来接收实时Agent日志
@@ -319,9 +340,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   // 清理WebSocket连接
-  if (ws) {
-    ws.close()
-  }
+  ws.value?.close()
 })
 </script>
 

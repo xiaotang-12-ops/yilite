@@ -126,3 +126,8 @@ htmlcov/
 # 3D model cache
 models_cache/
 
+# 部分和项目无关项目
+参考项目/
+测试-CAD/
+测试-pdf/
+
