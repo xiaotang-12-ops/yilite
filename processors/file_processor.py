@@ -216,6 +216,48 @@ class ModelProcessor:
                 scene.apply_scale(scale_factor)
                 print(f"   📏 应用缩放因子: {scale_factor}")
 
+            # 尝试修复节点/几何名称的编码（常见场景：latin1字节需按GBK/GB18030解码）
+            def _decode_name(name: str) -> str:
+                if not name:
+                    return name
+                try:
+                    raw_bytes = str(name).encode("latin1", errors="ignore")
+                except Exception:
+                    return str(name)
+                for enc in ("gbk", "gb18030"):
+                    try:
+                        decoded = raw_bytes.decode(enc)
+                        if decoded:
+                            return decoded
+                    except Exception:
+                        continue
+                return str(name)
+
+            if isinstance(scene, self.trimesh.Scene):
+                # 先修复 geometry 名称，避免导出 GLB 时出现乱码
+                new_geometry = {}
+                name_map = {}
+                for old_name, geom in scene.geometry.items():
+                    fixed_name = _decode_name(old_name)
+                    if fixed_name in new_geometry and new_geometry[fixed_name] is not geom:
+                        fixed_name = f"{fixed_name}_{len(new_geometry)}"
+                    new_geometry[fixed_name] = geom
+                    name_map[old_name] = fixed_name
+                scene.geometry = new_geometry
+
+                # 同步 graph 引用的 geometry 名称
+                for node in list(scene.graph.nodes_geometry):
+                    try:
+                        transform, geom_name = scene.graph[node]
+                        fixed_geom_name = name_map.get(geom_name, _decode_name(geom_name))
+                        scene.graph[node] = (transform, fixed_geom_name)
+                    except Exception:
+                        continue
+            else:
+                # 单网格场景，尝试修复元数据名称
+                mesh_name = _decode_name(getattr(scene, "metadata", {}).get("name", "mesh_0"))
+                scene.metadata["name"] = mesh_name
+
             # 确保输出目录存在
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
 

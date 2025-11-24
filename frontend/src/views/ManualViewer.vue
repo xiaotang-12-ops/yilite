@@ -149,7 +149,7 @@
             <div class="step-content">
               <!-- 描述 -->
               <div class="description-section">
-                <p class="description-text">{{ currentStepData.operation || currentStepData.description }}</p>
+                <p class="description-text">{{ currentStepData.description || currentStepData.operation }}</p>
               </div>
 
               <!-- 操作步骤 -->

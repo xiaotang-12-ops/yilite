@@ -2,6 +2,11 @@
 
 > 来源：`RELEASE_v1.1.5.md`、`RELEASE_v1.1.4.md`、旧版快照。
 
+## v2.0.1 (2025-11-24)
+- STEP→GLB 转换：导出前对节点/几何名称执行 `latin1 -> GBK/GB18030` 解码，减少 GLB/manifest 乱码。
+- 前端步骤展示：优先显示 `description`（再回退 `operation` 兼容旧数据），避免编辑描述后仍显示旧字段。
+- 提示词统一：组件/产品装配 Agent 输出字段统一为 `description`，便于前端直接显示/编辑同一字段。
+
 ## v2.0.0 (2025-11-18)
 - 管理员编辑：组件名称统一输入并写回 `assembly_manual.json`，前端确保同步到步骤与组件。
 - 手册查看：预计时间模块隐藏（暂不展示 `estimated_time_minutes` 字段，数据仍保留）。
