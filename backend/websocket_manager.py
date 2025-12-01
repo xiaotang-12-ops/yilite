@@ -9,6 +9,7 @@ import asyncio
 import json
 from typing import Dict, Set, Any
 from datetime import datetime
+from utils.time_utils import beijing_now
 from fastapi import WebSocket, WebSocketDisconnect
 
 
@@ -38,7 +39,7 @@ class ConnectionManager:
             await websocket.send_json({
                 "type": "initial_state",
                 "data": self.task_progress[task_id],
-                "timestamp": datetime.now().isoformat()
+                "timestamp": beijing_now().isoformat()
             })
     
     def disconnect(self, websocket: WebSocket, task_id: str):
@@ -68,7 +69,7 @@ class ConnectionManager:
             "progress": progress,
             "message": message,
             "data": data or {},
-            "timestamp": datetime.now().isoformat()
+            "timestamp": beijing_now().isoformat()
         }
         
         # 广播给所有连接的客户端
@@ -80,7 +81,7 @@ class ConnectionManager:
                 "progress": progress,
                 "message": message,
                 "data": data or {},
-                "timestamp": datetime.now().isoformat()
+                "timestamp": beijing_now().isoformat()
             }
             
             # 并发发送给所有连接
@@ -121,7 +122,7 @@ class ConnectionManager:
                 "type": "parallel_progress",
                 "task_id": task_id,
                 "parallel_data": parallel_data,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": beijing_now().isoformat()
             }
             
             disconnected = set()
@@ -153,7 +154,7 @@ class ConnectionManager:
                 "task_id": task_id,
                 "message": message,
                 "level": level,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": beijing_now().isoformat()
             }
             
             disconnected = set()
@@ -181,7 +182,7 @@ class ConnectionManager:
                 "success": success,
                 "result": result,
                 "error": error,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": beijing_now().isoformat()
             }
             
             disconnected = set()

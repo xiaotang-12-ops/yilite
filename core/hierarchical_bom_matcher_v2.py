@@ -7,6 +7,7 @@
 from typing import Dict, List
 from pathlib import Path
 from processors.file_processor import ModelProcessor
+from processors.step_to_glb_converter import StepToGlbConverter
 from core.bom_3d_matcher import match_bom_to_3d  # ✅ 使用完整版的匹配函数
 
 from utils.logger import print_step, print_substep, print_info, print_success, print_error, print_warning
@@ -18,6 +19,7 @@ class HierarchicalBOMMatcher:
     def __init__(self):
         """初始化匹配器"""
         self.model_processor = ModelProcessor()
+        self.step_converter = StepToGlbConverter(self.model_processor)
     
     def process_hierarchical_matching(
         self,
@@ -85,6 +87,7 @@ class HierarchicalBOMMatcher:
         for comp_file_info in components_from_files:
             file_index = comp_file_info.get("index")  # 文件序号（组件图X 中的 X）
             file_name = comp_file_info.get("name", f"组件图{file_index}")
+            step_path_from_hierarchy = comp_file_info.get("step")
 
             # 查找对应的 AI 规划（通过 assembly_order 匹配）
             comp_plan = None
@@ -105,26 +108,33 @@ class HierarchicalBOMMatcher:
 
             print_info(f"\n处理组件: {comp_name} (文件序号={file_index}, 装配顺序={comp_order})")
 
-            # ✅ 使用文件序号查找STEP文件
+            # ✅ 优先使用 file_hierarchy 中记录的真实 STEP 路径
             step_file = None
-            possible_names = [
-                f"组件图{file_index}.STEP",
-                f"组件图{file_index}.step",
-                f"组件{file_index}.STEP",
-                f"组件{file_index}.step",
-                f"组件图{file_index}.stp",
-                f"组件{file_index}.stp"
-            ]
-
-            for name in possible_names:
-                candidate = step_path / name
+            if step_path_from_hierarchy:
+                candidate = Path(step_path_from_hierarchy)
                 if candidate.exists():
                     step_file = candidate
-                    break
 
+            # 若未找到，再按历史命名回退
             if not step_file:
-                print_warning(f"组件图{file_index}的STEP文件不存在（尝试了: {', '.join(possible_names)}）", indent=1)
-                continue
+                possible_names = [
+                    f"组件图{file_index}.STEP",
+                    f"组件图{file_index}.step",
+                    f"组件{file_index}.STEP",
+                    f"组件{file_index}.step",
+                    f"组件图{file_index}.stp",
+                    f"组件{file_index}.stp"
+                ]
+
+                for name in possible_names:
+                    candidate = step_path / name
+                    if candidate.exists():
+                        step_file = candidate
+                        break
+
+                if not step_file:
+                    print_warning(f"组件图{file_index}的STEP文件不存在（尝试了: {', '.join(possible_names)}）", indent=1)
+                    continue
 
             print_info(f"STEP文件: {step_file.name}", indent=1)
 
@@ -135,7 +145,7 @@ class HierarchicalBOMMatcher:
             import sys
             sys.stdout.flush()
 
-            convert_result = self.model_processor.step_to_glb(
+            convert_result = self.step_converter.convert(
                 step_path=str(step_file),
                 output_path=str(glb_file),
                 scale_factor=0.001  # mm -> m
@@ -151,7 +161,7 @@ class HierarchicalBOMMatcher:
             print_success(f"GLB转换成功: {len(parts_list)} 个零件", indent=1)
 
             # 获取组件的BOM数据（只包含组件内部的零件）
-            component_bom = self._get_component_bom(bom_data, comp_plan, file_index)
+            component_bom = self._get_component_bom(bom_data, comp_plan, file_index, file_name=comp_name)
             print_info(f"组件BOM: {len(component_bom)} 个零件", indent=1)
 
             # BOM-3D匹配（双匹配策略：代码匹配 + AI跟进匹配）
@@ -271,46 +281,56 @@ class HierarchicalBOMMatcher:
                     "matching_rate": final_bom_rate  # ✅ 兼容旧代码
                 }
 
-                # ✅ 使用文件序号作为key
-                glb_files[f"component_{file_index}"] = str(glb_file)
+                # ✅ 使用组件代号作为 key，若缺失则使用 component_X
+                glb_key = comp_code or f"component_{file_index}"
+                glb_files[glb_key] = str(glb_file)
             else:
                 if not parts_list:
                     print_warning("没有提取到零件信息", indent=1)
                 if not component_bom:
                     print_warning("没有组件BOM数据", indent=1)
+                # 即便未匹配成功，也记录 GLB，便于前端加载
+                glb_key = comp_code or f"component_{file_index}"
+                glb_files[glb_key] = str(glb_file)
         
         print_success(f"组件级别处理完成: {len(component_level_mappings)} 个组件")
         
         # ========== 2. 处理产品级别 ==========
         print_substep("步骤2：处理产品级别的STEP文件")
         
-        # 查找产品总图的STEP文件
-        # 尝试多种可能的产品STEP文件名
-        possible_product_names = [
-            "产品测试.STEP",
-            "产品总图.STEP",
-            "产品主图.STEP",  # ✅ 新增
-            "产品测试.step",
-            "产品总图.step",
-            "产品主图.step",  # ✅ 新增
-            "产品测试.stp",
-            "产品总图.stp",
-            "产品主图.stp",   # ✅ 新增
-        ]
-
+        # 查找产品总图的STEP文件（优先使用 file_hierarchy 中的真实文件名）
         product_step = None
-        for name in possible_product_names:
-            candidate = step_path / name
+        product_info = file_hierarchy.get("product") if isinstance(file_hierarchy, dict) else None
+        if isinstance(product_info, dict) and product_info.get("step"):
+            candidate = Path(product_info["step"])
             if candidate.exists():
                 product_step = candidate
-                break
+
+        # 回退：尝试多种可能的产品STEP文件名
+        if not product_step:
+            possible_product_names = [
+                "产品测试.STEP",
+                "产品总图.STEP",
+                "产品主图.STEP",
+                "产品测试.step",
+                "产品总图.step",
+                "产品主图.step",
+                "产品测试.stp",
+                "产品总图.stp",
+                "产品主图.stp",
+            ]
+            for name in possible_product_names:
+                candidate = step_path / name
+                if candidate.exists():
+                    product_step = candidate
+                    break
 
         if product_step and product_step.exists():
             print_info(f"处理产品总图: {product_step.name}")
             
             # 转换为GLB
             product_glb = glb_output / "product_total.glb"
-            convert_result = self.model_processor.step_to_glb(
+            convert_result = self.step_converter.convert(
                 step_path=str(product_step),
                 output_path=str(product_glb),
                 scale_factor=0.001
@@ -341,9 +361,13 @@ class HierarchicalBOMMatcher:
 
                 # ✅ 产品级别的BOM数据（从产品总图PDF提取的零件）
                 # ✅ 修改：不排除组件，组件的零件也要参与匹配
+                product_pdf_stem = ""
+                if isinstance(product_info, dict) and product_info.get("pdf"):
+                    product_pdf_stem = Path(product_info["pdf"]).stem
+
                 product_bom_all = [
                     item for item in bom_data
-                    if item.get("source_pdf", "").startswith("产品总图")
+                    if product_pdf_stem and str(item.get("source_pdf", "")).startswith(product_pdf_stem)
                 ]
 
                 # ✅ 新策略：包含所有BOM项（组件+零件）
@@ -459,6 +483,24 @@ class HierarchicalBOMMatcher:
 
         if product_level_mapping:
             print_info(f"产品级别: BOM {product_level_mapping['bom_matched_count']}/{product_level_mapping['total_bom_count']} ({product_level_mapping['matching_rate']*100:.1f}%)")
+
+        # ========== 4. 生成 GLB 清单（step3_glb_inventory.json，用于调试） ==========
+        try:
+            inventory = {}
+            for key, glb_path in glb_files.items():
+                inv = self.model_processor.generate_glb_inventory(
+                    glb_path=glb_path,
+                    output_path=None
+                )
+                inventory[key] = inv
+            inventory_path = Path(output_dir).parent / "step3_glb_inventory.json"
+            with open(inventory_path, "w", encoding="utf-8") as f:
+                json.dump({
+                    "glb_files": inventory
+                }, f, ensure_ascii=False, indent=2)
+            print_success(f"GLB 清单已生成: {inventory_path.name}")
+        except Exception as e:
+            print_warning(f"生成 GLB 清单失败: {e}")
         
         return {
             "success": True,
@@ -467,7 +509,7 @@ class HierarchicalBOMMatcher:
             "glb_files": glb_files
         }
     
-    def _get_component_bom(self, bom_data: List[Dict], comp_plan: Dict, drawing_index: int = None) -> List[Dict]:
+    def _get_component_bom(self, bom_data: List[Dict], comp_plan: Dict, drawing_index: int = None, file_name: str = "") -> List[Dict]:
         """
         获取组件的BOM数据（只包含组件内部的零件）
 
@@ -488,22 +530,25 @@ class HierarchicalBOMMatcher:
         if drawing_index is None:
             drawing_index = comp_plan.get("assembly_order", 0)
 
-        comp_name = comp_plan.get("component_name", "")
+        comp_name = comp_plan.get("component_name", "") or file_name or comp_plan.get("component_code", "")
 
         # 根据source_pdf过滤BOM数据（支持多种命名方式）
         component_bom = []
 
         # 可能的文件名格式（不区分大小写）
-        possible_names = [
+        base_name = comp_name or f"组件图{drawing_index}"
+        possible_names = {
             f"组件图{drawing_index}.pdf",
             f"组件图{drawing_index}.PDF",
             f"组件{drawing_index}.pdf",
-            f"组件{drawing_index}.PDF"
-        ]
+            f"组件{drawing_index}.PDF",
+            f"{base_name}.pdf",
+            f"{base_name}.PDF"
+        }
 
         # ✅ 调试日志：打印查找信息
         print_info(f"🔍 查找组件{drawing_index}({comp_name})的BOM数据", indent=1)
-        print_info(f"   可能的文件名: {', '.join(possible_names)}", indent=1)
+        print_info(f"   可能的文件名: {', '.join(sorted(possible_names))}", indent=1)
 
         # 统计所有source_pdf
         all_source_pdfs = set()

@@ -17,9 +17,10 @@ Gemini 6-Agent工作流（生产级）
 import os
 import json
 import time
+import re
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 # 添加项目根目录到路径
 import sys
@@ -41,9 +42,9 @@ if sys.platform == 'win32':
 from core.file_classifier import FileClassifier
 from core.hierarchical_bom_matcher_v2 import HierarchicalBOMMatcher
 from core.manual_integrator_v2 import ManualIntegratorV2
+from core.simple_planner import SimplePlanner
 
 # 6个Gemini Agent
-from agents.vision_planning_agent import VisionPlanningAgent
 from agents.component_assembly_agent import ComponentAssemblyAgent
 from agents.product_assembly_agent import ProductAssemblyAgent
 from agents.welding_agent import WeldingAgent
@@ -54,6 +55,7 @@ from utils.logger import (
     print_step, print_substep, print_info,
     print_success, print_error, print_warning
 )
+from utils.time_utils import beijing_now
 
 
 class GeminiAssemblyPipeline:
@@ -86,12 +88,13 @@ class GeminiAssemblyPipeline:
         self.bom_matcher = HierarchicalBOMMatcher()
         self.integrator = ManualIntegratorV2(product_name=product_name)  # ✅ 传入产品名称
 
-        # 初始化6个Agent - 传入model_name确保使用正确的模型
-        self.vision_agent = VisionPlanningAgent()
+        # 初始化Agent - 传入model_name确保使用正确的模型
         self.component_agent = ComponentAssemblyAgent()
         self.product_agent = ProductAssemblyAgent()
         self.welding_agent = WeldingAgent()
         self.safety_agent = SafetyFAQAgent()
+        self.simple_planner = SimplePlanner()
+        self.is_product_mode = False  # 判定当前任务是否按产品总图流程
 
         # 初始化Gemini视觉模型（用于BOM提取）
         from models.gemini_model import GeminiVisionModel
@@ -104,7 +107,7 @@ class GeminiAssemblyPipeline:
         
     def log_agent_call(self, agent_name: str, action: str, status: str = "running"):
         """记录Agent调用日志（生动的AI员工工作描述）"""
-        timestamp = datetime.now().strftime("%H:%M:%S")
+        timestamp = beijing_now().strftime("%H:%M:%S")
 
         if status == "running":
             print_info(f"[{timestamp}] 👷 {agent_name}AI员工加入工作，他开始{action}...")
@@ -147,7 +150,13 @@ class GeminiAssemblyPipeline:
             self.current_step = 2
             bom_data = self._step2_extract_bom_from_pdfs(file_hierarchy)
 
-            # 步骤3: Agent 1 - 视觉规划
+            # 判定模式：组件或产品（单PDF/STEP场景互斥）
+            self.is_product_mode = self._determine_mode(file_hierarchy, bom_data)
+            mode_label = "产品模式" if self.is_product_mode else "组件模式"
+            print_info(f"🧭 判定结果: {mode_label}", indent=1)
+            import sys; sys.stdout.flush()
+
+            # 步骤3: SimplePlanner - 按BOM序号规划
             self.current_step = 3
             planning_result = self._step3_vision_planning(image_hierarchy, bom_data, file_hierarchy)
             
@@ -159,17 +168,25 @@ class GeminiAssemblyPipeline:
             )
             
             # ========== 主线路: Agent 3-6 ==========
-            # 步骤5: Agent 3 - 组件装配（可复用）
-            self.current_step = 5
-            component_results = self._step5_component_assembly(
-                file_hierarchy, image_hierarchy, planning_result, matching_result
-            )
+            # 步骤5: Agent 3 - 组件装配（可复用，产品模式下跳过）
+            component_results = []
+            if self.is_product_mode:
+                print_info("⏭️ 产品模式下跳过组件装配（Step5）", indent=1)
+                import sys; sys.stdout.flush()
+            else:
+                self.current_step = 5
+                component_results = self._step5_component_assembly(
+                    file_hierarchy, image_hierarchy, planning_result, matching_result
+                )
             
-            # 步骤6: Agent 4 - 产品总装
-            self.current_step = 6
-            product_result = self._step6_product_assembly(
-                file_hierarchy, image_hierarchy, planning_result, matching_result
-            )
+            # 步骤6: Agent 4 - 产品总装（仅产品模式）
+            if self.is_product_mode:
+                self.current_step = 6
+                product_result = self._step6_product_assembly(
+                    file_hierarchy, image_hierarchy, planning_result, matching_result
+                )
+            else:
+                product_result = {}
 
             # 步骤7: Agent 5 & 6 - 焊接和安全（增强装配步骤）
             self.current_step = 7
@@ -190,14 +207,13 @@ class GeminiAssemblyPipeline:
             print_step("🎉 工作流完成")
             print_success(f"⏱️  总耗时: {elapsed_time:.1f}秒")
             print_success(f"📄 输出文件: {self.output_dir / 'assembly_manual.json'}")
-            
             return {
                 "success": True,
                 "output_file": str(self.output_dir / "assembly_manual.json"),
                 "elapsed_time": elapsed_time,
                 "manual": final_manual
             }
-            
+
         except Exception as e:
             print_error(f"工作流失败: {str(e)}")
             import traceback
@@ -206,6 +222,65 @@ class GeminiAssemblyPipeline:
                 "success": False,
                 "error": str(e)
             }
+
+    def _determine_mode(self, file_hierarchy: Dict, bom_data: List[Dict]) -> bool:
+        """
+        判定当前任务是否走产品模式（True）或组件模式（False）
+        规则：
+        1) PDF 文件名（stem）前缀 01 → 组件模式
+        2) PDF 文件名（stem）前缀 03/06/07/08 → 产品模式
+        3) 其他情况默认组件模式
+        """
+        pdf_names = []
+
+        product_pdf = (file_hierarchy.get("product") or {}).get("pdf")
+        if product_pdf:
+            pdf_names.append(Path(product_pdf).stem)
+
+        for comp in file_hierarchy.get("components", []):
+            pdf_path = comp.get("pdf")
+            if pdf_path:
+                pdf_names.append(Path(pdf_path).stem)
+            else:
+                name = comp.get("name", "")
+                if name:
+                    pdf_names.append(str(name))
+
+        product_prefixes = {"03", "06", "07", "08"}
+        component_prefixes = {"01"}
+
+        found_product_prefix = False
+        found_component_prefix = False
+
+        for name in pdf_names:
+            match = re.match(r"(\d{2})", name)
+            if not match:
+                continue
+            prefix = match.group(1)
+            if prefix in product_prefixes:
+                found_product_prefix = True
+            elif prefix in component_prefixes:
+                found_component_prefix = True
+
+        if found_product_prefix:
+            return True
+        if found_component_prefix:
+            return False
+
+        # 默认组件模式
+        return False
+
+    def _get_product_pdf(self, file_hierarchy: Dict) -> Optional[str]:
+        """
+        获取产品总图PDF路径，若未识别产品但需要产品模式，则回退到首个组件PDF
+        """
+        product_pdf = (file_hierarchy.get("product") or {}).get("pdf")
+        if product_pdf:
+            return product_pdf
+        components = file_hierarchy.get("components", [])
+        if components:
+            return components[0].get("pdf")
+        return None
     
     def _step1_classify_and_convert(self, pdf_dir: str, step_dir: str = None) -> tuple:
         """步骤1: 文件分类 + PDF转图片"""
@@ -468,50 +543,79 @@ class GeminiAssemblyPipeline:
 
 
     def _step3_vision_planning(self, image_hierarchy: Dict, bom_data: List[Dict], file_hierarchy: Dict) -> Dict:
-        """步骤3: Agent 1 - 视觉规划"""
-        print_substep(f"[{self.current_step}/{self.total_steps}] 🔍 装配规划师")
+        """步骤3: SimplePlanner - 按BOM序号规划（替代Agent1）"""
+        print_substep(f"[{self.current_step}/{self.total_steps}] 🔍 装配规划师（SimplePlanner）")
 
-        self.log_agent_call("装配规划", "研究图纸，规划装配顺序", "running")
+        self.log_agent_call("装配规划", "按BOM序号自动生成装配规划", "running")
 
-        # 收集所有图片
-        all_images = []
-        all_images.extend(image_hierarchy.get("product_images", []))
-        for comp_images in image_hierarchy.get("component_images", {}).values():
-            all_images.extend(comp_images)
-
-        # ✅ 获取实际的组件数量（从file_hierarchy中获取）
-        actual_component_count = len(file_hierarchy.get("components", []))
-
-        print_info(f"🖼️  他拿到了 {len(all_images)} 张图片", indent=1)
-        print_info(f"📊 他参考了 {len(bom_data)} 个零件的信息", indent=1)
-        print_info(f"📁 系统识别出 {actual_component_count} 个组件图文件", indent=1)
         import sys
+        component_plans = []
+
+        # 组件级规划
+        components = file_hierarchy.get("components", [])
+        for comp in components:
+            comp_name = comp.get("name") or Path(comp.get("pdf", "")).stem
+            comp_index = comp.get("index", len(component_plans) + 1)
+            comp_pdf_stem = Path(comp.get("pdf", comp_name)).stem
+
+            comp_bom = [item for item in bom_data if str(item.get("source_pdf", "")).startswith(comp_pdf_stem)]
+            if not comp_bom:
+                print_warning(f"⚠️  组件 {comp_name} 未找到BOM数据，跳过规划", indent=1)
+                continue
+
+            try:
+                plan = self.simple_planner.generate_component_plan(comp_pdf_stem, comp_bom, drawing_index=comp_index)
+                component_plans.append(plan.__dict__)
+                print_success(f"🎯 组件规划完成: {comp_name} (序号={comp_index})", indent=1)
+            except Exception as e:
+                print_warning(f"⚠️ 组件 {comp_name} 规划失败: {e}", indent=1)
+
+        # 产品级规划（仅产品模式）
+        product_plan = {}
+        product_pdf = self._get_product_pdf(file_hierarchy) if self.is_product_mode else None
+        if self.is_product_mode and product_pdf:
+            product_stem = Path(product_pdf).stem
+            product_bom = [item for item in bom_data if str(item.get("source_pdf", "")).startswith(product_stem)]
+            if product_bom:
+                try:
+                    product_plan = self.simple_planner.generate_product_plan(product_stem, product_bom)
+                    print_success(f"📦 产品规划完成: {product_stem}", indent=1)
+                except Exception as e:
+                    print_warning(f"⚠️ 产品规划失败: {e}", indent=1)
+            else:
+                print_warning("⚠️ 产品总图未找到BOM数据，跳过产品规划", indent=1)
+        elif self.is_product_mode and not product_pdf:
+            # ✅ 产品模式下找不到产品PDF，直接终止程序
+            error_msg = "❌ 产品模式下找不到产品总图，程序终止"
+            print_warning(error_msg, indent=1)
+
+            # 在失败文件第一行标注生成失败
+            final_output_path = self.output_dir / f"{self.task_id}_装配说明书.md"
+            with open(final_output_path, 'w', encoding='utf-8') as f:
+                f.write("# ❌ 此文件生成失败\n\n")
+                f.write(f"**失败原因**: 产品模式下找不到产品总图PDF文件\n\n")
+                f.write(f"**解决方法**: 请确保产品总图PDF文件存在于正确路径\n")
+
+            raise FileNotFoundError(error_msg)
+
+        planning_result = {
+            "success": True,
+            "component_assembly_plan": component_plans,
+            "product_assembly_plan": product_plan,
+            "metadata": {
+                "generated_by": "SimplePlanner",
+                "generation_time": beijing_now().isoformat(),
+            "components_planned": len(component_plans),
+            "product_planned": bool(product_plan),
+        }
+        }
+
+        # ❌ 删除step3文件保存逻辑（不再需要，因为基准件=BOM序号1）
+        # with open(self.output_dir / "step3_planning_result.json", "w", encoding="utf-8") as f:
+        #     json.dump(planning_result, f, ensure_ascii=False, indent=2)
+
+        self.log_agent_call("装配规划", "完成了装配规划方案", "success")
         sys.stdout.flush()
-
-        self.log_agent_call("装配规划", "使用AI视觉分析图纸", "running")
-
-        # ✅ 传入实际组件数量，确保AI为每个组件生成规划
-        planning_result = self.vision_agent.process(all_images, bom_data, actual_component_count)
-
-        if planning_result["success"]:
-            component_count = len(planning_result.get("component_assembly_plan", []))
-            print_success(f"🎯 他识别出了 {component_count} 个组件", indent=1)
-
-            # ✅ 检查是否所有组件都被规划
-            if component_count < actual_component_count:
-                print_warning(f"⚠️  警告：只规划了 {component_count}/{actual_component_count} 个组件", indent=1)
-
-            print_success(f"📋 他制定了装配顺序方案", indent=1)
-            sys.stdout.flush()
-            self.log_agent_call("装配规划", "完成了装配规划方案", "success")
-        else:
-            self.log_agent_call("装配规划", "规划", "error")
-            raise Exception(f"装配规划失败: {planning_result.get('error')}")
-
-        # 保存结果
-        with open(self.output_dir / "step3_planning_result.json", "w", encoding="utf-8") as f:
-            json.dump(planning_result, f, ensure_ascii=False, indent=2)
-
         return planning_result
 
     def _step4_bom_3d_matching(
@@ -699,9 +803,18 @@ class GeminiAssemblyPipeline:
         # ✅ 使用图片而不是PDF
         product_images = image_hierarchy.get('product_images', [])
 
+        # 若无产品图片，尝试回退到首个组件图片（单图场景）
         if not product_images:
-            print_warning("⚠️  没有找到产品总图图片", indent=1)
-            return {"success": False, "error": "No product images"}
+            first_comp_images = []
+            comp_images_map = image_hierarchy.get('component_images', {})
+            if comp_images_map:
+                first_comp_images = comp_images_map.get(next(iter(comp_images_map.keys())), [])
+            if first_comp_images:
+                product_images = first_comp_images
+                print_warning("⚠️  没有产品总图图片，回退使用组件图作为产品图", indent=1)
+            else:
+                print_warning("⚠️  没有找到产品总图图片", indent=1)
+                return {"success": False, "error": "No product images"}
 
         # ✅ 读取产品级BOM数据
         bom_data = []
@@ -713,9 +826,13 @@ class GeminiAssemblyPipeline:
 
         # ✅ 筛选产品级BOM（从产品总图提取的零件）
         # ✅ 修改：不排除组件，组件的零件也要参与匹配
+        product_pdf_stem = ""
+        if file_hierarchy and file_hierarchy.get("product", {}).get("pdf"):
+            product_pdf_stem = Path(file_hierarchy["product"]["pdf"]).stem
+
         product_bom_all = [
             item for item in bom_data
-            if item.get("source_pdf", "").startswith("产品总图")
+            if product_pdf_stem and str(item.get("source_pdf", "")).startswith(product_pdf_stem)
         ]
 
         # ✅ 新策略：包含所有BOM项（组件+零件）
@@ -732,7 +849,7 @@ class GeminiAssemblyPipeline:
         sys.stdout.flush()
 
         result = self.product_agent.process(
-            product_plan=planning_result,
+            product_plan=planning_result.get("product_assembly_plan", {}),
             product_images=product_images,
             components_list=planning_result.get("component_assembly_plan", []),
             product_bom=product_bom,  # ✅ 传入产品级BOM
@@ -863,12 +980,15 @@ class GeminiAssemblyPipeline:
         sys.stdout.flush()
         self.log_agent_call("安全专员", "完成安全警告标注", "success")
 
-        # 保存增强后的结果
-        with open(self.output_dir / "step7_enhanced_component_results.json", "w", encoding="utf-8") as f:
-            json.dump(final_component_results, f, ensure_ascii=False, indent=2)
+        # ✅ 保存增强后的结果（合并成一个文件，避免生成空文件）
+        enhanced_result = {
+            "type": "product" if self.is_product_mode else "component",
+            "component_results": final_component_results,  # 组件模式时有数据，产品模式时为[]
+            "product_result": final_product_result  # 产品模式时有数据，组件模式时为{}
+        }
 
-        with open(self.output_dir / "step7_enhanced_product_result.json", "w", encoding="utf-8") as f:
-            json.dump(final_product_result, f, ensure_ascii=False, indent=2)
+        with open(self.output_dir / "step7_enhanced_result.json", "w", encoding="utf-8") as f:
+            json.dump(enhanced_result, f, ensure_ascii=False, indent=2)
 
         return final_component_results, final_product_result
 
@@ -913,6 +1033,14 @@ class GeminiAssemblyPipeline:
                 # ✅ 使用实际的组件图序号构建GLB文件名
                 glb_filename = f"component_{drawing_index}.glb"
                 component_to_glb_mapping[comp_code] = glb_filename
+
+        # 如果上面没有生成映射，且 glb_files 有组件 GLB，则兜底映射到唯一组件
+        if not component_to_glb_mapping and glb_files:
+            # 取第一个组件GLB
+            for key, path in glb_files.items():
+                if key.startswith("component"):
+                    component_to_glb_mapping["default_component"] = Path(path).name
+                    break
 
         print_info("📝 他正在整理所有内容...", indent=1)
         sys.stdout.flush()

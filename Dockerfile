@@ -1,7 +1,7 @@
 # 智能装配说明书生成系统 - 后端Dockerfile
-# 基于Python 3.11
+# 基于Python 3.11（slim-bullseye 规避 slim 默认镜像元数据异常）
 
-FROM python:3.11-slim
+FROM python:3.11-slim-bullseye
 
 # 设置工作目录
 WORKDIR /app
@@ -14,9 +14,13 @@ ENV PYTHONUNBUFFERED=1 \
     LANG=C.UTF-8 \
     LC_ALL=C.UTF-8
 
-# 配置国内镜像源以加速下载
-RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources && \
-    sed -i 's/security.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources
+# 配置国内镜像源以加速下载（兼容 bullseye-slim 没有 debian.sources 的情况）
+RUN if [ -f /etc/apt/sources.list.d/debian.sources ]; then \
+      sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources && \
+      sed -i 's/security.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources ; \
+    fi && \
+    sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list && \
+    sed -i 's/security.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list
 
 # 安装系统依赖
 # PDF处理依赖:

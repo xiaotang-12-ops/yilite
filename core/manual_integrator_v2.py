@@ -53,6 +53,7 @@ class ManualIntegratorV2:
         
         #
         manual = {
+            "mode": "product" if product_assembly_result.get("steps") else "component",
             "metadata": self._build_metadata(planning_result),
             "component_assembly": self._build_component_assembly(
                 component_assembly_results,
@@ -204,7 +205,7 @@ class ManualIntegratorV2:
         return {
             "chapter_type": "product_assembly",
             "product_name": product_result.get("product_name", ""),
-            "glb_file": "product_total.glb",
+            "glb_file": product_result.get("glb_file"),  # 仅在实际存在时写入
             "steps": enhanced_steps,  # ✅ 使用增强后的步骤
             "3d_display_mode": "component_level_explosion"
         }
@@ -255,7 +256,7 @@ class ManualIntegratorV2:
             "bom_to_mesh": bom_to_mesh_mapping or {},
             "component_to_glb": component_to_glb_mapping or {},
             "component_level_mappings": component_level_mappings or {},  # ✅ 添加组件级别映射
-            "product_glb": "product_total.glb"
+            # product_glb 仅在产品模式且 glb 存在时写入（由上层填充）
         }
     
     def _add_drawings_to_steps(
@@ -376,8 +377,8 @@ class ManualIntegratorV2:
 
     def _get_timestamp(self) -> str:
         """"""
-        from datetime import datetime
-        return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        from utils.time_utils import beijing_strftime
+        return beijing_strftime("%Y-%m-%d %H:%M:%S")
     
     def save_to_file(self, manual: Dict, output_path: str):
         """

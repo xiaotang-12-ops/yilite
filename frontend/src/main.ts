@@ -16,6 +16,7 @@ import Settings from './views/Settings.vue'
 import GLBTest from './views/GLBTest.vue'
 import SimpleGLBTest from './views/SimpleGLBTest.vue'
 import IconTest from './views/IconTest.vue'
+import VersionHistory from './views/VersionHistory.vue'
 
 import './style/main.scss'
 
@@ -25,6 +26,7 @@ const routes = [
   { path: '/generator', name: 'Generator', component: Generator },
   { path: '/viewer/:id?', name: 'Viewer', component: Viewer, props: true },
   { path: '/manual/:taskId', name: 'ManualViewer', component: ManualViewer, props: true },
+  { path: '/version-history/:taskId', name: 'VersionHistory', component: VersionHistory, props: true },
   { path: '/engineer', name: 'Engineer', component: Engineer },
   { path: '/settings', name: 'Settings', component: Settings },
   { path: '/glb-test', name: 'GLBTest', component: GLBTest },

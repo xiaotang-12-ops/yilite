@@ -56,6 +56,10 @@ class FileClassifier:
             "components": []
         }
 
+        # 前缀判定：01* 组件，03/06/07/08* 产品（最高优先级）
+        product_prefixes = {"03", "06", "07", "08"}
+        component_prefixes = {"01"}
+
         # 创建STEP文件名映射表（不含扩展名）
         step_name_map = {}
         if step_files:
@@ -63,30 +67,56 @@ class FileClassifier:
                 step_name = Path(step_file).stem
                 step_name_map[step_name] = step_file
 
-        # 处理PDF文件
+        # 处理PDF文件（组件关键字优先，避免误判为产品）
         for pdf_file in pdf_files:
             pdf_name = Path(pdf_file).stem  # 不含扩展名的文件名
 
             # 查找对应的STEP文件
             corresponding_step = step_name_map.get(pdf_name)
 
-            # 判断是否为产品总图
-            if self.product_pattern.search(pdf_name):
-                result["product"] = {
-                    "pdf": pdf_file,
-                    "step": corresponding_step,
-                    "product_code": self._extract_product_code(pdf_name)
-                }
-            else:
-                # 其他都视为组件图
+            # 前缀判定
+            prefix_match = re.match(r"(\d{2})", pdf_name)
+            prefix = prefix_match.group(1) if prefix_match else ""
+
+            # 组件关键字优先：含“组件”直接视为组件图
+            if "组件" in pdf_name:
                 component_info = self._parse_component_filename(pdf_name)
-                # ✅ 从文件名中提取实际的序号（如"组件图1" -> 1, "组件图2" -> 2）
                 component_number = self._extract_component_number(pdf_name)
                 component_info["index"] = component_number if component_number else len(result["components"]) + 1
                 component_info["name"] = pdf_name  # 使用文件名作为组件名
                 component_info["pdf"] = pdf_file
                 component_info["step"] = corresponding_step
                 result["components"].append(component_info)
+                continue
+
+            # 前缀判定：产品
+            if prefix in product_prefixes:
+                result["product"] = {
+                    "pdf": pdf_file,
+                    "step": corresponding_step,
+                    "product_code": self._extract_product_code(pdf_name)
+                }
+                continue
+
+            # 前缀判定：组件
+            if prefix in component_prefixes:
+                component_info = self._parse_component_filename(pdf_name)
+                component_number = self._extract_component_number(pdf_name)
+                component_info["index"] = component_number if component_number else len(result["components"]) + 1
+                component_info["name"] = pdf_name  # 使用文件名作为组件名
+                component_info["pdf"] = pdf_file
+                component_info["step"] = corresponding_step
+                result["components"].append(component_info)
+                continue
+
+            # 默认组件图（未命中前缀）
+            component_info = self._parse_component_filename(pdf_name)
+            component_number = self._extract_component_number(pdf_name)
+            component_info["index"] = component_number if component_number else len(result["components"]) + 1
+            component_info["name"] = pdf_name  # 使用文件名作为组件名
+            component_info["pdf"] = pdf_file
+            component_info["step"] = corresponding_step
+            result["components"].append(component_info)
 
         # 处理没有对应PDF的STEP文件
         used_step_files = set()
@@ -101,8 +131,11 @@ class FileClassifier:
             for step_file in step_files:
                 if step_file not in used_step_files:
                     step_name = Path(step_file).stem
+                    prefix_match = re.match(r"(\d{2})", step_name)
+                    prefix = prefix_match.group(1) if prefix_match else ""
+
                     # 如果是产品总图但没有对应PDF
-                    if self.product_pattern.search(step_name):
+                    if prefix in product_prefixes:
                         if not result["product"]:
                             result["product"] = {
                                 "pdf": None,

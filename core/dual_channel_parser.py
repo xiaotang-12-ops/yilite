@@ -29,6 +29,7 @@ import fitz  # PyMuPDF
 from pypdf import PdfReader
 
 from models.vision_model import Qwen3VLModel
+from utils.time_utils import beijing_strftime
 
 
 
@@ -1066,9 +1067,7 @@ class DualChannelParser:
 
                 # 保存输出结果到临时文件
 
-                import datetime
-
-                timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                timestamp = beijing_strftime("%Y%m%d_%H%M%S")
 
                 output_dir = "debug_output"
 

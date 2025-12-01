@@ -1,0 +1,1185 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+完美！小糖，我已经完成了深度分析，现在给你生成一份完整的技术方案文档：
+
+---
+
+# 🚀 单文件流程简化技术方案
+
+**版本：** v1.0  
+**日期：** 2025-11-27  
+**作者：** Augment AI  
+**目标：** 简化单文件装配手册生成流程，提升性能和可维护性
+
+---
+
+## 📋 目录
+
+1. [背景和目标](#背景和目标)
+2. [现状分析](#现状分析)
+3. [技术方案](#技术方案)
+4. [实施计划](#实施计划)
+5. [风险评估](#风险评估)
+6. [测试策略](#测试策略)
+7. [监控和回退](#监控和回退)
+
+---
+
+## 1. 背景和目标
+
+### 1.1 背景
+当前系统设计为支持"多文件多层级"场景（产品图+多个组件图），但实际使用中：
+- **100%的用户**只上传1个PDF + 1个STEP
+- **0%的用户**上传多个文件
+- 系统仍然按"多文件"逻辑处理，导致流程复杂、性能浪费
+
+### 1.2 目标
+- ✅ **简化流程**：去掉不必要的分类、判断、循环逻辑
+- ✅ **提升性能**：减少AI调用次数和处理时间（预计提升30-40%）
+- ✅ **提高稳定性**：减少分支逻辑，降低出错概率（预计降低50%）
+- ✅ **增强可维护性**：代码量减少37%，逻辑更清晰
+
+### 1.3 非目标
+- ❌ 不支持多文件上传（未来如需支持，需要重新设计）
+- ❌ 不修改前端上传界面（保持1个PDF + 1个STEP的限制）
+- ❌ 不迁移旧数据（前端通过适配器兼容）
+
+---
+
+## 2. 现状分析
+
+### 2.1 当前流程图
+
+```mermaid
+graph TD
+    A[用户上传1个PDF + 1个STEP] --> B[文件分类器]
+    B --> C{判断产品图/组件图}
+    C -->|产品图| D[产品模式]
+    C -->|组件图| E[组件模式]
+    D --> F[循环提取BOM]
+    E --> F
+    F --> G[层级BOM匹配器]
+    G --> H{判断模式}
+    H -->|组件模式| I[Agent3: 组件装配]
+    H -->|产品模式| J[Agent3 + Agent4]
+    I --> K[输出JSON]
+    J --> K
+```
+
+### 2.2 问题点
+
+| 问题 | 影响 | 严重程度 |
+|------|------|----------|
+| 文件分类逻辑多余 | 增加处理时间和复杂度 | 中 |
+| 循环处理单个文件 | 代码冗余，性能浪费 | 中 |
+| 模式判定可能误判 | 导致生成错误的步骤结构 | 高 |
+| 层级匹配器过度设计 | 单层BOM用多层匹配器，效率低 | 中 |
+| Agent调用不确定 | 有时调2个，有时调3个，难以预测 | 高 |
+| 输出结构不一致 | 前端需要处理多种情况 | 中 |
+
+### 2.3 代码复杂度分析
+
+| 文件 | 当前行数 | 复杂度 | 问题 |
+|------|----------|--------|------|
+| `file_classifier.py` | 316 | 高 | 大量分类逻辑 |
+| `gemini_pipeline.py` | 1084 | 极高 | 多分支、多循环 |
+| `hierarchical_bom_matcher_v2.py` | 450 | 高 | 层级匹配复杂 |
+| `agent_1_vision_planning.py` | 180 | 中 | 功能重复 |
+| `agent_3_component_assembly.py` | 220 | 中 | - |
+| `agent_4_product_assembly.py` | 200 | 中 | 与agent_3重复 |
+| **总计** | **2450** | - | - |
+
+---
+
+## 3. 技术方案
+
+### 3.1 新架构设计
+
+```mermaid
+graph TD
+    A[用户上传1个PDF + 1个STEP] --> B[FileHandler: 文件识别]
+    B --> C[BOM提取器]
+    C --> D[FlatBOMMatcher: 扁平匹配]
+    D --> E[AssemblyAgent: 统一装配规划]
+    E --> F[WeldingAgent: 焊接工艺]
+    F --> G[SafetyAgent: 安全检查]
+    G --> H[输出统一JSON]
+```
+
+**核心改进：**
+- 🔥 去掉文件分类器[object Object]掉模式判定
+- 🔥 去掉循环处理
+- 🔥 去掉层级匹配[object Object]并装配Agent
+
+---
+
+### 3.2 核心模块设计
+
+#### 3.2.1 FileHandler（文件处理器）
+
+**文件：** `core/file_handler.py`
+
+**职责：** 简单的文件识别和路径获取（不做分类判断）
+
+**接口设计：**
+```python
+class FileHandler:
+    def __init__(self, task_id: str):
+        self.task_id = task_id
+        self.base_path = f"tasks/{task_id}"
+    
+    def get_files(self) -> Dict[str, Any]:
+        """
+        获取任务文件
+        
+        返回：
+        {
+            "pdf_file": "path/to/drawing.pdf",
+            "step_file": "path/to/model.step",  # 或文件夹
+            "images": ["img1.jpg", "img2.jpg"]
+        }
+        """
+        pass
+    
+    def extract_step_parts(self, step_path: str) -> List[str]:
+        """
+        提取STEP零件列表
+        
+        - 如果是单个STEP文件 → 使用OCP解析
+        - 如果是STEP文件夹 → 列出所有.step文件
+        """
+        pass
+```
+
+**代码量：** 约80行（vs 旧的316行）
+
+---
+
+#### 3.2.2 FlatBOMMatcher（扁平BOM匹配器）
+
+**文件：** `core/bom_matcher.py`
+
+**职责：** 简单的BOM项与STEP文件匹配（不做层级判断）
+
+**接口设计：**
+```python
+class FlatBOMMatcher:
+    def match(self, bom_items: List[Dict], step_files: List[str]) -> List[Dict]:
+        """
+        扁平匹配：BOM项 ↔ STEP文件
+        
+        匹配策略：
+        1. 精确匹配：BOM名称 == STEP文件名（去扩展名）
+        2. 模糊匹配：使用difflib.SequenceMatcher
+        3. 数量验证：检查BOM数量与STEP数量
+        
+        返回：
+        [
+            {
+                "bom_name": "底板",
+                "bom_quantity": 1,
+                "bom_material": "Q235",
+                "matched_file": "底板.step",
+                "match_confidence": 1.0
+            },
+            ...
+        ]
+        """
+        pass
+```
+
+**匹配算法：**
+```python
+def _calculate_similarity(self, bom_name: str, file_name: str) -> float:
+    """
+    计算相似度
+    
+    1. 去除扩展名
+    2. 去除空格和特殊字符
+    3. 转小写
+    4. 使用SequenceMatcher计算相似度
+    """
+    from difflib import SequenceMatcher
+    
+    clean_bom = self._clean_name(bom_name)
+    clean_file = self._clean_name(file_name)
+    
+    return SequenceMatcher(None, clean_bom, clean_file).ratio()
+```
+
+**代码量：** 约150行（vs 旧的450行）
+
+---
+
+#### 3.2.3 AssemblyAgent（统一装配Agent）
+
+**文件：** `prompts/agent_assembly.py`
+
+**职责：** 统一的装配步骤规划（不区分组件/产品）
+
+**Prompt设计：**
+```python
+ASSEMBLY_PROMPT = """
+你是一位经验丰富的装配工程师。请根据以下信息规划装配步骤：
+
+## 输入信息
+1. **BOM清单**：{bom_items}
+2. **3D模型零件**：{step_parts}
+3. **装配图纸**：{images}
+
+## 任务要求
+1. 分析零件之间的装配关系
+2. 确定装配基准件（通常是最大的、固定的零件）
+3. 规划合理的装配顺序：
+   - 基准件 → 主要结构件 → 次要零件 → 紧固件
+   - 考虑焊接工序的位置（点焊定位 → 装配 → 最终焊接）
+4. 为每个步骤指定：
+   - 需要的零件
+   - 需要的工具
+   - 操作说明
+   - 注意事项
+
+## 输出格式
+{
+  "assembly_steps": [
+    {
+      "step_id": "step_1",
+      "description": "安装底板作为基准件",
+      "parts": ["底板"],
+      "tools": ["水平仪", "垫铁"],
+      "operations": ["将底板放置在工作台上", "使用水平仪调整水平"],
+      "precautions": ["确保底板水平", "检查表面无毛刺"],
+      "estimated_time": "10分钟"
+    },
+    ...
+  ]
+}
+"""
+```
+
+**输入数据结构：**
+```python
+{
+    "bom_items": [
+        {"name": "底板", "quantity": 1, "material": "Q235", "spec": "500×300×10"},
+        {"name": "左挂件", "quantity": 1, "material": "Q235", "spec": "200×150×8"},
+        ...
+    ],
+    "step_parts": ["底板.step", "左挂件.step", ...],
+    "images": ["base64_image_1", "base64_image_2", ...]
+}
+```
+
+**输出数据结构：**
+```python
+{
+    "assembly_steps": [
+        {
+            "step_id": "step_1",
+            "description": "安装底板作为基准件",
+            "parts": ["底板"],
+            "tools": ["水平仪", "垫铁"],
+            "operations": ["将底板放置在工作台上", "使用水平仪调整水平"],
+            "precautions": ["确保底板水平", "检查表面无毛刺"],
+            "estimated_time": "10分钟",
+            "images": [0, 1]  # 引用输入图片的索引
+        },
+        ...
+    ]
+}
+```
+
+**代码量：** 约200行
+
+---
+
+#### 3.2.4 GeminiPipeline（主流程控制器）
+
+**文件：** `core/gemini_pipeline.py`
+
+**新流程：**
+```python
+class GeminiPipeline:
+    async def generate_manual(self, task_id: str) -> Dict:
+        """
+        生成装配手册（新流程）
+        """
+        logger.info(f"开始生成装配手册: {task_id}")
+        monitor = PerformanceMonitor()
+        
+        # 1. 文件处理
+        start = time.time()
+        file_handler = FileHandler(task_id)
+        files = file_handler.get_files()
+        monitor.record("file_handling", time.time() - start)
+        logger.info(f"✅ 文件识别完成: PDF={files['pdf_file']}, STEP={files['step_file']}")
+        
+        # 2. BOM提取
+        start = time.time()
+        bom_extractor = BOMExtractor()
+        bom_items = await bom_extractor.extract(
+            pdf_path=files['pdf_file'],
+            images=files['images']
+        )
+        monitor.record("bom_extraction", time.time() - start)
+        logger.info(f"✅ BOM提取完成: {len(bom_items)}个零件")
+        
+        # 3. BOM匹配
+        start = time.time()
+        matcher = FlatBOMMatcher()
+        step_parts = file_handler.extract_step_parts(files['step_file'])
+        matched_bom = matcher.match(bom_items, step_parts)
+        monitor.record("bom_matching", time.time() - start)
+        logger.info(f"✅ BOM匹配完成: {len(matched_bom)}个匹配项")
+        
+        # 4. 装配步骤生成
+        start = time.time()
+        assembly_agent = AssemblyAgent()
+        assembly_result = await assembly_agent.generate(
+            bom_items=matched_bom,
+            step_parts=step_parts,
+            images=files['images']
+        )
+        monitor.record("assembly_planning", time.time() - start)
+        logger.info(f"✅ 装配规划完成: {len(assembly_result['assembly_steps'])}个步骤")
+        
+        # 5. 焊接工艺分析
+        start = time.time()
+        welding_agent = WeldingAgent()
+        welding_result = await welding_agent.analyze(
+            bom_items=matched_bom,
+            assembly_steps=assembly_result['assembly_steps'],
+            images=files['images']
+        )
+        monitor.record("welding_analysis", time.time() - start)
+        logger.info(f"✅ 焊接工艺分析完成")
+        
+        # 6. 安全检查
+        start = time.time()
+        safety_agent = SafetyAgent()
+        safety_result = await safety_agent.check(
+            assembly_steps=assembly_result['assembly_steps'],
+            welding_info=welding_result
+        )
+        monitor.record("safety_check", time.time() - start)
+        logger.info(f"✅ 安全检查完成")
+        
+        # 7. 合并结果
+        manual = {
+            "version": "2.0",  # 版本标记
+            "product_name": self._extract_product_name(files['pdf_file']),
+            "assembly_steps": assembly_result['assembly_steps'],
+            "welding": welding_result,
+            "safety": safety_result,
+            "bom": matched_bom,
+            "metadata": {
+                "generated_at": datetime.now().isoformat(),
+                "performance": monitor.summary()
+            }
+        }
+        
+        # 8. 保存结果
+        self._save_manual(task_id, manual)
+        
+        logger.info(f"✅ 装配手册生成完成，总耗时: {monitor.summary()['total_time']:.2f}秒")
+        return manual
+```
+
+**代码量：** 约600行（vs 旧的1084行）
+
+---
+
+### 3.3 数据结构变化
+
+#### 3.3.1 旧数据结构（v1.0）
+```json
+{
+  "product_name": "挂件总成",
+  "components": [
+    {
+      "component_id": "comp_1",
+      "component_name": "组件1",
+      "steps": [
+        {"step_id": "comp_1_step_1", "description": "..."}
+      ]
+    }
+  ],
+  "product_assembly_steps": [
+    {"step_id": "prod_step_1", "description": "..."}
+  ],
+  "welding": {...},
+  "safety": {...}
+}
+```
+
+#### 3.3.2 新数据结构（v2.0）
+```json
+{
+  "version": "2.0",
+  "product_name": "挂件总成",
+  "assembly_steps": [
+    {
+      "step_id": "step_1",
+      "description": "安装底板作为基准件",
+      "parts": ["底板"],
+      "tools": ["水平仪", "垫铁"],
+      "operations": ["将底板放置在工作台上", "使用水平仪调整水平"],
+      "precautions": ["确保底板水平", "检查表面无毛刺"],
+      "estimated_time": "10分钟",
+      "images": [0, 1]
+    },
+    {
+      "step_id": "step_2",
+      "description": "安装左右挂件并点焊定位",
+      "parts": ["左挂件", "右挂件"],
+      "tools": ["点焊钳", "角尺", "夹具"],
+      "operations": ["..."],
+      "precautions": ["..."],
+      "estimated_time": "20分钟",
+      "images": [2, 3]
+    }
+  ],
+  "welding": {...},
+  "safety": {...},
+  "bom": [
+    {
+      "bom_name": "底板",
+      "bom_quantity": 1,
+      "bom_material": "Q235",
+      "matched_file": "底板.step",
+      "match_confidence": 1.0
+    }
+  ],
+  "metadata": {
+    "generated_at": "2025-11-27T11:15:00Z",
+    "performance": {
+      "total_time": 45.2,
+      "stages": {
+        "file_handling": 0.5,
+        "bom_extraction": 12.3,
+        "bom_matching": 1.2,
+        "assembly_planning": 18.5,
+        "welding_analysis": 8.7,
+        "safety_check": 4.0
+      }
+    }
+  }
+}
+```
+
+**关键变化：**
+- ✅ 添加`version`字段标记版本
+- ✅ `components`数组 → `assembly_steps`数组（扁平化）
+- ✅ 删除`product_assembly_steps`（合并到assembly_steps）
+- ✅ 添加`bom`字段（包含匹配信息）
+- ✅ 添加`metadata`字段（包含性能数据）
+
+---
+
+### 3.4 前端适配
+
+#### 3.4.1 类型定义更新
+
+**文件：** `frontend/src/types/manual.ts`
+
+```typescript
+// 新增版本字段
+export interface Manual {
+  version?: string;  // "1.0" 或 "2.0"
+  product_name: string;
+  
+  // v1.0字段（兼容旧数据）
+  components?: Array<{
+    component_id: string;
+    component_name: string;
+    steps: AssemblyStep[];
+  }>;
+  product_assembly_steps?: AssemblyStep[];
+  
+  // v2.0字段（新数据）
+  assembly_steps?: AssemblyStep[];
+  bom?: BOMItem[];
+  
+  welding: WeldingInfo;
+  safety: SafetyInfo;
+  metadata?: {
+    generated_at: string;
+    performance: PerformanceMetrics;
+  };
+}
+
+export interface AssemblyStep {
+  step_id: string;
+  description: string;
+  parts: string[];
+  tools: string[];
+  operations?: string[];
+  precautions?: string[];
+  estimated_time?: string;
+  images?: number[];
+}
+
+export interface BOMItem {
+  bom_name: string;
+  bom_quantity: number;
+  bom_material?: string;
+  matched_file?: string;
+  match_confidence?: number;
+}
+```
+
+#### 3.4.2 数据适配器
+
+**文件：** `frontend/src/utils/manualAdapter.ts`
+
+```typescript
+export function adaptManualData(manual: any): Manual {
+  // 检查版本
+  const version = manual.version || "1.0";
+  
+  if (version === "2.0") {
+    // 新格式，直接返回
+    return manual as Manual;
+  }
+  
+  // 旧格式，需要适配
+  const adaptedManual: Manual = {
+    ...manual,
+    version: "1.0",
+    assembly_steps: []
+  };
+  
+  // 合并components和product_assembly_steps
+  if (manual.components && manual.components.length > 0) {
+    adaptedManual.assembly_steps = manual.components[0].steps || [];
+  }
+  
+  if (manual.product_assembly_steps) {
+    adaptedManual.assembly_steps = [
+      ...(adaptedManual.assembly_steps || []),
+      ...manual.product_assembly_steps
+    ];
+  }
+  
+  return adaptedManual;
+}
+```
+
+#### 3.4.3 ManualViewer更新
+
+**文件：** `frontend/src/components/ManualViewer.tsx`
+
+```typescript
+import { adaptManualData } from '../utils/manualAdapter';
+
+export function ManualViewer({ manualData }: { manualData: any }) {
+  // 适配数据
+  const manual = adaptManualData(manualData);
+  
+  return (
+    <div className="manual-viewer">
+      <h1>{manual.product_name}</h1>
+      
+      {/* 装配步骤 */}
+      <section className="assembly-steps">
+        <h2>装配步骤</h2>
+        {manual.assembly_steps?.map((step, index) => (
+          <StepCard key={step.step_id} step={step} index={index + 1} />
+        ))}
+      </section>
+      
+      {/* BOM清单（仅v2.0） */}
+      {manual.version === "2.0" && manual.bom && (
+        <section className="bom-list">
+          <h2>零件清单</h2>
+          <BOMTable items={manual.bom} />
+        </section>
+      )}
+      
+      {/* 焊接工艺 */}
+      <section className="welding">
+        <h2>焊接工艺</h2>
+        <WeldingInfo data={manual.welding} />
+      </section>
+      
+      {/* 安全注意事项 */}
+      <section className="safety">
+        <h2>安全注意事项</h2>
+        <SafetyInfo data={manual.safety} />
+      </section>
+      
+      {/* 性能数据（仅v2.0，开发模式） */}
+      {process.env.NODE_ENV === 'development' && manual.metadata && (
+        <section className="metadata">
+          <h2>生成信息</h2>
+          <PerformanceMetrics data={manual.metadata.performance} />
+        </section>
+      )}
+    </div>
+  );
+}
+```
+
+---
+
+## 4. 实施计划
+
+### 4.1 时间线（7天）
+
+```mermaid
+gantt
+    title 单文件流程简化实施计划
+    dateFormat  YYYY-MM-DD
+    section 准备阶段
+    创建分支和备份           :2025-11-27, 1d
+    准备测试数据             :2025-11-27, 1d
+    section 后端开发
+    创建AssemblyAgent       :2025-11-28, 1d
+    创建BOMMatcher          :2025-11-29, 1d
+    创建FileHandler         :2025-11-30, 1d
+    重构GeminiPipeline      :2025-12-01, 1d
+    集成测试                :2025-12-02, 1d
+    section 前端开发
+    前端适配                :2025-12-03, 1d
+    section 上线
+    灰度发布和监控          :2025-12-04, 1d
+```
+
+### 4.2 详细步骤
+
+#### Phase 1: 准备阶段（Day 1 - 2025-11-27）
+
+**任务清单：**
+- [ ] 创建feature分支：`git checkout -b feature/simplify-single-file-pipeline`
+- [ ] 备份关键文件到`backup/`目录
+- [ ] 准备测试数据：
+  - [ ] 挂件总成案例（PDF + STEP + 图片）
+  - [ ] 预期输出JSON
+- [ ] 编写测试用例框架：
+  - [ ] `tests/test_file_handler.py`
+  - [ ] `tests/test_bom_matcher.py`
+  - [ ] `tests/test_assembly_agent.py`
+  - [ ] `tests/test_pipeline_new.py`
+
+---
+
+#### Phase 2: 核心模块开发（Day 2-4）
+
+**Day 2 (2025-11-28): 创建AssemblyAgent**
+- [ ] 创建`prompts/agent_assembly.py`
+- [ ] 设计Prompt（参考3.2.3节）
+- [ ] 实现Agent调用逻辑
+- [ ] 编写单元测试
+- [ ] 测试通过率：>90%
+
+**Day 3 (2025-11-29): 创建BOMMatcher**
+- [ ] 创建`core/bom_matcher.py`
+- [ ] 实现扁平匹配算法
+- [ ] 实现相似度计算
+- [ ] 处理边界情况（未匹配、一对多）
+- [ ] 编写单元测试
+- [ ] 测试通过率：>90%
+
+**Day 4 (2025-11-30): 创建FileHandler**
+- [ ] 创建`core/file_handler.py`
+- [ ] 实现文件识别逻辑
+- [ ] 实现STEP零件提取
+- [ ] 编写单元测试
+- [ ] 测试通过率：>90%
+
+---
+
+#### Phase 3: 主流程重构（Day 5-6）
+
+**Day 5 (2025-12-01): 重构GeminiPipeline**
+- [ ] 在`gemini_pipeline.py`中添加新流程方法
+- [ ] 添加配置开关：`USE_NEW_PIPELINE`
+- [ ] 集成新模块（FileHandler, BOMMatcher, AssemblyAgent）
+- [ ] 添加性能监控
+- [ ] 添加详细日志
+- [ ] 保留旧流程代码（标记为deprecated）
+
+**Day 6 (2025-12-02): 集成测试**
+- [ ] 端到端测试（使用真实数据）
+- [ ] 性能测试（对比新旧流程）
+- [ ] 输出格式验证
+- [ ] 修复发现的bug
+- [ ] 测试通过率：>95%
+
+---
+
+#### Phase 4: 前端适配（Day 7）
+
+**Day 7 (2025-12-03): 前端修改**
+- [ ] 更新`types/manual.ts`
+- [ ] 创建`utils/manualAdapter.ts`
+- [ ] 更新`ManualViewer.tsx`
+- [ ] 测试旧数据兼容性
+- [ ] 测试新数据显示
+- [ ] UI测试通过
+
+---
+
+#### Phase 5: 上线和监控（Day 8）
+
+**Day 8 (2025-12-04): 灰度发布**
+- [ ] 设置`USE_NEW_PIPELINE=true`
+- [ ] 部署到测试环境
+- [ ] 生成3-5个测试任务
+- [ ] 监控错误日志
+- [ ] 检查性能指标
+- [ ] 收集用户反馈
+- [ ] 决定：全量发布 or 回退
+
+---
+
+### 4.3 文件变更清单
+
+#### 新增文件
+```
+core/
+  ├── file_handler.py          [新增, 约80行]
+  └── bom_matcher.py           [新增, 约150行]
+
+prompts/
+  └── agent_assembly.py        [新增, 约200行]
+
+tests/
+  ├── test_file_handler.py     [新增]
+  ├── test_bom_matcher.py      [新增]
+  ├── test_assembly_agent.py   [新增]
+  └── test_pipeline_new.py     [新增]
+
+frontend/src/
+  └── utils/
+      └── manualAdapter.ts     [新增]
+```
+
+#### 修改文件
+```
+core/
+  └── gemini_pipeline.py       [修改, 1084行 → 约600行]
+
+frontend/src/
+  ├── types/manual.ts          [修改, 添加新类型]
+  └── components/
+      └── ManualViewer.tsx     [修改, 添加适配器]
+
+.env                           [修改, 添加USE_NEW_PIPELINE]
+```
+
+#### 删除/弃用文件（暂时保留）
+```
+core/
+  ├── file_classifier.py       [弃用, 标记@deprecated]
+  └── hierarchical_bom_matcher_v2.py  [弃用]
+
+prompts/
+  ├── agent_1_vision_planning.py      [弃用]
+  └── agent_4_product_assembly.py     [弃用]
+```
+
+---
+
+## 5. 风险评估
+
+### 5.1 风险矩阵
+
+| 风险 | 概率 | 影响 | 等级 | 缓解措施 |
+|------|------|------|------|----------|
+| Agent输出格式错误 | 中 | 高 | 🔴高 | JSON Schema验证 + 回退机制 |
+| BOM匹配准确率下降 | 低 | 中 | 🟡中 | 模糊匹配算法 + 充分测试 |
+| 前端显示异常 | 低 | 中[object Object]| 数据适配器 + 兼容性测试 |
+| 性能不如预期 | 低 | 低 | 🟢低 | 性能监控 + 优化 |
+| 旧数据不兼容 | 极低 | 高 | 🟡中 | 前端适配器 + 版本标记 |
+
+### 5.2 详细风险分析
+
+#### 风险1: Agent输出格式错误
+**描述：** 新的AssemblyAgent可能输出不符合预期的JSON格式
+
+**缓解措施：**
+1. 使用JSON Schema严格验证输出
+2. 添加格式检查和修复逻辑
+3. 保留旧Agent代码，可快速切换
+4. 充分的单元测试
+
+**回退方案：**
+```python
+try:
+    result = await new_assembly_agent.generate(...)
+    validate_json_schema(result)
+except Exception as e:
+    logger.error(f"新Agent失败: {e}, 回退到旧Agent")
+    result = await old_assembly_agent.generate(...)
+```
+
+---
+
+#### 风险2: BOM匹配准确率下降
+**描述：** 扁平匹配可能不如层级匹配准确
+
+**缓解措施：**
+1. 增强相似度算法（difflib + 自定义规则）
+2. 添加人工审核界面（未来）
+3. 记录匹配置信度，低于阈值时告警
+4. 充分的测试数据覆盖
+
+**监控指标：**
+```python
+# 记录匹配统计
+match_stats = {
+    "total_bom_items": len(bom_items),
+    "matched_items": len([m for m in matched if m['match_confidence'] > 0.8]),
+    "unmatched_items": len([m for m in matched if m['match_confidence'] == 0]),
+    "average_confidence": sum(m['match_confidence'] for m in matched) / len(matched)
+}
+```
+
+---
+
+#### 风险3: 前端显示异常
+**描述：** 新数据结构导致前端渲染错误
+
+**缓解措施：**
+1. 数据适配器兼容旧格式
+2. 版本标记区分数据格式
+3. 充分的UI测试
+4. 错误边界捕获异常
+
+**兼容性保证：**
+```typescript
+// 错误边界
+class ManualViewerErrorBoundary extends React.Component {
+  componentDidCatch(error, errorInfo) {
+    console.error("ManualViewer渲染错误:", error, errorInfo);
+    // 降级到简单视图
+    this.setState({ hasError: true });
+  }
+  
+  render() {
+    if (this.state.hasError) {
+      return <SimpleManualView data={this.props.manualData} />;
+    }
+    return this.props.children;
+  }
+}
+```
+
+---
+
+### 5.3 回退策略
+
+#### 配置开关回退
+```python
+# .env
+USE_NEW_PIPELINE=false  # 切换回旧流程
+```
+
+#### 代码级回退
+```python
+# core/gemini_pipeline.py
+class GeminiPipeline:
+    async def generate_manual(self, task_id: str) -> Dict:
+        use_new = os.getenv("USE_NEW_PIPELINE", "true") == "true"
+        
+        if use_new:
+            try:
+                return await self._generate_manual_v2(task_id)
+            except Exception as e:
+                logger.error(f"新流程失败: {e}, 回退到旧流程")
+                return await self._generate_manual_v1(task_id)
+        else:
+            return await self._generate_manual_v1(task_id)
+```
+
+#### 数据库回退
+- 不需要数据库迁移
+- 旧数据保持不变
+- 新数据通过前端适配器兼容
+
+---
+
+## 6. 测试策略
+
+### 6.1 测试金字塔
+
+```
+        /\
+       /  \  E2E测试 (5%)
+      /----\
+     /      \ 集成测试 (25%)
+    /--------\
+   /          \ 单元测试 (70%)
+  /____________\
+```
+
+### 6.2 单元测试
+
+#### 6.2.1 FileHandler测试
+**文件：** `tests/test_file_handler.py`
+
+```python
+import pytest
+from core.file_handler import FileHandler
+
+class TestFileHandler:
+    def test_get_files_success(self):
+        """测试正常获取文件"""
+        handler = FileHandler("test_task_001")
+        files = handler.get_files()
+        
+        assert files['pdf_file'].endswith('.pdf')
+        assert files['step_file'] is not None
+        assert len(files['images']) > 0
+    
+    def test_extract_step_parts_from_file(self):
+        """测试从单个STEP文件提取零件"""
+        handler = FileHandler("test_task_001")
+        parts = handler.extract_step_parts("test.step")
+        
+        assert len(parts) > 0
+        assert all(p.endswith('.step') for p in parts)
+    
+    def test_extract_step_parts_from_folder(self):
+        """测试从STEP文件夹提取零件"""
+        handler = FileHandler("test_task_002")
+        parts = handler.extract_step_parts("step_folder/")
+        
+        assert len(parts) > 0
+        assert all(p.endswith('.step') for p in parts)
+    
+    def test_missing_pdf_raises_error(self):
+        """测试缺少PDF时抛出异常"""
+        handler = FileHandler("empty_task")
+        
+        with pytest.raises(FileNotFoundError):
+            handler.get_files()
+```
+
+#### 6.2.2 BOMMatcher测试
+**文件：** `tests/test_bom_matcher.py`
+
+```python
+import pytest
+from core.bom_matcher import FlatBOMMatcher
+
+class TestBOMMatcher:
+    def test_exact_match(self):
+        """测试精确匹配"""
+        matcher = FlatBOMMatcher()
+        bom_items = [{"name": "底板", "quantity": 1}]
+        step_files = ["底板.step"]
+        
+        result = matcher.match(bom_items, step_files)
+        
+        assert len(result) == 1
+        assert result[0]['matched_file'] == "底板.step"
+        assert result[0]['match_confidence'] == 1.0
+    
+    def test_fuzzy_match(self):
+        """测试模糊匹配"""
+        matcher = FlatBOMMatcher()
+        bom_items = [{"name": "左挂件", "quantity": 1}]
+        step_files = ["左侧挂件.step"]
+        
+        result = matcher.match(bom_items, step_files)
+        
+        assert len(result) == 1
+        assert result[0]['matched_file'] == "左侧挂件.step"
+        assert result[0]['match_confidence'] > 0.7
+    
+    def test_unmatched_bom(self):
+        """测试BOM中有但STEP中没有的零件"""
+        matcher = FlatBOMMatcher()
+        bom_items = [{"name": "螺栓", "quantity": 10}]
+        step_files = ["底板.step"]
+        
+        result = matcher.match(bom_items, step_files)
+        
+        assert len(result) == 1
+        assert result[0]['matched_file'] is None
+        assert result[0]['match_confidence'] == 0.0
+    
+    def test_quantity_mismatch_warning(self):
+        """测试数量不匹配时的警告"""
+        matcher = FlatBOMMatcher()
+        bom_items = [{"name": "螺栓", "quantity": 10}]
+        step_files = ["螺栓.step"]  # 只有1个文件
+        
+        result = matcher.match(bom_items, step_files)
+        
+        # 应该有警告日志
+        assert result[0]['quantity_mismatch'] == True
+```
+
+#### 6.2.3 AssemblyAgent测试
+**文件：** `tests/test_assembly_agent.py`
+
+```python
+import pytest
+from prompts.agent_assembly import AssemblyAgent
+
+class TestAssemblyAgent:
+    @pytest.mark.asyncio
+    async def test_generate_steps_success(self):
+        """测试成功生成装配步骤"""
+        agent = AssemblyAgent()
+        
+        bom_items = [
+            {"name": "底板", "quantity": 1, "material": "Q235"},
+            {"name": "左挂件", "quantity": 1, "material": "Q235"}
+        ]
+        step_parts = ["底板.step", "左挂件.step"]
+        images = ["base64_image_1", "base64_image_2"]
+        
+        result = await agent.generate(bom_items, step_parts, images)
+        
+        assert 'assembly_steps' in result
+        assert len(result['assembly_steps']) > 0
+        assert result['assembly_steps'][0]['step_id'] == "step_1"
+        assert 'description' in result['assembly_steps'][0]
+        assert 'parts' in result['assembly_steps'][0]
+    
+    @pytest.mark.asyncio
+    async def test_output_format_validation(self):
+        """测试输出格式验证"""
+        agent = AssemblyAgent()
+        
+        # ... 调用agent
+        
+        result = await agent.generate(...)
+        
+        # 验证JSON Schema
+        from jsonschema import validate
+        schema = {...}  # 定义Schema
+        validate(instance=result, schema=schema)
+```
+
+---
+
+### 6.3 集成测试
+
+#### 6.3.1 Pipeline集成测试
+**文件：** `tests/test_pipeline_new.py`
+
+```python
+import pytest
+from core.gemini_pipeline import GeminiPipeline
+
+class TestPipelineIntegration:
+    @pytest.mark.asyncio
+    async def test_full_pipeline_with_real_data(self):
+        """测试完整流程（使用真实数据）"""
+        pipeline = GeminiPipeline()
+        
+        # 使用测试任务
+        task_id = "test_task_hanger_assembly"
+        
+        result = await pipeline.generate_manual(task_id)
+        
+        # 验证输出结构
+        assert result['version'] == "2.0"
+        assert 'product_name' in result
+        assert 'assembly_steps' in result
+        assert len(result['assembly_steps']) > 0
+        assert 'welding' in result
+        assert 'safety' in result
+        assert 'bom' in result
+        
+        # 验证性能
+        assert result['metadata']['performance']['total_time'] < 60  # 小于60秒
+    
+    @pytest.mark.asyncio
+    async def test_pipeline_performance_comparison(self):
+        """测试新旧流程性能对比"""
+        pipeline = GeminiPipeline()
+        task_id = "test_task_hanger_assembly"
+        
+        # 测试旧流程
+        import time
+        start = time.time()
+        old_result = await pipeline._generate_manual_v1(task_id)
+        old_time = time.time() - start
+        
+        # 测试新流程
+        start = time.time()
+        new_result = await pipeline._generate_manual_v2(task_id)
+        new_time = time.time() - start
+        
+        # 新流程应该更快
+        assert new_time < old_time
+        print(f"性能提升: {(old_time - new_time) / old_time * 100:.1f}%")
+```
+
+---
+
+### 6.4 E2E测试
+
+#### 6.4.1 前端E2E测试
+**文件：** `frontend/tests/e2e/manual_viewer.spec.ts`
+
+```typescript
+import { test, expect } from '@playwright/test';
+
+test.describe('ManualViewer', () => {
+  test('should display v2.0 manual correctly', async ({ page }) => {
+    // 加载测试数据
+    await page.goto('/manual/test_task_v2');
+    
+    // 验证标题
+    await expect(page.locator('h1')).toContainText('挂件总成');
+    
+    // 验证装配步骤
+    const steps = page.locator('.assembly-step');
+    await expect(steps).toHaveCount(5);  // 假设有5个步骤
+    
+    // 验证第一个步骤
+    const firstStep = steps.first();
+    await expect(firstStep).toContainText('安装底板');
+    await expect(firstStep).toContainText('底板');
+    
+    // 验证BOM表
+    await expect(page.locator('.bom-table')).toBeVisible();
+  });
+  
+  test('should handle v1.0 manual with adapter', async ({ page }) => {
+    // 加载旧版本数据
+    await page.goto('/manual/test_task_v1');
+    
+    // 应该仍然能正常显示
+    await expect(page.locator('h1')).toBeVisible();
+    await expect(page.locator('.assembly-step')).toHaveCount.greaterThan(0);
+  });
+});
+```
+
+---

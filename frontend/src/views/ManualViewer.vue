@@ -48,6 +48,14 @@
               <el-icon><Edit /></el-icon>
               编辑内容
             </el-button>
+            <el-button type="success" size="large" @click="openPublishDialog">
+              <el-icon><Upload /></el-icon>
+              发布新版本
+            </el-button>
+            <el-button type="info" size="large" @click="goHistory">
+              <el-icon><Document /></el-icon>
+              历史版本
+            </el-button>
             <el-button size="large" @click="logout">退出</el-button>
           </div>
         </div>
@@ -335,6 +343,26 @@
     </el-form>
 
     <el-tabs v-model="editActiveTab">
+      <!-- 步骤描述 -->
+      <el-tab-pane label="步骤描述" name="description">
+        <div class="edit-section">
+          <el-alert
+            title="提示"
+            type="info"
+            :closable="false"
+            style="margin-bottom: 12px"
+          >
+            编辑当前步骤的文字描述（同步到 description/operation 字段）
+          </el-alert>
+          <el-input
+            v-model="editData.step_description"
+            type="textarea"
+            :rows="6"
+            placeholder="请输入该步骤的描述"
+          />
+        </div>
+      </el-tab-pane>
+
       <!-- 焊接注意事项 -->
       <el-tab-pane label="焊接注意事项" name="welding">
         <div class="edit-section">
@@ -587,7 +615,37 @@
       </el-tabs>
       <template #footer>
         <el-button @click="showEditDialog = false">取消</el-button>
-        <el-button type="primary" @click="saveManualData" :loading="saving">保存</el-button>
+        <el-button type="primary" @click="saveDraft" :loading="saving">💾 保存草稿</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 发布 Dialog -->
+    <el-dialog
+      v-model="showPublishDialog"
+      title="🚀 发布新版本"
+      width="520px"
+    >
+      <el-form label-width="100px">
+        <el-form-item label="当前版本">
+          <el-tag type="info">{{ manualData?.version || '未发布' }}</el-tag>
+        </el-form-item>
+        <el-form-item label="即将发布">
+          <el-tag type="success">{{ nextVersionPreview }}</el-tag>
+        </el-form-item>
+        <el-form-item label="版本说明" required>
+          <el-input
+            v-model="publishForm.changelog"
+            type="textarea"
+            :rows="4"
+            placeholder="请填写本次发布的变更说明"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showPublishDialog = false">取消</el-button>
+        <el-button type="primary" :loading="publishing" @click="confirmPublish">
+          确认发布✅
+        </el-button>
       </template>
     </el-dialog>
   </div>
@@ -595,10 +653,11 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Loading, ArrowLeft, ArrowRight, Picture, Box,
-  Refresh, View, Grid, Clock, Lock, Edit, Plus
+  Refresh, View, Grid, Clock, Lock, Edit, Plus, Upload, Document
 } from '@element-plus/icons-vue'
 import axios from 'axios'
 import * as THREE from 'three'
@@ -636,15 +695,27 @@ const props = defineProps<{
   taskId: string
 }>()
 
+const router = useRouter()
+
 const manualData = ref<any>(null)
 const currentStepIndex = ref(0)
 const activeTab = ref('welding')
 const modelContainer = ref<HTMLElement | null>(null)
 
+const nextVersionPreview = computed(() => {
+  const raw = manualData.value?.version || 'v0'
+  const numeric = parseInt(String(raw).replace(/[^0-9]/g, ''), 10)
+  const next = Number.isNaN(numeric) ? 1 : numeric + 1
+  return `v${next}`
+})
+
 // 管理员相关
 const isAdmin = ref(false)
 const showLoginDialog = ref(false)
 const showEditDialog = ref(false)
+const showPublishDialog = ref(false)
+const publishForm = ref({ changelog: '' })
+const publishing = ref(false)
 const editActiveTab = ref('welding')
 const saving = ref(false)
 const componentNameInput = ref('')
@@ -659,6 +730,7 @@ const editData = ref({
   welding_requirements: [] as WeldingRequirementEdit[],
   safety_warnings: [] as SafetyWarningEdit[],
   quality_check: '' as string,
+  step_description: '' as string,
   faq_items: [] as Array<{ question: string; answer: string }>
 })
 
@@ -1125,6 +1197,7 @@ watch(showEditDialog, (newVal) => {
     // FAQ是全局的，不按步骤过滤
     const safetyAndFaq = manualData.value.safety_and_faq || {}
     editData.value.faq_items = JSON.parse(JSON.stringify(safetyAndFaq.faq_items || []))
+    editData.value.step_description = currentStep.description || currentStep.operation || ''
 
     console.log('📝 [编辑数据初始化完成]')
     console.log('  - 原始步骤号:', originalStepNumber.value)
@@ -1189,9 +1262,9 @@ const removeFaqItem = (index: number) => {
   editData.value.faq_items.splice(index, 1)
 }
 
-// 保存修改（只更新当前步骤的数据）
+// 保存修改到草稿（只更新当前步骤的数据）
 // 🔧 修复：基于原始数据快照进行精确替换，避免数据丢失和重复
-const saveManualData = async () => {
+const saveDraft = async () => {
   try {
     saving.value = true
 
@@ -1206,6 +1279,7 @@ const saveManualData = async () => {
 
     // 更新manualData
     const updatedData = { ...manualData.value }
+    const newDescription = (editData.value.step_description || '').trim()
 
     // 统一同步名称到编辑表单，避免多个来源不一致
     editData.value.welding_requirements = editData.value.welding_requirements.map(req => ({
@@ -1242,6 +1316,11 @@ const saveManualData = async () => {
               console.log('  ✅ 找到匹配的步骤，准备更新...')
               console.log('  - 更新前 component.component_name:', component.component_name)
 
+              if (newDescription) {
+                step.description = newDescription
+                step.operation = newDescription
+              }
+
               // 更新焊接数据
               if (validWeldingReqs.length > 0) {
                 step.welding = validWeldingReqs[0].welding_info
@@ -1266,6 +1345,10 @@ const saveManualData = async () => {
     if (!stepUpdated && updatedData.product_assembly?.steps) {
       for (const step of updatedData.product_assembly.steps) {
         if (step.step_id === currentStepId) {
+          if (newDescription) {
+            step.description = newDescription
+            step.operation = newDescription
+          }
           // 更新焊接数据
           if (validWeldingReqs.length > 0) {
             step.welding = validWeldingReqs[0].welding_info
@@ -1359,22 +1442,23 @@ const saveManualData = async () => {
       f => f.question.trim() && f.answer.trim()
     )
 
-    // 调用后端API保存
-    const response = await axios.put(`/api/manual/${props.taskId}`, updatedData)
+    // 调用后端API保存草稿
+    const response = await axios.post(`/api/manual/${props.taskId}/save-draft`, {
+      manual_data: updatedData
+    })
 
     if (response.data.success) {
-      // 更新本地数据
+      // 更新本地数据到草稿态
       manualData.value = updatedData
 
-      // 更新localStorage缓存
-      localStorage.setItem('current_manual', JSON.stringify(updatedData))
+      // 草稿单独缓存，避免污染已发布缓存
+      localStorage.setItem('current_manual_draft', JSON.stringify(updatedData))
 
-      ElMessage.success(`保存成功！版本号: ${response.data.version}`)
+      ElMessage.success('草稿已保存')
       showEditDialog.value = false
 
-      console.log('✅ [保存成功]')
-      console.log('  - 新版本号:', response.data.version)
-      console.log('  - 数据已同步到localStorage')
+      console.log('✅ [草稿保存成功]')
+      console.log('  - lastUpdated:', response.data.lastUpdated)
     }
   } catch (error: any) {
     console.error('❌ [保存失败]:', error)
@@ -1382,6 +1466,51 @@ const saveManualData = async () => {
   } finally {
     saving.value = false
   }
+}
+
+const openPublishDialog = () => {
+  if (!isAdmin.value) {
+    ElMessage.warning('请先登录管理员')
+    return
+  }
+  publishForm.value.changelog = ''
+  showPublishDialog.value = true
+}
+
+const refreshManualFromServer = async () => {
+  const response = await axios.get(`/api/manual/${props.taskId}`)
+  manualData.value = response.data
+  localStorage.setItem('current_manual', JSON.stringify(response.data))
+  currentStepIndex.value = 0
+}
+
+const confirmPublish = async () => {
+  if (!publishForm.value.changelog.trim()) {
+    ElMessage.warning('请填写版本说明')
+    return
+  }
+
+  try {
+    publishing.value = true
+    const response = await axios.post(`/api/manual/${props.taskId}/publish`, {
+      changelog: publishForm.value.changelog.trim()
+    })
+    ElMessage.success(`发布成功，版本: ${response.data.version}`)
+    showPublishDialog.value = false
+    publishForm.value.changelog = ''
+    localStorage.removeItem('current_manual_draft')
+    await refreshManualFromServer()
+    await init3DViewerAndModel()
+  } catch (error: any) {
+    console.error('❌ 发布失败', error)
+    ElMessage.error('发布失败: ' + (error.response?.data?.detail || error.message))
+  } finally {
+    publishing.value = false
+  }
+}
+
+const goHistory = () => {
+  router.push(`/version-history/${props.taskId}`)
 }
 
 
@@ -1393,6 +1522,28 @@ const loadLocalJSON = async () => {
   }
 
   try {
+    // 0. 管理员优先加载草稿
+    if (isAdmin.value) {
+      try {
+        const draftResp = await axios.get(`/api/manual/${props.taskId}/draft`)
+        manualData.value = draftResp.data
+        localStorage.setItem('current_manual_draft', JSON.stringify(draftResp.data))
+        ElMessage.success('已加载草稿')
+        await init3DViewerAndModel()
+        return
+      } catch (error: any) {
+        console.log('⚠️ 草稿不存在或加载失败，使用已发布版本', error?.response?.status)
+      }
+
+      const cachedDraft = localStorage.getItem('current_manual_draft')
+      if (cachedDraft) {
+        manualData.value = JSON.parse(cachedDraft)
+        console.log('✅ 从本地草稿缓存加载')
+        await init3DViewerAndModel()
+        return
+      }
+    }
+
     // 1. 先尝试从 localStorage 加载
     const currentManual = localStorage.getItem('current_manual')
     if (currentManual) {

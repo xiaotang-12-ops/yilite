@@ -13,6 +13,7 @@ from typing import List, Dict, Optional, Tuple
 from datetime import datetime
 import fitz  # PyMuPDF
 from PIL import Image
+from utils.time_utils import beijing_now
 
 
 class PDFProcessor:
@@ -234,7 +235,7 @@ class ModelProcessor:
                 return str(name)
 
             if isinstance(scene, self.trimesh.Scene):
-                # 先修复 geometry 名称，避免导出 GLB 时出现乱码
+                # 先修复 geometry 名称，避免导出 GLB 时出现乱码，使用官方 graph.update 保持引用一致
                 new_geometry = {}
                 name_map = {}
                 for old_name, geom in scene.geometry.items():
@@ -245,14 +246,26 @@ class ModelProcessor:
                     name_map[old_name] = fixed_name
                 scene.geometry = new_geometry
 
-                # 同步 graph 引用的 geometry 名称
+                # 同步 graph 引用的 geometry 名称，避免直接赋值导致绑定失效
                 for node in list(scene.graph.nodes_geometry):
                     try:
                         transform, geom_name = scene.graph[node]
                         fixed_geom_name = name_map.get(geom_name, _decode_name(geom_name))
-                        scene.graph[node] = (transform, fixed_geom_name)
+                        scene.graph.update(
+                            frame_from=None,
+                            frame_to=node,
+                            matrix=transform,
+                            geometry=fixed_geom_name
+                        )
                     except Exception:
                         continue
+
+                # 绑定完整性自检：节点绑定数量应与 geometry 数量接近
+                with_geom = [n for n in scene.graph.nodes if scene.graph[n][1] is not None]
+                if scene.geometry and len(with_geom) / len(scene.geometry) < 0.95:
+                    raise ValueError(
+                        f"节点与geometry绑定缺失：with_geom={len(with_geom)}, geometry={len(scene.geometry)}"
+                    )
             else:
                 # 单网格场景，尝试修复元数据名称
                 mesh_name = _decode_name(getattr(scene, "metadata", {}).get("name", "mesh_0"))
@@ -316,6 +329,80 @@ class ModelProcessor:
                 "success": False,
                 "error": str(e),
                 "message": "trimesh转换失败"
+            }
+
+    def generate_glb_inventory(
+        self,
+        glb_path: str,
+        output_path: Optional[str] = None
+    ) -> Dict:
+        """
+        生成 GLB 节点/几何清单，便于调试缺件问题。
+
+        Args:
+            glb_path: GLB 文件路径
+            output_path: 如提供则写入文件，否则仅返回字典
+
+        Returns:
+            {
+                "glb": "...",
+                "nodes_total": int,
+                "geometry_total": int,
+                "nodes_with_geometry": int,
+                "nodes_without_geometry": [...],
+                "geometry_unused": [...],
+                "node_to_geometry": [{"node": "...", "geometry": "..."}]
+            }
+        """
+        try:
+            scene = self.trimesh.load(glb_path, force='scene')
+            if not isinstance(scene, self.trimesh.Scene):
+                return {
+                    "success": False,
+                    "error": "GLB 不是 Scene，无法生成清单"
+                }
+
+            nodes = list(scene.graph.nodes)
+            node_to_geom = []
+            nodes_without = []
+            used_geom = set()
+
+            for node in nodes:
+                try:
+                    transform, geom_name = scene.graph[node]
+                except Exception:
+                    nodes_without.append(str(node))
+                    continue
+                if geom_name:
+                    node_to_geom.append({"node": str(node), "geometry": str(geom_name)})
+                    used_geom.add(str(geom_name))
+                else:
+                    nodes_without.append(str(node))
+
+            all_geom = set(str(k) for k in scene.geometry.keys())
+            unused_geom = sorted(all_geom - used_geom)
+
+            result = {
+                "success": True,
+                "glb": os.path.basename(glb_path),
+                "nodes_total": len(nodes),
+                "geometry_total": len(scene.geometry),
+                "nodes_with_geometry": len(node_to_geom),
+                "nodes_without_geometry": nodes_without,
+                "geometry_unused": unused_geom,
+                "node_to_geometry": node_to_geom
+            }
+
+            if output_path:
+                Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+                with open(output_path, "w", encoding="utf-8") as f:
+                    json.dump(result, f, ensure_ascii=False, indent=2)
+
+            return result
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e)
             }
 
     def generate_explosion_data(
@@ -576,7 +663,7 @@ class ModelProcessor:
             "metadata": {
                 "total_parts": len(node_map),
                 "total_steps": len(assembly_steps),
-                "generated_at": datetime.now().isoformat()
+                "generated_at": beijing_now().isoformat()
             }
         }
 

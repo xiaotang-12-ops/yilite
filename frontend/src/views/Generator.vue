@@ -18,15 +18,17 @@
                   class="upload-dragger"
                   drag
                   :auto-upload="false"
-                  :multiple="true"
+                  :multiple="false"
+                  :limit="1"
                   accept=".pdf"
                   :on-change="handlePdfChange"
+                  :on-exceed="handlePdfExceed"
                   :file-list="pdfFiles"
                 >
                   <el-icon class="upload-icon"><UploadFilled /></el-icon>
                   <div class="upload-text">
                     <p>拖拽PDF文件到此处，或<em>点击上传</em></p>
-                    <p class="upload-hint">支持多个PDF文件，单个文件不超过50MB</p>
+                    <p class="upload-hint">仅支持1个PDF文件，单个文件不超过50MB</p>
                   </div>
                 </el-upload>
                 
@@ -58,15 +60,17 @@
                   class="upload-dragger"
                   drag
                   :auto-upload="false"
-                  :multiple="true"
+                  :multiple="false"
+                  :limit="1"
                   accept=".step,.stp"
                   :on-change="handleModelChange"
+                  :on-exceed="handleModelExceed"
                   :file-list="modelFiles"
                 >
                   <el-icon class="upload-icon"><Box /></el-icon>
                   <div class="upload-text">
                     <p>拖拽STEP模型文件到此处，或<em>点击上传</em></p>
-                    <p class="upload-hint">仅支持STEP格式 (.step, .stp)，单个文件不超过100MB</p>
+                    <p class="upload-hint">仅支持1个STEP文件 (.step, .stp)，单个文件不超过100MB</p>
                   </div>
                 </el-upload>
                 
@@ -94,12 +98,12 @@
                 <el-icon><Warning /></el-icon>
                 文件验证
               </h3>
-              <div class="validation-content">
-                <div class="validation-tips">
-                  <p><strong>📋 上传要求：</strong></p>
-                  <ul>
-                    <li>PDF文件和STEP文件需要<strong>文件名对应</strong>（如：产品总图.pdf ↔ 产品总图.step）</li>
-                    <li>请上传<strong>完整的文件包</strong>，包括组件图和整体产品图</li>
+            <div class="validation-content">
+              <div class="validation-tips">
+                <p><strong>📋 上传要求：</strong></p>
+                <ul>
+                    <li>当前仅支持<strong>1个PDF</strong>和<strong>1个STEP</strong>，task_id 将以PDF文件名（去后缀）生成</li>
+                    <li>请确保上传的文件中包含所需的<strong>组件图</strong>和<strong>整体产品图</strong></li>
                     <li>确保所有图纸都包含<strong>BOM表格</strong>和<strong>技术要求</strong></li>
                   </ul>
                 </div>
@@ -122,18 +126,6 @@
             </div>
 
             <!-- 项目配置 -->
-            <div class="config-section">
-              <h3>项目配置</h3>
-              <div class="config-item">
-                <label>项目名称 *</label>
-                <el-input
-                  v-model="config.projectName"
-                  placeholder="请输入项目名称，如：V型推雪板EURO连接器"
-                  :prefix-icon="Folder"
-                  size="large"
-                />
-              </div>
-            </div>
 
             <!-- 操作按钮 -->
             <div class="step-actions">
@@ -681,21 +673,46 @@ const processingSteps = [
 
 // 计算属性
 const canStartGeneration = computed(() => {
-  return pdfFiles.value.length > 0 &&
-         modelFiles.value.length > 0 &&
-         config.projectName.trim() !== '' &&
+  return pdfFiles.value.length === 1 &&
+         modelFiles.value.length === 1 &&
          (!validationResult.value || validationResult.value.isValid)
 })
 
+// 将项目名称与 PDF 文件名保持一致
+const syncProjectNameFromPdf = () => {
+  if (!pdfFiles.value.length) return
+  const pdfName = pdfFiles.value[0].name.replace(/\.pdf$/i, '')
+  config.projectName = pdfName
+}
+
 // 方法
 const handlePdfChange = (file: UploadFile, fileList: UploadFiles) => {
-  pdfFiles.value = fileList
+  if (fileList.length > 1) {
+    ElMessage.warning('仅支持上传1个PDF文件，已保留最近选择的文件')
+    pdfFiles.value = [fileList[fileList.length - 1]]
+  } else {
+    pdfFiles.value = fileList
+  }
+  syncProjectNameFromPdf()
   validateFileCorrespondence()
 }
 
+const handlePdfExceed = () => {
+  ElMessage.warning('一次只能上传1个PDF文件')
+}
+
 const handleModelChange = (file: UploadFile, fileList: UploadFiles) => {
-  modelFiles.value = fileList
+  if (fileList.length > 1) {
+    ElMessage.warning('仅支持上传1个STEP文件，已保留最近选择的文件')
+    modelFiles.value = [fileList[fileList.length - 1]]
+  } else {
+    modelFiles.value = fileList
+  }
   validateFileCorrespondence()
+}
+
+const handleModelExceed = () => {
+  ElMessage.warning('一次只能上传1个STEP文件')
 }
 
 // 文件对应性验证
@@ -705,25 +722,17 @@ const validateFileCorrespondence = () => {
     return
   }
 
-  const pdfNames = pdfFiles.value.map(f => f.name.replace(/\.pdf$/i, ''))
-  const stepNames = modelFiles.value.map(f => f.name.replace(/\.(step|stp)$/i, ''))
-
   const errors = []
 
-  // 检查PDF文件是否有对应的STEP文件
-  pdfNames.forEach(pdfName => {
-    if (!stepNames.includes(pdfName)) {
-      errors.push(`PDF文件"${pdfName}.pdf"缺少对应的STEP文件`)
-    }
-  })
+  // 限制数量
+  if (pdfFiles.value.length !== 1) {
+    errors.push(`需要上传1个PDF文件（当前${pdfFiles.value.length}个）`)
+  }
+  if (modelFiles.value.length !== 1) {
+    errors.push(`需要上传1个STEP文件（当前${modelFiles.value.length}个）`)
+  }
 
-  // 检查STEP文件是否有对应的PDF文件
-  stepNames.forEach(stepName => {
-    if (!pdfNames.includes(stepName)) {
-      errors.push(`STEP文件"${stepName}"缺少对应的PDF文件`)
-    }
-  })
-
+  // 检查文件名对应
   validationResult.value = {
     isValid: errors.length === 0,
     errors: errors
@@ -734,6 +743,11 @@ const removePdfFile = (file: UploadFile) => {
   const index = pdfFiles.value.indexOf(file)
   if (index > -1) {
     pdfFiles.value.splice(index, 1)
+  }
+  if (pdfFiles.value.length === 0) {
+    config.projectName = ''
+  } else {
+    syncProjectNameFromPdf()
   }
 }
 
@@ -752,15 +766,14 @@ const formatFileSize = (size: number) => {
 
 const startGeneration = async () => {
   // 验证文件
-  if (pdfFiles.value.length === 0 && modelFiles.value.length === 0) {
-    ElMessage.warning('请至少上传一个PDF文件或3D模型文件')
+  if (pdfFiles.value.length !== 1 || modelFiles.value.length !== 1) {
+    ElMessage.warning('请上传1个PDF和1个STEP文件')
     return
   }
 
-  // 验证项目名称
-  if (!config.projectName.trim()) {
-    ElMessage.warning('请输入项目名称')
-    return
+  // 若未填项目名，自动取PDF去后缀
+  if (!config.projectName.trim() && pdfFiles.value.length === 1) {
+    config.projectName = pdfFiles.value[0].name.replace(/\.pdf$/i, '')
   }
 
   // 验证文件对应关系
@@ -805,10 +818,23 @@ const startGeneration = async () => {
 
   } catch (error: any) {
     console.error('生成失败:', error)
-    ElMessage.error('生成失败: ' + (error.message || '未知错误'))
+    const detail = error.detail || error.message || error.response?.data?.detail
+    const status = error.status || error.response?.status
+
+    // 若因同名 task_id 冲突，弹窗提示用户更换 PDF 名称或清理旧任务
+    if (status === 400 && detail && String(detail).includes('已存在')) {
+      ElMessageBox.alert(
+        detail || '已存在同名任务，请更换 PDF 文件名或清理旧任务后再试',
+        '任务已存在',
+        { type: 'warning' }
+      )
+    } else {
+      ElMessage.error('生成失败: ' + (detail || '未知错误'))
+    }
+
     processingStatus.value = 'exception'
     processingText.value = '生成失败'
-    addLog(`❌ 生成失败: ${error.message}`, 'error')
+    addLog(`❌ 生成失败: ${detail}`, 'error')
     isGenerating.value = false
 
     // 关闭 SSE
@@ -855,25 +881,36 @@ let eventSource: EventSource | null = null
 
 // 开始生成任务 - 使用 SSE 实时更新
 const startGenerationTask = async () => {
-  const response = await axios.post('/api/generate', {
-    config: {
-      projectName: config.projectName
-    },
-    pdf_files: pdfFiles.value.map(f => f.name),
-    model_files: modelFiles.value.map(f => f.name)
-  })
+  try {
+    const response = await axios.post('/api/generate', {
+      config: {
+        projectName: config.projectName
+      },
+      pdf_files: pdfFiles.value.map(f => f.name),
+      model_files: modelFiles.value.map(f => f.name)
+    })
 
-  if (!response.data.success) {
-    throw new Error('生成失败: ' + (response.data.detail || '未知错误'))
+    if (!response.data.success) {
+      throw new Error('生成失败: ' + (response.data.detail || '未知错误'))
+    }
+
+    const newTaskId = response.data.task_id
+    taskId.value = newTaskId
+
+    // 建立 SSE 连接
+    connectEventSource(newTaskId)
+
+    return newTaskId
+  } catch (error: any) {
+    const detail = error.response?.data?.detail || error.message || '未知错误'
+    const status = error.response?.status
+    // 抛出结构化错误，供上层区分是否为同名任务冲突
+    throw {
+      message: detail,
+      detail,
+      status
+    }
   }
-
-  const newTaskId = response.data.task_id
-  taskId.value = newTaskId
-
-  // 建立 SSE 连接
-  connectEventSource(newTaskId)
-
-  return newTaskId
 }
 
 // 连接 EventSource (SSE)

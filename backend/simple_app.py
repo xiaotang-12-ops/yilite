@@ -10,7 +10,7 @@ import uuid
 import traceback
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List
+from typing import Any, Dict, List, Optional
 
 # ✅ 添加项目根目录到Python路径
 project_root = Path(__file__).parent.parent
@@ -31,6 +31,10 @@ import asyncio
 # 加载环境变量
 from dotenv import load_dotenv
 load_dotenv()
+
+# 存储管理
+from core.storage import ManualStorage
+from utils.time_utils import beijing_now, BEIJING_TZ
 
 # 创建FastAPI应用
 app = FastAPI(
@@ -61,7 +65,7 @@ async def health_check():
         "status": "healthy",
         "service": "assembly-manual-backend",
         "version": "1.0.0",
-        "timestamp": datetime.now().isoformat()
+        "timestamp": beijing_now().isoformat()
     }
 
 @app.get("/")
@@ -82,10 +86,25 @@ class GenerationRequest(BaseModel):
     pdf_files: List[str]
     model_files: List[str]
 
+# 版本管理请求模型
+class SaveDraftRequest(BaseModel):
+    manual_data: Dict[str, Any]
+
+class PublishRequest(BaseModel):
+    changelog: str
+    manual_data: Optional[Dict[str, Any]] = None
+
+class RollbackRequest(BaseModel):
+    changelog: Optional[str] = None
+
 # 全局变量
 tasks = {}
 upload_dir = Path("uploads")
 upload_dir.mkdir(exist_ok=True)
+
+def get_storage(task_id: str) -> ManualStorage:
+    """获取指定任务的存储管理器"""
+    return ManualStorage(base_dir=OUTPUT_DIR, task_id=task_id)
 
 @app.get("/")
 async def root():
@@ -97,6 +116,12 @@ async def upload_files(
     model_files: List[UploadFile] = File(default=[])
 ):
     """上传文件接口 - 支持PDF和3D模型文件"""
+
+    # ✅ 限制一次只允许 1 个 PDF + 1 个 STEP
+    pdf_count = len([f for f in pdf_files if f and f.filename])
+    model_count = len([f for f in model_files if f and f.filename])
+    if pdf_count != 1 or model_count != 1:
+        raise HTTPException(status_code=400, detail="一次仅支持上传 1 个 PDF 和 1 个 STEP 文件")
 
     # ✅ Bug修复：上传前清空uploads目录，防止旧文件累积
     import shutil
@@ -156,11 +181,31 @@ async def upload_files(
 @app.post("/api/generate")
 async def generate_manual(request: GenerationRequest):
     """生成装配说明书接口 - 直接调用gemini_pipeline"""
-    task_id = str(uuid.uuid4())
+    # ✅ 限制生成时也只允许 1 个 PDF + 1 个 STEP
+    if len(request.pdf_files) != 1 or len(request.model_files) != 1:
+        raise HTTPException(status_code=400, detail="一次仅支持 1 个 PDF 和 1 个 STEP 文件")
+
+    # ✅ 以 PDF 文件名作为 task_id，并校验 STEP 文件名匹配
+    pdf_filename = request.pdf_files[0]
+    step_filename = request.model_files[0]
+
+    pdf_suffix = Path(pdf_filename).suffix.lower()
+    step_suffix = Path(step_filename).suffix.lower()
+    pdf_base = Path(pdf_filename).stem or pdf_filename
+
+    # 若 STEP 与 PDF 基名不一致，则强制对齐（生成阶段重命名）
+    step_target_name = f"{pdf_base}{step_suffix or ''}"
+    pdf_target_name = f"{pdf_base}{pdf_suffix or ''}"
+
+    task_id = pdf_base
+    task_dir = OUTPUT_DIR / task_id
+
+    # 防止同名任务覆盖已有输出
+    if task_dir.exists():
+        raise HTTPException(status_code=400, detail=f"任务 {task_id} 已存在，请更换 PDF 文件名或清理旧任务后再试")
 
     try:
         # 创建任务目录
-        task_dir = OUTPUT_DIR / task_id
         task_dir.mkdir(parents=True, exist_ok=True)
 
         # ✅ Bug修复：优化文件复制逻辑
@@ -174,30 +219,32 @@ async def generate_manual(request: GenerationRequest):
         step_dir.mkdir(parents=True, exist_ok=True)
 
         # 复制文件（保留历史任务数据）
-        for pdf_file in request.pdf_files:
-            src = upload_dir / pdf_file
-            dst = pdf_dir / pdf_file
-            if src.exists():
-                shutil.copy2(src, dst)
-                print(f"📄 已复制PDF: {pdf_file}")
+        src_pdf = upload_dir / pdf_filename
+        dst_pdf = pdf_dir / pdf_target_name
+        if src_pdf.exists():
+            shutil.copy2(src_pdf, dst_pdf)
+            print(f"📄 已复制PDF并设置 task_id: {pdf_target_name} -> {task_id}")
 
-        for step_file in request.model_files:
-            src = upload_dir / step_file
-            dst = step_dir / step_file
-            if src.exists():
-                shutil.copy2(src, dst)
-                print(f"🎯 已复制STEP: {step_file}")
+        src_step = upload_dir / step_filename
+        dst_step = step_dir / step_target_name
+        if src_step.exists():
+            shutil.copy2(src_step, dst_step)
+            if step_filename != step_target_name:
+                print(f"🎯 STEP 文件名已对齐 task_id: {step_filename} -> {step_target_name}")
+            else:
+                print(f"🎯 已复制STEP: {step_filename}")
 
         # 创建任务记录
+        effective_project_name = pdf_base  # 项目名与 task_id 对齐
         tasks[task_id] = {
             "task_id": task_id,
             "status": "processing",
             "progress": 0,
-            "config": request.config.model_dump(),
-            "pdf_files": request.pdf_files,
-            "model_files": request.model_files,
-            "created_at": datetime.now(),
-            "updated_at": datetime.now()
+            "config": {"projectName": effective_project_name},
+            "pdf_files": [pdf_target_name],
+            "model_files": [step_target_name],
+            "created_at": beijing_now(),
+            "updated_at": beijing_now()
         }
 
         # 直接调用gemini_pipeline（在后台线程中）
@@ -226,7 +273,7 @@ async def generate_manual(request: GenerationRequest):
                 print(f"✅ Backend 使用模型: {model_name}")
 
                 # ✅ 获取用户输入的产品名称
-                product_name = request.config.projectName
+                product_name = effective_project_name
 
                 pipeline = GeminiAssemblyPipeline(
                     api_key=api_key,
@@ -241,17 +288,21 @@ async def generate_manual(request: GenerationRequest):
                     step_dir=str(step_dir)
                 )
 
-                # 更新任务状态
-                tasks[task_id]["status"] = "completed"
-                tasks[task_id]["progress"] = 100
+                # 更新任务状态（区分成功/失败）
+                if result.get("success"):
+                    tasks[task_id]["status"] = "completed"
+                    tasks[task_id]["progress"] = 100
+                else:
+                    tasks[task_id]["status"] = "failed"
+                    tasks[task_id]["progress"] = 0
                 tasks[task_id]["result"] = result
-                tasks[task_id]["updated_at"] = datetime.now()
+                tasks[task_id]["updated_at"] = beijing_now()
 
             except Exception as e:
                 print(f"Pipeline执行错误: {e}")
                 tasks[task_id]["status"] = "failed"
                 tasks[task_id]["error"] = str(e)
-                tasks[task_id]["updated_at"] = datetime.now()
+                tasks[task_id]["updated_at"] = beijing_now()
 
         # 在后台线程中运行
         thread = threading.Thread(target=run_pipeline)
@@ -348,7 +399,7 @@ async def websocket_endpoint(websocket: WebSocket, task_id: str):
             "task_id": task_id,
             "message": "👷 文件管理员AI员工加入工作，他开始分析上传的文件...",
             "level": "info",
-            "timestamp": datetime.now().isoformat()
+            "timestamp": beijing_now().isoformat()
         })
 
         # 保持连接并监听任务状态变化
@@ -364,7 +415,7 @@ async def websocket_endpoint(websocket: WebSocket, task_id: str):
                         "task_id": task_id,
                         "progress": task.get("progress", 0),
                         "status": task.get("status", "processing"),
-                        "timestamp": datetime.now().isoformat()
+                        "timestamp": beijing_now().isoformat()
                     })
 
                     # 如果任务完成或失败，发送最终消息
@@ -375,7 +426,7 @@ async def websocket_endpoint(websocket: WebSocket, task_id: str):
                             "status": task["status"],
                             "result": task.get("result"),
                             "error": task.get("error"),
-                            "timestamp": datetime.now().isoformat()
+                            "timestamp": beijing_now().isoformat()
                         })
                         break
 
@@ -419,9 +470,9 @@ async def list_manuals():
                 with open(manual_path, 'r', encoding='utf-8') as f:
                     manual_data = json.load(f)
 
-                # 获取文件修改时间
+                # 获取文件修改时间（北京时区）
                 mtime = manual_path.stat().st_mtime
-                timestamp = datetime.fromtimestamp(mtime).isoformat()
+                timestamp = datetime.fromtimestamp(mtime, tz=BEIJING_TZ).isoformat()
 
                 # 提取关键信息
                 metadata = manual_data.get('metadata', {})
@@ -535,15 +586,6 @@ async def get_manual(task_id: str):
     这样即使后端重启，只要文件存在就能查看
     """
     try:
-        # ✅ 直接检查输出目录（不依赖tasks字典）
-        output_dir = Path("output") / task_id
-
-        if not output_dir.exists():
-            raise HTTPException(
-                status_code=404,
-                detail=f"任务输出目录不存在。任务ID: {task_id}，可能任务未执行或已被删除。"
-            )
-
         # ✅ 可选：如果任务在内存中，检查状态
         if task_id in tasks:
             task = tasks[task_id]
@@ -552,17 +594,9 @@ async def get_manual(task_id: str):
             elif task["status"] == "failed":
                 raise HTTPException(status_code=400, detail=f"任务失败: {task.get('error', '未知错误')}")
 
-        # 查找 assembly_manual.json
-        manual_path = output_dir / "assembly_manual.json"
-        if not manual_path.exists():
-            raise HTTPException(
-                status_code=404,
-                detail=f"装配说明书文件不存在。路径: {manual_path}"
-            )
-
-        # 读取并返回 JSON 数据
-        with open(manual_path, 'r', encoding='utf-8') as f:
-            manual_data = json.load(f)
+        storage = get_storage(task_id)
+        storage.ensure_migration()
+        manual_data = storage.load_published()
 
         # ✅ 替换所有的{task_id}占位符为实际的task_id
         manual_json_str = json.dumps(manual_data, ensure_ascii=False)
@@ -572,6 +606,9 @@ async def get_manual(task_id: str):
         print(f"✅ 成功加载说明书: {task_id}")
         return manual_data
 
+    except FileNotFoundError:
+        # ✅ 手册文件不存在，返回友好提示
+        raise HTTPException(status_code=404, detail="装配说明书生成失败，请重试")
     except HTTPException:
         raise
     except Exception as e:
@@ -582,37 +619,19 @@ async def get_manual(task_id: str):
 @app.put("/api/manual/{task_id}")
 async def update_manual(task_id: str, manual_data: dict):
     """
-    更新装配说明书内容（管理员功能）
-    - 接收前端提交的完整assembly_manual.json数据
-    - 自动递增版本号(格式: major.minor)
-    - 添加lastUpdated时间戳
-    - 保存到output/{task_id}/assembly_manual.json
+    兼容旧接口：直接发布新版本（不经过草稿）
+    - 建议新前端使用 /api/manual/{task_id}/save-draft + /publish
     """
     try:
-        output_dir = Path("output") / task_id
-        if not output_dir.exists():
-            raise HTTPException(status_code=404, detail=f"任务不存在: {task_id}")
+        storage = get_storage(task_id)
+        storage.ensure_migration()
+        published = storage.publish_draft(
+            changelog="旧接口直接发布",
+            manual_data=manual_data
+        )
 
-        manual_path = output_dir / "assembly_manual.json"
-
-        # 自动递增版本号
-        current_version = manual_data.get('version', '1.0')
-        try:
-            major, minor = map(int, current_version.split('.'))
-            new_version = f"{major}.{minor + 1}"
-        except:
-            # 如果版本号格式不正确，从1.1开始
-            new_version = "1.1"
-
-        manual_data['version'] = new_version
-        manual_data['lastUpdated'] = datetime.now().isoformat()
-
-        # 保存文件
-        with open(manual_path, 'w', encoding='utf-8') as f:
-            json.dump(manual_data, f, ensure_ascii=False, indent=2)
-
-        print(f"✅ 成功更新说明书: {task_id}, 版本: {new_version}")
-        return {"success": True, "version": new_version, "message": "更新成功"}
+        print(f"✅ 成功更新说明书: {task_id}, 版本: {published.get('version')}")
+        return {"success": True, "version": published.get("version"), "message": "已发布（兼容旧接口）"}
 
     except HTTPException:
         raise
@@ -661,16 +680,10 @@ async def get_manual_version(task_id: str):
     - 用于前端检查数据是否需要更新
     """
     try:
-        output_dir = Path("output") / task_id
-        manual_path = output_dir / "assembly_manual.json"
-
-        if not manual_path.exists():
-            raise HTTPException(status_code=404, detail=f"任务不存在: {task_id}")
-
-        with open(manual_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-
-        version = data.get('version', '1.0')
+        storage = get_storage(task_id)
+        storage.ensure_migration()
+        manual = storage.load_published()
+        version = manual.get('version', 'v1')
 
         # 使用Response返回，在header中包含版本号
         return Response(headers={"X-Manual-Version": version})
@@ -679,6 +692,118 @@ async def get_manual_version(task_id: str):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"获取版本号失败: {str(e)}")
+
+
+# ============ 草稿/发布/历史 ============ #
+@app.post("/api/manual/{task_id}/save-draft")
+async def save_manual_draft(task_id: str, request: SaveDraftRequest):
+    """
+    保存草稿，不影响已发布版本
+    """
+    try:
+        storage = get_storage(task_id)
+        storage.ensure_migration()
+        draft = storage.save_draft(request.manual_data)
+        return {"success": True, "lastUpdated": draft.get("lastUpdated"), "message": "草稿保存成功"}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        print(f"❌ 保存草稿失败: {e}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"保存草稿失败: {str(e)}")
+
+
+@app.post("/api/manual/{task_id}/publish")
+async def publish_manual(task_id: str, request: PublishRequest):
+    """
+    将草稿发布为新版本，归档历史版本
+    """
+    try:
+        storage = get_storage(task_id)
+        storage.ensure_migration()
+        published = storage.publish_draft(
+            changelog=request.changelog,
+            manual_data=request.manual_data
+        )
+        return {"success": True, "version": published.get("version"), "message": "发布成功"}
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        print(f"❌ 发布失败: {e}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"发布失败: {str(e)}")
+
+
+@app.get("/api/manual/{task_id}/history")
+async def get_manual_history(task_id: str):
+    """
+    获取版本历史列表
+    """
+    try:
+        storage = get_storage(task_id)
+        history = storage.list_history()
+        return history
+    except Exception as e:
+        print(f"❌ 获取历史版本失败: {e}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"获取历史版本失败: {str(e)}")
+
+
+@app.get("/api/manual/{task_id}/draft")
+async def get_manual_draft(task_id: str):
+    """
+    获取草稿内容（如果存在）
+    """
+    try:
+        storage = get_storage(task_id)
+        draft = storage.load_draft()
+        if draft is None:
+            raise HTTPException(status_code=404, detail="草稿不存在")
+        return draft
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ 获取草稿失败: {e}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"获取草稿失败: {str(e)}")
+
+
+@app.get("/api/manual/{task_id}/version/{version}")
+async def get_manual_version_detail(task_id: str, version: str):
+    """
+    获取指定版本内容
+    """
+    try:
+        storage = get_storage(task_id)
+        storage.ensure_version_file(version)
+        manual = storage.load_version(version)
+        return manual
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        print(f"❌ 获取指定版本失败: {e}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"获取指定版本失败: {str(e)}")
+
+
+@app.post("/api/manual/{task_id}/rollback/{version}")
+async def rollback_manual(task_id: str, version: str, request: RollbackRequest):
+    """
+    回滚到指定版本，并以新版本发布
+    """
+    try:
+        storage = get_storage(task_id)
+        storage.ensure_migration()
+        published = storage.rollback_to_version(version, request.changelog)
+        return {"success": True, "version": published.get("version"), "message": "回滚成功并已发布"}
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        print(f"❌ 回滚失败: {e}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"回滚失败: {str(e)}")
 
 # ============ 设置管理端点 ============
 class SettingsModel(BaseModel):
