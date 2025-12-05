@@ -5,6 +5,7 @@ AgentJSON
 """
 
 import json
+import uuid
 from typing import Dict, List
 from pathlib import Path
 
@@ -309,8 +310,9 @@ class ManualIntegratorV2:
         为每个步骤添加全局唯一的 step_id
 
         规则：
-        - 组件装配步骤：{component_code}_step_{step_number}
-        - 产品装配步骤：product_step_{step_number}
+        - 生成稳定的 UUID 格式 step_id（与 step_number 解耦）
+        - 按顺序生成 display_order（间隔 1000，便于后续插入）
+        - 保留旧的 step_id/step_number 以便回溯
 
         Args:
             steps: 装配步骤列表
@@ -322,17 +324,29 @@ class ManualIntegratorV2:
         """
         enhanced_steps = []
 
-        for step in steps:
+        for idx, step in enumerate(steps):
             step_copy = step.copy()
-            step_number = step.get("step_number", 1)
 
-            # 生成 step_id
-            if step_type == "component":
-                step_id = f"{component_code}_step_{step_number}"
-            else:  # product
-                step_id = f"product_step_{step_number}"
+            # 记录旧格式，便于追溯
+            legacy_step_id = step_copy.get("step_id")
+            legacy_step_number = step_copy.get("step_number")
 
-            step_copy["step_id"] = step_id
+            # 生成稳定的 UUID step_id
+            new_step_id = f"step_{uuid.uuid4().hex[:12]}"
+
+            # display_order 采用 1000 的步进，预留插入空间
+            display_order = (idx + 1) * 1000
+
+            # 写入新字段
+            step_copy["step_id"] = new_step_id
+            step_copy["display_order"] = display_order
+
+            # 保留旧字段以兼容旧数据及回溯
+            if legacy_step_id:
+                step_copy["_legacy_step_id"] = legacy_step_id
+            if legacy_step_number is not None:
+                step_copy.setdefault("_legacy_step_number", legacy_step_number)
+
             enhanced_steps.append(step_copy)
 
         return enhanced_steps

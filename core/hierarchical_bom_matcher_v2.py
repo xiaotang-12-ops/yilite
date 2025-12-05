@@ -4,6 +4,7 @@
 处理组件级别和产品级别的分开匹配
 """
 
+import json
 from typing import Dict, List
 from pathlib import Path
 from processors.file_processor import ModelProcessor
@@ -51,6 +52,7 @@ class HierarchicalBOMMatcher:
         step_path = Path(step_dir)
         glb_output = Path(output_dir)
         glb_output.mkdir(parents=True, exist_ok=True)
+        task_id = glb_output.parent.name or step_path.parent.name or "unknown_task"
 
         print_info(f"STEP文件目录: {step_dir}")
         print_info(f"GLB输出目录: {output_dir}")
@@ -191,7 +193,7 @@ class HierarchicalBOMMatcher:
                     unmatched_bom = [bom for bom in component_bom if bom.get('code') not in matched_bom_codes]
 
                     from core.ai_matcher import AIBOMMatcher
-                    ai_matcher = AIBOMMatcher()
+                    ai_matcher = AIBOMMatcher(task_id=task_id)
                     ai_results = ai_matcher.match_unmatched_parts(unmatched_parts, unmatched_bom)
 
                     # ✅ 将AI匹配结果应用到cleaned_parts（更新bom_code）
@@ -402,7 +404,7 @@ class HierarchicalBOMMatcher:
                     unmatched_bom = [bom for bom in product_bom if bom.get('code') not in matched_bom_codes]
 
                     from core.ai_matcher import AIBOMMatcher
-                    ai_matcher = AIBOMMatcher()
+                    ai_matcher = AIBOMMatcher(task_id=task_id)
                     ai_results = ai_matcher.match_unmatched_parts(unmatched_parts, unmatched_bom)
 
                     # ✅ 将AI匹配结果应用到cleaned_parts（更新bom_code）
@@ -487,20 +489,30 @@ class HierarchicalBOMMatcher:
         # ========== 4. 生成 GLB 清单（step3_glb_inventory.json，用于调试） ==========
         try:
             inventory = {}
+            print_info(f"开始生成 GLB 清单，共 {len(glb_files)} 个 GLB 文件...")
             for key, glb_path in glb_files.items():
+                print_info(f"  处理 {key}: {glb_path}", indent=1)
                 inv = self.model_processor.generate_glb_inventory(
                     glb_path=glb_path,
                     output_path=None
                 )
+                if inv.get("success"):
+                    print_info(f"    ✅ 节点数: {inv.get('nodes_total', 0)}, 几何体数: {inv.get('geometry_total', 0)}", indent=1)
+                else:
+                    print_warning(f"    ⚠️ 生成失败: {inv.get('error', '未知错误')}", indent=1)
                 inventory[key] = inv
+
             inventory_path = Path(output_dir).parent / "step3_glb_inventory.json"
+            print_info(f"保存到: {inventory_path}")
             with open(inventory_path, "w", encoding="utf-8") as f:
                 json.dump({
                     "glb_files": inventory
                 }, f, ensure_ascii=False, indent=2)
             print_success(f"GLB 清单已生成: {inventory_path.name}")
         except Exception as e:
+            import traceback
             print_warning(f"生成 GLB 清单失败: {e}")
+            print_warning(f"详细堆栈: {traceback.format_exc()}")
         
         return {
             "success": True,

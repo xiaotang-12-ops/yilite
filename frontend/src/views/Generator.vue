@@ -2037,6 +2037,26 @@ onUnmounted(() => {
 }
 
 // 响应式设计
+@media (max-width: 1024px) {
+  .generator-page {
+    padding: 24px 0;
+  }
+
+  .container {
+    padding: 0 16px;
+  }
+
+  .fullscreen-logs-container {
+    height: 70vh;
+    min-height: 420px;
+  }
+
+  .result-actions {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+}
+
 @media (max-width: 768px) {
   .upload-grid {
     grid-template-columns: 1fr !important;

@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import re
+import uuid
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -97,6 +99,10 @@ class ManualStorage:
         self.versions_dir.mkdir(parents=True, exist_ok=True)
         history = self.load_version_history()
 
+        # 先尝试升级已存在的发布版/草稿的步骤结构（UUID step_id + display_order）
+        self._maybe_upgrade_manual_file(self.published_path)
+        self._maybe_upgrade_manual_file(self.draft_path)
+
         if history.get("versions"):
             return history
 
@@ -129,6 +135,66 @@ class ManualStorage:
         # 覆盖回已发布文件的版本字段（保持一致）
         self._write_json(self.published_path, manual)
         return history
+
+    def _maybe_upgrade_manual_file(self, path: Path) -> None:
+        """升级单个手册文件的步骤结构，缺失 display_order/UUID step_id 时补齐。"""
+        if not path.exists():
+            return
+        manual = self._read_json(path)
+        if self._upgrade_manual_schema(manual):
+            self._write_json(path, manual)
+
+    def _upgrade_manual_schema(self, manual: Dict[str, Any]) -> bool:
+        """为旧手册补充 UUID step_id、display_order，并保留 legacy 字段。"""
+        changed = False
+
+        if manual.get("_edit_version") is None:
+            manual["_edit_version"] = 0
+            changed = True
+
+        def upgrade_steps(steps: List[Dict[str, Any]]) -> bool:
+            local_changed = False
+            if not isinstance(steps, list):
+                return local_changed
+            for idx, step in enumerate(steps):
+                if not isinstance(step, dict):
+                    continue
+                # display_order：缺失则按顺序补齐
+                if not isinstance(step.get("display_order"), (int, float)):
+                    step["display_order"] = (idx + 1) * 1000
+                    local_changed = True
+                # step_id：非 UUID 则生成新的，并保留 legacy
+                step_id = step.get("step_id")
+                if not self._is_uuid_step_id(step_id):
+                    if step_id:
+                        step.setdefault("_legacy_step_id", step_id)
+                    step["step_id"] = f"step_{uuid.uuid4().hex[:12]}"
+                    local_changed = True
+                # 保留原始步骤号，便于回溯
+                if "step_number" in step and "_legacy_step_number" not in step:
+                    step["_legacy_step_number"] = step["step_number"]
+                    local_changed = True
+            return local_changed
+
+        # 组件装配章节
+        for chapter in manual.get("component_assembly", []):
+            steps = chapter.get("steps")
+            if upgrade_steps(steps):
+                changed = True
+
+        # 产品装配章节
+        product_steps = None
+        if isinstance(manual.get("product_assembly"), dict):
+            product_steps = manual["product_assembly"].get("steps")
+        if upgrade_steps(product_steps):
+            changed = True
+
+        return changed
+
+    def _is_uuid_step_id(self, step_id: Any) -> bool:
+        if not isinstance(step_id, str):
+            return False
+        return bool(re.match(r"^step_[0-9a-f]{12}$", step_id))
 
     # ---------- actions ----------
     def save_draft(self, manual_data: Dict[str, Any]) -> Dict[str, Any]:

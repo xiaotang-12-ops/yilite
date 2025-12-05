@@ -26,7 +26,7 @@
           </router-link>
           <router-link to="/settings" class="nav-item" active-class="active">
             <el-icon><Setting /></el-icon>
-            <span>设置</span>
+            <span v-if="false">设置</span>
           </router-link>
         </div>
         
@@ -41,13 +41,52 @@
               <Sunny v-else />
             </el-icon>
           </el-button>
-          <el-button type="primary" @click="showHelp">
+          <el-button type="primary" @click="showHelp" class="help-btn">
             <el-icon><QuestionFilled /></el-icon>
             帮助
+          </el-button>
+          <el-button
+            class="mobile-menu-btn"
+            circle
+            @click="mobileMenuOpen = true"
+            v-if="isMobile"
+          >
+            <el-icon><Menu /></el-icon>
           </el-button>
         </div>
       </div>
     </nav>
+
+    <el-drawer
+      v-model="mobileMenuOpen"
+      direction="ltr"
+      size="70%"
+      custom-class="mobile-drawer"
+    >
+      <template #header>
+        <div class="drawer-header">
+          <span>导航</span>
+        </div>
+      </template>
+      <div class="drawer-menu">
+        <router-link to="/" class="drawer-item" @click="mobileMenuOpen = false">
+          <el-icon><House /></el-icon>
+          <span>首页</span>
+        </router-link>
+        <router-link to="/generator" class="drawer-item" @click="mobileMenuOpen = false">
+          <el-icon><DocumentAdd /></el-icon>
+          <span>生成器</span>
+        </router-link>
+        <router-link to="/viewer" class="drawer-item" @click="mobileMenuOpen = false">
+          <el-icon><View /></el-icon>
+          <span>查看器</span>
+        </router-link>
+        <router-link to="/settings" class="drawer-item" @click="mobileMenuOpen = false">
+          <el-icon><Setting /></el-icon>
+          <span>设置</span>
+        </router-link>
+      </div>
+    </el-drawer>
 
     <!-- 主要内容区域 -->
     <main class="app-main">
@@ -67,12 +106,15 @@
 </template>
 
 <script setup lang="ts">
-import { watch } from 'vue'
-import { useDark, useToggle } from '@vueuse/core'
-import { Sunny, Moon, House, DocumentAdd, View, Setting, QuestionFilled } from '@element-plus/icons-vue'
+import { watch, ref } from 'vue'
+import { ElMessageBox } from 'element-plus'
+import { useDark, useToggle, useMediaQuery } from '@vueuse/core'
+import { Sunny, Moon, House, DocumentAdd, View, Setting, QuestionFilled, Menu } from '@element-plus/icons-vue'
 
 const isDark = useDark()
 const toggleDark = useToggle(isDark)
+const isMobile = useMediaQuery('(max-width: 1024px)')
+const mobileMenuOpen = ref(false)
 
 // 更新主题CSS变量
 const updateTheme = () => {
@@ -279,5 +321,64 @@ const showHelp = () => {
 .page-leave-to {
   opacity: 0;
   transform: translateY(-20px);
+}
+
+// 移动端适配
+@media (max-width: 1024px) {
+  .app-nav {
+    height: 64px;
+    .nav-content {
+      padding: 0 16px;
+    }
+    .nav-menu {
+      display: none;
+    }
+    .help-btn {
+      display: none;
+    }
+    .nav-actions {
+      gap: 8px;
+    }
+    .nav-brand h1 {
+      font-size: 16px;
+    }
+  }
+
+  .mobile-menu-btn {
+    background: var(--el-fill-color-light);
+    border: none;
+  }
+
+  .mobile-drawer {
+    .el-drawer__body {
+      padding: 12px 16px;
+    }
+  }
+
+  .drawer-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    .drawer-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px;
+      border-radius: 10px;
+      color: var(--el-text-color-regular);
+      text-decoration: none;
+      background: var(--el-fill-color-light);
+
+      &:hover {
+        background: var(--el-color-primary-light-9);
+        color: var(--el-color-primary);
+      }
+    }
+  }
+
+  .app-main {
+    margin-top: 64px;
+  }
 }
 </style>

@@ -119,6 +119,7 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { gsap } from 'gsap'
+import { useMediaQuery } from '@vueuse/core'
 
 interface Part {
   id: string
@@ -155,6 +156,7 @@ const fps = ref(0)
 const polyCount = ref(0)
 const loading = ref(false)
 const loadingProgress = ref(0)
+const isMobile = useMediaQuery('(max-width: 1024px)')
 
 const parts = ref<Part[]>([
   { id: 'part1', name: '主体框架', color: '#409eff', visible: true },
@@ -189,12 +191,12 @@ const initThreeJS = () => {
   
   // 渲染器
   renderer = new THREE.WebGLRenderer({ 
-    antialias: true,
+    antialias: !isMobile.value,
     alpha: true,
     powerPreference: 'high-performance'
   })
   renderer.setSize(rendererRef.value.clientWidth, rendererRef.value.clientHeight)
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile.value ? 1.5 : 2))
   renderer.shadowMap.enabled = true
   renderer.shadowMap.type = THREE.PCFSoftShadowMap
   renderer.toneMapping = THREE.ACESFilmicToneMapping
@@ -206,7 +208,7 @@ const initThreeJS = () => {
   controls = new OrbitControls(camera, renderer.domElement)
   controls.enableDamping = true
   controls.dampingFactor = 0.05
-  controls.autoRotate = props.autoRotate
+  controls.autoRotate = props.autoRotate && !isMobile.value
   controls.autoRotateSpeed = 2
   
   // 光照
@@ -355,6 +357,10 @@ onMounted(() => {
   if (props.modelUrl) {
     loadModel(props.modelUrl)
   }
+
+  if (isMobile.value) {
+    panelCollapsed.value = true
+  }
 })
 
 onUnmounted(() => {
@@ -372,6 +378,16 @@ onUnmounted(() => {
 watch(() => props.modelUrl, (newUrl) => {
   if (newUrl) {
     loadModel(newUrl)
+  }
+})
+
+watch(isMobile, (val) => {
+  panelCollapsed.value = val ? true : panelCollapsed.value
+  if (controls) {
+    controls.autoRotate = props.autoRotate && !val
+  }
+  if (renderer) {
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, val ? 1.5 : 2))
   }
 })
 </script>
@@ -539,5 +555,30 @@ watch(() => props.modelUrl, (newUrl) => {
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+@media (max-width: 1024px) {
+  .renderer-container {
+    min-height: 55vh;
+  }
+
+  .control-panel {
+    width: 90%;
+    left: 50%;
+    transform: translateX(-50%);
+    top: auto;
+    bottom: 16px;
+
+    &.collapsed {
+      width: 72px;
+      .panel-header {
+        justify-content: center;
+      }
+    }
+  }
+
+  .panel-content {
+    max-height: 320px;
+  }
 }
 </style>

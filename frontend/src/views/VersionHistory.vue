@@ -15,7 +15,7 @@
         <el-timeline-item
           v-for="item in history.versions"
           :key="item.version"
-          :timestamp="item.published_at"
+          :timestamp="formatDateTime(item.published_at)"
           :type="item.version === history.current_version ? 'primary' : 'info'"
         >
           <div class="version-item">
@@ -30,26 +30,12 @@
               </div>
             </div>
             <p class="changelog">{{ item.changelog || '无变更说明' }}</p>
-            <p class="meta">发布于 {{ item.published_at || '-' }} · 来源 {{ item.source || 'publish' }}</p>
+            <p class="meta">发布于 {{ formatDateTime(item.published_at) }} · 来源 {{ getSourceText(item.source) }}</p>
           </div>
         </el-timeline-item>
       </el-timeline>
       <el-empty v-else description="暂无历史版本" />
     </el-card>
-
-    <el-dialog v-model="showPreview" title="版本预览" width="70%">
-      <div v-if="previewData">
-        <p class="preview-meta">
-          版本：{{ previewVersion }} · 组件章节：{{ previewData.component_assembly?.length || 0 }} · 产品步骤：{{ previewData.product_assembly?.steps?.length || 0 }}
-        </p>
-        <el-scrollbar height="480px">
-          <pre class="preview-json">{{ formatJson(previewData) }}</pre>
-        </el-scrollbar>
-      </div>
-      <template #footer>
-        <el-button @click="showPreview = false">关闭</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
@@ -68,11 +54,34 @@ const history = ref<{ current_version: string | null; versions: any[] }>({
   versions: []
 })
 const loading = ref(false)
-const showPreview = ref(false)
-const previewVersion = ref('')
-const previewData = ref<any>(null)
 
-const formatJson = (data: any) => JSON.stringify(data, null, 2)
+// 格式化日期时间：2025-12-03T11:00:37.377297+08:00 → 2025-12-03 11:00:37
+const formatDateTime = (dateStr: string | undefined) => {
+  if (!dateStr) return '-'
+  try {
+    const date = new Date(dateStr)
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const hours = String(date.getHours()).padStart(2, '0')
+    const minutes = String(date.getMinutes()).padStart(2, '0')
+    const seconds = String(date.getSeconds()).padStart(2, '0')
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+  } catch {
+    return dateStr
+  }
+}
+
+// 来源翻译
+const getSourceText = (source: string | undefined) => {
+  const sourceMap: Record<string, string> = {
+    'publish': '发布',
+    'rollback': '回滚',
+    'legacy': '历史迁移',
+    'import': '导入'
+  }
+  return sourceMap[source || 'publish'] || source || '发布'
+}
 
 const loadHistory = async () => {
   if (!taskId) {
@@ -91,16 +100,10 @@ const loadHistory = async () => {
   }
 }
 
-const preview = async (version: string) => {
-  try {
-    const resp = await axios.get(`/api/manual/${taskId}/version/${version}`)
-    previewData.value = resp.data
-    previewVersion.value = version
-    showPreview.value = true
-  } catch (error: any) {
-    console.error('❌ 预览失败', error)
-    ElMessage.error('预览失败: ' + (error.response?.data?.detail || error.message))
-  }
+// 在新标签页打开历史版本的完整手册（只读模式）
+const preview = (version: string) => {
+  const url = `/manual/${taskId}?version=${version}`
+  window.open(url, '_blank')
 }
 
 const rollback = async (version: string) => {
@@ -184,19 +187,5 @@ onMounted(() => {
 .actions {
   display: flex;
   gap: 8px;
-}
-
-.preview-json {
-  background: #0b1021;
-  color: #e5e7eb;
-  padding: 12px;
-  border-radius: 8px;
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-.preview-meta {
-  margin-bottom: 8px;
-  color: #666;
 }
 </style>

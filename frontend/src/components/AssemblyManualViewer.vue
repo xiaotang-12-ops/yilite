@@ -153,6 +153,7 @@ import { ElMessage } from 'element-plus'
 import {
   View, Refresh, Download, Clock, ArrowLeft, ArrowRight
 } from '@element-plus/icons-vue'
+import { useMediaQuery } from '@vueuse/core'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
@@ -165,6 +166,8 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+
+const isMobile = useMediaQuery('(max-width: 1024px)')
 
 // 响应式数据
 const threeContainer = ref<HTMLDivElement>()
@@ -215,9 +218,9 @@ const initThreeScene = () => {
   camera.lookAt(0, 0, 0)
 
   // 创建渲染器
-  renderer = new THREE.WebGLRenderer({ antialias: true })
+  renderer = new THREE.WebGLRenderer({ antialias: !isMobile.value })
   renderer.setSize(width, height)
-  renderer.setPixelRatio(window.devicePixelRatio)
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile.value ? 1.5 : 2))
   renderer.shadowMap.enabled = true
   container.appendChild(renderer.domElement)
 
@@ -422,6 +425,7 @@ const handleResize = () => {
   camera.aspect = width / height
   camera.updateProjectionMatrix()
   renderer.setSize(width, height)
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile.value ? 1.5 : 2))
 }
 
 // 生命周期
@@ -448,6 +452,12 @@ onUnmounted(() => {
 // 监听步骤变化
 watch(currentStep, (newStep) => {
   console.log('当前步骤:', newStep)
+})
+
+watch(isMobile, (val) => {
+  if (renderer) {
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, val ? 1.5 : 2))
+  }
 })
 </script>
 
@@ -663,6 +673,28 @@ watch(currentStep, (newStep) => {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+@media (max-width: 1024px) {
+  .main-content {
+    flex-direction: column;
+    overflow: auto;
+  }
+
+  .viewer-container {
+    height: 55vh;
+  }
+
+  .viewer-controls {
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 260px;
+  }
+
+  .steps-container {
+    width: 100%;
+    max-height: 40vh;
+  }
 }
 </style>
 

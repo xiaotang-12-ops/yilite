@@ -23,6 +23,15 @@ class StepToGlbConverter:
         result = chardet.detect(raw[: min(len(raw), 500_000)])
         return (result.get("encoding") or "").lower(), float(result.get("confidence") or 0)
 
+    # GB系列编码统一映射到GB18030（最完整的中文编码，兼容GB2312和GBK）
+    GB_ENCODING_MAP = {
+        "gb2312": "gb18030",
+        "gbk": "gb18030",
+        "gb18030": "gb18030",
+        "hz-gb-2312": "gb18030",
+        "iso-2022-cn": "gb18030",
+    }
+
     def convert(self, step_path: str, output_path: str, scale_factor: float = 0.001) -> dict:
         """将STEP转换为GLB，自动探测并转换编码，完成后修复GLB名称。"""
         tmp_file: Optional[Path] = None
@@ -36,9 +45,14 @@ class StepToGlbConverter:
             # 如果探测到的编码不是UTF-8且可信度较高，先转换为UTF-8临时文件
             if encoding and encoding not in ("utf-8", "utf_8") and confidence >= 0.5:
                 try:
-                    text = source_path.read_bytes().decode(encoding, errors="ignore")
+                    # 将GB系列编码统一映射到GB18030，避免字符丢失
+                    actual_encoding = self.GB_ENCODING_MAP.get(encoding.lower(), encoding)
+                    if actual_encoding != encoding:
+                        print_info(f"🔄 编码映射: {encoding} → {actual_encoding}")
+
+                    text = source_path.read_bytes().decode(actual_encoding, errors="replace")
                     with tempfile.NamedTemporaryFile(suffix=source_path.suffix, delete=False) as tmp:
-                        tmp.write(text.encode("utf-8", errors="ignore"))
+                        tmp.write(text.encode("utf-8", errors="replace"))
                         tmp_file = Path(tmp.name)
                         use_path = tmp_file
                     print_info(f"🌐 STEP编码检测: {encoding} (confidence={confidence:.2f})，已转为UTF-8临时文件")

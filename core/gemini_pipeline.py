@@ -397,6 +397,9 @@ class GeminiAssemblyPipeline:
             print_info(f"      • {pdf_name}: {count} 个零件", indent=1)
         sys.stdout.flush()
 
+        # ✅ 检查seq连续性
+        self._check_seq_continuity(all_bom_items)
+
         self.log_agent_call("BOM分析", "生成了完整的零件清单", "success")
 
         # 保存结果
@@ -404,6 +407,39 @@ class GeminiAssemblyPipeline:
             json.dump(all_bom_items, f, ensure_ascii=False, indent=2)
 
         return all_bom_items
+
+    def _check_seq_continuity(self, bom_items: List[Dict]) -> None:
+        """检查BOM序号是否连续，警告缺失的序号"""
+        if not bom_items:
+            return
+
+        # 提取所有seq并转换为整数
+        seqs = set()
+        for item in bom_items:
+            seq_str = item.get("seq", "")
+            try:
+                seq_int = int(seq_str)
+                seqs.add(seq_int)
+            except (ValueError, TypeError):
+                pass
+
+        if not seqs:
+            return
+
+        max_seq = max(seqs)
+        min_seq = min(seqs)
+
+        # 检查缺失的序号
+        expected_seqs = set(range(min_seq, max_seq + 1))
+        missing_seqs = sorted(expected_seqs - seqs)
+
+        if missing_seqs:
+            print_warning(f"   ⚠️  检测到BOM序号不连续！缺失的序号: {missing_seqs}", indent=1)
+            print_warning(f"   ⚠️  这可能导致匹配不完整，建议检查原始PDF", indent=1)
+            sys.stdout.flush()
+        else:
+            print_success(f"   ✅ BOM序号连续性检查通过 (seq {min_seq}-{max_seq})", indent=1)
+            sys.stdout.flush()
 
     def _extract_bom_with_vision(self, pdf_path: str, pdf_name: str) -> List[Dict]:
         """使用Gemini Vision API从PDF中提取BOM表"""
@@ -429,7 +465,7 @@ class GeminiAssemblyPipeline:
 
         doc.close()
 
-        # 构建Gemini Vision API请求
+        # 构建Gemini Vision API请求（增强版提示词）
         prompt = f"""你是一个BOM表提取专家。请从这个工程图纸中提取BOM表（零件清单）。
 
 # 如何识别BOM表
@@ -452,11 +488,13 @@ class GeminiAssemblyPipeline:
 - quantity: 数量（整数）
 - weight: 总重（浮点数，优先使用总重，否则使用单重）
 
-# 重要规则
-1. 提取所有有效的seq和code的行
-2. 按seq序号排序（1, 2, 3...）
-3. 如果没有找到BOM表，返回[]
-4. 只返回有效的JSON，不要其他文本
+# ⚠️ 重要规则（必须遵守）
+1. **必须提取所有行**：不要遗漏任何一行BOM数据，每一行都很重要
+2. **仔细检查表格边界**：BOM表可能跨越多行或多列，确保完整提取
+3. **注意表格分隔**：如果表格有分隔线或空行，继续检查下方是否还有数据
+4. 按seq序号排序（1, 2, 3...）
+5. 如果没有找到BOM表，返回[]
+6. 只返回有效的JSON，不要其他文本
 
 来源PDF: {pdf_name}"""
 

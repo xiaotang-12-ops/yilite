@@ -5,10 +5,11 @@ AI智能匹配器
 
 import json
 import re
-from typing import List, Dict
+from typing import List, Dict, Optional
 from openai import OpenAI
 import sys
 import os
+from utils.time_utils import beijing_now
 
 # 添加项目根目录到路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -23,7 +24,7 @@ from prompts.agent_2_bom_3d_matching import (
 class AIBOMMatcher:
     """AI智能BOM匹配器（使用Gemini 2.5 Flash）"""
 
-    def __init__(self, api_key: str = None):
+    def __init__(self, api_key: Optional[str] = None, task_id: Optional[str] = None):
         # 使用Gemini 2.5 Flash（通过OpenRouter）
         self.api_key = api_key or os.getenv("OPENROUTER_API_KEY")
         if not self.api_key:
@@ -34,6 +35,12 @@ class AIBOMMatcher:
             base_url="https://openrouter.ai/api/v1"
         )
         self.model = "google/gemini-2.5-flash-preview-09-2025"  # 和其他agent使用相同的模型
+        # 记录任务ID用于调试文件命名
+        self.task_id = task_id or os.getenv("TASK_ID", "unknown_task")
+        # 批处理参数（未匹配零件超过阈值时分批，以防响应截断）
+        self.batch_threshold = 200  # 超过这个数量的未匹配3D零件就分批
+        self.batch_size = 100       # 单批上限
+        self.min_batch_size = 20    # 截断重试时的最小批大小（避免无限拆分）
     
     def match_unmatched_parts(
         self,
@@ -57,8 +64,17 @@ class AIBOMMatcher:
         import sys
         sys.stdout.flush()
 
-        # 一次性处理所有零件
-        all_results = self._match_all_at_once(unmatched_parts, bom_data)
+        # 统一的调试文件标识
+        ts_str = beijing_now().strftime("%Y%m%d_%H%M%S")
+        safe_task = re.sub(r"[^A-Za-z0-9._-]+", "_", str(self.task_id)) or "unknown_task"
+
+        # 根据数量决定是否分批，以避免大响应被截断
+        if len(unmatched_parts) > self.batch_threshold:
+            print(f"      📦 未匹配零件超过 {self.batch_threshold} 个，按批次处理（单批 {self.batch_size} 个）...")
+            sys.stdout.flush()
+            all_results = self._match_in_batches(unmatched_parts, bom_data, safe_task, ts_str)
+        else:
+            all_results = self._match_all_at_once(unmatched_parts, bom_data, safe_task, ts_str, allow_split=True)
 
         # 统计AI匹配结果
         matched_count = sum(1 for r in all_results if r.get('matched_bom_code'))
@@ -94,16 +110,28 @@ class AIBOMMatcher:
 
         return all_results
     
-    def _match_all_at_once(self, parts: List[Dict], bom_data: List[Dict]) -> List[Dict]:
+    def _match_all_at_once(
+        self,
+        parts: List[Dict],
+        bom_data: List[Dict],
+        safe_task: str,
+        ts_str: str,
+        batch_label: Optional[str] = None,
+        allow_split: bool = False
+    ) -> List[Dict]:
         """
-        一次性匹配所有零件
+        匹配一批零件；可在检测到截断时按需拆分
 
         Args:
             parts: 未匹配的3D零件列表
             bom_data: 未匹配的BOM列表（已经在调用方计算好了）
+            safe_task: 任务名（用于调试文件）
+            ts_str: 时间戳（用于调试文件）
+            batch_label: 批次标识，用于调试文件命名
+            allow_split: 截断时是否继续拆分当前批
         """
 
-        print(f"      📝 他正在准备分析资料...")
+        print(f"      📝 他正在准备分析资料... (批次: {batch_label or '全量'}, 数量: {len(parts)})")
         import sys
         sys.stdout.flush()
 
@@ -120,32 +148,52 @@ class AIBOMMatcher:
         print(f"      ⏱️  请稍候，Gemini速度很快...")
         sys.stdout.flush()
 
-        # 调用AI
+        # 调用AI（带重试机制）
+        max_retries = 3
+        retry_delay = 5  # 秒
+
         try:
             import time
             start_time = time.time()
 
-            response = self.client.chat.completions.create(
-                model=self.model,  # 使用Gemini 2.5 Flash
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_query}
-                ],
-                temperature=0.4,  # ✅ 提高到0.4，使用COT推理，追求100%匹配率
-                # ✅ 不限制max_tokens，Gemini 2.5 Flash支持65.5K输出（COT需要更多token）
-                stream=False,
-                timeout=60
-            )
+            last_error = None
+            for attempt in range(max_retries):
+                try:
+                    if attempt > 0:
+                        print(f"      🔄 第 {attempt + 1} 次重试...")
+                        time.sleep(retry_delay)
+
+                    response = self.client.chat.completions.create(
+                        model=self.model,  # 使用Gemini 2.5 Flash
+                        messages=[
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": user_query}
+                        ],
+                        temperature=0.4,  # ✅ 提高到0.4，使用COT推理，追求100%匹配率
+                        # ✅ 不限制max_tokens，Gemini 2.5 Flash支持65.5K输出（COT需要更多token）
+                        stream=False,
+                        timeout=120  # ✅ 增加超时时间到120秒
+                    )
+                    break  # 成功则跳出重试循环
+                except Exception as retry_error:
+                    last_error = retry_error
+                    print(f"      ⚠️  请求失败 (尝试 {attempt + 1}/{max_retries}): {retry_error}")
+                    if attempt == max_retries - 1:
+                        raise last_error  # 最后一次重试也失败，抛出异常
 
             elapsed = time.time() - start_time
-            result_text = response.choices[0].message.content
+            choice = response.choices[0]
+            result_text = choice.message.content
+            finish_reason = getattr(choice, "finish_reason", None)
 
-            print(f"      📊 AI大脑返回了分析结果 ({len(result_text)} 字符, 耗时: {elapsed:.1f}秒)")
+            print(f"      📊 AI大脑返回了分析结果 ({len(result_text)} 字符, 耗时: {elapsed:.1f}秒, finish_reason={finish_reason})")
             import sys
             sys.stdout.flush()
 
             # 调试：保存AI原始响应
-            debug_file = f"debug_output/ai_matching_response_{int(time.time())}.txt"
+            debug_file = f"debug_output/ai_matching_response_{safe_task}_{ts_str}.txt"
+            if batch_label:
+                debug_file = debug_file.replace(".txt", f"_part{batch_label}.txt")
             os.makedirs("debug_output", exist_ok=True)
             with open(debug_file, 'w', encoding='utf-8') as f:
                 f.write(result_text)
@@ -154,54 +202,128 @@ class AIBOMMatcher:
             # 解析JSON
             ai_results = self._parse_response(result_text)
 
+            truncated = False
+            if finish_reason and finish_reason != "stop":
+                truncated = True
+            if not ai_results:
+                truncated = True
+            elif len(ai_results) < len(parts) and finish_reason and finish_reason != "stop":
+                truncated = True
+
+            if truncated and allow_split and len(parts) > self.min_batch_size:
+                print(f"      ⚠️  检测到响应可能被截断，拆分本批继续处理（批次: {batch_label or '全量'}）")
+                mid = len(parts) // 2 or 1
+                left = parts[:mid]
+                right = parts[mid:]
+                left_results = self._match_all_at_once(left, bom_data, safe_task, ts_str, f"{batch_label or '1'}-a", allow_split=True)
+                right_results = self._match_all_at_once(right, bom_data, safe_task, ts_str, f"{batch_label or '1'}-b", allow_split=True)
+                return left_results + right_results
+
             if not ai_results:
                 print(f"   ⚠️  JSON解析失败，返回空结果")
                 return self._create_empty_results(parts)
 
-            # 将AI结果映射回原始零件
-            # AI返回格式：{"node_name": "...", "geometry_name": "...", "bom_code": "...", "confidence": 0.85, "reasoning": "..."}
-            results = []
-            for part in parts:
-                # 查找对应的AI结果（通过node_name或geometry_name匹配）
-                ai_result = None
-                part_node_name = part.get('node_name', '')
-                part_geometry = part.get('geometry_name', '')
-
-                for ar in ai_results:
-                    # 优先通过node_name匹配
-                    if ar.get('node_name') == part_node_name:
-                        ai_result = ar
-                        break
-                    # 备用：通过geometry_name匹配
-                    elif ar.get('geometry_name') == part_geometry:
-                        ai_result = ar
-                        break
-
-                if ai_result:
-                    results.append({
-                        'geometry_name': part.get('geometry_name'),
-                        'node_name': part.get('node_name'),
-                        'matched_bom_code': ai_result.get('bom_code'),  # AI返回的是bom_code
-                        'confidence': ai_result.get('confidence', 0.0),
-                        'reason': ai_result.get('reasoning', '')  # AI返回的是reasoning
-                    })
-                else:
-                    # 如果没找到对应结果，返回空匹配
-                    results.append({
-                        'geometry_name': part.get('geometry_name'),
-                        'node_name': part.get('node_name'),
-                        'matched_bom_code': None,
-                        'confidence': 0.0,
-                        'reason': 'AI未返回匹配结果'
-                    })
-
-            return results
+            return self._map_ai_results(parts, ai_results)
 
         except Exception as e:
             print(f"   ❌ AI匹配失败: {e}")
             import traceback
             traceback.print_exc()
+
+            # ✅ 保存失败信息到调试文件
+            try:
+                batch_suffix = f"_part{batch_label}" if batch_label else ""
+                error_file = f"debug_output/ai_matching_ERROR_{safe_task}_{ts_str}{batch_suffix}.txt"
+                os.makedirs("debug_output", exist_ok=True)
+                with open(error_file, "w", encoding="utf-8") as f:
+                    f.write(f"=== AI匹配失败 ===\n")
+                    f.write(f"时间: {ts_str}\n")
+                    f.write(f"批次: {batch_label or '全量'}\n")
+                    f.write(f"零件数: {len(parts)}\n")
+                    f.write(f"BOM数: {len(bom_data)}\n")
+                    f.write(f"\n=== 错误信息 ===\n")
+                    f.write(f"{type(e).__name__}: {e}\n")
+                    f.write(f"\n=== 堆栈跟踪 ===\n")
+                    f.write(traceback.format_exc())
+                    f.write(f"\n=== 零件列表 ===\n")
+                    for p in parts[:10]:  # 只记录前10个
+                        f.write(f"  - {p.get('node_name', 'N/A')}: {p.get('geometry_name', 'N/A')[:50]}\n")
+                    if len(parts) > 10:
+                        f.write(f"  ... 还有 {len(parts) - 10} 个零件\n")
+                print(f"   📝 错误信息已保存到: {error_file}")
+            except Exception as save_error:
+                print(f"   ⚠️  保存错误信息失败: {save_error}")
+
             return self._create_empty_results(parts)
+
+    def _match_in_batches(
+        self,
+        parts: List[Dict],
+        bom_data: List[Dict],
+        safe_task: str,
+        ts_str: str
+    ) -> List[Dict]:
+        """分批处理未匹配零件，防止单次响应过长被截断"""
+        results: List[Dict] = []
+        batch_no = 0
+        total_parts = len(parts)
+        for start in range(0, total_parts, self.batch_size):
+            batch_no += 1
+            end = min(start + self.batch_size, total_parts)
+            batch_parts = parts[start:end]
+            print(f"\n   📦 正在处理批次 {batch_no}: {len(batch_parts)} 个零件（范围 {start+1}-{end}/{total_parts}）")
+            batch_results = self._match_all_at_once(
+                batch_parts,
+                bom_data,
+                safe_task,
+                ts_str,
+                batch_label=str(batch_no),
+                allow_split=True
+            )
+            results.extend(batch_results)
+        return results
+
+    def _map_ai_results(self, parts: List[Dict], ai_results: List[Dict]) -> List[Dict]:
+        """
+        将AI结果映射回原始零件
+
+        AI返回格式：{"node_name": "...", "geometry_name": "...", "bom_code": "...", "confidence": 0.85, "reasoning": "..."}
+        """
+        results = []
+        for part in parts:
+            ai_result = None
+            part_node_name = part.get('node_name', '')
+            part_geometry = part.get('geometry_name', '')
+
+            for ar in ai_results:
+                # 优先通过node_name匹配
+                if ar.get('node_name') == part_node_name:
+                    ai_result = ar
+                    break
+                # 备用：通过geometry_name匹配
+                elif ar.get('geometry_name') == part_geometry:
+                    ai_result = ar
+                    break
+
+            if ai_result:
+                results.append({
+                    'geometry_name': part.get('geometry_name'),
+                    'node_name': part.get('node_name'),
+                    'matched_bom_code': ai_result.get('bom_code'),  # AI返回的是bom_code
+                    'confidence': ai_result.get('confidence', 0.0),
+                    'reason': ai_result.get('reasoning', '')  # AI返回的是reasoning
+                })
+            else:
+                # 如果没找到对应结果，返回空匹配
+                results.append({
+                    'geometry_name': part.get('geometry_name'),
+                    'node_name': part.get('node_name'),
+                    'matched_bom_code': None,
+                    'confidence': 0.0,
+                    'reason': 'AI未返回匹配结果'
+                })
+
+        return results
 
     def _create_empty_results(self, parts: List[Dict]) -> List[Dict]:
         """创建空的匹配结果"""

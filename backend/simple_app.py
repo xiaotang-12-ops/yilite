@@ -97,6 +97,20 @@ class PublishRequest(BaseModel):
 class RollbackRequest(BaseModel):
     changelog: Optional[str] = None
 
+
+class InsertStepRequest(BaseModel):
+    chapter_type: str  # component_assembly | product_assembly
+    component_code: Optional[str] = None  # 组件装配时必填
+    after_step_id: Optional[str] = None  # 在此步骤后插入，None 表示开头
+    new_step: Dict[str, Any]
+    edit_version: Optional[int] = None  # 乐观锁版本号
+
+
+class MoveStepRequest(BaseModel):
+    step_id: str
+    after_step_id: Optional[str] = None  # 移动到目标步骤之后，None 表示开头
+    edit_version: Optional[int] = None  # 乐观锁版本号
+
 # 全局变量
 tasks = {}
 upload_dir = Path("uploads")
@@ -105,6 +119,91 @@ upload_dir.mkdir(exist_ok=True)
 def get_storage(task_id: str) -> ManualStorage:
     """获取指定任务的存储管理器"""
     return ManualStorage(base_dir=OUTPUT_DIR, task_id=task_id)
+
+
+def _load_manual_for_edit(storage: ManualStorage, expected_version: Optional[int] = None) -> Dict[str, Any]:
+    """
+    加载草稿（优先）或已发布版本，并校验乐观锁。
+    """
+    manual = storage.load_draft() or storage.load_published()
+    if manual is None:
+        raise HTTPException(status_code=404, detail="装配说明书不存在")
+
+    # 单管理员场景：不阻塞操作，即使版本号不一致也直接返回
+    current_version = manual.get("_edit_version", 0)
+    manual["_edit_version"] = current_version
+    return manual
+
+
+def _calculate_insert_order(steps: List[Dict[str, Any]], after_step_id: Optional[str]) -> int:
+    """计算插入位置的 display_order，采用 1000 步进，支持头插/中插/尾插。"""
+    if not steps:
+        return 1000
+
+    def _order_val(item: Dict[str, Any], idx: int) -> float:
+        return item.get("display_order", (idx + 1) * 1000)
+
+    sorted_steps = sorted(
+        enumerate(steps),
+        key=lambda pair: _order_val(pair[1], pair[0])
+    )
+
+    if after_step_id is None:
+        first_order = _order_val(sorted_steps[0][1], sorted_steps[0][0])
+        return int(first_order / 2) if first_order > 1 else 500
+
+    for i, (original_idx, step) in enumerate(sorted_steps):
+        if step.get("step_id") == after_step_id:
+            current_order = _order_val(step, original_idx)
+            if i + 1 < len(sorted_steps):
+                next_order = _order_val(sorted_steps[i + 1][1], sorted_steps[i + 1][0])
+                if current_order == next_order:
+                    return int(current_order) + 1
+                return int((current_order + next_order) / 2)
+            return int(current_order) + 1000
+
+    raise HTTPException(status_code=404, detail="after_step_id 未找到")
+
+
+def _get_steps_by_chapter(manual: Dict[str, Any], chapter_type: str, component_code: Optional[str] = None):
+    """根据章节类型获取步骤列表及所属章节引用。"""
+    if chapter_type == "component_assembly":
+        for chapter in manual.get("component_assembly", []):
+            if chapter.get("component_code") == component_code:
+                steps = chapter.setdefault("steps", [])
+                return chapter, steps
+        raise HTTPException(status_code=404, detail="未找到对应的组件装配章节")
+
+    if chapter_type == "product_assembly":
+        product = manual.get("product_assembly")
+        if not isinstance(product, dict):
+            raise HTTPException(status_code=404, detail="未找到产品装配章节")
+        steps = product.setdefault("steps", [])
+        return product, steps
+
+    raise HTTPException(status_code=400, detail="chapter_type 无效")
+
+
+def _find_step_location(manual: Dict[str, Any], step_id: str):
+    """查找步骤所在章节与位置。"""
+    for chapter in manual.get("component_assembly", []):
+        steps = chapter.get("steps", [])
+        for idx, step in enumerate(steps):
+            if step.get("step_id") == step_id:
+                return "component_assembly", chapter, steps, idx
+
+    product = manual.get("product_assembly")
+    if isinstance(product, dict):
+        steps = product.get("steps", [])
+        for idx, step in enumerate(steps):
+            if step.get("step_id") == step_id:
+                return "product_assembly", product, steps, idx
+
+    raise HTTPException(status_code=404, detail="step_id 未找到")
+
+
+def _resort_steps(steps: List[Dict[str, Any]]) -> None:
+    steps.sort(key=lambda s: s.get("display_order", 0))
 
 @app.get("/")
 async def root():
@@ -675,18 +774,23 @@ async def delete_manual(task_id: str):
 @app.head("/api/manual/{task_id}/version")
 async def get_manual_version(task_id: str):
     """
-    快速获取版本号（用于前端缓存检查）
-    - 只返回版本号，不返回完整数据
+    快速获取版本号和更新时间（用于前端缓存检查）
+    - 返回版本号和lastUpdated，不返回完整数据
     - 用于前端检查数据是否需要更新
+    - 前端需同时比较version和lastUpdated来判断缓存有效性
     """
     try:
         storage = get_storage(task_id)
         storage.ensure_migration()
         manual = storage.load_published()
         version = manual.get('version', 'v1')
+        last_updated = manual.get('lastUpdated', '')
 
-        # 使用Response返回，在header中包含版本号
-        return Response(headers={"X-Manual-Version": version})
+        # 使用Response返回，在header中包含版本号和更新时间
+        return Response(headers={
+            "X-Manual-Version": version,
+            "X-Manual-LastUpdated": last_updated
+        })
 
     except HTTPException:
         raise
@@ -703,7 +807,12 @@ async def save_manual_draft(task_id: str, request: SaveDraftRequest):
     try:
         storage = get_storage(task_id)
         storage.ensure_migration()
-        draft = storage.save_draft(request.manual_data)
+        current = storage.load_draft() or storage.load_published() or {}
+        current_version = current.get("_edit_version", 0)
+        manual_to_save = dict(request.manual_data)
+        manual_to_save["_edit_version"] = current_version + 1
+
+        draft = storage.save_draft(manual_to_save)
         return {"success": True, "lastUpdated": draft.get("lastUpdated"), "message": "草稿保存成功"}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -770,6 +879,26 @@ async def get_manual_draft(task_id: str):
         raise HTTPException(status_code=500, detail=f"获取草稿失败: {str(e)}")
 
 
+@app.delete("/api/manual/{task_id}/draft")
+async def discard_draft(task_id: str):
+    """
+    丢弃草稿，删除 draft.json 文件
+    """
+    try:
+        storage = get_storage(task_id)
+        draft_path = storage.task_dir / "draft.json"
+        if not draft_path.exists():
+            raise HTTPException(status_code=404, detail="草稿不存在")
+        draft_path.unlink()
+        return {"success": True, "message": "草稿已丢弃"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ 丢弃草稿失败: {e}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"丢弃草稿失败: {str(e)}")
+
+
 @app.get("/api/manual/{task_id}/version/{version}")
 async def get_manual_version_detail(task_id: str, version: str):
     """
@@ -804,6 +933,106 @@ async def rollback_manual(task_id: str, version: str, request: RollbackRequest):
         print(f"❌ 回滚失败: {e}")
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"回滚失败: {str(e)}")
+
+# ============ 步骤插入 / 删除 / 移动 ============ #
+@app.post("/api/manual/{task_id}/steps/insert")
+async def insert_step(task_id: str, request: InsertStepRequest):
+    """
+    在指定步骤之后插入新步骤（不改动旧的 step_id）。
+    """
+    storage = get_storage(task_id)
+    storage.ensure_migration()
+
+    manual = _load_manual_for_edit(storage, request.edit_version)
+    current_version = manual.get("_edit_version", 0)
+
+    _, steps = _get_steps_by_chapter(manual, request.chapter_type, request.component_code)
+    new_order = _calculate_insert_order(steps, request.after_step_id)
+    new_step_id = f"step_{uuid.uuid4().hex[:12]}"
+
+    new_step = dict(request.new_step)
+    new_step["step_id"] = new_step_id
+    new_step["display_order"] = new_order
+    new_step.setdefault("step_number", len(steps) + 1)  # 兼容旧前端显示
+    if "step_number" in new_step and "_legacy_step_number" not in new_step:
+        new_step["_legacy_step_number"] = new_step["step_number"]
+
+    steps.append(new_step)
+    _resort_steps(steps)
+
+    manual["_edit_version"] = current_version + 1
+    storage.save_draft(manual)
+
+    return {
+        "success": True,
+        "step_id": new_step_id,
+        "display_order": new_order,
+        "edit_version": manual["_edit_version"]
+    }
+
+
+@app.delete("/api/manual/{task_id}/steps/{step_id}")
+async def delete_step(task_id: str, step_id: str, edit_version: Optional[int] = None):
+    """
+    删除指定步骤。
+    """
+    storage = get_storage(task_id)
+    storage.ensure_migration()
+
+    manual = _load_manual_for_edit(storage, edit_version)
+    current_version = manual.get("_edit_version", 0)
+
+    chapter_type, _, steps, idx = _find_step_location(manual, step_id)
+    removed_step = steps.pop(idx)
+
+    manual["_edit_version"] = current_version + 1
+    storage.save_draft(manual)
+
+    # 返回被删除步骤的零件信息，方便前端提示
+    affected_parts = removed_step.get("parts_used") or removed_step.get("components") or []
+
+    return {
+        "success": True,
+        "deleted_step_id": step_id,
+        "chapter_type": chapter_type,
+        "affected_parts": affected_parts,
+        "edit_version": manual["_edit_version"]
+    }
+
+
+@app.post("/api/manual/{task_id}/steps/move")
+async def move_step(task_id: str, request: MoveStepRequest):
+    """
+    通过 step_id 重新定位步骤（调整 display_order）。
+    """
+    storage = get_storage(task_id)
+    storage.ensure_migration()
+
+    manual = _load_manual_for_edit(storage, request.edit_version)
+    current_version = manual.get("_edit_version", 0)
+
+    if request.after_step_id == request.step_id:
+        raise HTTPException(status_code=400, detail="after_step_id 不能等于 step_id")
+
+    chapter_type, _, steps, idx = _find_step_location(manual, request.step_id)
+    moving_step = steps.pop(idx)
+
+    new_order = _calculate_insert_order(steps, request.after_step_id)
+    moving_step["display_order"] = new_order
+
+    steps.append(moving_step)
+    _resort_steps(steps)
+
+    manual["_edit_version"] = current_version + 1
+    storage.save_draft(manual)
+
+    return {
+        "success": True,
+        "step_id": request.step_id,
+        "new_display_order": new_order,
+        "chapter_type": chapter_type,
+        "edit_version": manual["_edit_version"]
+    }
 
 # ============ 设置管理端点 ============
 class SettingsModel(BaseModel):

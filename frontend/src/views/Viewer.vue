@@ -692,6 +692,18 @@ onMounted(() => {
     }
   }
 
+  .projects-section {
+    overflow-x: auto;
+
+    :deep(.el-table__body-wrapper) {
+      overflow-x: auto;
+    }
+  }
+
+  .projects-table {
+    min-width: 720px;
+  }
+
   .preview-header {
     flex-direction: column;
     gap: 16px;

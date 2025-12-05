@@ -6,6 +6,7 @@
 
 import os
 import json
+import re
 import tempfile
 import subprocess
 from pathlib import Path
@@ -221,6 +222,9 @@ class ModelProcessor:
             def _decode_name(name: str) -> str:
                 if not name:
                     return name
+                # ✅ 如果已经包含中文，直接返回（避免重复编解码导致丢失）
+                if re.search(r'[\u4e00-\u9fff]', str(name)):
+                    return str(name)
                 try:
                     raw_bytes = str(name).encode("latin1", errors="ignore")
                 except Exception:
@@ -382,15 +386,28 @@ class ModelProcessor:
             all_geom = set(str(k) for k in scene.geometry.keys())
             unused_geom = sorted(all_geom - used_geom)
 
+            # ✅ 按 NAUO 编号从小到大排序（NAUO1, NAUO2, ..., NAUO10, NAUO11, ...）
+            def _extract_nauo_num(item):
+                """提取 NAUO 编号用于排序"""
+                node_name = item.get("node", "")
+                if node_name.startswith("NAUO"):
+                    try:
+                        return int(node_name[4:])  # 提取 NAUO 后面的数字
+                    except ValueError:
+                        return float('inf')  # 无法解析的放最后
+                return float('inf')  # 非 NAUO 节点放最后
+
+            node_to_geom_sorted = sorted(node_to_geom, key=_extract_nauo_num)
+
             result = {
                 "success": True,
                 "glb": os.path.basename(glb_path),
                 "nodes_total": len(nodes),
                 "geometry_total": len(scene.geometry),
-                "nodes_with_geometry": len(node_to_geom),
+                "nodes_with_geometry": len(node_to_geom_sorted),
                 "nodes_without_geometry": nodes_without,
                 "geometry_unused": unused_geom,
-                "node_to_geometry": node_to_geom
+                "node_to_geometry": node_to_geom_sorted
             }
 
             if output_path:
