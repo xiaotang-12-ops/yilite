@@ -825,17 +825,21 @@ onUnmounted(() => {
   }
 
   .stats-section {
-    flex-wrap: wrap;
-    gap: 20px;
+    flex-wrap: nowrap;  // ✅ 不换行，一行显示
+    justify-content: space-between;
+    gap: 8px;
     padding-bottom: 10px;
 
     .stat-item {
+      flex: 1;
+      min-width: 0;  // 允许收缩
+
       .stat-value {
-        font-size: 1.8rem;
+        font-size: 1.2rem;
       }
 
       .stat-label {
-        font-size: 10px;
+        font-size: 9px;
       }
     }
   }

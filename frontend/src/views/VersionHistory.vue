@@ -1,6 +1,6 @@
 <template>
   <div class="version-history-page">
-    <el-page-header content="装配手册历史版本" @back="goBack" />
+    <el-page-header title="回退" content="装配手册历史版本" @back="goBack" />
 
     <el-card class="history-card" shadow="hover">
       <div class="header-row">
@@ -27,6 +27,14 @@
               <div class="actions">
                 <el-button size="small" @click="preview(item.version)">预览</el-button>
                 <el-button size="small" type="warning" @click="rollback(item.version)">回滚</el-button>
+                <el-button
+                  size="small"
+                  type="danger"
+                  :disabled="item.version === history.current_version"
+                  @click="deleteVersion(item.version)"
+                >
+                  删除
+                </el-button>
               </div>
             </div>
             <p class="changelog">{{ item.changelog || '无变更说明' }}</p>
@@ -121,6 +129,29 @@ const rollback = async (version: string) => {
     if (error === 'cancel') return
     console.error('❌ 回滚失败', error)
     ElMessage.error('回滚失败: ' + (error.response?.data?.detail || error.message))
+  }
+}
+
+const deleteVersion = async (version: string) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除版本 ${version} 吗？此操作不可恢复！`,
+      '确认删除',
+      {
+        confirmButtonText: '确定删除',
+        cancelButtonText: '取消',
+        type: 'warning',
+        confirmButtonClass: 'el-button--danger'
+      }
+    )
+
+    await axios.delete(`/api/manual/${taskId}/version/${version}`)
+    ElMessage.success(`版本 ${version} 已删除`)
+    await loadHistory()
+  } catch (error: any) {
+    if (error === 'cancel') return
+    console.error('❌ 删除版本失败', error)
+    ElMessage.error('删除失败: ' + (error.response?.data?.detail || error.message))
   }
 }
 

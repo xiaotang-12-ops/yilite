@@ -7,8 +7,11 @@
         <span>正在查看历史版本 <strong>{{ historyVersion }}</strong>（只读模式）</span>
       </div>
       <div class="history-notice-actions">
+        <el-button size="small" @click="exitHistoryPreview">
+          退出
+        </el-button>
         <el-button size="small" @click="router.push(`/manual/${props.taskId}`)">
-          返回当前版本
+          修改当前版本
         </el-button>
         <el-button size="small" type="primary" @click="router.push(`/version-history/${props.taskId}`)">
           版本历史
@@ -53,74 +56,87 @@
       </div>
 
       <div class="top-actions">
-        <el-button-group :size="isMobile ? 'large' : 'large'" class="step-nav-group">
-          <el-button :icon="ArrowLeft" :disabled="currentStepIndex === 0" @click="previousStep">
+        <!-- 导航组 -->
+        <div class="action-group nav-group">
+          <el-button :disabled="currentStepIndex === 0" @click="previousStep">
+            <el-icon><ArrowLeft /></el-icon>
             上一步
           </el-button>
-          <el-button type="primary" :icon="ArrowRight" :disabled="currentStepIndex === totalSteps - 1" @click="nextStep">
+          <span class="step-indicator">{{ currentStepIndex + 1 }} / {{ totalSteps }}</span>
+          <el-button type="primary" :disabled="currentStepIndex === totalSteps - 1" @click="nextStep">
             下一步
+            <el-icon><ArrowRight /></el-icon>
           </el-button>
-        </el-button-group>
+        </div>
 
         <!-- 管理员登录/管理按钮（只读模式下隐藏） -->
-        <div v-if="!isReadOnlyMode && !isMobile" class="admin-section">
-          <el-button
-            v-if="!isAdmin"
-            type="warning"
-            :size="isMobile ? 'small' : 'large'"
-            @click="showLoginDialog = true"
-            >
+        <template v-if="!isReadOnlyMode && !isMobile">
+          <!-- 未登录状态 -->
+          <div v-if="!isAdmin" class="action-group">
+            <el-button @click="showLoginDialog = true">
               <el-icon><Lock /></el-icon>
               管理员登录
             </el-button>
-
-          <div v-else class="admin-actions">
-            <el-tag type="success" size="large">管理员</el-tag>
-
-            <!-- 编辑下拉菜单 -->
-            <el-dropdown trigger="click" @command="handleEditCommand">
-              <el-button type="primary" :size="isMobile ? 'small' : 'large'">
-                <el-icon><Edit /></el-icon>
-                编辑 <el-icon class="el-icon--right"><ArrowDown /></el-icon>
-              </el-button>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item command="editContent">
-                    <el-icon><Edit /></el-icon> 编辑内容
-                  </el-dropdown-item>
-                  <el-dropdown-item command="insertStep">
-                    <el-icon><Plus /></el-icon> 插入步骤
-                  </el-dropdown-item>
-                  <el-dropdown-item command="deleteStep" divided>
-                    <el-icon><Delete /></el-icon> 删除当前步骤
-                  </el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
-
-            <!-- 版本下拉菜单 -->
-            <el-dropdown trigger="click" @command="handleVersionCommand">
-              <el-button type="success" :size="isMobile ? 'small' : 'large'">
-                <el-icon><Upload /></el-icon>
-                版本 <el-icon class="el-icon--right"><ArrowDown /></el-icon>
-              </el-button>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item command="publish">
-                    <el-icon><Upload /></el-icon> 发布新版本
-                  </el-dropdown-item>
-                  <el-dropdown-item command="history">
-                    <el-icon><Document /></el-icon> 历史版本
-                  </el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
-
-            <el-button :size="isMobile ? 'small' : 'large'" @click="logout">退出</el-button>
           </div>
-        </div>
 
+          <!-- 已登录状态 -->
+          <template v-else>
+            <!-- 分隔线 -->
+            <div class="action-divider"></div>
 
+            <!-- 功能组 -->
+            <div class="action-group function-group">
+              <el-dropdown trigger="click" @command="handleEditCommand">
+                <el-button>
+                  <el-icon><Edit /></el-icon>
+                  编辑 <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                </el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="editContent">
+                      <el-icon><Edit /></el-icon> 编辑内容
+                    </el-dropdown-item>
+                    <el-dropdown-item command="insertStep">
+                      <el-icon><Plus /></el-icon> 插入步骤
+                    </el-dropdown-item>
+                    <el-dropdown-item command="deleteStep" divided>
+                      <el-icon><Delete /></el-icon> 删除当前步骤
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+
+              <el-dropdown trigger="click" @command="handleVersionCommand">
+                <el-button>
+                  <el-icon><Upload /></el-icon>
+                  版本 <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                </el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="publish">
+                      <el-icon><Upload /></el-icon> 发布新版本
+                    </el-dropdown-item>
+                    <el-dropdown-item command="history">
+                      <el-icon><Document /></el-icon> 历史版本
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </div>
+
+            <!-- 分隔线 -->
+            <div class="action-divider"></div>
+
+            <!-- 状态组 -->
+            <div class="action-group status-group">
+              <span class="admin-badge">
+                <el-icon><User /></el-icon>
+                管理员
+              </span>
+              <el-button @click="logout">退出</el-button>
+            </div>
+          </template>
+        </template>
       </div>
     </div>
 
@@ -133,6 +149,14 @@
       <el-button type="primary" plain @click="showDetailsDrawer = true">
         <el-icon><Document /></el-icon>
         步骤/参考
+      </el-button>
+      <el-button
+        :type="isAutoPlaying ? 'danger' : 'success'"
+        plain
+        @click="toggleAutoPlay"
+      >
+        <el-icon><VideoPlay v-if="!isAutoPlaying" /><VideoPause v-else /></el-icon>
+        {{ isAutoPlaying ? '停止播放' : '自动播放' }}
       </el-button>
     </div>
 
@@ -192,6 +216,65 @@
           <!-- Three.js 渲染区域 -->
         </div>
 
+        <!-- 零件状态选择弹窗 - 仅管理员可见 -->
+        <div
+          v-if="showStatusPopup && isAdmin && selectedMesh"
+          class="part-status-popup"
+          :style="{
+            left: statusPopupPosition.x + 'px',
+            top: statusPopupPosition.y + 'px'
+          }"
+        >
+          <div class="popup-header">
+            <div class="part-info">
+              <span class="part-name">{{ getPartDisplayName(selectedMesh) }}</span>
+              <span class="part-nauo">NAUO: {{ getPartNauoName(selectedMesh) }}</span>
+            </div>
+            <el-button
+              :icon="Close"
+              circle
+              size="small"
+              @click="closeStatusPopup"
+            />
+          </div>
+          <div class="popup-content">
+            <el-button
+              :type="getPartStatus(selectedMesh) === 'not_installed' ? 'info' : 'default'"
+              @click="setPartStatus('not_installed')"
+              size="small"
+            >
+              <span class="status-dot gray"></span>
+              未装
+            </el-button>
+            <el-button
+              :type="getPartStatus(selectedMesh) === 'installing' ? 'warning' : 'default'"
+              @click="setPartStatus('installing')"
+              size="small"
+            >
+              <span class="status-dot yellow"></span>
+              正在装
+            </el-button>
+            <el-button
+              :type="getPartStatus(selectedMesh) === 'installed' ? 'primary' : 'default'"
+              @click="setPartStatus('installed')"
+              size="small"
+            >
+              <span class="status-dot blue"></span>
+              已装
+            </el-button>
+          </div>
+          <div class="popup-footer">
+            <el-button
+              type="danger"
+              size="small"
+              @click="deletePart"
+            >
+              <el-icon><Delete /></el-icon>
+              删除零件
+            </el-button>
+          </div>
+        </div>
+
         <!-- 3D控制 -->
         <div class="model-controls">
           <div class="controls-row">
@@ -212,19 +295,75 @@
                 线框模式
               </el-button>
             </el-button-group>
+
+            <!-- 爆炸比例滑块（放在按钮组同一行） -->
+            <div v-if="isExploded && !isMobile" class="explode-slider-inline">
+              <el-slider
+                v-model="explodeScale"
+                :min="0"
+                :max="50"
+                :step="1"
+                :style="{ width: '180px' }"
+              />
+              <span class="slider-value">{{ explodeScale }}%</span>
+            </div>
+
+            <!-- 已删除零件下拉菜单（放在按钮组同一行） -->
+            <el-dropdown v-if="deletedParts.size > 0 && isAdmin && !isMobile" trigger="click" @command="restorePart">
+              <el-button type="warning" plain size="default">
+                <el-icon><Delete /></el-icon>
+                已删除 ({{ deletedParts.size }})
+                <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+              </el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item
+                    v-for="meshKey in deletedParts"
+                    :key="meshKey"
+                    :command="meshKey"
+                  >
+                    <span class="deleted-part-name">{{ getDeletedPartDisplayName(meshKey) }}</span>
+                    <el-tag size="small" type="success">恢复</el-tag>
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
           </div>
 
-          <!-- 爆炸比例滑块 -->
-          <div v-if="isExploded" class="explode-slider">
+          <!-- 移动端：爆炸滑块单独一行 -->
+          <div v-if="isExploded && isMobile" class="explode-slider">
             <span class="slider-label">爆炸程度:</span>
             <el-slider
               v-model="explodeScale"
               :min="0"
               :max="50"
               :step="1"
-              :style="{ width: isMobile ? '100%' : '300px', margin: isMobile ? '0 8px' : '0 12px' }"
+              :style="{ width: '100%', margin: '0 8px' }"
             />
             <span class="slider-value">{{ explodeScale }}%</span>
+          </div>
+
+          <!-- 移动端：已删除零件单独一行 -->
+          <div v-if="deletedParts.size > 0 && isAdmin && isMobile" class="deleted-parts-dropdown">
+            <el-dropdown trigger="click" @command="restorePart">
+              <el-button type="warning" plain size="small">
+                <el-icon><Delete /></el-icon>
+                已删除零件 ({{ deletedParts.size }})
+                <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+              </el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item
+                    v-for="meshKey in deletedParts"
+                    :key="meshKey"
+                    :command="meshKey"
+                  >
+                    <span class="deleted-part-name">{{ getDeletedPartDisplayName(meshKey) }}</span>
+                    <el-tag size="small" type="success">恢复</el-tag>
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
           </div>
         </div>
       </div>
@@ -238,10 +377,6 @@
             <div class="step-header">
               <div class="step-badge">{{ currentStepIndex + 1 }}</div>
               <h2>{{ currentStepData.title }}</h2>
-              <div class="step-admin-actions" v-if="isAdmin">
-                <el-button size="small" @click="openInsertDialog">在当前后插入</el-button>
-                <el-button size="small" type="danger" :loading="deletingStep" @click="confirmDeleteCurrentStep">删除当前</el-button>
-              </div>
             </div>
 
             <div class="step-content">
@@ -972,7 +1107,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Loading, ArrowLeft, ArrowRight, ArrowDown, Picture, Box,
   Refresh, View, Grid, Clock, Lock, Edit, Plus, Upload, Document,
-  Warning, Delete
+  Warning, Delete, Close, User, VideoPlay, VideoPause
 } from '@element-plus/icons-vue'
 import { useMediaQuery } from '@vueuse/core'
 import axios from 'axios'
@@ -1024,14 +1159,52 @@ const historyVersion = computed(() => route.query.version as string | undefined)
 const isReadOnlyMode = computed(() => !!historyVersion.value)
 
 const manualData = ref<any>(null)
+// ✅ 存储 step3_glb_inventory.json 的 node_to_geometry 数据（用于显示3D零件实际名称）
+const glbNodeToGeometry = ref<{ node: string; geometry: string }[]>([])
+
 const setManualDataValue = (data: any) => {
   manualData.value = data
   if (manualData.value && manualData.value._edit_version === undefined) {
     manualData.value._edit_version = 0
   }
+
+  // ✅ 从 part_assembly_states 恢复零件状态到内存 Map
+  restorePartAssemblyStates(data)
+}
+
+// 从 manualData.part_assembly_states 恢复零件装配状态
+const restorePartAssemblyStates = (data: any) => {
+  // 恢复零件装配状态
+  if (!data?.part_assembly_states) {
+    partAssemblyStates.value.clear()
+  } else {
+    const savedStates = data.part_assembly_states as Record<string, Record<string, AssemblyStatus>>
+    partAssemblyStates.value.clear()
+
+    for (const [stepId, stepStates] of Object.entries(savedStates)) {
+      const stepMap = new Map<string, AssemblyStatus>()
+      for (const [meshKey, status] of Object.entries(stepStates)) {
+        stepMap.set(meshKey, status as AssemblyStatus)
+      }
+      partAssemblyStates.value.set(stepId, stepMap)
+    }
+    console.log(`✅ 恢复零件装配状态: ${partAssemblyStates.value.size} 个步骤`)
+  }
+
+  // 恢复已删除零件
+  if (data?.deleted_parts && Array.isArray(data.deleted_parts)) {
+    deletedParts.value = new Set(data.deleted_parts)
+    console.log(`✅ 恢复已删除零件: ${deletedParts.value.size} 个`)
+  } else {
+    deletedParts.value.clear()
+  }
 }
 const currentStepIndex = ref(0)
 const activeTab = ref('welding')
+
+// 自动播放相关
+const isAutoPlaying = ref(false)
+let autoPlayTimer: ReturnType<typeof setInterval> | null = null
 const modelContainer = ref<HTMLElement | null>(null)
 
 const nextVersionPreview = computed(() => {
@@ -1098,6 +1271,39 @@ let meshWorldExplodeDirections: Map<string, THREE.Vector3> = new Map()
 const isExploded = ref(true) // 初始爆炸，未装配件分散
 const isWireframe = ref(false)
 const explodeScale = ref(25) // 爆炸比例（0-50，默认25）
+
+// ============ 零件交互选中功能（管理员专用） ============
+// 装配状态类型定义
+type AssemblyStatus = 'not_installed' | 'installing' | 'installed'
+
+// Raycaster 相关
+let raycaster: THREE.Raycaster | null = null
+const mouse = new THREE.Vector2()
+
+// 悬浮和选中状态
+const hoveredMesh = ref<THREE.Mesh | null>(null)
+const selectedMesh = ref<THREE.Mesh | null>(null)
+
+// 边框线条组
+let hoverOutlineGroup: THREE.Group | null = null
+
+// 状态弹窗
+const statusPopupPosition = ref({ x: 0, y: 0 })
+const showStatusPopup = ref(false)
+
+// 装配状态存储 (stepId -> (meshKey -> status))，按步骤独立存储
+// 解决步骤切换时颜色状态混乱的问题
+const partAssemblyStates = ref<Map<string, Map<string, AssemblyStatus>>>(new Map())
+
+// 已删除零件存储（全局，所有步骤都不显示）
+const deletedParts = ref<Set<string>>(new Set())
+
+// 自动保存防抖计时器
+let autoSaveTimer: ReturnType<typeof setTimeout> | null = null
+
+// 区分点击和拖拽
+let mouseDownPosition = { x: 0, y: 0 }
+let mouseDownTime = 0
 
 // 图纸缩放相关
 const zoomedDrawingIndex = ref<number | null>(null)
@@ -1291,6 +1497,47 @@ const assembledNodeNames = computed(() => {
     names.push(...getStepNodeNames(step))
   }
   return names
+})
+
+// ✅ node_name 到零件名称的映射（用于显示实际零件名称而非NAUO序号）
+// 优先使用 step3_glb_inventory.json 的 geometry 字段（3D零件实际名称）
+const nodeNameToPartName = computed(() => {
+  const mapping = new Map<string, string>()
+
+  // ✅ 优先使用 glbNodeToGeometry（来自 step3_glb_inventory.json）
+  // 这是最准确的3D零件名称，如 "GB╱T 5782-2016[六角头螺栓M20×90]_M20×90"
+  for (const item of glbNodeToGeometry.value) {
+    if (item.node && item.geometry) {
+      mapping.set(item.node, item.geometry)
+    }
+  }
+
+  // 如果 glbNodeToGeometry 没有数据，回退到 BOM 映射表
+  if (mapping.size === 0) {
+    const resources3d = (manualData.value as any)?.['3d_resources']
+    const componentMappings = resources3d?.component_level_mappings
+
+    if (componentMappings) {
+      for (const [, componentData] of Object.entries(componentMappings)) {
+        const bomMappingTable = (componentData as any)?.bom_mapping_table
+        if (Array.isArray(bomMappingTable)) {
+          for (const item of bomMappingTable) {
+            const name = item.name || item.bom_name || ''
+            const nodeNames = item.node_names || []
+            if (name && Array.isArray(nodeNames)) {
+              for (const nodeName of nodeNames) {
+                if (nodeName && !mapping.has(nodeName)) {
+                  mapping.set(nodeName, name)
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return mapping
 })
 
 // ✅ 根据当前步骤的零件自动生成3D高亮mesh列表
@@ -1910,6 +2157,9 @@ const saveDraft = async () => {
       // 更新本地数据到草稿态
       setManualDataValue(updatedData)
 
+      // ✅ 立即显示草稿提示条
+      isDraftMode.value = true
+
       const cacheDraftKey = `current_manual_draft_${props.taskId}`
       localStorage.setItem(cacheDraftKey, JSON.stringify(updatedData))
 
@@ -2097,6 +2347,11 @@ const goHistory = () => {
   router.push(`/version-history/${props.taskId}`)
 }
 
+// 退出历史版本预览（关闭当前标签页）
+const exitHistoryPreview = () => {
+  window.close()
+}
+
 // ============ 下拉菜单命令处理 ============
 
 const handleEditCommand = (command: string) => {
@@ -2144,6 +2399,9 @@ const handleDiscardDraft = async () => {
     setManualDataValue(resp.data)
     localStorage.setItem(`current_manual_${props.taskId}`, JSON.stringify(resp.data))
     currentStepIndex.value = 0
+
+    // ✅ 刷新3D显示，让零件颜色恢复到已发布状态
+    updateStepDisplay(false)
   } catch (error: any) {
     if (error !== 'cancel') {
       console.error('❌ 丢弃草稿失败:', error)
@@ -2154,6 +2412,22 @@ const handleDiscardDraft = async () => {
   }
 }
 
+// ✅ 加载 step3_glb_inventory.json 获取3D零件实际名称
+const loadGlbInventory = async () => {
+  if (!props.taskId) return
+  try {
+    const resp = await axios.get(`/api/manual/${props.taskId}/glb-inventory`)
+    const nodeToGeometry = resp.data?.glb_files?.product_total?.node_to_geometry
+    if (Array.isArray(nodeToGeometry)) {
+      glbNodeToGeometry.value = nodeToGeometry
+      console.log(`✅ 加载 glb-inventory 成功，共 ${nodeToGeometry.length} 个零件名称映射`)
+    }
+  } catch (e) {
+    // 文件不存在不影响主流程，只是显示 NAUO 序号
+    console.log('📝 glb-inventory 不存在或加载失败，将显示 NAUO 序号')
+  }
+}
+
 // ✅ 加载数据：历史版本 > 管理员草稿 > 普通已发布
 const loadLocalJSON = async () => {
   if (!props.taskId) {
@@ -2161,6 +2435,8 @@ const loadLocalJSON = async () => {
     return
   }
   try {
+    // ✅ 先加载 step3_glb_inventory.json（3D零件名称映射）
+    await loadGlbInventory()
     // 历史版本模式：从 ?version=v2 参数加载指定版本（只读）
     if (historyVersion.value) {
       try {
@@ -2266,6 +2542,44 @@ const previousStep = () => {
 const nextStep = () => {
   if (currentStepIndex.value < totalSteps.value - 1) {
     currentStepIndex.value++
+  }
+}
+
+// 自动播放：每5秒切换到下一步，到最后一步停止
+const toggleAutoPlay = () => {
+  if (isAutoPlaying.value) {
+    // 停止播放
+    stopAutoPlay()
+  } else {
+    // 开始播放
+    startAutoPlay()
+  }
+}
+
+const startAutoPlay = () => {
+  // 如果已经是最后一步，不启动
+  if (currentStepIndex.value >= totalSteps.value - 1) {
+    ElMessage.info('已经是最后一步了')
+    return
+  }
+
+  isAutoPlaying.value = true
+  autoPlayTimer = setInterval(() => {
+    if (currentStepIndex.value < totalSteps.value - 1) {
+      currentStepIndex.value++
+    } else {
+      // 到达最后一步，自动停止
+      stopAutoPlay()
+      ElMessage.success('播放完成')
+    }
+  }, 5000) // 5秒间隔
+}
+
+const stopAutoPlay = () => {
+  isAutoPlaying.value = false
+  if (autoPlayTimer) {
+    clearInterval(autoPlayTimer)
+    autoPlayTimer = null
   }
 }
 
@@ -2377,6 +2691,9 @@ const init3DViewer = () => {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile.value ? 2 : 2))
   }
   window.addEventListener('resize', handleResize)
+
+  // ✅ 初始化零件交互功能（射线检测、鼠标事件）
+  initPartInteraction()
 }
 
 const load3DModel = async () => {
@@ -2829,11 +3146,55 @@ const updateStepDisplay = (animate = true) => {
     const explodeDir = meshWorldExplodeDirections.get(child.uuid)
     if (!originalWorldPos || !explodeDir) return
 
+    // ✅ 检查是否是已删除的零件
+    const meshKey = child.name || child.uuid
+    if (deletedParts.value.has(meshKey)) {
+      child.visible = false
+      return  // 跳过后续处理
+    }
+
     const isCurrent = currentSet.has(child.name)
     const isAssembled = assembledSet.has(child.name)
-    const targetWorld = isAssembled || isCurrent || explodeDistanceBase === 0
-      ? originalWorldPos.clone()
-      : originalWorldPos.clone().add(explodeDir.clone().multiplyScalar(explodeDistanceBase))
+
+    // ✅ 先获取手动状态（位置和颜色都需要用）
+    // meshKey 已在上面定义
+    const stepId = currentStepData.value?.step_id
+    const stepStates = stepId ? partAssemblyStates.value.get(stepId) : null
+    let manualStatus = stepStates?.get(meshKey)
+
+    // ✅ 状态继承：如果当前步骤没有手动状态，检查之前步骤
+    // 第N步设为"正在装"的零件，在第N+1步及之后应自动变成"已装"
+    if (!manualStatus && currentStepIndex.value > 0) {
+      for (let i = currentStepIndex.value - 1; i >= 0; i--) {
+        const prevStepId = allSteps.value[i]?.step_id
+        if (!prevStepId) continue
+        const prevStepStates = partAssemblyStates.value.get(prevStepId)
+        const prevStatus = prevStepStates?.get(meshKey)
+        if (prevStatus === 'installing' || prevStatus === 'installed') {
+          manualStatus = 'installed'  // 之前设为正在装/已装，现在视为已装
+          break
+        }
+      }
+    }
+
+    // ✅ 位置逻辑：手动状态优先，再用自动逻辑（修复颜色和位置不一致的问题）
+    let targetWorld: THREE.Vector3
+    if (manualStatus) {
+      // 手动状态优先（与 applyPartPosition 逻辑一致）
+      if (manualStatus === 'not_installed') {
+        // 未装：始终爆炸到指定位置（不受 isExploded 影响）
+        const explodeDistance = maxDim * (explodeScale.value / 100 || 0.25)
+        targetWorld = originalWorldPos.clone().add(explodeDir.clone().multiplyScalar(explodeDistance))
+      } else {
+        // 正在装/已装：归位
+        targetWorld = originalWorldPos.clone()
+      }
+    } else {
+      // 自动逻辑（原有逻辑）
+      targetWorld = isAssembled || isCurrent || explodeDistanceBase === 0
+        ? originalWorldPos.clone()
+        : originalWorldPos.clone().add(explodeDir.clone().multiplyScalar(explodeDistanceBase))
+    }
 
     const targetLocal = child.parent.worldToLocal(targetWorld.clone())
     if (animate) {
@@ -2842,16 +3203,21 @@ const updateStepDisplay = (animate = true) => {
       child.position.copy(targetLocal)
     }
 
-    // 材质应用
-    if (isCurrent) {
-      child.material = highlightMaterial.clone()
-    } else if (isAssembled) {
-      const originMat = meshOriginalMaterials.get(child.name)
-      child.material = originMat ? originMat.clone() : new THREE.MeshStandardMaterial({ color: 0x4a90e2 })
-      child.material.transparent = false
-      child.material.opacity = 1
+    if (manualStatus) {
+      // 使用手动标记的状态和材质
+      applyPartStatusMaterial(child, manualStatus)
     } else {
-      child.material = unassembledMaterial.clone()
+      // 使用原有的自动逻辑
+      if (isCurrent) {
+        child.material = highlightMaterial.clone()
+      } else if (isAssembled) {
+        const originMat = meshOriginalMaterials.get(child.name)
+        child.material = originMat ? originMat.clone() : new THREE.MeshStandardMaterial({ color: 0x4a90e2 })
+        child.material.transparent = false
+        child.material.opacity = 1
+      } else {
+        child.material = unassembledMaterial.clone()
+      }
     }
     processed++
   })
@@ -2870,6 +3236,453 @@ const toggleExplode = () => {
 watch(explodeScale, () => {
   updateStepDisplay(true)
 })
+
+// ============ 零件交互选中功能（管理员专用） ============
+
+// 初始化零件交互功能
+const initPartInteraction = () => {
+  if (!renderer || !camera || !scene) {
+    console.warn('⚠️ 无法初始化零件交互：renderer/camera/scene 未就绪')
+    return
+  }
+
+  raycaster = new THREE.Raycaster()
+  hoverOutlineGroup = new THREE.Group()
+  hoverOutlineGroup.name = 'hoverOutlineGroup'
+  scene.add(hoverOutlineGroup)
+
+  const canvas = renderer.domElement
+
+  // 鼠标移动 - 悬浮检测（节流 50ms）
+  let lastMoveTime = 0
+  canvas.addEventListener('mousemove', (event: MouseEvent) => {
+    const now = Date.now()
+    if (now - lastMoveTime < 50) return
+    lastMoveTime = now
+    onCanvasMouseMove(event)
+  })
+
+  // 鼠标按下 - 记录位置和时间
+  canvas.addEventListener('mousedown', onCanvasMouseDown)
+
+  // 鼠标松开 - 判断是否点击
+  canvas.addEventListener('mouseup', onCanvasMouseUp)
+
+  console.log('✅ 零件交互功能初始化完成')
+}
+
+// 鼠标按下事件
+const onCanvasMouseDown = (event: MouseEvent) => {
+  mouseDownPosition = { x: event.clientX, y: event.clientY }
+  mouseDownTime = Date.now()
+}
+
+// 鼠标松开事件
+const onCanvasMouseUp = (event: MouseEvent) => {
+  const dx = event.clientX - mouseDownPosition.x
+  const dy = event.clientY - mouseDownPosition.y
+  const distance = Math.sqrt(dx * dx + dy * dy)
+  const duration = Date.now() - mouseDownTime
+
+  // 移动距离小于5像素，且按下时间小于300ms，认为是点击
+  if (distance < 5 && duration < 300) {
+    onCanvasClick(event)
+  }
+}
+
+// 鼠标移动事件 - 悬浮检测
+const onCanvasMouseMove = (event: MouseEvent) => {
+  if (!raycaster || !camera || !model || !renderer) return
+
+  // 只有管理员才能使用此功能
+  if (!isAdmin.value) return
+
+  const canvas = renderer.domElement
+  const rect = canvas.getBoundingClientRect()
+
+  // 计算鼠标在 canvas 中的归一化坐标 (-1 到 1)
+  mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
+  mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
+
+  // 射线检测
+  raycaster.setFromCamera(mouse, camera)
+  const intersects = raycaster.intersectObjects(model.children, true)
+
+  if (intersects.length > 0) {
+    const hitObject = intersects[0].object as THREE.Mesh
+    if (hitObject.isMesh && hitObject !== hoveredMesh.value) {
+      hoveredMesh.value = hitObject
+      updateHoverOutline(hitObject)
+    }
+  } else {
+    if (hoveredMesh.value) {
+      hoveredMesh.value = null
+      clearHoverOutline()
+    }
+  }
+}
+
+// 点击事件
+const onCanvasClick = (event: MouseEvent) => {
+  if (!raycaster || !camera || !model || !renderer) return
+  if (!isAdmin.value) return  // 只有管理员可用
+
+  const canvas = renderer.domElement
+  const rect = canvas.getBoundingClientRect()
+
+  mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
+  mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
+
+  raycaster.setFromCamera(mouse, camera)
+  const intersects = raycaster.intersectObjects(model.children, true)
+
+  if (intersects.length > 0) {
+    const hitObject = intersects[0].object as THREE.Mesh
+    if (hitObject.isMesh) {
+      selectedMesh.value = hitObject
+
+      // 计算弹窗位置（在点击位置附近）
+      statusPopupPosition.value = {
+        x: event.clientX,
+        y: event.clientY
+      }
+      showStatusPopup.value = true
+      console.log('🎯 选中零件:', hitObject.name || hitObject.uuid)
+    }
+  } else {
+    // 点击空白处关闭弹窗
+    closeStatusPopup()
+  }
+}
+
+// 更新悬浮边框（红色）
+const updateHoverOutline = (mesh: THREE.Mesh) => {
+  if (!hoverOutlineGroup) return
+
+  // 清除旧边框
+  clearHoverOutline()
+
+  try {
+    // 创建边框几何体
+    const edges = new THREE.EdgesGeometry(mesh.geometry, 15) // 15度阈值
+    const lineMaterial = new THREE.LineBasicMaterial({
+      color: 0xff0000, // 红色
+      linewidth: 2
+    })
+    const lineSegments = new THREE.LineSegments(edges, lineMaterial)
+
+    // 复制 mesh 的世界变换矩阵
+    mesh.updateWorldMatrix(true, false)
+    lineSegments.applyMatrix4(mesh.matrixWorld)
+
+    hoverOutlineGroup.add(lineSegments)
+  } catch (error) {
+    console.warn('⚠️ 创建边框失败:', error)
+  }
+}
+
+// 清除悬浮边框
+const clearHoverOutline = () => {
+  if (!hoverOutlineGroup) return
+  while (hoverOutlineGroup.children.length > 0) {
+    const child = hoverOutlineGroup.children[0]
+    hoverOutlineGroup.remove(child)
+    if (child instanceof THREE.LineSegments) {
+      child.geometry.dispose()
+      ;(child.material as THREE.Material).dispose()
+    }
+  }
+}
+
+// 关闭状态弹窗
+const closeStatusPopup = () => {
+  showStatusPopup.value = false
+  selectedMesh.value = null
+}
+
+// 获取零件当前状态（按当前步骤获取）
+const getPartStatus = (mesh: THREE.Mesh | null): AssemblyStatus | null => {
+  if (!mesh) return null
+  const stepId = currentStepData.value?.step_id
+  if (!stepId) return null
+
+  const meshKey = mesh.name || mesh.uuid
+  const stepStates = partAssemblyStates.value.get(stepId)
+  return stepStates?.get(meshKey) || null
+}
+
+// 获取指定步骤的零件状态
+const getPartStatusByStep = (stepId: string, meshKey: string): AssemblyStatus | null => {
+  const stepStates = partAssemblyStates.value.get(stepId)
+  return stepStates?.get(meshKey) || null
+}
+
+// 设置零件状态（按当前步骤存储 + 自动保存）
+const setPartStatus = (status: AssemblyStatus) => {
+  if (!selectedMesh.value) return
+
+  const stepId = currentStepData.value?.step_id
+  if (!stepId) {
+    console.warn('⚠️ 当前步骤没有 step_id，无法保存状态')
+    return
+  }
+
+  const meshKey = selectedMesh.value.name || selectedMesh.value.uuid
+
+  // 获取或创建当前步骤的状态Map
+  if (!partAssemblyStates.value.has(stepId)) {
+    partAssemblyStates.value.set(stepId, new Map())
+  }
+  const stepStates = partAssemblyStates.value.get(stepId)!
+  stepStates.set(meshKey, status)
+
+  // 立即更新该零件的材质
+  applyPartStatusMaterial(selectedMesh.value, status)
+
+  // ✅ 根据状态决定零件位置：正在装/已装 → 归位，未装 → 保持爆炸位置
+  applyPartPosition(selectedMesh.value, status)
+
+  console.log(`✅ 步骤 "${stepId}" 零件 "${meshKey}" 状态设置为: ${status}`)
+
+  // ✅ 自动保存到草稿（带防抖）
+  autoSavePartStates()
+
+  // 关闭弹窗
+  closeStatusPopup()
+}
+
+// 自动保存零件状态到草稿（防抖500ms）
+const autoSavePartStates = () => {
+  if (autoSaveTimer) {
+    clearTimeout(autoSaveTimer)
+  }
+
+  autoSaveTimer = setTimeout(async () => {
+    try {
+      // 将 Map 转换为可序列化的对象
+      const statesObj: Record<string, Record<string, AssemblyStatus>> = {}
+      partAssemblyStates.value.forEach((stepMap, stepId) => {
+        statesObj[stepId] = Object.fromEntries(stepMap)
+      })
+
+      // 将 deletedParts Set 转换为数组
+      const deletedPartsArr = Array.from(deletedParts.value)
+
+      // 更新 manualData
+      const updatedData = {
+        ...manualData.value,
+        part_assembly_states: statesObj,
+        deleted_parts: deletedPartsArr
+      }
+
+      // 调用保存草稿API
+      const response = await axios.post(`/api/manual/${props.taskId}/save-draft`, {
+        manual_data: updatedData
+      })
+
+      if (response.data.success) {
+        // 更新本地数据
+        updatedData._edit_version = (manualData.value?._edit_version ?? 0) + 1
+        setManualDataValue(updatedData)
+
+        // ✅ 立即显示草稿提示条
+        isDraftMode.value = true
+
+        // 更新缓存
+        const cacheDraftKey = `current_manual_draft_${props.taskId}`
+        localStorage.setItem(cacheDraftKey, JSON.stringify(updatedData))
+
+        console.log('✅ 零件状态已自动保存到草稿')
+      }
+    } catch (error: any) {
+      console.error('❌ 自动保存零件状态失败:', error)
+      // 不显示错误提示，避免干扰用户操作
+    }
+  }, 500)
+}
+
+// 删除零件（全局隐藏）
+const deletePart = async () => {
+  if (!selectedMesh.value) return
+
+  const meshKey = selectedMesh.value.name || selectedMesh.value.uuid
+  const displayName = getPartDisplayName(selectedMesh.value)
+
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除零件 "${displayName}" 吗？删除后该零件在所有步骤都不会显示。`,
+      '删除零件',
+      {
+        confirmButtonText: '确定删除',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+
+    // 添加到已删除集合
+    deletedParts.value.add(meshKey)
+
+    // 隐藏该零件
+    selectedMesh.value.visible = false
+
+    // 关闭弹窗
+    closeStatusPopup()
+
+    // 自动保存
+    autoSavePartStates()
+
+    ElMessage.success(`零件 "${displayName}" 已删除`)
+    console.log(`🗑️ 零件已删除: ${meshKey}`)
+  } catch {
+    // 用户取消
+  }
+}
+
+// 恢复已删除的零件
+const restorePart = (meshKey: string) => {
+  // 从已删除集合中移除
+  deletedParts.value.delete(meshKey)
+
+  // 找到对应的 mesh 并显示
+  if (model) {
+    model.traverse((child: any) => {
+      if (child.isMesh) {
+        const childKey = child.name || child.uuid
+        if (childKey === meshKey) {
+          child.visible = true
+        }
+      }
+    })
+  }
+
+  // 自动保存
+  autoSavePartStates()
+
+  const displayName = getDeletedPartDisplayName(meshKey)
+  ElMessage.success(`零件 "${displayName}" 已恢复`)
+  console.log(`✅ 零件已恢复: ${meshKey}`)
+}
+
+// 获取已删除零件的显示名称
+const getDeletedPartDisplayName = (meshKey: string): string => {
+  // 优先从 glbNodeToGeometry 获取名称
+  if (glbNodeToGeometry.value && glbNodeToGeometry.value[meshKey]) {
+    return glbNodeToGeometry.value[meshKey]
+  }
+  return meshKey
+}
+
+// 应用状态对应的材质（使用原来的配色）
+const applyPartStatusMaterial = (mesh: THREE.Mesh, status: AssemblyStatus) => {
+  switch (status) {
+    case 'not_installed':
+      // 未装：灰色半透明
+      mesh.material = new THREE.MeshStandardMaterial({
+        color: 0x888888,
+        opacity: 0.35,
+        transparent: true,
+        metalness: 0.2,
+        roughness: 0.6
+      })
+      break
+    case 'installing':
+      // 正在装：黄色高亮（和原来的 highlightMaterial 一致）
+      mesh.material = new THREE.MeshStandardMaterial({
+        color: 0xffff00,
+        emissive: 0xffaa00,
+        emissiveIntensity: 0.8,
+        metalness: 0.3,
+        roughness: 0.4
+      })
+      break
+    case 'installed':
+      // 已装：恢复原始材质或使用蓝色
+      const originMat = meshOriginalMaterials.get(mesh.name)
+      if (originMat) {
+        mesh.material = originMat.clone()
+        ;(mesh.material as THREE.MeshStandardMaterial).transparent = false
+        ;(mesh.material as THREE.MeshStandardMaterial).opacity = 1
+      } else {
+        mesh.material = new THREE.MeshStandardMaterial({
+          color: 0x4a90e2,
+          metalness: 0.5,
+          roughness: 0.4
+        })
+      }
+      break
+  }
+}
+
+// 应用零件位置（归位或弹出）
+const applyPartPosition = (mesh: THREE.Mesh, status: AssemblyStatus) => {
+  if (!model) return
+
+  const originalWorldPos = meshWorldOriginalPositions.get(mesh.uuid)
+  const explodeDir = meshWorldExplodeDirections.get(mesh.uuid)
+  if (!originalWorldPos || !explodeDir) return
+
+  // 计算爆炸距离（未装状态始终使用爆炸距离，不受 isExploded 影响）
+  const box = new THREE.Box3().setFromObject(model)
+  const size = new THREE.Vector3()
+  box.getSize(size)
+  const maxDim = Math.max(size.x, size.y, size.z)
+  // 未装状态：始终使用爆炸比例计算距离（即使当前是收起视图）
+  const explodeDistance = maxDim * (explodeScale.value / 100 || 0.25)
+
+  let targetWorld: THREE.Vector3
+  if (status === 'not_installed') {
+    // 未装：弹出到爆炸位置
+    targetWorld = originalWorldPos.clone().add(explodeDir.clone().multiplyScalar(explodeDistance))
+  } else {
+    // 正在装/已装：归位到原始位置
+    targetWorld = originalWorldPos.clone()
+  }
+
+  const targetLocal = mesh.parent!.worldToLocal(targetWorld.clone())
+  animateMeshPosition(mesh, targetLocal, 450)
+}
+
+// 获取零件显示名称（美化名称）
+const getPartDisplayName = (mesh: THREE.Mesh | null): string => {
+  if (!mesh) return '未命名零件'
+
+  const name = mesh.name || ''
+
+  // ✅ 优先从 BOM 映射中获取实际零件名称（而非 NAUO 序号）
+  if (name && nodeNameToPartName.value.has(name)) {
+    return nodeNameToPartName.value.get(name)!
+  }
+
+  // 如果名称为空或太短，使用uuid的前8位
+  if (!name || name.length < 2) {
+    return `零件-${mesh.uuid.substring(0, 8)}`
+  }
+
+  // 尝试解码可能的URL编码
+  try {
+    const decoded = decodeURIComponent(name)
+    if (decoded !== name) {
+      return decoded
+    }
+  } catch (e) {
+    // 解码失败，使用原名称
+  }
+
+  // 如果名称看起来是乱码（非中英文数字），尝试美化
+  if (!/[\u4e00-\u9fa5a-zA-Z0-9]/.test(name)) {
+    return `零件-${mesh.uuid.substring(0, 8)}`
+  }
+
+  return name
+}
+
+// 获取零件原始 NAUO 序号（mesh.name）
+const getPartNauoName = (mesh: THREE.Mesh | null): string => {
+  if (!mesh) return '-'
+  return mesh.name || mesh.uuid.substring(0, 8)
+}
+
+// ============ 零件交互功能结束 ============
 
 // 线框模式
 const toggleWireframe = () => {
@@ -2951,6 +3764,16 @@ onUnmounted(() => {
   if (controls) {
     controls.dispose()
   }
+  // ✅ 清理自动保存计时器
+  if (autoSaveTimer) {
+    clearTimeout(autoSaveTimer)
+    autoSaveTimer = null
+  }
+  // ✅ 清理自动播放计时器
+  if (autoPlayTimer) {
+    clearInterval(autoPlayTimer)
+    autoPlayTimer = null
+  }
 })
 </script>
 
@@ -2962,6 +3785,96 @@ onUnmounted(() => {
   flex-direction: column;
   background: #f0f2f5;
   overflow: hidden;
+}
+
+// 零件状态选择弹窗
+.part-status-popup {
+  position: fixed;
+  z-index: 1000;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 12px;
+  min-width: 320px;
+  max-width: 500px;
+  transform: translate(-50%, 10px);
+
+  .popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #eee;
+    gap: 12px;
+
+    .part-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .part-name {
+      font-weight: 600;
+      color: #333;
+      word-break: break-all;
+      line-height: 1.4;
+    }
+
+    .part-nauo {
+      font-size: 12px;
+      color: #888;
+      word-break: break-all;
+    }
+  }
+
+  .popup-content {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+
+    .status-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 4px;
+
+      &.gray {
+        background: #888888;
+      }
+      &.yellow {
+        background: #ffff00;
+        border: 1px solid #ffaa00;
+      }
+      &.blue {
+        background: #4a90e2;
+      }
+    }
+  }
+
+  .popup-footer {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+    display: flex;
+    justify-content: center;
+  }
+}
+
+// 已删除零件下拉菜单
+.deleted-parts-dropdown {
+  margin-top: 8px;
+
+  .deleted-part-name {
+    margin-right: 8px;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
 // 草稿模式提示条
@@ -3073,27 +3986,96 @@ onUnmounted(() => {
 
   .top-actions {
     display: flex;
-    gap: 12px;
+    gap: 8px;
     align-items: center;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 8px 16px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   }
 
-  .admin-section {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .admin-actions {
+  .action-group {
     display: flex;
     align-items: center;
     gap: 8px;
+
+    :deep(.el-button) {
+      border-radius: 8px;
+      font-weight: 500;
+      min-height: 40px;
+      padding: 0 16px;
+      border: 1px solid #e4e7ed;
+      background: white;
+      color: #606266;
+      transition: all 0.2s;
+
+      &:hover {
+        background: #f5f7fa;
+        border-color: #c0c4cc;
+        color: #303133;
+      }
+
+      &.el-button--primary {
+        background: #409eff;
+        border-color: #409eff;
+        color: white;
+
+        &:hover {
+          background: #66b1ff;
+          border-color: #66b1ff;
+        }
+      }
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
+  }
+
+  .nav-group {
+    .step-indicator {
+      font-size: 14px;
+      font-weight: 600;
+      color: #606266;
+      padding: 0 8px;
+      min-width: 60px;
+      text-align: center;
+    }
+  }
+
+  .action-divider {
+    width: 1px;
+    height: 28px;
+    background: #dcdfe6;
+    margin: 0 8px;
+  }
+
+  .status-group {
+    .admin-badge {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 12px;
+      background: #f0f9eb;
+      color: #67c23a;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+
+      .el-icon {
+        font-size: 14px;
+      }
+    }
   }
 }
 
 .main-workspace {
   flex: 1;
+  min-height: 0;  // ✅ 关键！让 flex 子元素可以收缩，防止溢出
   display: grid;
   grid-template-columns: 300px 1fr 400px;
+  grid-template-rows: 1fr;  // ✅ 限制行高度为可用空间
   gap: 16px;
   padding: 16px;
   overflow: hidden;
@@ -3118,14 +4100,7 @@ onUnmounted(() => {
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.step-nav-group {
-  :deep(.el-button) {
-    min-height: 44px;
-    font-weight: 700;
-    padding: 0 14px;
-  }
+  min-height: 0;  // ✅ 让 grid 子元素可以收缩
 }
 
 .left-sidebar {
@@ -3379,7 +4354,8 @@ onUnmounted(() => {
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   display: flex;
   flex-direction: column;
-  min-height: 360px;
+  min-height: 0;  // ✅ 允许收缩，防止撑破容器
+  overflow: hidden;
 
   .model-container {
     flex: 1;
@@ -3395,18 +4371,38 @@ onUnmounted(() => {
   }
 
   .model-controls {
-    padding: 16px;
+    padding: 12px 16px;
     border-top: 1px solid #e5e7eb;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
 
     .controls-row {
       display: flex;
+      align-items: center;
       justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
     }
 
+    // PC端：滑块和按钮在同一行
+    .explode-slider-inline {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: 8px;
+
+      .slider-value {
+        font-size: 13px;
+        font-weight: 600;
+        color: #7c3aed;
+        min-width: 40px;
+        text-align: right;
+      }
+    }
+
+    // 移动端：滑块单独一行
     .explode-slider {
       display: flex;
       align-items: center;
@@ -3414,6 +4410,7 @@ onUnmounted(() => {
       padding: 8px 16px;
       background: #f5f7fa;
       border-radius: 8px;
+      width: 100%;
 
       .slider-label {
         font-size: 14px;
@@ -3621,14 +4618,6 @@ onUnmounted(() => {
     overflow: auto;
   }
 
-  .step-nav-group {
-    :deep(.el-button) {
-      min-height: 48px;
-      font-size: 16px;
-      padding: 0 16px;
-    }
-  }
-
   .top-bar {
     height: auto;
     padding: 12px 14px;
@@ -3663,17 +4652,19 @@ onUnmounted(() => {
     .top-actions {
       flex-wrap: wrap;
       width: 100%;
-      gap: 8px;
-      align-items: center;
+      padding: 8px;
+    }
 
-      .el-button-group {
-        width: 100%;
-        display: flex;
-      }
+    .action-divider {
+      display: none;
+    }
 
-      .admin-section {
-        width: 100%;
-        justify-content: flex-start;
+    .action-group {
+      flex-wrap: wrap;
+
+      :deep(.el-button) {
+        min-height: 36px;
+        font-size: 13px;
       }
     }
   }

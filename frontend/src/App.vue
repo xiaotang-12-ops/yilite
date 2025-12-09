@@ -25,7 +25,7 @@
             <span>查看器</span>
           </router-link>
           <router-link to="/settings" class="nav-item" active-class="active">
-            <el-icon><Setting /></el-icon>
+            <el-icon v-if="false"><Setting /></el-icon>
             <span v-if="false">设置</span>
           </router-link>
         </div>
@@ -73,18 +73,12 @@
           <el-icon><House /></el-icon>
           <span>首页</span>
         </router-link>
-        <router-link to="/generator" class="drawer-item" @click="mobileMenuOpen = false">
-          <el-icon><DocumentAdd /></el-icon>
-          <span>生成器</span>
-        </router-link>
+        <!-- 移动端隐藏生成器入口 -->
         <router-link to="/viewer" class="drawer-item" @click="mobileMenuOpen = false">
           <el-icon><View /></el-icon>
           <span>查看器</span>
         </router-link>
-        <router-link to="/settings" class="drawer-item" @click="mobileMenuOpen = false">
-          <el-icon><Setting /></el-icon>
-          <span>设置</span>
-        </router-link>
+        <!-- 移动端隐藏设置入口 -->
       </div>
     </el-drawer>
 

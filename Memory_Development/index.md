@@ -1,8 +1,8 @@
 # 📸 项目快照 - Memory Development
 
 **创建时间**: 2025-11-18
-**最后校对**: 2025-12-05
-**当前版本**: v2.0.20
+**最后校对**: 2025-12-09
+**当前版本**: v2.0.29
 **项目状态**: 核心功能完成，可用
 
 ---
@@ -53,6 +53,7 @@ output/{task_id} (JSON + GLB + 图片)
 | GET | `/api/manual/{task_id}/history` | 获取版本历史 | 列出版本列表及当前版本 |
 | GET | `/api/manual/{task_id}/version/{v}` | 读取指定版本 | 从 `versions/v*.json` 读取 |
 | POST | `/api/manual/{task_id}/rollback/{v}` | 回滚到版本并生成新版本 | 复制目标版本为新发布 |
+| DELETE | `/api/manual/{task_id}/version/{v}` | 删除指定历史版本 | 不能删除当前版本 |
 | POST | `/api/manual/{task_id}/steps/insert` | 插入新步骤 | 生成 UUID step_id + display_order，可传 `_edit_version` |
 | DELETE | `/api/manual/{task_id}/steps/{step_id}` | 删除步骤 | 支持 `_edit_version` 并返回被删零件 |
 | POST | `/api/manual/{task_id}/steps/move` | 移动步骤 | 重算 display_order，支持 `_edit_version` |
@@ -103,9 +104,9 @@ output/{task_id} (JSON + GLB + 图片)
 ## 最近 3 个版本快照
 | 版本 | 日期 | 关键变更 |
 | --- | --- | --- |
-| v2.0.20 | 2025-12-05 | **手册加载修复**：ManualViewer 将主工作区+抽屉与加载态分离，避免移动端抽屉的 v-else 误触导致桌面端永远显示“加载中”，恢复 3D 与步骤区渲染。 |
-| v2.0.19 | 2025-12-05 | **移动端横屏适配**：导航栏新增抽屉与汉堡按钮；ManualViewer 左右栏改抽屉、3D 渲染降级(像素比/抗锯齿/阴影)；ThreeViewer/AssemblyManualViewer 控制面板折叠，移动端限定画布高度；生成器/项目列表增加响应式布局，桌面保持不变。 |
-| v2.0.18 | 2025-12-04 | **AI匹配增强**：①step3_glb_inventory.json按NAUO编号从小到大排序；②AI提示词增加"相邻NAUO推断"策略，相邻编号零件推断归属同一组件。 |
+| v2.0.29 | 2025-12-09 | **修复草稿相关bug**：①`saveDraft()` 和 `autoSavePartStates()` 保存成功后新增 `isDraftMode.value = true`，草稿提示条立即显示；②`handleDiscardDraft()` 丢弃草稿后新增 `updateStepDisplay(false)`，3D模型状态同步恢复。 |
+| v2.0.28 | 2025-12-08 | **删除零件功能（全局隐藏）**：①点击3D零件弹窗新增"删除零件"按钮（红色），删除前弹出确认框；②新增 `deletedParts: Set<string>` 存储已删除零件；③3D控制区新增"已删除零件"下拉菜单，可恢复被删除的零件；④`updateModelByStep()` 中检查 deletedParts，隐藏已删除零件；⑤自动保存 `deleted_parts` 到 manualData 并持久化；⑥加载时从 manualData.deleted_parts 恢复。 |
+| v2.0.27 | 2025-12-08 | **手机端自动播放功能**：①新增"自动播放"按钮（仅手机端显示），点击后每5秒自动切换到下一步；②到达最后一步自动停止，或手动点击停止；③新增 `isAutoPlaying` 状态、`toggleAutoPlay()`/`startAutoPlay()`/`stopAutoPlay()` 方法；④组件卸载时清理定时器。 |
 
 ---
 

@@ -641,6 +641,31 @@ async def get_glb_file(task_id: str, glb_filename: str):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"获取GLB文件失败: {str(e)}")
 
+@app.get("/api/manual/{task_id}/glb-inventory")
+async def get_glb_inventory(task_id: str):
+    """
+    获取任务的 step3_glb_inventory.json 文件
+    ✅ 用于获取3D零件的实际名称（node_to_geometry 映射）
+    """
+    try:
+        inventory_path = Path("output") / task_id / "step3_glb_inventory.json"
+
+        if not inventory_path.exists():
+            raise HTTPException(status_code=404, detail="step3_glb_inventory.json 不存在")
+
+        with open(inventory_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+
+        print(f"✅ 加载 step3_glb_inventory.json 成功: {task_id}")
+        return data
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ 获取 glb-inventory 失败: {e}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"获取 glb-inventory 失败: {str(e)}")
+
 @app.get("/api/manual/{task_id}/pdf_images/{image_path:path}")
 async def get_pdf_image(task_id: str, image_path: str):
     """
@@ -933,6 +958,29 @@ async def rollback_manual(task_id: str, version: str, request: RollbackRequest):
         print(f"❌ 回滚失败: {e}")
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"回滚失败: {str(e)}")
+
+
+@app.delete("/api/manual/{task_id}/version/{version}")
+async def delete_manual_version(task_id: str, version: str):
+    """
+    删除指定历史版本（不能删除当前版本）
+    - 删除 versions/{version}.json 文件
+    - 从 version_history.json 中移除该版本记录
+    """
+    try:
+        storage = get_storage(task_id)
+        result = storage.delete_version(version)
+        print(f"✅ 成功删除版本: {task_id}/{version}")
+        return {"success": True, **result}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        print(f"❌ 删除版本失败: {e}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"删除版本失败: {str(e)}")
+
 
 # ============ 步骤插入 / 删除 / 移动 ============ #
 @app.post("/api/manual/{task_id}/steps/insert")

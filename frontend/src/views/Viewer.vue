@@ -18,18 +18,10 @@
             clearable
             class="search-input"
           />
-          <el-select
-            v-model="statusFilter"
-            placeholder="状态筛选"
-            clearable
-            class="status-filter"
-          >
-            <el-option label="全部" value="" />
-            <el-option label="已完成" value="completed" />
-            <el-option label="处理中" value="processing" />
-            <el-option label="失败" value="failed" />
-          </el-select>
+          <!-- 状态筛选已隐藏 -->
+          <!-- 移动端隐藏日期筛选 -->
           <el-date-picker
+            v-if="!isMobile"
             v-model="dateRange"
             type="daterange"
             range-separator="至"
@@ -203,6 +195,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useMediaQuery } from '@vueuse/core'
 import {
   Search, Document, View, Delete, Plus, FolderOpened
 } from '@element-plus/icons-vue'
@@ -210,6 +203,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import axios from 'axios'
 
 const router = useRouter()
+const isMobile = useMediaQuery('(max-width: 768px)')
 
 // 响应式数据
 const showProjectDialog = ref(true)

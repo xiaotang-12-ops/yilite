@@ -295,3 +295,31 @@ class ManualStorage:
         if not path.exists():
             raise FileNotFoundError(f"version file not found: {path}")
         return path
+
+    def delete_version(self, version: str) -> Dict[str, Any]:
+        """
+        删除指定版本（不能删除当前版本）
+        - 删除 versions/{version}.json 文件
+        - 从 version_history.json 中移除该版本记录
+        """
+        history = self.load_version_history()
+        current_version = history.get("current_version")
+
+        # 不能删除当前版本
+        if version == current_version:
+            raise ValueError(f"不能删除当前版本 {version}，请先回滚到其他版本")
+
+        # 检查版本是否存在
+        version_file = self.versions_dir / f"{version}.json"
+        if not version_file.exists():
+            raise FileNotFoundError(f"版本 {version} 不存在")
+
+        # 删除版本文件
+        version_file.unlink()
+
+        # 从历史记录中移除
+        versions = history.get("versions", [])
+        history["versions"] = [v for v in versions if v.get("version") != version]
+        self._write_json(self.version_history_path, history)
+
+        return {"deleted_version": version, "remaining_count": len(history["versions"])}
