@@ -9,7 +9,7 @@ from typing import List, Dict, Optional
 from openai import OpenAI
 import sys
 import os
-from utils.time_utils import beijing_now
+from utils.time_utils import beijing_now, build_debug_output_dir
 
 # 添加项目根目录到路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -64,17 +64,26 @@ class AIBOMMatcher:
         import sys
         sys.stdout.flush()
 
-        # 统一的调试文件标识
-        ts_str = beijing_now().strftime("%Y%m%d_%H%M%S")
+        # 统一的调试文件标识与输出目录
+        now = beijing_now()
+        ts_str = now.strftime("%Y%m%d_%H%M%S")
+        debug_dir = build_debug_output_dir(self.task_id, now=now)
         safe_task = re.sub(r"[^A-Za-z0-9._-]+", "_", str(self.task_id)) or "unknown_task"
 
         # 根据数量决定是否分批，以避免大响应被截断
         if len(unmatched_parts) > self.batch_threshold:
             print(f"      📦 未匹配零件超过 {self.batch_threshold} 个，按批次处理（单批 {self.batch_size} 个）...")
             sys.stdout.flush()
-            all_results = self._match_in_batches(unmatched_parts, bom_data, safe_task, ts_str)
+            all_results = self._match_in_batches(unmatched_parts, bom_data, safe_task, ts_str, debug_dir)
         else:
-            all_results = self._match_all_at_once(unmatched_parts, bom_data, safe_task, ts_str, allow_split=True)
+            all_results = self._match_all_at_once(
+                unmatched_parts,
+                bom_data,
+                safe_task,
+                ts_str,
+                debug_dir,
+                allow_split=True,
+            )
 
         # 统计AI匹配结果
         matched_count = sum(1 for r in all_results if r.get('matched_bom_code'))
@@ -116,6 +125,7 @@ class AIBOMMatcher:
         bom_data: List[Dict],
         safe_task: str,
         ts_str: str,
+        debug_dir: str,
         batch_label: Optional[str] = None,
         allow_split: bool = False
     ) -> List[Dict]:
@@ -127,6 +137,7 @@ class AIBOMMatcher:
             bom_data: 未匹配的BOM列表（已经在调用方计算好了）
             safe_task: 任务名（用于调试文件）
             ts_str: 时间戳（用于调试文件）
+            debug_dir: 调试文件目录
             batch_label: 批次标识，用于调试文件命名
             allow_split: 截断时是否继续拆分当前批
         """
@@ -191,10 +202,10 @@ class AIBOMMatcher:
             sys.stdout.flush()
 
             # 调试：保存AI原始响应
-            debug_file = f"debug_output/ai_matching_response_{safe_task}_{ts_str}.txt"
+            os.makedirs(debug_dir, exist_ok=True)
+            debug_file = os.path.join(debug_dir, f"ai_matching_response_{safe_task}_{ts_str}.txt")
             if batch_label:
                 debug_file = debug_file.replace(".txt", f"_part{batch_label}.txt")
-            os.makedirs("debug_output", exist_ok=True)
             with open(debug_file, 'w', encoding='utf-8') as f:
                 f.write(result_text)
             print(f"      💾 AI响应已保存到: {debug_file}")
@@ -215,8 +226,12 @@ class AIBOMMatcher:
                 mid = len(parts) // 2 or 1
                 left = parts[:mid]
                 right = parts[mid:]
-                left_results = self._match_all_at_once(left, bom_data, safe_task, ts_str, f"{batch_label or '1'}-a", allow_split=True)
-                right_results = self._match_all_at_once(right, bom_data, safe_task, ts_str, f"{batch_label or '1'}-b", allow_split=True)
+                left_results = self._match_all_at_once(
+                    left, bom_data, safe_task, ts_str, debug_dir, f"{batch_label or '1'}-a", allow_split=True
+                )
+                right_results = self._match_all_at_once(
+                    right, bom_data, safe_task, ts_str, debug_dir, f"{batch_label or '1'}-b", allow_split=True
+                )
                 return left_results + right_results
 
             if not ai_results:
@@ -233,8 +248,8 @@ class AIBOMMatcher:
             # ✅ 保存失败信息到调试文件
             try:
                 batch_suffix = f"_part{batch_label}" if batch_label else ""
-                error_file = f"debug_output/ai_matching_ERROR_{safe_task}_{ts_str}{batch_suffix}.txt"
-                os.makedirs("debug_output", exist_ok=True)
+                os.makedirs(debug_dir, exist_ok=True)
+                error_file = os.path.join(debug_dir, f"ai_matching_ERROR_{safe_task}_{ts_str}{batch_suffix}.txt")
                 with open(error_file, "w", encoding="utf-8") as f:
                     f.write(f"=== AI匹配失败 ===\n")
                     f.write(f"时间: {ts_str}\n")
@@ -261,7 +276,8 @@ class AIBOMMatcher:
         parts: List[Dict],
         bom_data: List[Dict],
         safe_task: str,
-        ts_str: str
+        ts_str: str,
+        debug_dir: str,
     ) -> List[Dict]:
         """分批处理未匹配零件，防止单次响应过长被截断"""
         results: List[Dict] = []
@@ -277,6 +293,7 @@ class AIBOMMatcher:
                 bom_data,
                 safe_task,
                 ts_str,
+                debug_dir,
                 batch_label=str(batch_no),
                 allow_split=True
             )
@@ -499,4 +516,3 @@ class AIBOMMatcher:
         print(f"   更新了 {updated_count} 个零件的匹配结果")
         
         return cleaned_parts
-

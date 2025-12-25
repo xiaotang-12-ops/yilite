@@ -783,6 +783,10 @@ onUnmounted(() => {
     height: 100vh;
   }
 
+  .action-buttons {
+    display: none;
+  }
+
   .main-title {
     font-size: 2.5rem;
     margin-bottom: 20px;

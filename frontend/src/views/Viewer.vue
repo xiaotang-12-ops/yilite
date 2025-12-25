@@ -91,14 +91,6 @@
                   <el-icon><View /></el-icon>
                   查看说明书
                 </el-button>
-                <el-button
-                  type="danger"
-                  size="small"
-                  @click.stop="deleteProject(row)"
-                  plain
-                >
-                  <el-icon><Delete /></el-icon>
-                </el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -197,9 +189,9 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useMediaQuery } from '@vueuse/core'
 import {
-  Search, Document, View, Delete, Plus, FolderOpened
+  Search, Document, View, Plus, FolderOpened
 } from '@element-plus/icons-vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import axios from 'axios'
 
 const router = useRouter()
@@ -364,7 +356,7 @@ const viewProject = async (project: any) => {
   // ✅ 如果项目数据已经存在，直接使用
   if (project.data) {
     localStorage.setItem('current_manual', JSON.stringify(project.data))
-    router.push(`/manual/${project.id}`)
+    router.push({ path: `/manual/${project.id}`, query: { source: 'viewer' } })
     return
   }
 
@@ -385,65 +377,10 @@ const viewProject = async (project: any) => {
     localStorage.setItem('current_manual', JSON.stringify(manualData))
 
     // 跳转到装配说明书页面
-    router.push(`/manual/${project.id}`)
+    router.push({ path: `/manual/${project.id}`, query: { source: 'viewer' } })
   } catch (error: any) {
     console.error('加载说明书失败:', error)
     ElMessage.error('加载说明书失败: ' + (error.response?.data?.detail || error.message))
-  }
-}
-
-const deleteProject = async (project: any) => {
-  try {
-    await ElMessageBox.confirm(
-      `确定要删除项目"${project.projectName}"吗？此操作不可恢复。`,
-      '确认删除',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
-    )
-
-    // ✅ 调用后端API删除服务器文件
-    try {
-      await axios.delete(`/api/manual/${project.id}`)
-      console.log(`✅ 服务器文件删除成功: ${project.id}`)
-    } catch (apiError: any) {
-      console.error('删除服务器文件失败:', apiError)
-      ElMessage.error('删除服务器文件失败: ' + (apiError.response?.data?.detail || apiError.message))
-      return
-    }
-
-    // ✅ 从 localStorage 删除项目
-    const historyKey = 'assembly_manual_history'
-    const stored = localStorage.getItem(historyKey)
-
-    if (stored) {
-      let history = JSON.parse(stored)
-      history = history.filter((item: any) => item.taskId !== project.id)
-      localStorage.setItem(historyKey, JSON.stringify(history))
-    }
-
-    // 如果当前查看的是被删除的项目，也清除current_manual
-    const currentManual = localStorage.getItem('current_manual')
-    if (currentManual) {
-      const current = JSON.parse(currentManual)
-      if (current.metadata?.task_id === project.id) {
-        localStorage.removeItem('current_manual')
-      }
-    }
-
-    // 从列表中删除
-    const index = projects.value.findIndex(p => p.id === project.id)
-    if (index > -1) {
-      projects.value.splice(index, 1)
-      ElMessage.success('项目删除成功')
-    }
-  } catch (error: any) {
-    if (error !== 'cancel') {
-      console.error('删除项目失败:', error)
-      ElMessage.error('删除失败: ' + (error.response?.data?.detail || error.message || '未知错误'))
-    }
   }
 }
 

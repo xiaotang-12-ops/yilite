@@ -152,10 +152,11 @@ class GeminiVisionModel:
                 else:
                     parsed_result = {"raw_content": response_content, "parse_error": str(e)}
             
-            # 保存输出结果到临时文件
-            import datetime
-            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            output_dir = "debug_output"
+            # 保存输出结果到临时文件（按任务名归档到子目录）
+            from utils.time_utils import beijing_now, build_debug_output_dir
+            now = beijing_now()
+            timestamp = now.strftime("%Y%m%d_%H%M%S")
+            output_dir = build_debug_output_dir(os.getenv("TASK_ID"), now=now)
             os.makedirs(output_dir, exist_ok=True)
             
             output_file = os.path.join(output_dir, f"gemini_output_{timestamp}.json")

@@ -39,6 +39,11 @@ const router = createRouter({
   routes
 })
 
+// 捕获路由错误，避免静默失败
+router.onError((err) => {
+  console.error('router error', err)
+})
+
 // 创建应用
 const app = createApp(App)
 const pinia = createPinia()
@@ -51,6 +56,11 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 app.use(pinia)
 app.use(router)
 app.use(ElementPlus)
+
+// 全局错误处理，避免渲染错误被吞掉
+app.config.errorHandler = (err, instance, info) => {
+  console.error('vue error', err, { instance, info })
+}
 
 // 隐藏加载屏幕
 app.mount('#app')

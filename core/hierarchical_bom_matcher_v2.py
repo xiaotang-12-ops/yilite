@@ -5,13 +5,16 @@
 """
 
 import json
-from typing import Dict, List
+import re
+from typing import Dict, List, Optional
 from pathlib import Path
 from processors.file_processor import ModelProcessor
 from processors.step_to_glb_converter import StepToGlbConverter
 from core.bom_3d_matcher import match_bom_to_3d  # ✅ 使用完整版的匹配函数
+from core.step_hierarchy_parser import parse_step_hierarchy, collect_leaf_parts
 
 from utils.logger import print_step, print_substep, print_info, print_success, print_error, print_warning
+from utils.time_utils import build_debug_output_dir
 
 
 class HierarchicalBOMMatcher:
@@ -296,9 +299,11 @@ class HierarchicalBOMMatcher:
                 glb_files[glb_key] = str(glb_file)
         
         print_success(f"组件级别处理完成: {len(component_level_mappings)} 个组件")
-        
+
         # ========== 2. 处理产品级别 ==========
         print_substep("步骤2：处理产品级别的STEP文件")
+        hierarchy_output = glb_output.parent / "step_assembly_hierarchy.json"
+        hierarchy_data = None
         
         # 查找产品总图的STEP文件（优先使用 file_hierarchy 中的真实文件名）
         product_step = None
@@ -342,6 +347,16 @@ class HierarchicalBOMMatcher:
                 parts_list = convert_result.get("parts_info", [])
                 print_success(f"GLB转换成功: {len(parts_list)} 个零件", indent=1)
 
+                # 解析并保存 STEP 装配层级
+                try:
+                    hierarchy_data = parse_step_hierarchy(str(product_step))
+                    hierarchy_output.parent.mkdir(parents=True, exist_ok=True)
+                    with open(hierarchy_output, "w", encoding="utf-8") as f:
+                        json.dump(hierarchy_data, f, ensure_ascii=False, indent=2)
+                    print_success(f"装配层级已生成: {hierarchy_output.name}", indent=1)
+                except Exception as e:
+                    print_warning(f"装配层级解析失败: {e}", indent=1)
+                
                 # ✅ 生成产品总图的爆炸视图数据
                 print_info("生成产品总图爆炸视图数据...", indent=1)
                 explosion_result = self.model_processor.generate_explosion_data(
@@ -377,21 +392,61 @@ class HierarchicalBOMMatcher:
                 product_bom = product_bom_all
 
                 print(f"  产品BOM: {len(product_bom)} 个项（包含组件和零件）", flush=True)
-                
-                # BOM-3D匹配（双匹配策略：代码匹配 + AI跟进匹配）
-                # 步骤1：代码匹配
-                code_matching_result = match_bom_to_3d(product_bom, parts_list)
+
+                # ========== 优化后的匹配策略 v2.0.33 ==========
+                # 优先级：层级匹配(100%准确) → 代码匹配 → AI匹配(兜底)
+
+                total_bom = len(product_bom)
+                total_parts = len(parts_list)
+
+                # ✅ 步骤1：层级匹配优先（100%准确，基于STEP文件的真实父子关系）
+                assembly_to_mesh = {}
+                hierarchy_matched_nodes = set()  # 记录层级匹配已覆盖的node_names
+                hierarchy_matched_bom_codes = set()  # 记录层级匹配已覆盖的bom_codes
+
+                if hierarchy_data:
+                    try:
+                        print_info("🏗️ 步骤1：层级匹配（优先，100%准确）", indent=1)
+                        assembly_to_mesh = self._build_assembly_mesh_mapping(
+                            hierarchy_data.get("hierarchy", {}),
+                            product_bom,
+                            parts_list,  # 直接使用parts_list，无需等待cleaned_parts
+                            nauo_edges=hierarchy_data.get("nauo_edges", []),
+                            task_name=task_id,
+                        )
+                        if assembly_to_mesh:
+                            # 收集已被层级匹配覆盖的node_names和bom_codes
+                            for bom_code, node_list in assembly_to_mesh.items():
+                                hierarchy_matched_bom_codes.add(bom_code)
+                                hierarchy_matched_nodes.update(node_list)
+                            print_success(f"  层级匹配成功: {len(assembly_to_mesh)} 个装配体, 覆盖 {len(hierarchy_matched_nodes)} 个零件", indent=1)
+                        else:
+                            print_info("  层级匹配无结果（可能没有子装配体）", indent=1)
+                    except Exception as e:
+                        print_warning(f"层级匹配失败: {e}", indent=1)
+
+                # ✅ 步骤2：代码匹配（处理剩余零件，排除已被层级匹配覆盖的）
+                print_info("📝 步骤2：代码匹配（处理剩余零件）", indent=1)
+
+                # 过滤掉已被层级匹配覆盖的零件
+                remaining_parts = [p for p in parts_list if p.get("node_name") not in hierarchy_matched_nodes]
+                # 过滤掉已被层级匹配覆盖的BOM
+                remaining_bom = [b for b in product_bom if b.get("code") not in hierarchy_matched_bom_codes]
+
+                print_info(f"  剩余零件: {len(remaining_parts)}/{total_parts}, 剩余BOM: {len(remaining_bom)}/{total_bom}", indent=1)
+
+                code_matching_result = match_bom_to_3d(remaining_bom, remaining_parts)
 
                 code_bom_to_mesh = code_matching_result.get("bom_to_mesh_mapping", {})
                 code_summary = code_matching_result.get("summary", {})
                 unmatched_parts = code_matching_result.get("unmatched_parts", [])
+                cleaned_parts = code_matching_result.get("cleaned_parts", [])
 
                 code_bom_matched = code_summary.get('bom_matched_count', 0)
-                total_bom = code_summary.get('total_bom_count', 0)
-                total_parts = code_summary.get('total_3d_parts', 0)
+                print_info(f"  代码匹配成功: {code_bom_matched} 个BOM", indent=1)
 
-                # ✅ AI匹配所有零件
-                print_info(f"🤖 AI匹配员工开始工作，分析 {len(product_bom)} 个BOM和 {len(parts_list)} 个3D零件", indent=1)
+                # ✅ 步骤3：AI匹配（处理仍未匹配的零件，兜底）
+                print_info(f"🤖 步骤3：AI匹配（兜底，处理仍未匹配的零件）", indent=1)
                 ai_bom_to_mesh = {}
                 ai_bom_matched_count = 0
 
@@ -399,39 +454,47 @@ class HierarchicalBOMMatcher:
                     import sys
                     sys.stdout.flush()
 
-                    # ✅ 计算未匹配的BOM（排除已经被代码匹配的BOM）
-                    matched_bom_codes = set(code_bom_to_mesh.keys())
+                    # 计算未匹配的BOM（排除已被层级匹配和代码匹配覆盖的）
+                    matched_bom_codes = hierarchy_matched_bom_codes | set(code_bom_to_mesh.keys())
                     unmatched_bom = [bom for bom in product_bom if bom.get('code') not in matched_bom_codes]
 
-                    from core.ai_matcher import AIBOMMatcher
-                    ai_matcher = AIBOMMatcher(task_id=task_id)
-                    ai_results = ai_matcher.match_unmatched_parts(unmatched_parts, unmatched_bom)
+                    print_info(f"  待AI匹配: {len(unmatched_parts)} 个零件, {len(unmatched_bom)} 个BOM", indent=1)
 
-                    # ✅ 将AI匹配结果应用到cleaned_parts（更新bom_code）
-                    cleaned_parts = code_matching_result.get("cleaned_parts", [])
-                    for ai_result in ai_results:
-                        bom_code = ai_result.get("matched_bom_code")
-                        node_name = ai_result.get("node_name")
+                    if unmatched_bom:  # 只有还有未匹配的BOM才调用AI
+                        from core.ai_matcher import AIBOMMatcher
+                        ai_matcher = AIBOMMatcher(task_id=task_id)
+                        ai_results = ai_matcher.match_unmatched_parts(unmatched_parts, unmatched_bom)
 
-                        if bom_code and node_name:
-                            # 找到对应的零件并更新bom_code
-                            for part in cleaned_parts:
-                                if part.get("node_name") == node_name and not part.get("bom_code"):
-                                    part["bom_code"] = bom_code
-                                    part["match_method"] = "AI匹配"
-                                    part["confidence"] = ai_result.get("confidence", 0.0)
-                                    break
+                        # 将AI匹配结果应用到cleaned_parts（更新bom_code）
+                        for ai_result in ai_results:
+                            bom_code = ai_result.get("matched_bom_code")
+                            node_name = ai_result.get("node_name")
 
-                            # 同时更新ai_bom_to_mesh映射（用于统计）
-                            if bom_code not in ai_bom_to_mesh:
-                                ai_bom_to_mesh[bom_code] = []
-                            ai_bom_to_mesh[bom_code].append(node_name)
+                            if bom_code and node_name:
+                                # 找到对应的零件并更新bom_code
+                                for part in cleaned_parts:
+                                    if part.get("node_name") == node_name and not part.get("bom_code"):
+                                        part["bom_code"] = bom_code
+                                        part["match_method"] = "AI匹配"
+                                        part["confidence"] = ai_result.get("confidence", 0.0)
+                                        break
 
-                    # 计算AI新增匹配的BOM数量（不在代码匹配中的）
-                    ai_bom_matched_count = len([k for k in ai_bom_to_mesh.keys() if k not in code_bom_to_mesh])
+                                # 同时更新ai_bom_to_mesh映射（用于统计）
+                                if bom_code not in ai_bom_to_mesh:
+                                    ai_bom_to_mesh[bom_code] = []
+                                ai_bom_to_mesh[bom_code].append(node_name)
 
-                # ✅ 合并匹配结果
-                final_bom_to_mesh = {**code_bom_to_mesh, **ai_bom_to_mesh}
+                        # 计算AI新增匹配的BOM数量
+                        ai_bom_matched_count = len(ai_bom_to_mesh)
+                        print_info(f"  AI匹配成功: {ai_bom_matched_count} 个BOM", indent=1)
+                    else:
+                        print_info("  无需AI匹配（所有BOM已被层级/代码匹配覆盖）", indent=1)
+                else:
+                    print_info("  无需AI匹配（所有零件已匹配）", indent=1)
+
+                # ✅ 步骤4：合并匹配结果（层级优先）
+                # 合并顺序：层级匹配 → 代码匹配 → AI匹配
+                final_bom_to_mesh = {**assembly_to_mesh, **code_bom_to_mesh, **ai_bom_to_mesh}
                 total_bom_matched = len(final_bom_to_mesh)
                 final_bom_rate = total_bom_matched / total_bom if total_bom else 0
 
@@ -439,7 +502,8 @@ class HierarchicalBOMMatcher:
                 final_parts_matched = sum(len(meshes) for meshes in final_bom_to_mesh.values())
                 final_parts_rate = final_parts_matched / total_parts if total_parts else 0
 
-                print_success(f"✅ AI匹配完成:", indent=1)
+                # 打印匹配汇总
+                print_success(f"✅ 匹配完成 - 层级:{len(assembly_to_mesh)} + 代码:{code_bom_matched} + AI:{ai_bom_matched_count} = 总计:{total_bom_matched}/{total_bom}", indent=1)
                 print_info(f"  📋 BOM匹配率: {total_bom_matched}/{total_bom} ({final_bom_rate*100:.1f}%)", indent=1)
                 print_info(f"  🎨 3D零件覆盖率: {final_parts_matched}/{total_parts} ({final_parts_rate*100:.1f}%)", indent=1)
 
@@ -466,9 +530,12 @@ class HierarchicalBOMMatcher:
                     "total_3d_parts": total_parts,
                     "matched_3d_count": final_parts_matched,  # ✅ 匹配的3D零件数
                     "parts_matching_rate": final_parts_rate,  # ✅ 3D零件匹配率
+                    "hierarchy_matched": len(assembly_to_mesh),  # ✅ 新增：层级匹配数量
                     "code_matched": code_bom_matched,
                     "ai_matched": ai_bom_matched_count,
-                    "matching_rate": final_bom_rate  # ✅ 兼容旧代码
+                    "matching_rate": final_bom_rate,  # ✅ 兼容旧代码
+                    "assembly_to_mesh": assembly_to_mesh,
+                    "step_assembly_hierarchy": str(hierarchy_output) if hierarchy_output.exists() else None
                 }
 
                 glb_files["product_total"] = str(product_glb)
@@ -520,6 +587,406 @@ class HierarchicalBOMMatcher:
             "product_level_mapping": product_level_mapping,
             "glb_files": glb_files
         }
+
+    # ---------- 装配层级辅助 ----------
+    def _build_assembly_mesh_mapping(
+        self,
+        hierarchy: Dict,
+        product_bom: List[Dict],
+        cleaned_parts: List[Dict],
+        nauo_edges: Optional[List[Dict]] = None,
+        task_name: Optional[str] = None,
+    ) -> Dict[str, List[str]]:
+        """
+        将子装配体（BOM项）映射到其所有叶子零件的 node_name 列表。
+
+        ✅ v2.0.47 修复（面向未来的“父级上下文”层级匹配）：
+        - 根因：仅凭“零件名/几何名”做全局匹配，会在同名件（如“防滑条”）场景下
+          发生“串父级拿错NAUO” + “重复件只拿到1个实例”。
+        - 新策略：优先使用 STEP 的 NAUO 父子边（nauo_edges）来确定“哪个父装配体下面有哪些 NAUO”，
+          再结合 GLB parts_info 中真实 node_name 集合，将同一 NAUO 展开到 NAUOxxx、NAUOxxx_1 等重复实例。
+
+        兼容策略：如果未提供 nauo_edges，则回退到旧的名称匹配逻辑（尽力而为）。
+        """
+        if not hierarchy or not product_bom or not cleaned_parts:
+            return {}
+
+        # 统一调试日志：记录 product_code 与装配层级键的匹配过程
+        hierarchy_keys = list(hierarchy.keys())
+        debug_log: List[Dict] = []
+        debug_dir: Optional[Path] = None
+        try:
+            debug_dir = Path(build_debug_output_dir(task_name))
+            debug_dir.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            debug_dir = None
+
+        def _format_record(detail: Dict) -> Dict:
+            """统一输出字段，贴近 step2_bom_correction_log 的阅读习惯。"""
+            product_code_orig = detail.get("product_code_orig", "")
+            product_code_text = detail.get("product_code_text", product_code_orig)
+            product_code_name = detail.get("product_code_name", "")
+            decision = detail.get("decision")
+            product_code_final = ""
+            if decision == "keep":
+                product_code_final = product_code_orig
+            elif decision == "correct_to_text_pc":
+                product_code_final = product_code_text
+            elif decision == "correct_to_name_pc":
+                product_code_final = product_code_name or product_code_orig
+
+            assembly_key = detail.get("assembly_key_selected", "") or ""
+            return {
+                "seq": detail.get("seq"),
+                "code": detail.get("bom_code"),
+                "name": detail.get("bom_name"),
+                "product_code_orig": product_code_orig,
+                "product_code_text": product_code_text,
+                "product_code_name": product_code_name,
+                "product_code_final": product_code_final,
+                "decision": decision,
+                "reasons": detail.get("reasons", []),
+                "assembly_key_selected": assembly_key,
+                "code_hits": detail.get("candidates_by_code", []),
+                "name_hits": detail.get("candidates_by_name", []),
+                "mapped_nodes": detail.get("mapped_nodes", 0),
+                "stage": detail.get("stage"),
+            }
+
+        def _write_debug_log():
+            if not debug_dir:
+                return
+            try:
+                summary = {
+                    "total_bom": len(product_bom),
+                    "mapped": sum(1 for r in debug_log if r.get("decision") == "mapped"),
+                    "skipped": sum(1 for r in debug_log if r.get("decision") != "mapped"),
+                    "has_nauo_edges": bool(nauo_edges),
+                }
+                log_path = debug_dir / "product_code_correction_log.json"
+                with open(log_path, "w", encoding="utf-8") as f:
+                    json.dump(
+                        {
+                            "_comment": [
+                                "产品级层级匹配纠正日志：记录 product_code(原值/OCR) 与 PDF 文本层值、名称交叉校验后的决策。字段含义对齐 step2_bom_correction_log：",
+                                "  product_code_orig  -> 原值（OCR/大模型）",
+                                "  product_code_text  -> PDF 文本层提取值（无则等于原值）",
+                                "  product_code_name  -> 基于 name 在层级键名命中的推导值",
+                                "  product_code_final -> 最终采用的值",
+                                "  decision           -> keep(用原值) / correct_to_text_pc(用文本层值) / correct_to_name_pc(用名称命中层级键) / no_safe_pc(无层级匹配，跳过)",
+                                "  reasons            -> 决策原因列表（如 use_text_pc, name_not_in_selected, skip_ambiguous_name 等）",
+                                "  code_hits          -> 按 code（原值或文本层）命中的层级键列表",
+                                "  name_hits          -> 按 BOM 名称命中的层级键列表（独立于 code，用于兜底或校验）"
+                            ],
+                            "summary": summary,
+                            "records": [_format_record(d) for d in debug_log],
+                        },
+                        f,
+                        ensure_ascii=False,
+                        indent=2,
+                    )
+                print_info(f"产品级匹配日志已写入: {log_path}", indent=1)
+            except Exception as e:
+                print_warning(f"写产品级匹配日志失败: {e}", indent=1)
+
+        def _select_assembly_key_with_guard(bom_item: Dict, stage: str) -> (Optional[str], Dict):
+            """按 product_code + name 选择装配层级键，异常时放弃以避免串件；支持文本层回退。"""
+            product_code_orig = str(bom_item.get("product_code") or "").strip()
+            product_code_text = str(bom_item.get("product_code_text") or product_code_orig).strip()
+            bom_name = str(bom_item.get("name") or "").strip()
+            bom_code = str(bom_item.get("code") or "").strip()
+
+            norm_product_code = self._normalize_token(product_code_orig)
+            norm_product_code_text = self._normalize_token(product_code_text)
+            bom_name_norm = self._normalize_token(bom_name)
+
+            def _match_by_code(code_val: str) -> (Optional[str], List[str], bool):
+                norm_code = self._normalize_token(code_val)
+                candidates: List[str] = []
+                if norm_code and len(norm_code) >= 8:
+                    candidates = [k for k in hierarchy_keys if norm_code in self._normalize_token(k)]
+                if not candidates:
+                    code_token = self._extract_code_token(code_val)
+                    if code_token:
+                        candidates = [k for k in hierarchy_keys if code_token in self._normalize_token(k)]
+                filtered = list(candidates)
+                if bom_name_norm and filtered:
+                    name_filtered = [c for c in filtered if bom_name_norm in self._normalize_token(c)]
+                    if name_filtered:
+                        filtered = name_filtered
+                selected = max(filtered, key=len) if filtered else None
+                name_in = bool(selected and bom_name_norm and bom_name_norm in self._normalize_token(selected))
+                return selected, candidates, name_in
+
+            reasons: List[str] = []
+            # 尝试原始 code
+            assembly_name, code_hits, name_in_selected = _match_by_code(product_code_orig)
+            used_code = "orig"
+
+            # 若原始 code 未命中或名称不符，尝试文本层 code（若与原值不同）
+            if (not assembly_name or (bom_name_norm and not name_in_selected)) and product_code_text and product_code_text != product_code_orig:
+                assembly_name, code_hits, name_in_selected = _match_by_code(product_code_text)
+                used_code = "text"
+                if assembly_name:
+                    reasons.append("use_text_pc")
+
+            # 名称候选（独立于 code）
+            candidates_by_name: List[str] = []
+            if bom_name_norm:
+                candidates_by_name = [k for k in hierarchy_keys if bom_name_norm in self._normalize_token(k)]
+
+            if assembly_name:
+                reasons.append("code_match")
+                if bom_name_norm and not name_in_selected:
+                    reasons.append("name_not_in_selected")
+                    if len(candidates_by_name) == 1:
+                        assembly_name = candidates_by_name[0]
+                        name_in_selected = True
+                        used_code = "name"
+                        reasons.append("name_override_unique")
+                    elif len(candidates_by_name) == 0:
+                        assembly_name = None
+                        reasons.append("skip_no_name_match")
+                    else:
+                        assembly_name = None
+                        reasons.append("skip_ambiguous_name")
+            else:
+                reasons.append("no_code_candidate")
+                if len(candidates_by_name) == 1:
+                    assembly_name = candidates_by_name[0]
+                    name_in_selected = True
+                    used_code = "name"
+                    reasons.append("fallback_name_unique")
+
+            decision = "no_safe_pc"
+            product_code_name = ""
+            if assembly_name:
+                if used_code == "orig":
+                    decision = "keep"
+                elif used_code == "text":
+                    decision = "correct_to_text_pc"
+                else:
+                    decision = "correct_to_name_pc"
+                    product_code_name = assembly_name
+
+            detail = {
+                "stage": stage,
+                "seq": bom_item.get("seq"),
+                "bom_code": bom_code,
+                "product_code_orig": product_code_orig,
+                "product_code_text": product_code_text,
+                "product_code_name": product_code_name,
+                "bom_name": bom_name,
+                "assembly_key_selected": assembly_name,
+                "candidates_by_code": code_hits,
+                "candidates_by_name": candidates_by_name,
+                "name_in_selected": name_in_selected,
+                "decision": decision,
+                "reasons": reasons or ["noop"],
+            }
+            return assembly_name, detail
+
+        # ---------- 优先：基于 NAUO 边（父级上下文）构建映射 ----------
+        assembly_map: Dict[str, List[str]] = {}
+        if nauo_edges:
+            from collections import defaultdict
+
+            # GLB 实例节点索引：base(NAUOxxx) -> [NAUOxxx, NAUOxxx_1, ...]
+            nodes_by_base: Dict[str, List[str]] = defaultdict(list)
+            node_names_set = set()
+            for part in cleaned_parts:
+                node = str(part.get("node_name") or "").strip()
+                if not node:
+                    continue
+                node_names_set.add(node)
+                base = node.split("_", 1)[0]
+                nodes_by_base[base].append(node)
+
+            # parent_name(装配体名) -> leaf node_name 列表
+            # 只收集“叶子零件边”（child_name 不是装配体）来避免把中间装配体节点当作可高亮零件。
+            parent_to_leaf_nodes: Dict[str, List[str]] = defaultdict(list)
+            for edge in nauo_edges:
+                try:
+                    parent_name = str(edge.get("parent_name") or "").strip()
+                    child_name = str(edge.get("child_name") or "").strip()
+                    base_nauo = str(edge.get("nauo_name") or "").strip()
+                except Exception:
+                    continue
+
+                if not parent_name or not child_name or not base_nauo:
+                    continue
+
+                # child_name 出现在 hierarchy key 中，说明它还是装配体（非叶子）
+                if child_name in hierarchy:
+                    continue
+
+                # 将一个 STEP NAUO 展开到 GLB 的真实节点名（含 _1/_2 后缀）
+                candidates = nodes_by_base.get(base_nauo, [])
+                if not candidates and base_nauo in node_names_set:
+                    candidates = [base_nauo]
+
+                if not candidates:
+                    continue
+
+                parent_to_leaf_nodes[parent_name].extend(candidates)
+
+            # descendant 装配体缓存：root -> {root及其所有子装配体}
+            descendant_cache: Dict[str, set] = {}
+
+            def _collect_descendant_assemblies(root_name: str) -> set:
+                if root_name in descendant_cache:
+                    return descendant_cache[root_name]
+
+                visited = set()
+                stack = [root_name]
+                while stack:
+                    current = stack.pop()
+                    if current in visited:
+                        continue
+                    visited.add(current)
+                    for child in hierarchy.get(current, []):
+                        if child in hierarchy:
+                            stack.append(child)
+                descendant_cache[root_name] = visited
+                return visited
+            for bom in product_bom:
+                bom_code = str(bom.get("code", "") or "").strip()
+                if not bom_code:
+                    continue
+
+                assembly_name, detail = _select_assembly_key_with_guard(bom, stage="nauo")
+                if not assembly_name:
+                    debug_log.append(detail)
+                    continue
+
+                descendant_assemblies = _collect_descendant_assemblies(assembly_name)
+                node_names = set()
+                for asm_name in descendant_assemblies:
+                    node_names.update(parent_to_leaf_nodes.get(asm_name, []))
+
+                if node_names:
+                    assembly_map[bom_code] = sorted(node_names)
+                    detail["mapped_nodes"] = len(node_names)
+                else:
+                    detail["decision"] = "skipped"
+                    detail["reasons"].append("no_leaf_nodes")
+                debug_log.append(detail)
+
+        # ---------- 回退：旧的“名称匹配”逻辑（尽力而为） ----------
+        if assembly_map:
+            _write_debug_log()
+            return assembly_map
+
+        # NAUO 未命中则回退名称匹配，日志重新开始避免重复记录
+        if nauo_edges:
+            debug_log = []
+
+        # 建立几何名 -> node_name 的快速索引（含标准化）
+        # 注意：bom_to_mesh 实际存储的是 node_name，不是 mesh_id
+        from collections import defaultdict
+
+        geom_to_nodes: Dict[str, List[str]] = defaultdict(list)
+        norm_geom_to_nodes: Dict[str, List[str]] = defaultdict(list)
+
+        for part in cleaned_parts:
+            node_name = part.get("node_name")  # 使用 node_name
+            if not node_name:
+                continue
+
+            names = [
+                part.get("fixed_name") or "",
+                part.get("geometry_name") or "",
+                part.get("node_name") or "",
+            ]
+            for name in names:
+                if not name:
+                    continue
+                geom_to_nodes[name].append(node_name)
+                norm = self._normalize_token(name)
+                if norm:
+                    norm_geom_to_nodes[norm].append(node_name)
+
+        assembly_map: Dict[str, List[str]] = {}
+
+        for bom in product_bom:
+            # 优先使用 product_code（因为层级key是产品代号+名称格式）
+            product_code = bom.get("product_code", "")
+            bom_code = bom.get("code", "")
+
+            if not bom_code:
+                continue
+
+            assembly_name, detail = _select_assembly_key_with_guard(bom, stage="name_fallback")
+            if not assembly_name:
+                debug_log.append(detail)
+                continue
+
+            # 收集该子装配体的所有叶子零件对应的 node_name
+            leaves = collect_leaf_parts(hierarchy, assembly_name)
+            node_names: List[str] = []
+
+            for leaf in leaves:
+                matched_any = False
+
+                # 方法1：直接匹配（可能有多个 node_name）
+                if leaf in geom_to_nodes:
+                    node_names.extend([n for n in geom_to_nodes[leaf] if n])
+                    matched_any = True
+
+                # 方法2：规范化匹配
+                norm_leaf = self._normalize_token(leaf)
+                if norm_leaf in norm_geom_to_nodes:
+                    node_names.extend([n for n in norm_geom_to_nodes[norm_leaf] if n])
+                    matched_any = True
+
+                # 方法3：前缀匹配（处理 _1, _2 后缀）
+                # 说明：即使“直接匹配”命中，也不能跳过此步骤，否则会只拿到一个实例，丢失重复件。
+                for geom_name, nodes in geom_to_nodes.items():
+                    base_geom = geom_name.rsplit("_", 1)[0] if "_" in geom_name else geom_name
+                    if leaf == base_geom or leaf == geom_name:
+                        node_names.extend([n for n in nodes if n])
+                        matched_any = True
+
+                # 方法4：代码片段匹配
+                if not matched_any:
+                    leaf_code = self._extract_code_token(leaf)
+                    if leaf_code:
+                        for norm_name, nodes in norm_geom_to_nodes.items():
+                            if leaf_code in norm_name:
+                                node_names.extend([n for n in nodes if n])
+                            break
+
+            if node_names:
+                # 使用 bom_code 作为 key（与 ai_bom_to_mesh 格式一致）
+                assembly_map[bom_code] = sorted(set(node_names))
+                detail["mapped_nodes"] = len(assembly_map[bom_code])
+            else:
+                detail["decision"] = "skipped"
+                detail["reasons"].append("no_leaf_nodes")
+            debug_log.append(detail)
+
+        _write_debug_log()
+        return assembly_map
+
+    def _normalize_token(self, text: str) -> str:
+        """轻量级规范化：去除空白和常见分隔符，转小写。"""
+        if not text:
+            return ""
+        return re.sub(r"[\s_\-]+", "", str(text)).lower()
+
+    def _extract_code_token(self, text: str) -> str:
+        """提取类似 E-CW3T-02 或 XX.XX.XXXX 的代码片段。"""
+        if not text:
+            return ""
+        # 产品代码
+        match = re.search(r"[A-Z]-[A-Z0-9]+-\d+(?:-\d+)?", str(text), re.IGNORECASE)
+        if match:
+            return match.group(0).lower()
+        # BOM 代号格式 01.09.2549
+        match = re.search(r"\d{2}\.\d{2}\.\d{4}", str(text))
+        if match:
+            return match.group(0).lower()
+        return ""
     
     def _get_component_bom(self, bom_data: List[Dict], comp_plan: Dict, drawing_index: int = None, file_name: str = "") -> List[Dict]:
         """
@@ -575,4 +1042,3 @@ class HierarchicalBOMMatcher:
         print_info(f"   匹配到的BOM数量: {len(component_bom)}", indent=1)
 
         return component_bom
-

@@ -1,4 +1,260 @@
-# Memory Changelog (倒序)
+# Memory Changelog
+
+## v2.0.72 (2025-12-25)
+- **移动端首页隐藏“开始工作”按钮**：仅在手机端隐藏首页“开始工作”入口，避免移动端显示该按钮。
+  - **核心改动**：在移动端样式中隐藏 `.action-buttons` 区域。
+  - **行为变化**：移动端首页不再显示“开始工作”；桌面端不受影响。
+  - 影响文件：`frontend/src/views/HomeNew.vue`
+
+## v2.0.71 (2025-12-25)
+- **发布弹窗版本号纠偏（历史预览→编辑场景）**：管理员加载草稿时补拉线上最新版本号，避免“当前线上/即将发布”被草稿版本覆盖。
+  - **核心改动**：在管理员草稿加载流程中新增 `fetchLatestVersion()`（草稿存在时也会拉 HEAD 版本）。
+  - **行为变化**：从历史预览编辑 v3 再发布时，显示“当前线上 v10 / 草稿 v3 / 即将发布 v11”而非 v3/v4。
+  - **风险与兜底**：若 HEAD 请求失败，则沿用草稿版本显示并打印 warning。
+  - 影响文件：`frontend/src/views/ManualViewer.vue`
+
+## v2.0.70 (2025-12-25)
+- **历史版本入口按来源控制（仅查看器入口可见）**：手册页“历史版本”入口仅在从查看器进入时显示；从历史预览进入编辑或其他入口（如生成器）进入时默认隐藏，避免误用历史入口。
+  - **核心改动**：查看器跳转手册新增 `?source=viewer`；手册页读取 `route.query.source` 判断是否展示历史入口；保留 `editingFromHistory` 兜底以避免编辑历史时误显示。
+  - **行为变化**：查看器进入手册仍可打开历史版本；历史预览点击“修改当前版本”后，历史入口不再出现。
+  - 影响文件：`frontend/src/views/Viewer.vue`、`frontend/src/views/ManualViewer.vue`
+
+## v2.0.69 (2025-12-25)
+- **历史预览转草稿弹窗抑制（跨路由）**：从历史预览点击“修改当前版本”并创建草稿后，进入编辑页不会再误弹“发现草稿”，只抑制一次提示，避免打断用户编辑流程。
+  - **核心改动**：新增 `draft_prompt_suppress_once_<taskId>` 单次抑制标记；创建草稿成功后写入标记；进入编辑加载草稿时先消费标记再决定是否弹窗，确保不会长期抑制真实旧草稿提示。
+  - **行为变化**：点击“修改当前版本”直接进入编辑，不弹“已有草稿”；如果确实存在旧草稿，仍会按原逻辑提示。
+- **草稿创建时间记录与展示**：后端保存草稿时新增 `draftCreatedAt` 字段（首次创建写入，后续保存保留）；弹窗展示创建时间，旧草稿缺失时回退显示 `lastUpdated` 并标注“使用最后保存时间”。
+  - **核心改动**：`save_draft()` 写入/保留 `draftCreatedAt`；前端 `draftPromptContext` 增加 `draftCreatedAt/createdAtFallback` 并在弹窗中显示格式化时间。
+  - **兼容说明**：历史草稿无法追溯真实创建时间，会显示“最后保存时间”作为兜底。
+  - 影响文件：`frontend/src/views/ManualViewer.vue`、`core/storage.py`
+
+## v2.0.68 (2025-12-24)
+- **移动端大图/抽屉分层返回**：大图与抽屉各自维护历史栈，轻点大图只关闭大图、保留抽屉；返回键按栈逐层关闭（先大图后抽屉），避免直接退出到查看器。
+  - 影响文件：`frontend/src/views/ManualViewer.vue`
+
+## v2.0.67 (2025-12-24)
+- **路由渲染兜底**：移除 App 层页面切换过渡动画并为 `router-view` 添加 fallback，占位避免渲染异常导致全屏空白；新增全局错误/路由错误打印，渲染失败会直接暴露日志，不再静默。
+  - 影响文件：`frontend/src/App.vue`、`frontend/src/main.ts`
+- **移动端预览交互优化**：手机端大图/抽屉打开时，物理返回键或导航优先关闭预览/抽屉并阻止本次跳转，避免直接跳出页面；轻点大图即可关闭预览（捏合/拖拽时不误触），提升可用性。
+  - 影响文件：`frontend/src/views/ManualViewer.vue`
+
+## v2.0.66 (2025-12-24)
+- **移动端图纸/抽屉历史副作用移除**：不再向浏览器历史栈插入 `pushState/back`，抽屉与大图全由本地状态控制；组件卸载时兜底恢复 `html/body.touchAction`，修复点击图纸后切换首页/查看器/生成器出现空白或无响应的问题。
+  - 影响文件：`frontend/src/views/ManualViewer.vue`
+
+## v2.0.65 (2025-12-24)
+- **网格遮挡优化（黄色/蓝色状态）**：网格材质开启深度测试，避免高亮/已装状态下仍显示网格线覆盖模型。
+  - **改动字段/状态**：`refreshGridHelper()` 中 `gridHelper.material.depthTest` 由 `false` 改为 `true`，保持 `depthWrite = false` 与透明度不变。
+  - **行为变化**：网格会被模型遮挡（正常遮挡），模型本身显示不受影响。
+  - 影响文件：`frontend/src/views/ManualViewer.vue`
+
+## v2.0.64 (2025-12-24)
+- **草稿弹窗抑制（删除/插入步骤）**：删除或插入步骤生成草稿后，在刷新草稿的流程中抑制一次“发现草稿”弹窗，使行为与“编辑标题/调整顺序”等同一类编辑操作一致。
+  - **改动字段/状态**：在插入/删除成功后设置 `suppressDraftPromptOnce = true`，只影响一次 `refreshManualFromServer()` 的弹窗逻辑，不改变草稿生成本身。 
+  - 影响文件：`frontend/src/views/ManualViewer.vue`
+
+## v2.0.63 (2025-12-24)
+- **手册编辑稳定性修复**：历史预览改为显式进入编辑（移除自动草稿创建），步骤标题显示兼容 `title/action`；插入步骤标题必填与“开头插入”显示修复；丢弃草稿后恢复零件可见性。
+  - 影响文件：`frontend/src/views/ManualViewer.vue`
+
+## v2.0.62 (2025-12-24)
+- **产品级日志对齐 Step2 语义**：产品级纠正日志改为 `product_code_correction_log.json`，字段/决策含义与 Step2 保持一致（keep/correct_to_text_pc/correct_to_name_pc/no_safe_pc），并补充 code_hits/name_hits 含义说明。
+  - 影响文件：`core/hierarchical_bom_matcher_v2.py`
+
+## v2.0.61 (2025-12-23)
+- **产品级层级匹配防串件 + 调试日志**：在 `_build_assembly_mesh_mapping` 增加 product_code+名称双重校验，遇到代码命中但名称不符时改用唯一名称匹配，否则跳过以避免 -02/-03 误配；匹配决策输出到 `debug_output/<任务目录>/product_code_validation.json`，便于人工复核。
+  - 影响文件：`core/hierarchical_bom_matcher_v2.py`
+
+
+## v2.0.60 (2025-12-23)
+- **调试输出目录归档修复（避免按Agent拆分）**：同一次任务运行中固定 `debug_output/<时间戳_任务名>` 目录，Agent4/5/6/FAQ 的调试输出统一落在任务目录下。
+  - 影响文件：`utils/time_utils.py`、`core/gemini_pipeline.py`
+
+## v2.0.59 (2025-12-23)
+- **步骤拖拽可滚动（65+ 步场景）**：步骤顺序弹窗的拖拽改为 `forceFallback` 并开启自动滚动参数（scrollSensitivity/scrollSpeed），拖拽过程中可自动滚动列表，支持将第1步拖到第65步。
+  - 影响文件：`frontend/src/views/ManualViewer.vue`
+- **“已装”禁用态更明显**：按钮增加固定可见的“（禁用）”标识，并调整状态点样式，避免仅悬停时才看得出不可用。
+  - 影响文件：`frontend/src/views/ManualViewer.vue`
+
+## v2.0.58 (2025-12-23)
+- **ManualViewer 步骤拖拽排序（方案A）**：在“编辑”菜单新增“调整步骤顺序”弹窗，按 `step_id` 全局重排 `display_order`（1000 步进）并一次性保存到草稿；保存后按原 `step_id` 重新定位当前步骤并刷新3D显示。
+  - 影响文件：`frontend/src/views/ManualViewer.vue`
+- **暂时禁用“已装”手动标记**：前端按钮不可点击，并在 `setPartStatus` 增加兜底拦截，便于阶段性验证“未装/正在装”链路。
+  - 影响文件：`frontend/src/views/ManualViewer.vue`
+- **前端依赖**：引入 `vuedraggable` 作为拖拽库。
+  - 影响文件：`frontend/package.json`、`frontend/package-lock.json`
+
+## v2.0.57 (2025-12-22)
+- **ManualViewer 固定小网格**：网格固定尺寸 150、分隔 40，固定高度 -5，并添加边界线，避免随模型/爆炸高度变化导致“无限”或漂浮感。
+  - 影响文件：`frontend/src/views/ManualViewer.vue`
+
+## v2.0.56 (2025-12-22)
+- **有限网格（终版）**：网格固定 1600 尺寸、160 分隔（单格约 10），范围不再随模型扩大，转动时避免“无边界”眩晕；网格临时/重建逻辑保持一致。
+  - 影响文件：`frontend/src/views/ManualViewer.vue`
+
+## v2.0.55 (2025-12-22)
+- **网格再收缩 + 调试可用**：固定网格 1000 尺寸、100 分隔（单格约 10），并将 `THREE` 暴露到 `__three_debug__`，便于在浏览器控制台直接创建/调整网格。
+  - 影响文件：`frontend/src/views/ManualViewer.vue`
+
+## v2.0.52 (2025-12-22)
+- **网格可见性修复**：网格尺寸随模型包围盒自适应生成，颜色加深并关闭深度遮挡，位置略低于模型底部，避免 z-fighting 与“网格消失”。
+  - 影响文件：`frontend/src/views/ManualViewer.vue`
+
+
+## v2.0.51 (2025-12-22)
+- **装配状态继承补全 + 只读保护**：`updateStepDisplay` 向前继承 `not_installed`，未装状态在后续步骤保持爆炸视图直到显式改为正在装/已装；历史版本预览/非管理员禁止调用 `setPartStatus` 修改零件状态。
+  - 影响文件：`frontend/src/views/ManualViewer.vue`
+
+
+## v2.0.50 (2025-12-22)
+- **ManualViewer 相机自适应与缩放收敛**：加载/切换 GLB 时基于包围盒自动框选相机，动态设置 near/far，并将模型放大上限收敛到 1e4，避免深度闪烁和“缩小后看不到模型”的问题；重置相机复用同一逻辑。
+  - 影响文件：`frontend/src/views/ManualViewer.vue`
+
+
+## v2.0.49 (2025-12-22)
+- **调试输出按任务分目录（中文日期+时间+任务名）**：新增统一目录生成工具 `build_debug_output_dir`，AI匹配、Gemini Agent、视觉模型、双通道解析等调试文件全部落在 `debug_output/<yyyy年MM月dd日_HHmmss_任务名>/`，便于按任务归档；时间统一用北京时间。
+  - 影响文件：`utils/time_utils.py`、`core/ai_matcher.py`、`agents/base_gemini_agent.py`、`models/vision_model.py`、`models/gemini_model.py`、`core/dual_channel_parser.py`
+
+
+## v2.0.48 (2025-12-18)
+- **落地PDF文本层BOM补全（替代/回退Vision）**：Step2 提取BOM时优先从 PDF 文本层确定性解析 7 列（`seq/code/product_code/name/quantity/unit_weight/total_weight`），文本层结果可信时直接使用并跳过 Vision；文本层不可信则回退 Vision，并用文本层结果补齐缺失字段与漏行，解决 `product_code` 等字段丢失导致的后续流程不稳定。
+  - 影响文件：`core/pdf_text_bom_extractor.py`、`core/gemini_pipeline.py`
+
+## v2.0.47 (2025-12-18)
+- **修复step4层级匹配丢件/串件（同名重复件）**：层级匹配不再依赖“几何名全局匹配”，改为优先使用STEP解析出的 NAUO 父子边（带父级上下文）来生成 `assembly_to_mesh`/`bom_to_mesh`，并用 GLB `parts_info.node_name` 将同一 NAUO 展开到 `NAUOxxx_1/_2...` 等重复实例，解决组件内同名件（如防滑条/下齿板）导致的高亮丢失与串件。
+  - 根本原因：旧逻辑在 `_build_assembly_mesh_mapping` 中用 `geom_to_node.setdefault(...)` 把“同名多实例”压成一对一；且一旦命中“无后缀”的同名件会跳过实例收集，导致重复件只取到 1 个，并可能拿到其他装配体的同名件（跨父级串件）。
+  - 影响文件：`core/step_hierarchy_parser.py`、`core/hierarchical_bom_matcher_v2.py`
+
+## v2.0.46 (2025-12-18)
+- **修复3D高亮丢失**：ManualIntegratorV2新增`_inject_node_names_to_steps`方法，在整合步骤数据时利用`bom_to_mesh`映射把`node_name`注入到步骤的`components`/`fasteners`/`parts_used`里，修复前端3D高亮和三色状态功能。
+  - 根本原因：AI Agent生成的步骤数据只有`bom_seq`/`bom_name`/`quantity`，缺少`node_name`；而`bom_to_mesh`映射是正确的但未被注入到步骤中。
+  - 影响文件：`core/manual_integrator_v2.py`
+
+## v2.0.45 (2025-12-17)
+- **历史预览一键转草稿**：预览历史版本后点击“修改当前版本”会先基于预览版拉取数据并创建草稿，再跳转到编辑页，避免回落到最新发布版导致编辑/发布基线错位。
+  - 影响文件：`frontend/src/views/ManualViewer.vue`
+
+## v2.0.44 (2025-12-16)
+- **查看器列表移除删除按钮**：列表只保留“查看说明书”，删除入口统一在手册内的编辑菜单，避免误删。
+  - 影响文件：`frontend/src/views/Viewer.vue`
+
+## v2.0.43 (2025-12-16)
+- **删除图纸入口收敛到编辑菜单**：管理员在编辑下拉中新增“删除当前图纸”选项，操作前弹确认，调用删除接口后清理缓存并返回首页，避免无权限用户误删。
+  - 影响文件：`frontend/src/views/ManualViewer.vue`
+
+
+## v2.0.42 (2025-12-16)
+- **草稿提示显示版本**：草稿模式提示条直接显示当前修改基于的版本号，便于确认正在编辑哪一版的未发布修改。
+  - 影响文件：`frontend/src/views/ManualViewer.vue`
+
+
+## v2.0.41 (2025-12-16)
+- **版本选择弹窗文案与选项收敛**：历史预览返回时的提示改为“两选项”（继续修改上一次未发布版本 / 丢弃并改当前预览版），移除“当前线上”概念，文案更直白。
+  - 影响文件：`frontend/src/views/ManualViewer.vue`
+
+
+## v2.0.40 (2025-12-16)
+- **历史预览创建草稿对齐**：历史预览跳转编辑时记住预览版本，在草稿提示中提供基于预览版创建新草稿的选项，避免默认落到最新草稿版本。
+  - 影响文件：`frontend/src/views/ManualViewer.vue`
+
+
+## v2.0.39 (2025-12-16)
+- **历史预览返回交互卡死修复**：3D查看器重复初始化前先清理旧 renderer/controls/canvas 和监听，避免叠加遮挡导致模型无法旋转/选中。
+  - 影响文件：`frontend/src/views/ManualViewer.vue`
+
+## v2.0.38 (2025-12-16)
+- **草稿来源提示与选择**：检测到旧草稿时弹窗提示基线版本，可选择继续旧草稿、丢弃草稿回到线上、或基于当前预览版本创建新草稿，避免旧草稿悄悄抢优先级。
+- **草稿文案精简**：发布弹窗/提示仅显示草稿基线版本，不再展示“草稿#次数”。
+  - 影响文件：`frontend/src/views/ManualViewer.vue`
+
+## v2.0.37 (2025-12-16)
+- **版本号显示防回退**：历史预览/草稿不会把最新发布版本号覆盖成旧号，发布弹窗的“当前线上版本/即将发布”始终基于最新版本。
+- **历史返回自动刷新**：从历史预览跳回当前版本时强制重新加载数据，避免停留在旧版本内容。
+  - 影响文件：`frontend/src/views/ManualViewer.vue`
+
+## v2.0.36 (2025-12-15)
+- **发布说明字数限制**：发布弹窗的版本说明 textarea 增加 `maxlength=500` + 字数统计，避免过长输入。
+  - 影响文件：`frontend/src/views/ManualViewer.vue`
+
+## v2.0.35 (2025-12-15)
+- **步骤标题可编辑**：管理员在内容编辑弹窗中可直接修改步骤标题（同步到 title/action 字段），支持草稿保存与发布。
+- **步骤标题对齐优化**：步骤卡片头部左对齐，减少标题与步骤号之间的空白距离。
+  - 影响文件：`frontend/src/views/ManualViewer.vue`
+
+## v2.0.34 (2025-12-15)
+- **发布弹窗与版本号显示修复**：
+  - **问题现象**：历史版本预览时，发布弹窗的"当前版本/即将发布"基于预览的旧版本（如预览 v4 时显示将发布 v5），实际发布成功版本为最新（如 v10），显示与真实版本不一致。
+  - **修复方案**：发布弹窗优先使用后端 `HEAD /api/manual/{task}/version` 返回的最新版本号，回退到当前加载数据的 `version`，`nextVersionPreview` 基于最新版本递增。
+  - **影响文件**：`frontend/src/views/ManualViewer.vue`（`latestVersion` 状态、`fetchLatestVersion`、`currentVersionDisplay/nextVersionPreview` 计算）
+- **发布失败提示本地化**：
+  - **问题现象**：未修改内容直接发布时，后端返回英文"no changes"文案，弹窗提示为英文。
+  - **修复方案**：前端拦截包含"no changes/nothing to publish"的错误信息，提示为中文"未进行修改，无法生成新版本"。
+  - **影响文件**：`frontend/src/views/ManualViewer.vue`（`translatePublishError`）
+- **全屏看图隐藏导航栏**：放大图纸时为 `body` 添加 `manual-viewer-zoomed` 样式，隐藏顶部导航栏，避免遮挡图纸视图。
+  - **影响文件**：`frontend/src/views/ManualViewer.vue`（全局样式与卸载清理）
+
+## v2.0.33 (2025-12-15)
+- **匹配流程优化：层级匹配优先**：
+  - **问题现象**：
+    1. 当前流程：代码匹配 → AI匹配 → 层级匹配，层级匹配执行太晚
+    2. 层级匹配基于STEP文件的真实父子关系，100%准确，却在AI匹配之后才执行
+    3. AI匹配会处理本应由层级匹配覆盖的零件，浪费token且可能出错
+  - **优化方案**（小糖提出）：
+    1. **层级匹配优先执行**：基于STEP文件真实父子关系，100%准确
+    2. **代码匹配处理剩余**：排除已被层级匹配覆盖的零件和BOM
+    3. **AI匹配兜底**：只处理仍未匹配的零件和BOM，减少token消耗
+  - **代码修改**（`core/hierarchical_bom_matcher_v2.py` 第393-536行）：
+    1. 步骤1：层级匹配 `_build_assembly_mesh_mapping()`，收集 `hierarchy_matched_nodes` 和 `hierarchy_matched_bom_codes`
+    2. 步骤2：代码匹配，输入 `remaining_parts` 和 `remaining_bom`（排除层级已覆盖的）
+    3. 步骤3：AI匹配，只处理未被层级和代码匹配覆盖的
+    4. 步骤4：合并结果 `{**assembly_to_mesh, **code_bom_to_mesh, **ai_bom_to_mesh}`
+  - **新增统计字段**：`product_level_mapping` 新增 `hierarchy_matched` 字段，记录层级匹配的装配体数量
+  - **优势**：
+    - 层级匹配100%准确，优先使用
+    - 减少AI调用次数和token消耗
+    - 匹配逻辑更合理：确定性 → 概率性
+
+## v2.0.32 (2025-12-09)
+- **子装配体层级匹配修复**：
+  - **问题现象**：
+    1. `step4_matching_result.json` 中 `assembly_to_mesh: {}` 为空，层级文件完全没起作用
+    2. "挂架组件" 本应匹配 25 个叶子零件，但 AI 匹配到了错误的 5 个零件（S-LP1730 系列）
+    3. 匹配率显示 100% 但实际子装配体高亮不正确
+  - **问题根因**：
+    1. `_build_assembly_mesh_mapping` 使用精确匹配，但 BOM product_code 和层级 key 格式不一致
+       - BOM: `S-AB1830(72IN)-MP1140-01`
+       - 层级: `S-AB1830(72IN)-MP1140-01挂架组件`
+    2. 返回值使用 `mesh_id`，但 `bom_to_mesh` 期望 `node_name`
+    3. 输出 key 使用 `candidate_key`，但应该使用 `bom_code`
+  - **修复方案**：
+    1. 改用 **包含匹配**：如果 `normalize(product_code)` 在 `normalize(层级key)` 中就匹配成功
+    2. 建立 `geometry_name -> node_name` 索引（而非 mesh_id）
+    3. 增加前缀匹配处理 `_1`, `_2` 等后缀（同一零件多实例）
+    4. 使用 `bom_code` 作为输出 key
+  - **验证结果**：
+    - 挂架组件：25 个 node_name ✅
+    - 主框架组件：16 个 node_name ✅
+    - 毛刷套组件：6 个 node_name ✅
+  - **影响文件**：`core/hierarchical_bom_matcher_v2.py`（`_build_assembly_mesh_mapping` 函数）
+
+## v2.0.31 (2025-12-09)
+- **STEP 层级解析编码修复 + 输出简化**：
+  - **问题现象**：`step_assembly_hierarchy.json` 中的中文显示为乱码（如 `S-AB1830(72IN)-MP1140ɨбͣ`）
+  - **问题根因**：STEP 文件通常使用 GBK/GB2312 编码，但解析器使用 UTF-8 导致乱码
+  - **修复方案**：
+    1. 修改 `core/step_hierarchy_parser.py` 第 40-51 行，自动检测编码：优先尝试 GBK → GB18030 → GB2312 → UTF-8
+    2. 如果所有编码都失败，使用 GBK + replace 模式兜底
+  - **输出简化**：
+    - 修改返回值，只保留 `hierarchy` 和 `stats`，去掉冗余的 `products`、`pd_to_name`、`nauos`
+    - 文件从 2614 行精简到约 300 行，更易阅读
+  - **影响文件**：`core/step_hierarchy_parser.py`
+
+## v2.0.30 (2025-12-09)
+- **STEP 装配层级解析 + 子装配体高亮**：
+  - 新增 `core/step_hierarchy_parser.py`，正则解析 PRODUCT / PRODUCT_DEFINITION / NAUO，输出 `step_assembly_hierarchy.json`
+  - 产品总图转换时自动生成层级 JSON（存于任务根目录），失败时打印警告不阻断流程
+  - 产品级 BOM 匹配新增子装配体→叶子零件的 mesh 映射，`assembly_to_mesh` 合并进 `bom_to_mesh`，前端可据此高亮组件
+  - 影响文件：`core/step_hierarchy_parser.py`、`core/hierarchical_bom_matcher_v2.py`
 
 ## v2.0.29 (2025-12-09)
 - **修复草稿提示条不即时显示的bug**：

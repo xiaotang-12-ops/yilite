@@ -55,7 +55,7 @@ from utils.logger import (
     print_step, print_substep, print_info,
     print_success, print_error, print_warning
 )
-from utils.time_utils import beijing_now
+from utils.time_utils import beijing_now, init_debug_output_dir
 
 
 class GeminiAssemblyPipeline:
@@ -134,6 +134,15 @@ class GeminiAssemblyPipeline:
             工作流结果字典
         """
         self.start_time = time.time()
+
+        # ✅ 固定调试输出目录：同一次任务运行中，Agent4/5/6 等调试文件应写入同一任务文件夹
+        # 依赖：utils.time_utils.build_debug_output_dir 的缓存机制（第一次确定时间戳，后续复用）
+        try:
+            task_id = self.output_dir.name or self.product_name or "unknown_task"
+            os.environ["TASK_ID"] = task_id
+            init_debug_output_dir(task_id, now=beijing_now(), override=True)
+        except Exception as e:
+            print_warning(f"⚠️ 初始化调试输出目录失败：{e}", indent=1)
 
         print_step("🚀 Gemini 6-Agent装配说明书生成工作流启动")
         print_info(f"📁 输出目录: {self.output_dir}")
@@ -365,6 +374,81 @@ class GeminiAssemblyPipeline:
         # 统计每个PDF的BOM数量
         pdf_bom_counts = {}
 
+        def _merge_vision_with_text_layer(vision_items: List[Dict], text_items: List[Dict]) -> List[Dict]:
+            """
+            用文本层结果补全 vision 抽取的缺失字段，并补齐 vision 漏掉的行。
+            """
+            if not vision_items:
+                return text_items or []
+            if not text_items:
+                return vision_items
+
+            def _norm(x) -> str:
+                return str(x or "").strip()
+
+            text_by_seq = {_norm(x.get("seq")): x for x in text_items if _norm(x.get("seq"))}
+            text_by_code = {_norm(x.get("code")): x for x in text_items if _norm(x.get("code"))}
+
+            merged: List[Dict] = []
+            seen_seqs = set()
+            for item in vision_items:
+                seq = _norm(item.get("seq"))
+                code = _norm(item.get("code"))
+                seen_seqs.add(seq)
+
+                sup = text_by_seq.get(seq) or text_by_code.get(code)
+                if sup:
+                    # 补齐关键字段
+                    for field in ("product_code", "name"):
+                        if not _norm(item.get(field)) and _norm(sup.get(field)):
+                            item[field] = sup.get(field)
+
+                    if item.get("quantity") in (None, "", 0) and sup.get("quantity") not in (None, "", 0):
+                        item["quantity"] = sup.get("quantity")
+
+                    # 新增/补齐重量字段（不会破坏旧链路，旧字段 weight 仍保留）
+                    if item.get("unit_weight") is None and sup.get("unit_weight") is not None:
+                        item["unit_weight"] = sup.get("unit_weight")
+                    if item.get("total_weight") is None and sup.get("total_weight") is not None:
+                        item["total_weight"] = sup.get("total_weight")
+                    if item.get("weight") in (None, "", 0):
+                        w = sup.get("total_weight")
+                        if w is None:
+                            w = sup.get("unit_weight")
+                        if w is not None:
+                            item["weight"] = w
+
+                merged.append(item)
+
+            # vision 漏掉的行：以文本层为准补齐（按 seq 去重）
+            for sup in text_items:
+                seq = _norm(sup.get("seq"))
+                if seq and seq not in seen_seqs:
+                    merged.append(sup)
+
+            # 尽量按 seq 排序（不影响后续按 source_pdf 分组）
+            def _seq_int(x: Dict) -> int:
+                try:
+                    return int(_norm(x.get("seq")) or "999999")
+                except Exception:
+                    return 999999
+
+            merged.sort(key=_seq_int)
+            return merged
+
+        def _missing_seqs(items: List[Dict]) -> List[int]:
+            seqs = set()
+            for it in items or []:
+                try:
+                    seqs.add(int(str(it.get("seq", "")).strip()))
+                except Exception:
+                    continue
+            if not seqs:
+                return []
+            min_seq, max_seq = min(seqs), max(seqs)
+            expected = set(range(min_seq, max_seq + 1))
+            return sorted(expected - seqs)
+
         # 从每个PDF提取BOM（使用Gemini Vision API）
         for pdf_path in all_pdfs:
             pdf_name = Path(pdf_path).name
@@ -372,8 +456,50 @@ class GeminiAssemblyPipeline:
             sys.stdout.flush()
 
             try:
-                # 使用Gemini Vision API提取BOM
-                bom_items = self._extract_bom_with_vision(pdf_path, pdf_name)
+                # ✅ 优先：从 PDF 文本层确定性提取 BOM（补全/保证字段完整）
+                text_items = []
+                text_plausible = False
+                try:
+                    from core.pdf_text_bom_extractor import extract_bom_from_pdf_text_layer
+
+                    text_items, stats = extract_bom_from_pdf_text_layer(pdf_path, source_pdf=pdf_name)
+                    text_plausible = bool(text_items) and bool(getattr(stats, "plausible", False))
+
+                    if stats.pages_total:
+                        print_info(
+                            f"      文本层页数: {stats.pages_with_text}/{stats.pages_total}，提取到 {stats.items_extracted} 行BOM",
+                            indent=1,
+                        )
+                except Exception as e:
+                    print_warning(f"      文本层提取失败（将回退Vision）: {e}", indent=1)
+
+                missing_seqs = _missing_seqs(text_items) if text_items else []
+
+                # 文本层可信且序号连续：直接使用文本层结果，避免不必要的Vision调用
+                if text_plausible and not missing_seqs:
+                    all_bom_items.extend(text_items)
+                    pdf_bom_counts[pdf_name] = len(text_items)
+                    print_success(f"      ✅ 文本层提取到 {len(text_items)} 个零件", indent=1)
+                    sys.stdout.flush()
+                    continue
+
+                if text_plausible and missing_seqs:
+                    preview = ", ".join(str(x) for x in missing_seqs[:10])
+                    suffix = "..." if len(missing_seqs) > 10 else ""
+                    print_warning(
+                        f"      ⚠️  文本层BOM序号疑似缺失 {len(missing_seqs)} 项（{preview}{suffix}），回退Vision补全",
+                        indent=1,
+                    )
+
+                # 回退：使用 Gemini Vision API 提取 BOM（Vision失败时也保留文本层结果）
+                vision_items = []
+                try:
+                    vision_items = self._extract_bom_with_vision(pdf_path, pdf_name)
+                except Exception as e:
+                    print_warning(f"      Vision提取失败，将仅使用文本层结果: {e}", indent=1)
+
+                bom_items = vision_items
+                bom_items = _merge_vision_with_text_layer(bom_items, text_items)
 
                 if bom_items:
                     all_bom_items.extend(bom_items)
@@ -1152,5 +1278,3 @@ def test_gemini_pipeline():
 
 if __name__ == "__main__":
     test_gemini_pipeline()
-
-

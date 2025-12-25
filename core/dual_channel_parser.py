@@ -1065,15 +1065,15 @@ class DualChannelParser:
 
 
 
-                # 保存输出结果到临时文件
+                # 保存输出结果到临时文件（按任务名归档到子目录）
+                from utils.time_utils import beijing_now, build_debug_output_dir
 
-                timestamp = beijing_strftime("%Y%m%d_%H%M%S")
+                now = beijing_now()
+                timestamp = now.strftime("%Y%m%d_%H%M%S")
 
-                output_dir = "debug_output"
+                output_dir = build_debug_output_dir(os.getenv("TASK_ID"), now=now)
 
                 os.makedirs(output_dir, exist_ok=True)
-
-
 
                 output_file = os.path.join(output_dir, f"assembly_expert_output_{timestamp}.json")
 

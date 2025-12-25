@@ -60,12 +60,14 @@ class ManualIntegratorV2:
                 component_assembly_results,
                 component_to_glb_mapping,
                 image_hierarchy,
-                task_id
+                task_id,
+                component_level_mappings  # ✅ 传递组件级别映射用于注入node_name
             ),
             "product_assembly": self._build_product_assembly(
                 product_assembly_result,
                 image_hierarchy,
-                task_id
+                task_id,
+                bom_to_mesh_mapping  # ✅ 传递bom_to_mesh用于注入node_name
             ),
             "safety_and_faq": self._build_safety_faq(safety_faq_result),
             "3d_resources": self._build_3d_resources(
@@ -105,16 +107,18 @@ class ManualIntegratorV2:
         component_results: List[Dict],
         component_to_glb_mapping: Dict = None,
         image_hierarchy: Dict = None,
-        task_id: str = None
+        task_id: str = None,
+        component_level_mappings: Dict = None  # ✅ 新增：组件级别映射用于注入node_name
     ) -> List[Dict]:
         """
-        组件装配章节构建（增强版：添加PDF图纸路径）
+        组件装配章节构建（增强版：添加PDF图纸路径 + 注入node_name）
 
         Args:
             component_results: 组件装配结果
             component_to_glb_mapping: GLB文件映射
             image_hierarchy: 图片层级结构
             task_id: 任务ID
+            component_level_mappings: 组件级别的BOM-3D映射（用于注入node_name）
 
         Returns:
             组件装配章节列表（按assembly_order排序）
@@ -159,6 +163,13 @@ class ManualIntegratorV2:
             # ✅ 为每个步骤添加 step_id
             enhanced_steps = self._add_step_ids(enhanced_steps, component_code, "component")
 
+            # ✅ 为每个步骤的 components 注入 node_name（用于前端3D高亮）
+            # 从组件级别映射中获取 bom_to_mesh
+            component_bom_to_mesh = None
+            if component_level_mappings and component_code in component_level_mappings:
+                component_bom_to_mesh = component_level_mappings[component_code].get("bom_to_mesh", {})
+            enhanced_steps = self._inject_node_names_to_steps(enhanced_steps, component_bom_to_mesh)
+
             chapter = {
                 "chapter_type": "component_assembly",
                 "component_code": component_code,
@@ -178,15 +189,17 @@ class ManualIntegratorV2:
         self,
         product_result: Dict,
         image_hierarchy: Dict = None,
-        task_id: str = None
+        task_id: str = None,
+        bom_to_mesh_mapping: Dict = None  # ✅ 新增：BOM到mesh的映射用于注入node_name
     ) -> Dict:
         """
-        产品总装章节构建（增强版：添加PDF图纸路径）
+        产品总装章节构建（增强版：添加PDF图纸路径 + 注入node_name）
 
         Args:
             product_result: 产品装配结果
             image_hierarchy: 图片层级结构
             task_id: 任务ID
+            bom_to_mesh_mapping: BOM代号到node_name的映射（用于前端3D高亮）
 
         Returns:
             产品总装章节
@@ -202,6 +215,9 @@ class ManualIntegratorV2:
 
         # ✅ 为每个步骤添加 step_id
         enhanced_steps = self._add_step_ids(enhanced_steps, None, "product")
+
+        # ✅ 为每个步骤的 components 注入 node_name（用于前端3D高亮）
+        enhanced_steps = self._inject_node_names_to_steps(enhanced_steps, bom_to_mesh_mapping)
 
         return {
             "chapter_type": "product_assembly",
@@ -259,7 +275,82 @@ class ManualIntegratorV2:
             "component_level_mappings": component_level_mappings or {},  # ✅ 添加组件级别映射
             # product_glb 仅在产品模式且 glb 存在时写入（由上层填充）
         }
-    
+
+    def _inject_node_names_to_steps(
+        self,
+        steps: List[Dict],
+        bom_to_mesh: Dict = None
+    ) -> List[Dict]:
+        """
+        为每个步骤的 components 注入 node_name（用于前端3D高亮）
+
+        核心逻辑：
+        1. 遍历每个步骤的 components
+        2. 根据步骤的 component_code 从 bom_to_mesh 查找 node_names
+        3. 把 node_name 注入到 components 里
+
+        Args:
+            steps: 装配步骤列表
+            bom_to_mesh: BOM代号到node_name列表的映射 {"01.09.3152": ["NAUO753", "NAUO754", ...]}
+
+        Returns:
+            增强后的步骤列表（components 包含 node_name 字段）
+        """
+        if not steps or not bom_to_mesh:
+            return steps
+
+        enhanced_steps = []
+
+        for step in steps:
+            step_copy = step.copy()
+
+            # 获取当前步骤的 component_code（产品装配步骤）
+            component_code = step.get("component_code", "")
+
+            # 查找对应的 node_names
+            node_names = bom_to_mesh.get(component_code, [])
+
+            # ✅ 为 components 注入 node_name
+            if "components" in step_copy and step_copy["components"]:
+                enhanced_components = []
+                for comp in step_copy["components"]:
+                    comp_copy = comp.copy()
+                    # 注入 node_name（使用步骤的 component_code 对应的 node_names）
+                    if node_names:
+                        comp_copy["node_name"] = node_names
+                    enhanced_components.append(comp_copy)
+                step_copy["components"] = enhanced_components
+
+            # ✅ 为 fasteners 也尝试注入 node_name（如果有匹配的话）
+            if "fasteners" in step_copy and step_copy["fasteners"]:
+                enhanced_fasteners = []
+                for fastener in step_copy["fasteners"]:
+                    fastener_copy = fastener.copy()
+                    # 紧固件可能有独立的 bom_code
+                    fastener_code = fastener.get("bom_code", "")
+                    fastener_nodes = bom_to_mesh.get(fastener_code, [])
+                    if fastener_nodes:
+                        fastener_copy["node_name"] = fastener_nodes
+                    enhanced_fasteners.append(fastener_copy)
+                step_copy["fasteners"] = enhanced_fasteners
+
+            # ✅ 为 parts_used 也尝试注入 node_name（组件装配步骤）
+            if "parts_used" in step_copy and step_copy["parts_used"]:
+                enhanced_parts = []
+                for part in step_copy["parts_used"]:
+                    part_copy = part.copy()
+                    # 零件可能有独立的 bom_code
+                    part_code = part.get("bom_code", "")
+                    part_nodes = bom_to_mesh.get(part_code, [])
+                    if part_nodes:
+                        part_copy["node_name"] = part_nodes
+                    enhanced_parts.append(part_copy)
+                step_copy["parts_used"] = enhanced_parts
+
+            enhanced_steps.append(step_copy)
+
+        return enhanced_steps
+
     def _add_drawings_to_steps(
         self,
         steps: List[Dict],

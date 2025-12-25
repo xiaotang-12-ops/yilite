@@ -11,6 +11,7 @@ import time
 from typing import Dict, List, Optional, Union
 from openai import OpenAI
 import datetime
+from utils.time_utils import beijing_now, build_debug_output_dir
 
 
 class BaseGeminiAgent:
@@ -308,14 +309,12 @@ class BaseGeminiAgent:
             response: 
             parsed: 
         """
-        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        output_dir = "debug_output"
-        os.makedirs(output_dir, exist_ok=True)
-        
-        # agent
-        safe_name = self.agent_name.replace(" ", "_").replace("/", "_")
-        output_file = os.path.join(output_dir, f"{safe_name}_{timestamp}.json")
-        
+        now = beijing_now()
+        timestamp = now.strftime("%Y%m%d_%H%M%S")
+        # 任务名优先使用环境变量 TASK_ID，否则用 agent 名称
+        debug_dir = build_debug_output_dir(os.getenv("TASK_ID") or self.agent_name, now=now)
+        os.makedirs(debug_dir, exist_ok=True)
+
         result_data = {
             "agent_name": self.agent_name,
             "model": self.model_name,
@@ -327,10 +326,13 @@ class BaseGeminiAgent:
             "raw_response": response,
             "parsed_result": parsed
         }
-        
+
+        safe_name = self.agent_name.replace(" ", "_").replace("/", "_")
+        output_file = os.path.join(debug_dir, f"{safe_name}__{timestamp}.json")
+
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump(result_data, f, ensure_ascii=False, indent=2)
-        
+
         print(f" [{self.agent_name}] : {output_file}")
     
     def process(self, **kwargs) -> Dict:

@@ -201,7 +201,18 @@ class ManualStorage:
         if not manual_data:
             raise ValueError("manual_data is empty")
         manual_data = dict(manual_data)
-        manual_data["lastUpdated"] = self._now()
+        existing = self.load_draft()
+        existing_created_at = None
+        if isinstance(existing, dict):
+            existing_created_at = existing.get("draftCreatedAt")
+        now = self._now()
+        if existing_created_at:
+            manual_data["draftCreatedAt"] = existing_created_at
+        elif manual_data.get("draftCreatedAt"):
+            manual_data["draftCreatedAt"] = manual_data["draftCreatedAt"]
+        else:
+            manual_data["draftCreatedAt"] = now
+        manual_data["lastUpdated"] = now
         self._write_json(self.draft_path, manual_data)
         return manual_data
 

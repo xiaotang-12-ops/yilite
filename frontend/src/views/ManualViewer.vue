@@ -10,11 +10,8 @@
         <el-button size="small" @click="exitHistoryPreview">
           退出
         </el-button>
-        <el-button size="small" @click="router.push(`/manual/${props.taskId}`)">
+        <el-button size="small" @click="goEditFromHistory">
           修改当前版本
-        </el-button>
-        <el-button size="small" type="primary" @click="router.push(`/version-history/${props.taskId}`)">
-          版本历史
         </el-button>
       </div>
     </div>
@@ -23,7 +20,7 @@
     <div v-if="isAdmin && isDraftMode && !isReadOnlyMode" class="draft-notice-bar">
       <div class="draft-notice-content">
         <el-icon><Warning /></el-icon>
-        <span>草稿模式 - 您有未发布的修改</span>
+        <span>草稿模式 - 当前修改基于 {{ manualData?.version || '未知版本' }}，您有未发布的修改</span>
       </div>
       <div class="draft-notice-actions">
         <el-button size="small" :loading="discardingDraft" @click="handleDiscardDraft">
@@ -35,7 +32,7 @@
       </div>
     </div>
 
-    <!-- 顶部进度条 -->
+    <!-- 顶部进度条（图片放大时隐藏） -->
     <div class="top-bar">
       <div class="product-info">
         <h1>{{ productName }}</h1>
@@ -46,7 +43,7 @@
         <div class="progress-info">
           <span class="current-step">步骤 {{ currentStepIndex + 1 }}</span>
           <span class="total-steps">/ {{ totalSteps }}</span>
-          <span class="step-title">{{ currentStepData?.title }}</span>
+        <span class="step-title">{{ currentStepDisplayTitle }}</span>
         </div>
         <el-progress
           :percentage="progressPercentage"
@@ -99,8 +96,14 @@
                     <el-dropdown-item command="insertStep">
                       <el-icon><Plus /></el-icon> 插入步骤
                     </el-dropdown-item>
+                    <el-dropdown-item command="reorderSteps">
+                      <el-icon><Sort /></el-icon> 调整步骤顺序
+                    </el-dropdown-item>
                     <el-dropdown-item command="deleteStep" divided>
                       <el-icon><Delete /></el-icon> 删除当前步骤
+                    </el-dropdown-item>
+                    <el-dropdown-item command="deleteManual" divided>
+                      <el-icon><Delete /></el-icon> 删除当前图纸
                     </el-dropdown-item>
                   </el-dropdown-menu>
                 </template>
@@ -116,7 +119,7 @@
                     <el-dropdown-item command="publish">
                       <el-icon><Upload /></el-icon> 发布新版本
                     </el-dropdown-item>
-                    <el-dropdown-item command="history">
+                    <el-dropdown-item v-if="showHistoryEntry" command="history">
                       <el-icon><Document /></el-icon> 历史版本
                     </el-dropdown-item>
                   </el-dropdown-menu>
@@ -177,8 +180,7 @@
               v-for="(drawingUrl, index) in drawingImages"
               :key="index"
               class="drawing-item"
-              :class="{ 'zoomed': zoomedDrawingIndex === index }"
-              @click="toggleDrawingZoom(index)"
+              @click="openImageViewer(index)"
               @touchstart="handleDrawingTouchStart(index, $event)"
               @touchmove="handleDrawingTouchMove(index, $event)"
               @touchend="handleDrawingTouchEnd"
@@ -255,12 +257,18 @@
               正在装
             </el-button>
             <el-button
-              :type="getPartStatus(selectedMesh) === 'installed' ? 'primary' : 'default'"
+              :type="disableInstalledStatusOption ? 'default' : (getPartStatus(selectedMesh) === 'installed' ? 'primary' : 'default')"
+              :plain="disableInstalledStatusOption"
+              :disabled="disableInstalledStatusOption"
               @click="setPartStatus('installed')"
               size="small"
+              class="installed-disabled-button"
             >
-              <span class="status-dot blue"></span>
-              已装
+              <span
+                class="status-dot"
+                :class="disableInstalledStatusOption ? 'disabled-installed' : 'blue'"
+              ></span>
+              已装<span v-if="disableInstalledStatusOption" class="disabled-label">（禁用）</span>
             </el-button>
           </div>
           <div class="popup-footer">
@@ -376,7 +384,7 @@
           <div class="step-detail-card" v-if="currentStepData">
             <div class="step-header">
               <div class="step-badge">{{ currentStepIndex + 1 }}</div>
-              <h2>{{ currentStepData.title }}</h2>
+              <h2>{{ currentStepDisplayTitle }}</h2>
             </div>
 
             <div class="step-content">
@@ -534,8 +542,7 @@
               v-for="(drawingUrl, index) in drawingImages"
               :key="index"
               class="drawing-item"
-              :class="{ 'zoomed': zoomedDrawingIndex === index }"
-              @click="toggleDrawingZoom(index)"
+              @click="openImageViewer(index)"
               @touchstart="handleDrawingTouchStart(index, $event)"
               @touchmove="handleDrawingTouchMove(index, $event)"
               @touchend="handleDrawingTouchEnd"
@@ -580,7 +587,7 @@
           <div class="step-detail-card" v-if="currentStepData">
             <div class="step-header">
               <div class="step-badge">{{ currentStepIndex + 1 }}</div>
-              <h2>{{ currentStepData.title }}</h2>
+              <h2>{{ currentStepDisplayTitle }}</h2>
             </div>
 
             <div class="step-content">
@@ -749,11 +756,11 @@
       <el-form label-width="100px">
         <el-form-item label="插入位置">
           <el-select v-model="insertAfterStepId" placeholder="选择插入位置" style="width: 100%;">
-            <el-option :label="'在开头插入'" :value="null" />
+            <el-option :label="'在开头插入'" :value="INSERT_AT_START" />
             <el-option
               v-for="step in allSteps"
               :key="step.step_id"
-              :label="`在步骤${step.step_number}「${step.action || '未命名'}」之后`"
+              :label="`在步骤${step.step_number}「${getStepDisplayTitle(step)}」之后`"
               :value="step.step_id"
             />
           </el-select>
@@ -771,10 +778,64 @@
       </template>
     </el-dialog>
 
+    <!-- 步骤顺序调整 Dialog（管理员） -->
+    <el-dialog
+      v-model="showStepOrderDialog"
+      title="调整步骤顺序"
+      width="520px"
+      :close-on-click-modal="false"
+    >
+      <div class="step-order-hint">
+        <el-text type="info">
+          拖拽左侧“≡”调整顺序；确认后会保存到草稿（未发布前仅管理员可见）。
+        </el-text>
+      </div>
+      <div class="step-order-list">
+        <draggable
+          v-model="tempStepOrder"
+          item-key="step_id"
+          handle=".drag-handle"
+          animation="200"
+          :force-fallback="true"
+          :scroll="true"
+          :scroll-sensitivity="140"
+          :scroll-speed="24"
+          :bubble-scroll="true"
+          :fallback-on-body="true"
+          ghost-class="step-order-ghost"
+          chosen-class="step-order-chosen"
+        >
+          <template #item="{ element, index }">
+            <div
+              class="step-order-item"
+              :class="{ current: element.step_id === currentStepData?.step_id }"
+            >
+              <span class="drag-handle">≡</span>
+              <span class="step-number">{{ index + 1 }}.</span>
+              <span class="step-title">{{ getStepDisplayTitle(element) }}</span>
+              <el-tag
+                v-if="element.step_id === currentStepData?.step_id"
+                size="small"
+                type="warning"
+              >
+                当前
+              </el-tag>
+            </div>
+          </template>
+        </draggable>
+      </div>
+      <template #footer>
+        <el-button @click="showStepOrderDialog = false">取消</el-button>
+        <el-button type="primary" :loading="stepOrderSaving" @click="confirmStepOrder">
+          确认调整
+        </el-button>
+      </template>
+    </el-dialog>
+
     <!-- 内容编辑Dialog -->
   <el-dialog
     v-model="showEditDialog"
-    :title="`编辑步骤${currentStepData?.step_number} - ${currentStepData?.action}`"
+    :title="`编辑步骤${currentStepData?.step_number} - ${currentStepDisplayTitle}`"
     width="800px"
     :close-on-click-modal="false"
   >
@@ -787,6 +848,15 @@
         />
         <el-text type="info" size="small" style="margin-left: 8px;">
           这里修改的名称会同步到当前步骤及所属组件
+        </el-text>
+      </el-form-item>
+      <el-form-item label="步骤标题">
+        <el-input
+          v-model="editData.step_title"
+          placeholder="例如：安装方形板-机加"
+        />
+        <el-text type="info" size="small" style="margin-left: 8px;">
+          将同步到步骤的 title/action 字段
         </el-text>
       </el-form-item>
     </el-form>
@@ -1075,8 +1145,16 @@
       width="520px"
     >
       <el-form label-width="100px">
-        <el-form-item label="当前版本">
-          <el-tag type="info">{{ manualData?.version || '未发布' }}</el-tag>
+        <el-form-item label="当前线上版本">
+          <el-tag type="info">{{ currentOnlineVersion }}</el-tag>
+        </el-form-item>
+        <el-form-item label="当前修改版本">
+          <el-tag :type="isDraftMode ? 'warning' : 'info'">
+            {{ draftVersionDisplay || '无草稿' }}
+          </el-tag>
+        </el-form-item>
+        <el-form-item v-if="isReadOnlyMode" label="正在预览">
+          <el-tag type="warning">{{ previewVersionDisplay }}</el-tag>
         </el-form-item>
         <el-form-item label="即将发布">
           <el-tag type="success">{{ nextVersionPreview }}</el-tag>
@@ -1087,6 +1165,8 @@
             type="textarea"
             :rows="4"
             placeholder="请填写本次发布的变更说明"
+            :maxlength="500"
+            show-word-limit
           />
         </el-form-item>
       </el-form>
@@ -1097,6 +1177,83 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- 草稿来源提示 Dialog -->
+    <el-dialog
+      v-model="draftPromptVisible"
+      title="发现草稿"
+      width="520px"
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+      :show-close="false"
+    >
+      <p style="margin-bottom: 12px">当前存在一个草稿，基于版本：<strong>{{ draftPromptContext.draftBaseVersion }}</strong></p>
+      <p style="margin-bottom: 12px">
+        草稿创建时间：<strong>{{ formatDateTime(draftPromptContext.draftCreatedAt) }}</strong>
+        <span v-if="draftPromptContext.createdAtFallback">（使用最后保存时间）</span>
+      </p>
+      <p v-if="draftPromptContext.hasPreview" style="margin-bottom: 12px">
+        你刚刚预览了 <strong>{{ draftPromptContext.previewVersion }}</strong>，可选择用该版本创建新草稿。
+      </p>
+      <p v-else style="margin-bottom: 12px">
+        没有历史预览版本，继续当前草稿或丢弃草稿回到最新线上。
+      </p>
+      <template #footer>
+        <div class="draft-dialog-actions">
+          <el-button @click="handleContinueDraft">继续修改上一个未发布版本 {{ draftPromptContext.draftBaseVersion }}</el-button>
+          <el-button
+            type="primary"
+            :disabled="!draftPromptContext.hasPreview"
+            :loading="draftPromptLoading"
+            @click="handleDiscardAndUsePreview"
+          >
+            丢弃上一个版本 {{ draftPromptContext.draftBaseVersion }}，改当前预览 {{ draftPromptContext.previewVersion || '（无预览）' }}
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
+  </div>
+
+  <Teleport to="body">
+    <ElImageViewer
+      v-if="imageViewerVisible"
+      :url-list="drawingImages"
+      :initial-index="imageViewerIndex"
+      hide-on-click-modal
+      teleported
+      @close="imageViewerVisible = false"
+    />
+  </Teleport>
+
+  <!-- 移动端原图滚动查看 -->
+  <div
+    v-if="mobileImagePreviewVisible"
+    class="mobile-image-overlay"
+    @click.self="closeMobileImagePreview()"
+    @touchstart.stop.prevent="handleMobilePreviewTouchStart"
+    @touchmove.stop.prevent="handleMobilePreviewTouchMove"
+    @touchend.stop.prevent="handleMobilePreviewTouchEnd"
+    @touchcancel.stop.prevent="handleMobilePreviewTouchEnd"
+  >
+    <div class="mobile-image-header">
+      <span>图纸预览</span>
+      <div class="mobile-image-actions">
+        <el-button size="small" @click="resetMobileImageTransform()">重置</el-button>
+        <el-button size="small" type="primary" @click="closeMobileImagePreview()">关闭</el-button>
+      </div>
+    </div>
+    <div class="mobile-image-wrapper" ref="mobileImageWrapper">
+      <img
+        :src="mobileImagePreviewUrl"
+        alt="drawing preview"
+        :style="{
+          transform: `translate(${mobileImageOffset.x}px, ${mobileImageOffset.y}px) scale(${mobileImageScale})`,
+          transformOrigin: 'top left'
+        }"
+        @load="handleMobileImageLoad"
+        @click="handleMobileImageTap"
+      />
+    </div>
   </div>
 </template>
 
@@ -1107,13 +1264,15 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Loading, ArrowLeft, ArrowRight, ArrowDown, Picture, Box,
   Refresh, View, Grid, Clock, Lock, Edit, Plus, Upload, Document,
-  Warning, Delete, Close, User, VideoPlay, VideoPause
+  Warning, Delete, Close, User, VideoPlay, VideoPause, Sort
 } from '@element-plus/icons-vue'
 import { useMediaQuery } from '@vueuse/core'
 import axios from 'axios'
+import draggable from 'vuedraggable'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+import { ElImageViewer } from 'element-plus'
 
 // ============ 辅助函数 ============
 
@@ -1141,6 +1300,11 @@ interface SafetyWarningEdit {
   warning: string
 }
 
+interface StepOrderItem {
+  step_id: string
+  title: string
+}
+
 // ✅ 接收路由参数 taskId
 const props = defineProps<{
   taskId: string
@@ -1150,6 +1314,35 @@ const isMobile = useMediaQuery('(max-width: 1024px)')
 const showDrawingsDrawer = ref(false)
 const showDetailsDrawer = ref(false)
 let viewerInitAttempts = 0
+const lastPreviewKey = computed(() => `last_preview_version_${props.taskId}`)
+const draftPromptSuppressKey = computed(() => `draft_prompt_suppress_once_${props.taskId}`)
+const creatingPreviewDraft = ref(false)
+const imageViewerVisible = ref(false)
+const imageViewerIndex = ref(0)
+let prevDocTouchAction = ''
+let prevBodyTouchAction = ''
+const mobileImagePreviewVisible = ref(false)
+const mobileImagePreviewUrl = ref('')
+const mobileImageScale = ref(1)
+const mobileImageOffset = reactive({ x: 0, y: 0 })
+const mobileImageNaturalSize = reactive({ w: 0, h: 0 })
+const mobileImageWrapper = ref<HTMLElement | null>(null)
+const tapStart = reactive({ x: 0, y: 0, t: 0 })
+const overlayStack: Array<'image' | 'drawer'> = []
+let closingOverlayFromManual = false
+let closingOverlayFromPopstate = false
+const mobileDragState = reactive({
+  isDragging: false,
+  startX: 0,
+  startY: 0,
+  startOffsetX: 0,
+  startOffsetY: 0
+})
+const mobilePinchState = reactive({
+  isPinching: false,
+  startDistance: 0,
+  startScale: 1
+})
 
 const router = useRouter()
 const route = useRoute()
@@ -1157,19 +1350,58 @@ const route = useRoute()
 // 历史版本只读模式（通过 ?version=v2 参数触发）
 const historyVersion = computed(() => route.query.version as string | undefined)
 const isReadOnlyMode = computed(() => !!historyVersion.value)
+const entrySource = computed(() => {
+  const source = route.query.source
+  return Array.isArray(source) ? source[0] : source
+})
 
 const manualData = ref<any>(null)
 // ✅ 存储 step3_glb_inventory.json 的 node_to_geometry 数据（用于显示3D零件实际名称）
 const glbNodeToGeometry = ref<{ node: string; geometry: string }[]>([])
+const latestVersion = ref<string | null>(null)
+let suppressDraftPromptOnce = false
+const editingFromHistory = ref(false)
+const showHistoryEntry = computed(() => entrySource.value === 'viewer' && !editingFromHistory.value)
+
+// 版本号只允许向上更新，避免历史/草稿覆盖最新版本
+const parseVersionNumber = (ver?: string | null): number | null => {
+  if (!ver) return null
+  const match = String(ver).match(/(\d+)/)
+  if (!match) return null
+  const num = parseInt(match[1], 10)
+  return Number.isNaN(num) ? null : num
+}
+
+const updateLatestVersion = (candidate?: string | null) => {
+  if (!candidate) return
+  const candidateNum = parseVersionNumber(candidate)
+  if (candidateNum === null) return
+  const currentNum = parseVersionNumber(latestVersion.value)
+  if (currentNum === null || candidateNum > currentNum) {
+    latestVersion.value = candidate
+  }
+}
 
 const setManualDataValue = (data: any) => {
   manualData.value = data
   if (manualData.value && manualData.value._edit_version === undefined) {
     manualData.value._edit_version = 0
   }
+  updateLatestVersion(data?.version)
 
   // ✅ 从 part_assembly_states 恢复零件状态到内存 Map
   restorePartAssemblyStates(data)
+}
+
+// 获取后端当前最新版本号（用于历史版本预览时正确显示即将发布版本）
+const fetchLatestVersion = async () => {
+  try {
+    const resp = await axios.head(`/api/manual/${props.taskId}/version`)
+    const serverVersion = resp.headers['x-manual-version']
+    updateLatestVersion(serverVersion as string)
+  } catch (error) {
+    console.warn('获取最新版本号失败，使用已加载版本', error)
+  }
 }
 
 // 从 manualData.part_assembly_states 恢复零件装配状态
@@ -1206,9 +1438,45 @@ const activeTab = ref('welding')
 const isAutoPlaying = ref(false)
 let autoPlayTimer: ReturnType<typeof setInterval> | null = null
 const modelContainer = ref<HTMLElement | null>(null)
+const draftPromptVisible = ref(false)
+const draftPromptLoading = ref(false)
+const draftPromptContext = reactive({
+  draftBaseVersion: '',
+  previewVersion: '',
+  hasPreview: false,
+  draftCreatedAt: '',
+  createdAtFallback: false
+})
+
+const currentOnlineVersion = computed(() => {
+  return latestVersion.value || manualData.value?.version || '未发布'
+})
+const previewVersionDisplay = computed(() => {
+  return manualData.value?.version || '未发布'
+})
+const formatDateTime = (value?: string) => {
+  if (!value) return '未知'
+  try {
+    const date = new Date(value)
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const hours = String(date.getHours()).padStart(2, '0')
+    const minutes = String(date.getMinutes()).padStart(2, '0')
+    const seconds = String(date.getSeconds()).padStart(2, '0')
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+  } catch {
+    return value || '未知'
+  }
+}
+const draftVersionDisplay = computed(() => {
+  if (!isDraftMode.value) return ''
+  const base = manualData.value?.version || currentOnlineVersion.value || '未发布'
+  return `${base}（草稿）`
+})
 
 const nextVersionPreview = computed(() => {
-  const raw = manualData.value?.version || 'v0'
+  const raw = latestVersion.value || manualData.value?.version || 'v0'
   const numeric = parseInt(String(raw).replace(/[^0-9]/g, ''), 10)
   const next = Number.isNaN(numeric) ? 1 : numeric + 1
   return `v${next}`
@@ -1221,17 +1489,22 @@ const discardingDraft = ref(false)  // 正在丢弃草稿
 const showLoginDialog = ref(false)
 const showEditDialog = ref(false)
 const showPublishDialog = ref(false)
+const showStepOrderDialog = ref(false)
+const stepOrderSaving = ref(false)
+const tempStepOrder = ref<StepOrderItem[]>([])
 const publishForm = ref({ changelog: '' })
 const publishing = ref(false)
 const editActiveTab = ref('welding')
 const saving = ref(false)
 const componentNameInput = ref('')
 const showInsertDialog = ref(false)
-const insertAfterStepId = ref<string | null>(null)
+const INSERT_AT_START = '__START__'
+const insertAfterStepId = ref<string>(INSERT_AT_START)
 const insertAction = ref('')
 const insertDescription = ref('')
 const inserting = ref(false)
 const deletingStep = ref(false)
+const deletingManual = ref(false)
 
 const loginForm = ref({
   username: '',
@@ -1243,6 +1516,7 @@ const editData = ref({
   welding_requirements: [] as WeldingRequirementEdit[],
   safety_warnings: [] as SafetyWarningEdit[],
   quality_check: '' as string,
+  step_title: '' as string,
   step_description: '' as string,
   faq_items: [] as Array<{ question: string; answer: string }>
 })
@@ -1257,6 +1531,17 @@ let renderer: THREE.WebGLRenderer | null = null
 let controls: OrbitControls | null = null
 let model: THREE.Group | null = null
 let gridHelper: THREE.GridHelper | null = null
+let gridBoundary: THREE.Line | null = null
+let animationId: number | null = null
+let resizeHandler: (() => void) | null = null
+
+// 固定网格配置：与验证脚本一致，提供小范围且有边界的网格
+const GRID_SIZE = 150
+const GRID_DIVISIONS = 40
+const GRID_HEIGHT = -5
+const GRID_COLOR_CENTER = 0x666666
+const GRID_COLOR_LINE = 0x999999
+const GRID_BOUNDARY_COLOR = 0x444444
 
 // 保存每个mesh的原始位置、材质和爆炸方向
 let meshOriginalPositions: Map<string, THREE.Vector3> = new Map()
@@ -1290,6 +1575,8 @@ let hoverOutlineGroup: THREE.Group | null = null
 // 状态弹窗
 const statusPopupPosition = ref({ x: 0, y: 0 })
 const showStatusPopup = ref(false)
+// ✅ 启用“已装”手动标记，便于手动校准装配状态
+const disableInstalledStatusOption = ref(false)
 
 // 装配状态存储 (stepId -> (meshKey -> status))，按步骤独立存储
 // 解决步骤切换时颜色状态混乱的问题
@@ -1306,7 +1593,7 @@ let mouseDownPosition = { x: 0, y: 0 }
 let mouseDownTime = 0
 
 // 图纸缩放相关
-const zoomedDrawingIndex = ref<number | null>(null)
+const zoomedDrawingIndex = ref<number | null>(null) // 兼容旧逻辑占位
 
 // 获取当前步骤的图纸列表
 const drawingImages = computed(() => {
@@ -1437,6 +1724,10 @@ const totalSteps = computed(() => {
   return allSteps.value.length
 })
 
+const getStepDisplayTitle = (step: any): string => {
+  return step?.title || step?.action || '未命名'
+}
+
 const currentStepData = computed(() => {
   const stepData = allSteps.value[currentStepIndex.value]
 
@@ -1447,6 +1738,10 @@ const currentStepData = computed(() => {
   }
 
   return stepData
+})
+
+const currentStepDisplayTitle = computed(() => {
+  return getStepDisplayTitle(currentStepData.value)
 })
 
 const currentStepParts = computed(() => {
@@ -1664,19 +1959,10 @@ const currentStepHighlightMeshes = computed(() => {
   return highlightMeshes
 })
 
-// 图纸点击放大功能
-const toggleDrawingZoom = (index: number) => {
-  if (zoomedDrawingIndex.value === index) {
-    zoomedDrawingIndex.value = null
-  } else {
-    zoomedDrawingIndex.value = index
-  }
-}
-
 // 图纸缩放控制（移动端默认缩小）
 const drawingScales = ref<Record<number, number>>({})
 const getDrawingScale = (index: number) => {
-  const defaultScale = isMobile.value ? 0.6 : 1
+  const defaultScale = isMobile.value ? 0.9 : 1
   return drawingScales.value[index] ?? defaultScale
 }
 const setDrawingScale = (index: number, delta: number) => {
@@ -1691,13 +1977,6 @@ const pinchState = reactive({
   startScale: 1,
   targetIndex: -1
 })
-
-const getTouchDistance = (event: TouchEvent) => {
-  const [t1, t2] = [event.touches[0], event.touches[1]]
-  const dx = t1.clientX - t2.clientX
-  const dy = t1.clientY - t2.clientY
-  return Math.hypot(dx, dy)
-}
 
 const handleDrawingTouchStart = (index: number, event: TouchEvent) => {
   if (event.touches.length === 2) {
@@ -1723,7 +2002,171 @@ const handleDrawingTouchEnd = () => {
   pinchState.targetIndex = -1
 }
 const resetDrawingScale = (index: number) => {
-  drawingScales.value = { ...drawingScales.value, [index]: isMobile.value ? 0.6 : 1 }
+  drawingScales.value = { ...drawingScales.value, [index]: isMobile.value ? 0.9 : 1 }
+}
+
+// 图纸查看器（Element Plus）
+const resetMobileImageTransform = () => {
+  mobileImageScale.value = 1
+  mobileImageOffset.x = 0
+  mobileImageOffset.y = 0
+}
+
+const handleMobileImageLoad = (event: Event) => {
+  const img = event.target as HTMLImageElement
+  if (!img) return
+  mobileImageNaturalSize.w = img.naturalWidth
+  mobileImageNaturalSize.h = img.naturalHeight
+  const wrapper = mobileImageWrapper.value
+  if (!wrapper) return
+  const fitScaleW = wrapper.clientWidth / (img.naturalWidth || 1)
+  const fitScaleH = wrapper.clientHeight / (img.naturalHeight || 1)
+  const fitScale = Math.min(1, Math.min(fitScaleW, fitScaleH) * 0.98)
+  const scale = fitScale > 0 ? fitScale : 1
+  mobileImageScale.value = scale
+  const imgW = (img.naturalWidth || 0) * scale
+  const imgH = (img.naturalHeight || 0) * scale
+  mobileImageOffset.x = (wrapper.clientWidth - imgW) / 2
+  mobileImageOffset.y = (wrapper.clientHeight - imgH) / 2
+}
+
+const openImageViewer = (index: number) => {
+  const targetUrl = drawingImages.value[index]
+  if (!targetUrl) return
+
+  if (isMobile.value) {
+    mobileImagePreviewUrl.value = targetUrl
+    mobileImagePreviewVisible.value = true
+    resetMobileImageTransform()
+    // 为移动预览插入一层历史，用于拦截物理返回先关闭预览
+    if (typeof window !== 'undefined') {
+      try {
+        window.history.pushState({ overlay: 'mobileImage' }, '', window.location.href)
+        overlayStack.push('image')
+      } catch (err) {
+        console.warn('⚠️ pushState 失败，移动预览返回行为可能无法拦截:', err)
+      }
+    }
+    return
+  }
+
+  imageViewerIndex.value = index
+  imageViewerVisible.value = true
+}
+
+const restoreTouchAction = () => {
+  if (typeof document === 'undefined') return
+  document.documentElement.style.touchAction = prevDocTouchAction
+  document.body.style.touchAction = prevBodyTouchAction
+}
+
+watch(imageViewerVisible, (visible) => {
+  if (typeof document === 'undefined') return
+  if (visible) {
+    prevDocTouchAction = document.documentElement.style.touchAction
+    prevBodyTouchAction = document.body.style.touchAction
+    document.documentElement.style.touchAction = 'none'
+    document.body.style.touchAction = 'none'
+  } else {
+    restoreTouchAction()
+  }
+})
+
+const getTouchDistance = (event: TouchEvent) => {
+  const [t1, t2] = [event.touches[0], event.touches[1]]
+  const dx = t1.clientX - t2.clientX
+  const dy = t1.clientY - t2.clientY
+  return Math.hypot(dx, dy)
+}
+
+const handleMobilePreviewTouchStart = (event: TouchEvent) => {
+  tapStart.t = Date.now()
+  if (event.touches.length === 2) {
+    mobilePinchState.isPinching = true
+    mobilePinchState.startDistance = getTouchDistance(event)
+    mobilePinchState.startScale = mobileImageScale.value
+  } else if (event.touches.length === 1) {
+    // 初始认为未拖拽，移动时超过阈值再标记
+    mobileDragState.isDragging = false
+    mobileDragState.startX = event.touches[0].clientX
+    mobileDragState.startY = event.touches[0].clientY
+    mobileDragState.startOffsetX = mobileImageOffset.x
+    mobileDragState.startOffsetY = mobileImageOffset.y
+    tapStart.x = event.touches[0].clientX
+    tapStart.y = event.touches[0].clientY
+  }
+}
+
+const handleMobilePreviewTouchMove = (event: TouchEvent) => {
+  if (mobilePinchState.isPinching && event.touches.length === 2) {
+    event.preventDefault()
+    const currentDistance = getTouchDistance(event)
+    const ratio = currentDistance / (mobilePinchState.startDistance || 1)
+    const nextScale = Math.min(3, Math.max(0.2, mobilePinchState.startScale * ratio))
+    mobileImageScale.value = nextScale
+    return
+  }
+
+  if (mobileDragState.isDragging && event.touches.length === 1) {
+    event.preventDefault()
+    const dx = event.touches[0].clientX - mobileDragState.startX
+    const dy = event.touches[0].clientY - mobileDragState.startY
+    mobileImageOffset.x = mobileDragState.startOffsetX + dx
+    mobileImageOffset.y = mobileDragState.startOffsetY + dy
+  } else if (event.touches.length === 1) {
+    // 判断是否达到拖拽阈值（避免轻点被误判为拖拽）
+    const dx = event.touches[0].clientX - mobileDragState.startX
+    const dy = event.touches[0].clientY - mobileDragState.startY
+    if (Math.hypot(dx, dy) > 8) {
+      mobileDragState.isDragging = true
+    }
+  }
+}
+
+const handleMobilePreviewTouchEnd = (event: TouchEvent) => {
+  const touch = event.changedTouches?.[0]
+  const dx = touch ? touch.clientX - tapStart.x : 0
+  const dy = touch ? touch.clientY - tapStart.y : 0
+  const duration = Date.now() - tapStart.t
+
+  // 在状态复位前判定是否为轻点（无拖拽/捏合）
+  const isTap =
+    !mobilePinchState.isPinching &&
+    Math.hypot(dx, dy) < 8 &&
+    duration < 250 &&
+    !mobileDragState.isDragging
+
+  mobilePinchState.isPinching = false
+  mobileDragState.isDragging = false
+
+  if (isTap) {
+    closeMobileImagePreview()
+  }
+}
+
+// 单击图片时关闭预览（仅当未拖拽/捏合时）
+const handleMobileImageTap = () => {
+  if (mobilePinchState.isPinching || mobileDragState.isDragging) return
+  closeMobileImagePreview()
+}
+
+const closeMobileImagePreview = () => {
+  mobileImagePreviewVisible.value = false
+  resetMobileImageTransform()
+  mobileImageNaturalSize.w = 0
+  mobileImageNaturalSize.h = 0
+  if (overlayStack.length > 0 && overlayStack[overlayStack.length - 1] === 'image' && typeof window !== 'undefined') {
+    // 手动关闭时只消费自身的历史层
+    try {
+      closingOverlayFromManual = true
+      overlayStack.pop()
+      window.history.back()
+    } catch (err) {
+      console.warn('⚠️ 关闭预览回退历史失败:', err)
+    }
+    // 异步重置标记，避免 popstate 将抽屉一起关闭
+    setTimeout(() => { closingOverlayFromManual = false }, 0)
+  }
 }
 
 // ✅ 过滤当前步骤的焊接信息（只从步骤内嵌字段读取）
@@ -1869,10 +2312,12 @@ watch(showEditDialog, (newVal) => {
     const currentStepId = currentStep.step_id
     const currentStepNumber = currentStep.step_number
     const currentComponentName = currentStep.component_name
+    const currentTitle = currentStep.title || currentStep.action || ''
 
     // 🔧 记住原始步骤号（兼容性）
     originalStepNumber.value = currentStepNumber
     componentNameInput.value = currentComponentName || ''
+    editData.value.step_title = currentTitle
 
     // 从步骤内嵌字段加载焊接数据
     if (currentStep.welding && currentStep.welding.required) {
@@ -1978,6 +2423,7 @@ const saveDraft = async () => {
 
     const currentStepNumber = currentStep.step_number
     const newComponentName = componentNameInput.value.trim() || currentStep.component_name || ''
+    const newTitle = (editData.value.step_title || '').trim()
 
     // 更新manualData
     const updatedData = { ...manualData.value }
@@ -2022,6 +2468,10 @@ const saveDraft = async () => {
                 step.description = newDescription
                 step.operation = newDescription
               }
+              if (newTitle) {
+                step.title = newTitle
+                step.action = newTitle
+              }
 
               // 更新焊接数据
               if (validWeldingReqs.length > 0) {
@@ -2050,6 +2500,10 @@ const saveDraft = async () => {
           if (newDescription) {
             step.description = newDescription
             step.operation = newDescription
+          }
+          if (newTitle) {
+            step.title = newTitle
+            step.action = newTitle
           }
           // 更新焊接数据
           if (validWeldingReqs.length > 0) {
@@ -2195,18 +2649,37 @@ const refreshManualFromServer = async () => {
         const draftResp = await axios.get(`/api/manual/${props.taskId}/draft`)
         data = draftResp.data
         isDraftMode.value = true  // 标记为草稿模式
+        updateLatestVersion(data?.version)
         console.log('✅ 管理员模式：从草稿加载数据')
+        await fetchLatestVersion()
+
+        const createdAt = data?.draftCreatedAt
+        draftPromptContext.draftCreatedAt = createdAt || data?.lastUpdated || ''
+        draftPromptContext.createdAtFallback = !createdAt && !!data?.lastUpdated
+        applyDraftPromptSuppressOnce()
+        if (!suppressDraftPromptOnce) {
+          // 弹出草稿提示，提醒当前草稿基线，并提供选择
+          const previewVer = historyVersion.value || getLastPreviewVersion()
+          draftPromptContext.draftBaseVersion = data?.version || '未知版本'
+          draftPromptContext.previewVersion = previewVer
+          draftPromptContext.hasPreview = !!previewVer
+          draftPromptVisible.value = true
+        } else {
+          suppressDraftPromptOnce = false
+        }
       } catch (e) {
         // 草稿不存在，fallback 到已发布版本
         const resp = await axios.get(`/api/manual/${props.taskId}`)
         data = resp.data
         isDraftMode.value = false  // 非草稿模式
+        updateLatestVersion(data?.version)
         console.log('✅ 管理员模式：草稿不存在，从已发布版本加载')
       }
     } else {
       // 普通用户：只获取已发布版本
       const resp = await axios.get(`/api/manual/${props.taskId}`)
       data = resp.data
+      updateLatestVersion(data?.version)
       isDraftMode.value = false
     }
     const cacheKey = `current_manual_${props.taskId}`
@@ -2224,7 +2697,7 @@ const openInsertDialog = () => {
     ElMessage.warning('请先登录管理员')
     return
   }
-  insertAfterStepId.value = currentStepData.value?.step_id || null
+  insertAfterStepId.value = currentStepData.value?.step_id || INSERT_AT_START
   insertAction.value = ''
   insertDescription.value = ''
   showInsertDialog.value = true
@@ -2233,6 +2706,10 @@ const openInsertDialog = () => {
 const handleInsertStep = async () => {
   if (!currentStepData.value) {
     ElMessage.error('当前步骤数据不存在')
+    return
+  }
+  if (!insertAction.value.trim()) {
+    ElMessage.warning('步骤标题必填')
     return
   }
   const chapterType = currentStepData.value.chapter_type
@@ -2248,10 +2725,10 @@ const handleInsertStep = async () => {
   const payload = {
     chapter_type: chapterType,
     component_code: componentCode,
-    after_step_id: insertAfterStepId.value,
+    after_step_id: insertAfterStepId.value === INSERT_AT_START ? null : insertAfterStepId.value,
     new_step: {
-      action: insertAction.value || '新步骤',
-      title: insertAction.value || '新步骤',
+      action: insertAction.value.trim(),
+      title: insertAction.value.trim(),
       description: insertDescription.value || '',
       parts_used: currentStepData.value.parts_used || [],
       drawings
@@ -2264,6 +2741,7 @@ const handleInsertStep = async () => {
     const resp = await axios.post(`/api/manual/${props.taskId}/steps/insert`, payload)
     ElMessage.success('插入成功')
     showInsertDialog.value = false
+    suppressDraftPromptOnce = true
     await refreshManualFromServer()
     await nextTick()
     const newIndex = allSteps.value.findIndex(s => s.step_id === resp.data.step_id)
@@ -2285,7 +2763,7 @@ const confirmDeleteCurrentStep = async () => {
   }
   try {
     await ElMessageBox.confirm(
-      `确定删除步骤${currentStepData.value.step_number}「${currentStepData.value.action || '未命名'}」吗？`,
+      `确定删除步骤${currentStepData.value.step_number}「${getStepDisplayTitle(currentStepData.value)}」吗？`,
       '删除确认',
       { type: 'warning' }
     )
@@ -2304,6 +2782,7 @@ const handleDeleteStep = async (stepId: string) => {
       params: { edit_version: editVersion }
     })
     ElMessage.success('删除成功')
+    suppressDraftPromptOnce = true
     await refreshManualFromServer()
     if (currentStepIndex.value >= allSteps.value.length) {
       currentStepIndex.value = Math.max(0, allSteps.value.length - 1)
@@ -2314,6 +2793,57 @@ const handleDeleteStep = async (stepId: string) => {
   } finally {
     deletingStep.value = false
   }
+}
+
+const confirmDeleteManual = async () => {
+  if (!isAdmin.value) {
+    ElMessage.warning('请先登录管理员')
+    return
+  }
+  try {
+    await ElMessageBox.confirm(
+      '确定删除当前图纸及其所有版本吗？此操作不可恢复。',
+      '删除确认',
+      { type: 'warning', confirmButtonText: '确定删除', cancelButtonText: '取消' }
+    )
+    await handleDeleteManual()
+  } catch (error) {
+    // 用户取消
+  }
+}
+
+const handleDeleteManual = async () => {
+  if (!props.taskId) {
+    ElMessage.error('任务ID不存在')
+    return
+  }
+  try {
+    deletingManual.value = true
+    await axios.delete(`/api/manual/${props.taskId}`)
+    ElMessage.success({ message: '图纸已删除', duration: 1200 })
+    // 清理本地缓存
+    localStorage.removeItem(`current_manual_${props.taskId}`)
+    localStorage.removeItem(`current_manual_draft_${props.taskId}`)
+    // 跳转到首页
+    router.push('/')
+  } catch (error: any) {
+    console.error('❌ 删除图纸失败:', error)
+    ElMessage.error('删除失败: ' + (error.response?.data?.detail || error.message))
+  } finally {
+    deletingManual.value = false
+  }
+}
+
+const translatePublishError = (detail: any) => {
+  const message = String(detail || '未知错误')
+  const lower = message.toLowerCase()
+  if (lower.includes('no changes') || lower.includes('nothing to publish') || lower.includes('no modified')) {
+    return '未进行修改，无法生成新版本'
+  }
+  if ((lower.includes('draft') && lower.includes('not found')) || lower.includes('save draft first')) {
+    return '草稿不存在，请先保存草稿后再发布'
+  }
+  return message
 }
 
 
@@ -2329,6 +2859,7 @@ const confirmPublish = async () => {
       changelog: publishForm.value.changelog.trim()
     })
     ElMessage.success(`发布成功，版本: ${response.data.version}`)
+    updateLatestVersion(response.data.version)
     showPublishDialog.value = false
     publishForm.value.changelog = ''
     isDraftMode.value = false  // 发布后退出草稿模式
@@ -2337,7 +2868,8 @@ const confirmPublish = async () => {
     await init3DViewerAndModel()
   } catch (error: any) {
     console.error('❌ 发布失败', error)
-    ElMessage.error('发布失败: ' + (error.response?.data?.detail || error.message))
+    const detail = error.response?.data?.detail || error.message
+    ElMessage.error('发布失败: ' + translatePublishError(detail))
   } finally {
     publishing.value = false
   }
@@ -2352,6 +2884,35 @@ const exitHistoryPreview = () => {
   window.close()
 }
 
+// 从历史预览跳回当前版本编辑，自动基于预览版生成草稿
+const goEditFromHistory = async () => {
+  const previewVer = historyVersion.value || getLastPreviewVersion()
+  rememberHistoryPreview()
+  editingFromHistory.value = true
+
+  // 没有预览版本时，按原逻辑直接跳回
+  if (!previewVer) {
+    router.push(`/manual/${props.taskId}`)
+    return
+  }
+
+  creatingPreviewDraft.value = true
+  try {
+    const result = await createDraftFromPreviewVersion(previewVer)
+    if (result === 'created') {
+      ElMessage.success(`已基于 ${previewVer} 创建草稿，正在进入编辑`)
+    } else if (result === 'exists') {
+      ElMessage.info('已存在草稿，直接进入编辑')
+    }
+    router.push(`/manual/${props.taskId}`)
+  } catch (error: any) {
+    console.error('❌ 基于预览创建草稿失败:', error)
+    ElMessage.error('创建草稿失败: ' + (error.response?.data?.detail || error.message || '未知错误'))
+  } finally {
+    creatingPreviewDraft.value = false
+  }
+}
+
 // ============ 下拉菜单命令处理 ============
 
 const handleEditCommand = (command: string) => {
@@ -2362,8 +2923,14 @@ const handleEditCommand = (command: string) => {
     case 'insertStep':
       openInsertDialog()
       break
+    case 'reorderSteps':
+      openStepOrderDialog()
+      break
     case 'deleteStep':
       confirmDeleteCurrentStep()
+      break
+    case 'deleteManual':
+      confirmDeleteManual()
       break
   }
 }
@@ -2376,6 +2943,168 @@ const handleVersionCommand = (command: string) => {
     case 'history':
       goHistory()
       break
+  }
+}
+
+const getStepOrderDisplayTitle = (step: any): string => {
+  const baseTitle = step?.title || step?.action || '未命名步骤'
+  if (step?.chapter_type === 'product_assembly') {
+    return `【产品】${baseTitle}`
+  }
+  const comp = step?.component_name || step?.component_code || '组件'
+  return `【${comp}】${baseTitle}`
+}
+
+const openStepOrderDialog = () => {
+  if (!isAdmin.value) {
+    ElMessage.warning('请先登录管理员')
+    return
+  }
+  if (isReadOnlyMode.value) {
+    ElMessage.warning('历史版本为只读，无法调整步骤顺序')
+    return
+  }
+  if (!allSteps.value.length) {
+    ElMessage.warning('暂无步骤，无法调整顺序')
+    return
+  }
+  showStepOrderDialog.value = true
+}
+
+watch(showStepOrderDialog, (visible) => {
+  if (!visible) return
+  // ✅ 每次打开弹窗都用当前的全局顺序生成一个可拖拽副本
+  tempStepOrder.value = allSteps.value.map((step: any) => ({
+    step_id: step.step_id,
+    title: getStepOrderDisplayTitle(step)
+  }))
+})
+
+const confirmStepOrder = async () => {
+  if (stepOrderSaving.value) return
+
+  // 只读/非管理员模式下禁止修改
+  if (isReadOnlyMode.value) {
+    ElMessage.warning('历史版本为只读，无法调整步骤顺序')
+    return
+  }
+  if (!isAdmin.value) {
+    ElMessage.warning('仅管理员可调整步骤顺序')
+    return
+  }
+  if (!manualData.value) {
+    ElMessage.error('手册数据未加载完成，无法调整步骤顺序')
+    return
+  }
+
+  // ✅ 基于 step_id 的全局顺序重排：display_order 采用 1000 步进，避免破坏后端插入算法
+  const currentStepId = currentStepData.value?.step_id || null
+  const expectedCount = allSteps.value.length
+  const ordered = tempStepOrder.value || []
+  if (!ordered.length || ordered.length !== expectedCount) {
+    ElMessage.error('步骤列表数量异常，请刷新后重试')
+    return
+  }
+
+  const uniqueIds = new Set<string>()
+  for (const item of ordered) {
+    if (!item?.step_id) continue
+    if (uniqueIds.has(item.step_id)) {
+      ElMessage.error('检测到重复的 step_id，请刷新后重试')
+      return
+    }
+    uniqueIds.add(item.step_id)
+  }
+  if (uniqueIds.size !== expectedCount) {
+    ElMessage.error('步骤ID不完整，请刷新后重试')
+    return
+  }
+
+  const orderMap = new Map<string, number>()
+  ordered.forEach((item, idx) => {
+    orderMap.set(item.step_id, (idx + 1) * 1000)
+  })
+
+  // 深拷贝：避免保存失败时污染本地状态
+  const updatedData = JSON.parse(JSON.stringify(manualData.value))
+  const applied = new Set<string>()
+
+  const applyToSteps = (steps: any[]) => {
+    if (!Array.isArray(steps)) return
+    for (const step of steps) {
+      const stepId = step?.step_id
+      if (!stepId) continue
+      const newOrder = orderMap.get(stepId)
+      if (typeof newOrder === 'number') {
+        step.display_order = newOrder
+        applied.add(stepId)
+      }
+    }
+    // 写回后对章节内步骤排序，保持 JSON 稳定
+    steps.sort((a: any, b: any) => (a?.display_order ?? 0) - (b?.display_order ?? 0))
+  }
+
+  if (Array.isArray(updatedData.component_assembly)) {
+    for (const chapter of updatedData.component_assembly) {
+      applyToSteps(chapter?.steps)
+    }
+  }
+  if (updatedData.product_assembly && Array.isArray(updatedData.product_assembly.steps)) {
+    applyToSteps(updatedData.product_assembly.steps)
+  }
+
+  const missing = Array.from(orderMap.keys()).filter(id => !applied.has(id))
+  if (missing.length > 0) {
+    console.error('❌ 步骤重排失败：存在未写回的 step_id', missing)
+    ElMessage.error('步骤重排失败：步骤数据不完整，请刷新后重试')
+    return
+  }
+
+  const currentEditVersion = manualData.value?._edit_version ?? 0
+  updatedData._edit_version = currentEditVersion
+
+  try {
+    stepOrderSaving.value = true
+    const resp = await axios.post(`/api/manual/${props.taskId}/save-draft`, {
+      manual_data: updatedData
+    })
+
+    if (!resp.data?.success) {
+      throw new Error(resp.data?.message || '保存草稿失败')
+    }
+
+    updatedData._edit_version = currentEditVersion + 1
+    if (resp.data?.lastUpdated) {
+      updatedData.lastUpdated = resp.data.lastUpdated
+    }
+    setManualDataValue(updatedData)
+
+    // ✅ 立即显示草稿提示条
+    isDraftMode.value = true
+
+    // 更新缓存（草稿）
+    const cacheDraftKey = `current_manual_draft_${props.taskId}`
+    localStorage.setItem(cacheDraftKey, JSON.stringify(updatedData))
+
+    showStepOrderDialog.value = false
+    ElMessage.success('步骤顺序已保存到草稿')
+
+    // ✅ 重新定位到原来正在查看的步骤（按 step_id，而不是旧 index）
+    await nextTick()
+    if (currentStepId) {
+      const newIndex = allSteps.value.findIndex(s => s.step_id === currentStepId)
+      if (newIndex >= 0) {
+        currentStepIndex.value = newIndex
+      }
+    }
+
+    // ✅ 强制刷新3D显示，避免“顺序变了但 currentStepIndex 未变化”导致的显示不同步
+    updateStepDisplay(true)
+  } catch (error: any) {
+    console.error('❌ 保存步骤顺序失败:', error)
+    ElMessage.error('保存失败: ' + (error.response?.data?.detail || error.message || '未知错误'))
+  } finally {
+    stepOrderSaving.value = false
   }
 }
 
@@ -2399,6 +3128,9 @@ const handleDiscardDraft = async () => {
     setManualDataValue(resp.data)
     localStorage.setItem(`current_manual_${props.taskId}`, JSON.stringify(resp.data))
     currentStepIndex.value = 0
+
+    // ✅ 丢弃草稿后强制恢复零件可见性
+    restoreAllPartsVisibility()
 
     // ✅ 刷新3D显示，让零件颜色恢复到已发布状态
     updateStepDisplay(false)
@@ -2444,6 +3176,8 @@ const loadLocalJSON = async () => {
         setManualDataValue(resp.data)
         console.log(`✅ 历史版本模式：加载 ${historyVersion.value} 成功`)
         ElMessage.success(`正在查看历史版本 ${historyVersion.value}`)
+        rememberHistoryPreview()
+        await fetchLatestVersion()
         await init3DViewerAndModel()
         return
       } catch (e: any) {
@@ -2461,6 +3195,20 @@ const loadLocalJSON = async () => {
         isDraftMode.value = true  // 标记为草稿模式
         console.log('✅ 管理员模式：从草稿加载说明书成功')
         ElMessage.success('装配说明书加载成功（草稿模式）！')
+        await fetchLatestVersion()
+        const createdAt = draftResp.data?.draftCreatedAt
+        draftPromptContext.draftCreatedAt = createdAt || draftResp.data?.lastUpdated || ''
+        draftPromptContext.createdAtFallback = !createdAt && !!draftResp.data?.lastUpdated
+        applyDraftPromptSuppressOnce()
+        if (!suppressDraftPromptOnce) {
+          const previewVer = historyVersion.value || getLastPreviewVersion()
+          draftPromptContext.draftBaseVersion = draftResp.data?.version || '未知版本'
+          draftPromptContext.previewVersion = previewVer
+          draftPromptContext.hasPreview = !!previewVer
+          draftPromptVisible.value = true
+        } else {
+          suppressDraftPromptOnce = false
+        }
         await init3DViewerAndModel()
         return
       } catch (e) {
@@ -2483,6 +3231,8 @@ const loadLocalJSON = async () => {
 
         console.log(`📌 缓存版本: ${cached.version}, 服务器版本: ${serverVersion}`)
         console.log(`📌 缓存更新时间: ${cached.lastUpdated}, 服务器更新时间: ${serverLastUpdated}`)
+        updateLatestVersion(serverVersion as string)
+        updateLatestVersion(cached.version)
 
         // ✅ 同时比较version和lastUpdated，两者都一致才使用缓存
         const versionMatch = cached.version === serverVersion
@@ -2505,6 +3255,7 @@ const loadLocalJSON = async () => {
       } catch (error) {
         console.warn('版本检查失败,使用缓存数据', error)
         setManualDataValue(cached)
+        updateLatestVersion(cached.version)
         console.log('✅ 从缓存加载说明书成功 (版本检查失败):', manualData.value)
         ElMessage.success('装配说明书加载成功！')
         await init3DViewerAndModel()
@@ -2515,6 +3266,7 @@ const loadLocalJSON = async () => {
     // 版本不一致或无缓存，从后端 API 获取已发布版本
     const response = await axios.get(`/api/manual/${props.taskId}`)
     setManualDataValue(response.data)
+    updateLatestVersion(response.data?.version)
 
     // 保存到 localStorage（按任务隔离）
     const cachePublishedKey = `current_manual_${props.taskId}`
@@ -2530,6 +3282,54 @@ const loadLocalJSON = async () => {
   } catch (error: any) {
     console.error('❌ 加载失败:', error)
     ElMessage.error('加载失败: ' + (error.response?.data?.detail || error.message || '未知错误'))
+  }
+}
+
+// 路由中的 historyVersion 变化时重新加载，避免停留在旧版本数据
+watch(historyVersion, (newVal, oldVal) => {
+  if (newVal !== oldVal) {
+    loadLocalJSON()
+  }
+})
+
+// ============ 草稿提示与操作 ============
+
+const handleContinueDraft = () => {
+  draftPromptVisible.value = false
+  suppressDraftPromptOnce = true
+}
+
+const handleDiscardAndUsePreview = async () => {
+  if (!draftPromptContext.hasPreview || !draftPromptContext.previewVersion) {
+    ElMessage.warning('当前无预览版本可用，无法切换')
+    return
+  }
+  try {
+    draftPromptLoading.value = true
+    editingFromHistory.value = true
+    // 丢弃当前未发布修改
+    await axios.delete(`/api/manual/${props.taskId}/draft`)
+    // 拉取预览版本数据
+    const resp = await axios.get(`/api/manual/${props.taskId}/version/${draftPromptContext.previewVersion}`)
+    const versionData = resp.data
+    // 保存为新的未发布修改
+    await axios.post(`/api/manual/${props.taskId}/save-draft`, {
+      manual_data: {
+        ...versionData,
+        _edit_version: versionData?._edit_version ?? 0
+      }
+    })
+    ElMessage.success(`已切换为预览版本 ${draftPromptContext.previewVersion} 的修改`)
+    draftPromptVisible.value = false
+    isDraftMode.value = true
+    suppressDraftPromptOnce = true
+    clearLastPreviewVersion()
+    await refreshManualFromServer()
+  } catch (error: any) {
+    console.error('❌ 切换到预览版本失败:', error)
+    ElMessage.error('切换失败: ' + (error.response?.data?.detail || error.message))
+  } finally {
+    draftPromptLoading.value = false
   }
 }
 
@@ -2597,8 +3397,221 @@ const getSeverityType = (severity: string) => {
   return map[severity] || 'warning'
 }
 
+// 根据模型尺寸自适应缩放，避免极端放大导致视锥体精度问题
+const computeAdaptiveScale = (maxDimOriginal: number) => {
+  if (!isFinite(maxDimOriginal) || maxDimOriginal <= 0) return 1
+  const targetSize = 1500 // 希望模型最大边落在可视范围的目标尺寸
+  const maxScale = 10000  // 上限，避免 100 万倍级别放大
+  const scale = targetSize / maxDimOriginal
+  return Math.min(maxScale, Math.max(1, scale))
+}
+
+// 依据固定配置刷新网格：小范围 + 边界，高度锁定
+const refreshGridHelper = (_box: THREE.Box3) => {
+  if (!scene) return
+
+  if (gridHelper && scene) {
+    scene.remove(gridHelper)
+  }
+  if (gridBoundary && scene) {
+    scene.remove(gridBoundary)
+  }
+
+  gridHelper = new THREE.GridHelper(GRID_SIZE, GRID_DIVISIONS, GRID_COLOR_CENTER, GRID_COLOR_LINE)
+  gridHelper.name = 'manual_grid_helper'
+  gridHelper.position.y = GRID_HEIGHT
+
+  const mats = Array.isArray(gridHelper.material) ? gridHelper.material : [gridHelper.material]
+  mats.forEach((mat: any) => {
+    mat.depthWrite = false
+    mat.depthTest = true
+    mat.transparent = true
+    mat.opacity = 0.35
+  })
+  gridHelper.renderOrder = -1
+
+  scene.add(gridHelper)
+
+  // 添加边界线，强化范围感知
+  const half = GRID_SIZE / 2
+  const boundaryY = GRID_HEIGHT + 0.01
+  const points = [
+    new THREE.Vector3(-half, boundaryY, -half),
+    new THREE.Vector3(half, boundaryY, -half),
+    new THREE.Vector3(half, boundaryY, half),
+    new THREE.Vector3(-half, boundaryY, half),
+    new THREE.Vector3(-half, boundaryY, -half)
+  ]
+  const boundaryMaterial = new THREE.LineBasicMaterial({
+    color: GRID_BOUNDARY_COLOR,
+    transparent: true,
+    opacity: 0.9
+  })
+  gridBoundary = new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), boundaryMaterial)
+  gridBoundary.name = 'manual_grid_boundary'
+  gridBoundary.renderOrder = -1
+  scene.add(gridBoundary)
+}
+
+// 基于包围盒重置相机位置/near/far，并更新控制器 target
+const fitCameraToBox = (box: THREE.Box3) => {
+  if (!camera) return
+
+  const size = new THREE.Vector3()
+  box.getSize(size)
+  const center = box.getCenter(new THREE.Vector3())
+  const maxDim = Math.max(size.x, size.y, size.z, 1)
+  const dist = maxDim * 2.5
+
+  camera.position.set(center.x + dist, center.y + dist * 0.6, center.z + dist)
+  camera.lookAt(center)
+  camera.near = Math.max(0.1, maxDim / 500)
+  camera.far = Math.max(dist * 4, maxDim * 10)
+  camera.updateProjectionMatrix()
+
+  if (controls) {
+    controls.target.copy(center)
+    controls.update()
+  }
+
+  console.log('🎯 相机自适应完成', {
+    size: size.toArray(),
+    center: center.toArray(),
+    cameraPosition: camera.position.toArray(),
+    near: camera.near,
+    far: camera.far
+  })
+}
+
+// 清理3D资源，避免重复初始化叠加canvas/事件
+const cleanup3DViewer = () => {
+  if (animationId !== null) {
+    cancelAnimationFrame(animationId)
+    animationId = null
+  }
+  if (resizeHandler) {
+    window.removeEventListener('resize', resizeHandler)
+    resizeHandler = null
+  }
+  if (controls) {
+    controls.dispose()
+    controls = null
+  }
+  if (renderer) {
+    const dom = renderer.domElement
+    if (dom?.parentElement) {
+      dom.parentElement.removeChild(dom)
+    }
+    renderer.dispose()
+    renderer = null
+  }
+  if (scene && gridHelper) {
+    scene.remove(gridHelper)
+  }
+  if (scene && gridBoundary) {
+    scene.remove(gridBoundary)
+  }
+  gridHelper = null
+  gridBoundary = null
+  model = null
+  scene = null
+  camera = null
+  raycaster = null
+  hoverOutlineGroup = null
+  hoveredMesh.value = null
+  selectedMesh.value = null
+  meshOriginalPositions = new Map()
+  meshOriginalMaterials = new Map()
+  meshExplodeDirections = new Map()
+  meshWorldOriginalPositions = new Map()
+  meshWorldExplodeDirections = new Map()
+}
+
+// 历史预览版本的暂存（用于返回当前页面时创建草稿）
+const rememberHistoryPreview = () => {
+  if (historyVersion.value) {
+    sessionStorage.setItem(lastPreviewKey.value, historyVersion.value)
+  }
+}
+
+const getLastPreviewVersion = () => {
+  return sessionStorage.getItem(lastPreviewKey.value) || ''
+}
+
+const clearLastPreviewVersion = () => {
+  sessionStorage.removeItem(lastPreviewKey.value)
+}
+
+const setDraftPromptSuppressOnce = () => {
+  if (typeof window === 'undefined') return
+  sessionStorage.setItem(draftPromptSuppressKey.value, '1')
+}
+
+const consumeDraftPromptSuppressOnce = (): boolean => {
+  if (typeof window === 'undefined') return false
+  const hit = sessionStorage.getItem(draftPromptSuppressKey.value)
+  if (!hit) return false
+  sessionStorage.removeItem(draftPromptSuppressKey.value)
+  return true
+}
+
+const applyDraftPromptSuppressOnce = () => {
+  if (suppressDraftPromptOnce) return
+  if (consumeDraftPromptSuppressOnce()) {
+    suppressDraftPromptOnce = true
+  }
+}
+
+// 基于指定预览版本创建草稿；若草稿已存在则直接返回 exists
+const createDraftFromPreviewVersion = async (previewVersion: string): Promise<'created' | 'exists'> => {
+  try {
+    await axios.get(`/api/manual/${props.taskId}/draft`)
+    return 'exists'
+  } catch (e: any) {
+    // 404 表示不存在草稿，可以创建；其他错误抛出
+    if (e?.response?.status && e.response.status !== 404) {
+      throw e
+    }
+  }
+
+  const resp = await axios.get(`/api/manual/${props.taskId}/version/${previewVersion}`)
+  const versionData = resp.data
+
+  await axios.post(`/api/manual/${props.taskId}/save-draft`, {
+    manual_data: {
+      ...versionData,
+      _edit_version: versionData?._edit_version ?? 0
+    }
+  })
+
+  setDraftPromptSuppressOnce()
+  suppressDraftPromptOnce = true
+  clearLastPreviewVersion()
+  isDraftMode.value = true
+  return 'created'
+}
+
+// 如果 sessionStorage 有预览版本且当前没有草稿，自动将预览版转为草稿
+const ensurePreviewDraftFromCache = async () => {
+  const previewVer = getLastPreviewVersion()
+  if (!previewVer) return
+
+  try {
+    editingFromHistory.value = true
+    const result = await createDraftFromPreviewVersion(previewVer)
+    if (result === 'created') {
+      ElMessage.success(`已基于预览版本 ${previewVer} 创建草稿`)
+    }
+  } catch (error: any) {
+    console.warn('⚠️ 基于预览版本创建草稿失败，后续将加载线上版本:', error)
+  }
+}
+
 const init3DViewer = () => {
   console.log('🎬 开始初始化3D查看器...')
+
+  // 先清理旧的实例，避免多次初始化叠加canvas/事件
+  cleanup3DViewer()
 
   if (!modelContainer.value) {
     console.error('❌ modelContainer 不存在')
@@ -2639,6 +3652,9 @@ const init3DViewer = () => {
   container.appendChild(renderer.domElement)
   console.log('✅ 渲染器创建成功，已添加到DOM')
 
+  // 图纸查看器关闭后恢复滚动（兼容旧逻辑的类名移除）
+  document.body.classList.remove('manual-viewer-zoomed')
+
   // 添加光源（增强亮度）
   const ambientLight = new THREE.AmbientLight(0xffffff, 1.2)  // 环境光增强到1.2
   scene.add(ambientLight)
@@ -2660,15 +3676,12 @@ const init3DViewer = () => {
   controls.enableDamping = true
   controls.dampingFactor = 0.05
 
-  // 添加底部地面网格（初始位置，会在模型加载后调整）
-  const gridSize = 5000  // 大网格
-  gridHelper = new THREE.GridHelper(gridSize, 50, 0x888888, 0xcccccc)
-  gridHelper.position.y = -1000  // 临时位置
-  scene.add(gridHelper)
+  // 添加底部地面网格（初始位置，后续模型加载时仍会重建）
+  refreshGridHelper(new THREE.Box3())
 
   // 动画循环
   const animate = () => {
-    requestAnimationFrame(animate)
+    animationId = requestAnimationFrame(animate)
     if (controls) controls.update()
     if (renderer && scene && camera) {
       renderer.render(scene, camera)
@@ -2678,7 +3691,7 @@ const init3DViewer = () => {
   console.log('🎬 动画循环已启动')
 
   // ✅ 调试：暴露到window对象
-  ;(window as any).__three_debug__ = { scene, camera, renderer, controls }
+  ;(window as any).__three_debug__ = { scene, camera, renderer, controls, THREE }
 
   // 窗口大小调整
   const handleResize = () => {
@@ -2690,6 +3703,7 @@ const init3DViewer = () => {
     renderer.setSize(width, height)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile.value ? 2 : 2))
   }
+  resizeHandler = handleResize
   window.addEventListener('resize', handleResize)
 
   // ✅ 初始化零件交互功能（射线检测、鼠标事件）
@@ -2771,21 +3785,11 @@ const load3DModel = async () => {
       center: { x: center.x, y: center.y, z: center.z }
     })
 
-    // ✅ 如果模型太小（单位可能是米，但实际是毫米建模），放大倍数
     const maxDimOriginal = Math.max(size.x, size.y, size.z)
-    let scaleFactor = 1
-
-    // 根据模型尺寸自动计算放大倍数，目标是让模型达到1500-2000单位（根据图纸1830mm）
-    if (maxDimOriginal < 10) {
-      scaleFactor = 1000000  // 如果小于10，放大100万倍（模型单位可能是米）
-    } else if (maxDimOriginal < 100) {
-      scaleFactor = 10000   // 如果小于100，放大1万倍
-    } else if (maxDimOriginal < 1000) {
-      scaleFactor = 1000    // 如果小于1000，放大1000倍
-    }
+    const scaleFactor = computeAdaptiveScale(maxDimOriginal)
 
     if (scaleFactor > 1) {
-      console.warn(`⚠️ 模型太小（${maxDimOriginal.toFixed(6)}），放大${scaleFactor}倍`)
+      console.warn(`⚠️ 模型太小（${maxDimOriginal.toFixed(6)}），自适应放大${scaleFactor.toFixed(2)}倍`)
       model.scale.set(scaleFactor, scaleFactor, scaleFactor)
       // 重新计算边界
       box.setFromObject(model)
@@ -2856,34 +3860,10 @@ const load3DModel = async () => {
       console.log(`⚠️ ${nearCenterCount} 个零件非常接近中心，使用随机方向`)
     }
 
-    // 调整相机位置以适应模型
-    const maxDim = Math.max(size.x, size.y, size.z)
-    console.log('📏 最大尺寸:', maxDim)
-
-    const fov = camera!.fov * (Math.PI / 180)
-    let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2))
-    cameraZ *= 2.5 // 增加距离，确保能看到
-
-    console.log('📷 计算的相机距离:', cameraZ)
-
-    // ✅ 如果计算出的距离太小（模型单位可能是毫米），使用固定距离
-    if (cameraZ < 10) {
-      console.warn('⚠️ 相机距离太小，使用固定距离')
-      cameraZ = Math.max(maxDim * 3, 1000) // 至少1000单位
-    }
-
-    console.log('📷 最终相机距离:', cameraZ)
-
-    camera!.position.set(cameraZ * 0.7, cameraZ * 0.5, cameraZ * 0.7)
-    camera!.lookAt(0, 0, 0)
-
-    if (controls) {
-      controls.target.set(0, 0, 0)
-      controls.update()
-    }
-
-    console.log('📷 相机位置:', camera!.position)
-    console.log('🎯 控制器目标:', controls?.target)
+    // 调整相机位置/near/far 以适应模型
+    const fitBox = new THREE.Box3().setFromObject(model)
+    fitCameraToBox(fitBox)
+    refreshGridHelper(fitBox)
 
     scene.add(model)
     console.log('✅ 3D模型已添加到场景')
@@ -2894,14 +3874,6 @@ const load3DModel = async () => {
       cameraPosition: camera!.position,
       modelPosition: model.position
     })
-
-    // ✅ 调整网格位置，紧贴模型底部
-    if (gridHelper) {
-      const modelBox = new THREE.Box3().setFromObject(model)
-      const modelMin = modelBox.min
-      gridHelper.position.y = modelMin.y  // 网格Y坐标 = 模型最低点Y坐标
-      console.log('✅ 网格已调整到模型底部，Y =', modelMin.y)
-    }
 
     // ✅ 调试：暴露model到window对象
     ;(window as any).__three_debug__.model = model
@@ -2985,18 +3957,10 @@ const switchGLBModel = async (glbFile: string) => {
     const size = box.getSize(new THREE.Vector3())
 
     const maxDimOriginal = Math.max(size.x, size.y, size.z)
-    let scaleFactor = 1
-
-    if (maxDimOriginal < 10) {
-      scaleFactor = 1000000
-    } else if (maxDimOriginal < 100) {
-      scaleFactor = 10000
-    } else if (maxDimOriginal < 1000) {
-      scaleFactor = 1000
-    }
+    const scaleFactor = computeAdaptiveScale(maxDimOriginal)
 
     if (scaleFactor > 1) {
-      console.log(`⚠️ 模型太小（${maxDimOriginal.toFixed(6)}），放大${scaleFactor}倍`)
+      console.log(`⚠️ 模型太小（${maxDimOriginal.toFixed(6)}），自适应放大${scaleFactor.toFixed(2)}倍`)
       model.scale.set(scaleFactor, scaleFactor, scaleFactor)
       box.setFromObject(model)
       box.getCenter(center)
@@ -3056,32 +4020,14 @@ const switchGLBModel = async (glbFile: string) => {
     }
 
     // 7. 调整相机
-    const maxDim = Math.max(size.x, size.y, size.z)
-    let cameraZ = maxDim * 2.5
-
-    if (cameraZ < 100) {
-      cameraZ = Math.max(maxDim * 3, 1000)
-    }
-
-    camera!.position.set(cameraZ * 0.7, cameraZ * 0.5, cameraZ * 0.7)
-    camera!.lookAt(0, 0, 0)
-
-    if (controls) {
-      controls.target.set(0, 0, 0)
-      controls.update()
-    }
+    fitCameraToBox(new THREE.Box3().setFromObject(model))
+    refreshGridHelper(new THREE.Box3().setFromObject(model))
 
     // 8. 添加到场景
     scene.add(model)
     console.log('✅ 新模型已添加到场景')
 
-    // 9. 调整网格
-    if (gridHelper) {
-      const modelBox = new THREE.Box3().setFromObject(model)
-      gridHelper.position.y = modelBox.min.y
-    }
-
-    // 10. 初始化显示状态
+    // 9. 初始化显示状态
     isExploded.value = true
     updateStepDisplay(false)
 
@@ -3115,6 +4061,7 @@ const updateStepDisplay = (animate = true) => {
 
   const assembledSet = new Set(assembledNodeNames.value)
   const currentSet = new Set(currentStepNodeNames.value)
+  const manualStatusCache = new Map<string, AssemblyStatus | null>()
 
   // 材质定义
   const highlightMaterial = new THREE.MeshStandardMaterial({
@@ -3140,6 +4087,46 @@ const updateStepDisplay = (animate = true) => {
   const explodeDistanceBase = isExploded.value ? maxDim * (explodeScale.value / 100 || 0.25) : 0
 
   let processed = 0
+
+  // 解析当前零件的手动状态，支持向前继承未装/已装
+  const resolveManualStatus = (meshKey: string): AssemblyStatus | null => {
+    if (manualStatusCache.has(meshKey)) {
+      return manualStatusCache.get(meshKey) || null
+    }
+
+    let status: AssemblyStatus | null = null
+
+    // 当前步骤的手动状态
+    const stepId = currentStepData.value?.step_id
+    if (stepId) {
+      const stepStates = partAssemblyStates.value.get(stepId)
+      status = stepStates?.get(meshKey) || null
+    }
+
+    // 向前继承：未装/正在装/已装都可继承，取最近一次
+    if (!status && currentStepIndex.value > 0) {
+      for (let i = currentStepIndex.value - 1; i >= 0; i--) {
+        const prevStepId = allSteps.value[i]?.step_id
+        if (!prevStepId) continue
+        const prevStepStates = partAssemblyStates.value.get(prevStepId)
+        const prevStatus = prevStepStates?.get(meshKey)
+        if (!prevStatus) continue
+
+        if (prevStatus === 'not_installed') {
+          status = 'not_installed'
+          break
+        }
+        if (prevStatus === 'installing' || prevStatus === 'installed') {
+          status = 'installed'
+          break
+        }
+      }
+    }
+
+    manualStatusCache.set(meshKey, status)
+    return status
+  }
+
   model.traverse((child: any) => {
     if (!child.isMesh) return
     const originalWorldPos = meshWorldOriginalPositions.get(child.uuid)
@@ -3157,25 +4144,7 @@ const updateStepDisplay = (animate = true) => {
     const isAssembled = assembledSet.has(child.name)
 
     // ✅ 先获取手动状态（位置和颜色都需要用）
-    // meshKey 已在上面定义
-    const stepId = currentStepData.value?.step_id
-    const stepStates = stepId ? partAssemblyStates.value.get(stepId) : null
-    let manualStatus = stepStates?.get(meshKey)
-
-    // ✅ 状态继承：如果当前步骤没有手动状态，检查之前步骤
-    // 第N步设为"正在装"的零件，在第N+1步及之后应自动变成"已装"
-    if (!manualStatus && currentStepIndex.value > 0) {
-      for (let i = currentStepIndex.value - 1; i >= 0; i--) {
-        const prevStepId = allSteps.value[i]?.step_id
-        if (!prevStepId) continue
-        const prevStepStates = partAssemblyStates.value.get(prevStepId)
-        const prevStatus = prevStepStates?.get(meshKey)
-        if (prevStatus === 'installing' || prevStatus === 'installed') {
-          manualStatus = 'installed'  // 之前设为正在装/已装，现在视为已装
-          break
-        }
-      }
-    }
+    const manualStatus = resolveManualStatus(meshKey)
 
     // ✅ 位置逻辑：手动状态优先，再用自动逻辑（修复颜色和位置不一致的问题）
     let targetWorld: THREE.Vector3
@@ -3421,6 +4390,25 @@ const getPartStatusByStep = (stepId: string, meshKey: string): AssemblyStatus | 
 const setPartStatus = (status: AssemblyStatus) => {
   if (!selectedMesh.value) return
 
+  // 只读/非管理员模式下禁止修改
+  if (isReadOnlyMode.value) {
+    ElMessage.warning('历史版本为只读，无法修改零件状态')
+    closeStatusPopup()
+    return
+  }
+  if (!isAdmin.value) {
+    ElMessage.warning('仅管理员可修改零件状态')
+    closeStatusPopup()
+    return
+  }
+
+  // ⚠️ 暂时禁用“已装”按钮（不删除逻辑，防止其他路径误调用）
+  if (status === 'installed' && disableInstalledStatusOption.value) {
+    ElMessage.warning('“已装”状态暂时禁用，请使用“未装 / 正在装”')
+    closeStatusPopup()
+    return
+  }
+
   const stepId = currentStepData.value?.step_id
   if (!stepId) {
     console.warn('⚠️ 当前步骤没有 step_id，无法保存状态')
@@ -3499,6 +4487,18 @@ const autoSavePartStates = () => {
       // 不显示错误提示，避免干扰用户操作
     }
   }, 500)
+}
+
+// 丢弃草稿后恢复零件可见性（避免残留隐藏状态）
+const restoreAllPartsVisibility = () => {
+  if (!model) return
+  model.traverse((child: any) => {
+    if (!child.isMesh) return
+    const meshKey = child.name || child.uuid
+    if (!deletedParts.value.has(meshKey)) {
+      child.visible = true
+    }
+  })
 }
 
 // 删除零件（全局隐藏）
@@ -3702,20 +4702,7 @@ const toggleWireframe = () => {
 // 重置相机
 const resetCamera = () => {
   if (!camera || !controls || !model) return
-
-  const box = new THREE.Box3().setFromObject(model)
-  const center = box.getCenter(new THREE.Vector3())
-  const size = box.getSize(new THREE.Vector3())
-
-  const maxDim = Math.max(size.x, size.y, size.z)
-  const fov = camera.fov * (Math.PI / 180)
-  let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2))
-  cameraZ *= 1.5
-
-  camera.position.set(cameraZ, cameraZ, cameraZ)
-  camera.lookAt(0, 0, 0)
-  controls.target.set(0, 0, 0)
-  controls.update()
+  fitCameraToBox(new THREE.Box3().setFromObject(model))
 }
 
 
@@ -3755,15 +4742,63 @@ onMounted(() => {
 
   // ✅ 只需要加载数据，3D初始化会在数据加载完成后自动执行
   loadLocalJSON()
+
+  // 移动端导航守卫：优先关闭图片预览/抽屉，防止物理返回直接离开
+  if (typeof window !== 'undefined' && router) {
+    const handlePopState = () => {
+      // 如果是手动关闭时触发的 back，则不再重复处理
+      if (closingOverlayFromManual) return
+      if (overlayStack.length > 0) {
+        closingOverlayFromPopstate = true
+        const type = overlayStack.pop()
+        if (type === 'image') {
+          mobileImagePreviewVisible.value = false
+          resetMobileImageTransform()
+        } else if (type === 'drawer') {
+          showDrawingsDrawer.value = false
+          showDetailsDrawer.value = false
+        }
+        closingOverlayFromPopstate = false
+      }
+    }
+    window.addEventListener('popstate', handlePopState)
+
+    // 抽屉打开/关闭时同步历史栈，保证返回键先关抽屉
+    watch([showDrawingsDrawer, showDetailsDrawer], ([newDraw, newDetail], [oldDraw, oldDetail]) => {
+      if (!isMobile.value) return
+      const wasOpen = oldDraw || oldDetail
+      const nowOpen = newDraw || newDetail
+
+      if (nowOpen && !wasOpen && typeof window !== 'undefined') {
+        try {
+          window.history.pushState({ overlay: 'drawer' }, '', window.location.href)
+          overlayStack.push('drawer')
+        } catch (err) {
+          console.warn('⚠️ 抽屉 pushState 失败，返回键行为可能异常:', err)
+        }
+      }
+
+      if (!nowOpen && wasOpen && overlayStack.length > 0 && typeof window !== 'undefined') {
+        if (closingOverlayFromPopstate) return
+        const top = overlayStack[overlayStack.length - 1]
+        if (top === 'drawer') {
+          try {
+            closingOverlayFromManual = true
+            overlayStack.pop()
+            window.history.back()
+          } catch (err) {
+            console.warn('⚠️ 抽屉关闭回退历史失败:', err)
+          } finally {
+            closingOverlayFromManual = false
+          }
+        }
+      }
+    })
+  }
 })
 
 onUnmounted(() => {
-  if (renderer) {
-    renderer.dispose()
-  }
-  if (controls) {
-    controls.dispose()
-  }
+  cleanup3DViewer()
   // ✅ 清理自动保存计时器
   if (autoSaveTimer) {
     clearTimeout(autoSaveTimer)
@@ -3774,6 +4809,10 @@ onUnmounted(() => {
     clearInterval(autoPlayTimer)
     autoPlayTimer = null
   }
+  overlayHistoryDepth = 0
+  imageViewerVisible.value = false
+  mobileImagePreviewVisible.value = false
+  restoreTouchAction()
 })
 </script>
 
@@ -3852,6 +4891,11 @@ onUnmounted(() => {
       &.blue {
         background: #4a90e2;
       }
+      &.disabled-installed {
+        background: #4a90e2;
+        opacity: 0.35;
+        border: 1px dashed #4a90e2;
+      }
     }
   }
 
@@ -3862,6 +4906,68 @@ onUnmounted(() => {
     display: flex;
     justify-content: center;
   }
+}
+
+.installed-disabled-button {
+  .disabled-label {
+    margin-left: 4px;
+    color: #f56c6c !important;
+    font-weight: 600;
+  }
+}
+
+.step-order-hint {
+  margin-bottom: 10px;
+}
+
+.step-order-list {
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.step-order-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  background: #f5f7fa;
+  border-radius: 8px;
+  user-select: none;
+
+  &.current {
+    background: #fff7e6;
+    border: 1px solid #ffd591;
+  }
+}
+
+.step-order-ghost {
+  opacity: 0.45;
+}
+
+.step-order-chosen {
+  background: #e6f7ff;
+}
+
+.drag-handle {
+  cursor: grab;
+  color: #999;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.step-number {
+  color: #409eff;
+  font-weight: 600;
+}
+
+.step-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 // 已删除零件下拉菜单
@@ -4429,6 +5535,14 @@ onUnmounted(() => {
   }
 }
 
+.step-detail-card .step-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  justify-content: flex-start;
+}
+
 .right-sidebar {
   padding: 16px;
 
@@ -4438,9 +5552,9 @@ onUnmounted(() => {
     .step-header {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 12px;
       margin-bottom: 20px;
-      justify-content: space-between;
+      justify-content: flex-start;
 
       .step-admin-actions {
         display: flex;
@@ -4611,6 +5725,7 @@ onUnmounted(() => {
   overflow-y: auto;
 }
 
+/* 全屏查看图纸时，隐藏全局导航栏并去掉顶部间距 */
 @media (max-width: 1024px) {
   .worker-manual-viewer {
     height: auto;
@@ -4702,6 +5817,59 @@ onUnmounted(() => {
   .left-sidebar {
     display: none;
   }
+
+  /* 移动端：图纸按宽度自适应，去掉 60vh 限高，避免缩小时留白 */
+  .drawing-section-full .drawing-item .drawing-image,
+  .mobile-drawer-body .drawing-item .drawing-image {
+    width: 100%;
+    height: auto;
+    max-height: none;
+    object-fit: contain;
+  }
+}
+
+.mobile-image-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 5000; // 提高层级，确保盖过 Drawer/Mask
+  display: flex;
+  flex-direction: column;
+  backdrop-filter: blur(2px);
+
+  .mobile-image-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 14px;
+    color: #fff;
+    font-size: 15px;
+
+    .mobile-image-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+  }
+
+  .mobile-image-wrapper {
+    flex: 1;
+    overflow: hidden;
+    padding: 8px;
+    touch-action: none;
+    position: relative;
+
+    img {
+      max-width: none;
+      max-height: none;
+      width: auto;
+      height: auto;
+      display: block;
+      margin: 0;
+      background: #fff;
+      border-radius: 6px;
+    }
+  }
 }
 
 // 移动端横屏强化布局：保持 3D 主视区，压缩边距
@@ -4743,5 +5911,16 @@ onUnmounted(() => {
   }
 }
 
-</style>
+.draft-dialog-actions {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 
+.draft-dialog-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+</style>

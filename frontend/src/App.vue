@@ -24,7 +24,7 @@
             <el-icon><View /></el-icon>
             <span>查看器</span>
           </router-link>
-          <router-link to="/settings" class="nav-item" active-class="active">
+          <router-link to="/settings" class="nav-item" active-class="active" v-if="false">
             <el-icon v-if="false"><Setting /></el-icon>
             <span v-if="false">设置</span>
           </router-link>
@@ -85,9 +85,14 @@
     <!-- 主要内容区域 -->
     <main class="app-main">
       <router-view v-slot="{ Component }">
-        <transition name="page" mode="out-in">
-          <component :is="Component" />
-        </transition>
+        <component
+          v-if="Component"
+          :is="Component"
+          :key="$route.fullPath"
+        />
+        <div v-else class="route-fallback">
+          页面加载中，请稍候…
+        </div>
       </router-view>
     </main>
 
@@ -299,6 +304,13 @@ const showHelp = () => {
 @keyframes grid-move {
   0% { transform: translate(0, 0); }
   100% { transform: translate(50px, 50px); }
+}
+
+.route-fallback {
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--el-text-color-regular);
+  font-size: 16px;
 }
 
 // 页面切换动画
