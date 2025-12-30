@@ -551,7 +551,7 @@ onUnmounted(() => {
   justify-content: flex-start;
   padding: 10px 80px 40px 80px; /* 顶部进一步收紧 */
   color: var(--text-color);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .main-title-section {
@@ -569,12 +569,15 @@ onUnmounted(() => {
 .main-title {
   font-size: 6rem;
   font-weight: 900;
-  line-height: 0.9;
+  line-height: 1.05;
   margin-bottom: 20px; /* 收紧与下方的间距 */
   text-transform: uppercase;
 
   .title-line {
     display: block;
+    line-height: 1.08;
+    padding: 0;
+    margin: 4px 0;
     background: linear-gradient(45deg, var(--text-color), var(--accent-color));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;

@@ -164,51 +164,58 @@
     </div>
 
     <!-- 主工作区 -->
-    <div class="main-workspace">
+    <div class="main-workspace" :style="mainWorkspaceStyle">
       <!-- 左侧：图纸参考（全屏显示） -->
-      <div class="left-sidebar" v-if="!isMobile">
-      <div class="drawing-section-full">
-        <div class="section-title">
-          📐 图纸参考
-          <span v-if="drawingImages.length > 1" class="page-indicator">
-            共{{ drawingImages.length }}张
-          </span>
-        </div>
-        <el-scrollbar class="drawings-container">
-          <div class="drawings-list">
-            <div
-              v-for="(drawingUrl, index) in drawingImages"
-              :key="index"
-              class="drawing-item"
-              @click="openImageViewer(index)"
-              @touchstart="handleDrawingTouchStart(index, $event)"
-              @touchmove="handleDrawingTouchMove(index, $event)"
-              @touchend="handleDrawingTouchEnd"
-              @touchcancel="handleDrawingTouchEnd"
-            >
-              <div class="drawing-zoom-bar" v-if="isMobile" @click.stop>
-                <el-button size="small" @click.stop="setDrawingScale(index, -0.1)">缩小</el-button>
-                <span class="scale-text">{{ Math.round(getDrawingScale(index) * 100) }}%</span>
-                <el-button size="small" @click.stop="setDrawingScale(index, 0.1)">放大</el-button>
-                <el-button size="small" type="info" @click.stop="resetDrawingScale(index)">重置</el-button>
+      <div class="left-sidebar" v-if="!isMobile" :class="{ 'is-collapsed': isLeftSidebarCollapsed }">
+        <div class="sidebar-content">
+          <div class="drawing-section-full">
+            <div class="section-title">
+              📐 图纸参考
+              <span v-if="drawingImages.length > 1" class="page-indicator">
+                共{{ drawingImages.length }}张
+              </span>
+            </div>
+            <el-scrollbar class="drawings-container">
+              <div class="drawings-list">
+                <div
+                  v-for="(drawingUrl, index) in drawingImages"
+                  :key="index"
+                  class="drawing-item"
+                  @click="openImageViewer(index)"
+                  @touchstart="handleDrawingTouchStart(index, $event)"
+                  @touchmove="handleDrawingTouchMove(index, $event)"
+                  @touchend="handleDrawingTouchEnd"
+                  @touchcancel="handleDrawingTouchEnd"
+                >
+                  <div class="drawing-zoom-bar" v-if="isMobile" @click.stop>
+                    <el-button size="small" @click.stop="setDrawingScale(index, -0.1)">缩小</el-button>
+                    <span class="scale-text">{{ Math.round(getDrawingScale(index) * 100) }}%</span>
+                    <el-button size="small" @click.stop="setDrawingScale(index, 0.1)">放大</el-button>
+                    <el-button size="small" type="info" @click.stop="resetDrawingScale(index)">重置</el-button>
+                  </div>
+                  <img
+                    :src="drawingUrl"
+                    :alt="`工程图纸 ${index + 1}`"
+                    class="drawing-image"
+                    :style="{
+                      transform: `scale(${getDrawingScale(index)})`,
+                      transformOrigin: 'top center'
+                    }"
+                    @dragstart.prevent
+                  />
+                </div>
+                <div v-if="drawingImages.length === 0" class="drawing-placeholder">
+                  <el-icon :size="64" color="#ccc"><Picture /></el-icon>
+                  <p>暂无图纸</p>
+                </div>
               </div>
-              <img
-                :src="drawingUrl"
-                :alt="`工程图纸 ${index + 1}`"
-                class="drawing-image"
-                :style="{
-                  transform: `scale(${getDrawingScale(index)})`,
-                  transformOrigin: 'top center'
-                }"
-                @dragstart.prevent
-              />
-            </div>
-            <div v-if="drawingImages.length === 0" class="drawing-placeholder">
-              <el-icon :size="64" color="#ccc"><Picture /></el-icon>
-              <p>暂无图纸</p>
-            </div>
-            </div>
-          </el-scrollbar>
+            </el-scrollbar>
+          </div>
+        </div>
+
+        <div class="split-handle split-handle-left" @pointerdown="startSidebarResize('left', $event)"></div>
+        <div class="split-toggle left" :title="isLeftSidebarCollapsed ? '展开图纸' : '收起图纸'" @click="toggleLeftSidebar">
+          {{ isLeftSidebarCollapsed ? '⟩' : '⟨' }}
         </div>
       </div>
 
@@ -377,8 +384,9 @@
       </div>
 
       <!-- 右侧：当前步骤详情 -->
-      <div class="right-sidebar" v-if="!isMobile">
-        <el-scrollbar height="100%">
+      <div class="right-sidebar" v-if="!isMobile" :class="{ 'is-collapsed': isRightSidebarCollapsed }">
+        <div class="sidebar-content">
+          <el-scrollbar height="100%">
 
           <!-- 当前步骤 -->
           <div class="step-detail-card" v-if="currentStepData">
@@ -517,7 +525,13 @@
               </el-tab-pane>
             </el-tabs>
           </div>
-        </el-scrollbar>
+          </el-scrollbar>
+        </div>
+
+        <div class="split-handle split-handle-right" @pointerdown="startSidebarResize('right', $event)"></div>
+        <div class="split-toggle right" :title="isRightSidebarCollapsed ? '展开步骤' : '收起步骤'" @click="toggleRightSidebar">
+          {{ isRightSidebarCollapsed ? '⟨' : '⟩' }}
+        </div>
       </div>
     </div>
 
@@ -1258,7 +1272,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch, nextTick, reactive } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick, reactive, type CSSProperties } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
@@ -1311,6 +1325,128 @@ const props = defineProps<{
 }>()
 
 const isMobile = useMediaQuery('(max-width: 1024px)')
+
+// ============ 桌面端：左右侧栏拖拽/折叠（方案B） ============
+const SIDEBAR_RAIL_WIDTH = 16
+const LEFT_SIDEBAR_DEFAULT_WIDTH = 300
+const RIGHT_SIDEBAR_DEFAULT_WIDTH = 400
+const LEFT_SIDEBAR_MIN_WIDTH = 200
+const LEFT_SIDEBAR_MAX_WIDTH = 420
+const RIGHT_SIDEBAR_MIN_WIDTH = 280
+const RIGHT_SIDEBAR_MAX_WIDTH = 520
+
+const leftSidebarWidth = ref(LEFT_SIDEBAR_DEFAULT_WIDTH)
+const rightSidebarWidth = ref(RIGHT_SIDEBAR_DEFAULT_WIDTH)
+const lastLeftExpandedWidth = ref(LEFT_SIDEBAR_DEFAULT_WIDTH)
+const lastRightExpandedWidth = ref(RIGHT_SIDEBAR_DEFAULT_WIDTH)
+
+const isLeftSidebarCollapsed = computed(() => leftSidebarWidth.value <= SIDEBAR_RAIL_WIDTH)
+const isRightSidebarCollapsed = computed(() => rightSidebarWidth.value <= SIDEBAR_RAIL_WIDTH)
+
+const mainWorkspaceStyle = computed<CSSProperties>(() => {
+  if (isMobile.value) return {}
+  return {
+    gridTemplateColumns: `${leftSidebarWidth.value}px 1fr ${rightSidebarWidth.value}px`
+  }
+})
+
+const clampNumber = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value))
+
+let sidebarResizeRaf: number | null = null
+const schedule3DViewerResize = () => {
+  if (sidebarResizeRaf !== null) return
+  sidebarResizeRaf = requestAnimationFrame(() => {
+    sidebarResizeRaf = null
+    // 侧栏宽度变化不会触发 window resize，这里主动重算 3D 画布尺寸
+    if (resizeHandler) {
+      resizeHandler()
+    } else {
+      window.dispatchEvent(new Event('resize'))
+    }
+  })
+}
+
+type SidebarSide = 'left' | 'right'
+let sidebarDragCleanup: (() => void) | null = null
+
+const startSidebarResize = (side: SidebarSide, event: PointerEvent) => {
+  if (isMobile.value) return
+  if (event.button !== 0) return
+
+  event.preventDefault()
+
+  const startX = event.clientX
+  const startLeftWidth = leftSidebarWidth.value
+  const startRightWidth = rightSidebarWidth.value
+
+  document.body.style.cursor = 'col-resize'
+  document.body.style.userSelect = 'none'
+
+  const handleMove = (moveEvent: PointerEvent) => {
+    const dx = moveEvent.clientX - startX
+    if (side === 'left') {
+      const next = clampNumber(startLeftWidth + dx, LEFT_SIDEBAR_MIN_WIDTH, LEFT_SIDEBAR_MAX_WIDTH)
+      leftSidebarWidth.value = next
+      if (next > SIDEBAR_RAIL_WIDTH) lastLeftExpandedWidth.value = next
+    } else {
+      const next = clampNumber(startRightWidth - dx, RIGHT_SIDEBAR_MIN_WIDTH, RIGHT_SIDEBAR_MAX_WIDTH)
+      rightSidebarWidth.value = next
+      if (next > SIDEBAR_RAIL_WIDTH) lastRightExpandedWidth.value = next
+    }
+    schedule3DViewerResize()
+  }
+
+  const handleUp = () => {
+    sidebarDragCleanup?.()
+  }
+
+  sidebarDragCleanup = () => {
+    window.removeEventListener('pointermove', handleMove)
+    window.removeEventListener('pointerup', handleUp)
+    document.body.style.cursor = ''
+    document.body.style.userSelect = ''
+    sidebarDragCleanup = null
+  }
+
+  try {
+    const target = event.currentTarget as HTMLElement | null
+    target?.setPointerCapture?.(event.pointerId)
+  } catch {
+    // ignore
+  }
+
+  window.addEventListener('pointermove', handleMove, { passive: true })
+  window.addEventListener('pointerup', handleUp, { passive: true })
+}
+
+const toggleLeftSidebar = () => {
+  if (isLeftSidebarCollapsed.value) {
+    leftSidebarWidth.value = clampNumber(
+      lastLeftExpandedWidth.value || LEFT_SIDEBAR_DEFAULT_WIDTH,
+      LEFT_SIDEBAR_MIN_WIDTH,
+      LEFT_SIDEBAR_MAX_WIDTH
+    )
+  } else {
+    lastLeftExpandedWidth.value = leftSidebarWidth.value
+    leftSidebarWidth.value = SIDEBAR_RAIL_WIDTH
+  }
+  schedule3DViewerResize()
+}
+
+const toggleRightSidebar = () => {
+  if (isRightSidebarCollapsed.value) {
+    rightSidebarWidth.value = clampNumber(
+      lastRightExpandedWidth.value || RIGHT_SIDEBAR_DEFAULT_WIDTH,
+      RIGHT_SIDEBAR_MIN_WIDTH,
+      RIGHT_SIDEBAR_MAX_WIDTH
+    )
+  } else {
+    lastRightExpandedWidth.value = rightSidebarWidth.value
+    rightSidebarWidth.value = SIDEBAR_RAIL_WIDTH
+  }
+  schedule3DViewerResize()
+}
+
 const showDrawingsDrawer = ref(false)
 const showDetailsDrawer = ref(false)
 let viewerInitAttempts = 0
@@ -3372,7 +3508,7 @@ const startAutoPlay = () => {
       stopAutoPlay()
       ElMessage.success('播放完成')
     }
-  }, 5000) // 5秒间隔
+  }, 3000) // 3秒间隔
 }
 
 const stopAutoPlay = () => {
@@ -4799,6 +4935,11 @@ onMounted(() => {
 
 onUnmounted(() => {
   cleanup3DViewer()
+  sidebarDragCleanup?.()
+  if (sidebarResizeRaf !== null) {
+    cancelAnimationFrame(sidebarResizeRaf)
+    sidebarResizeRaf = null
+  }
   // ✅ 清理自动保存计时器
   if (autoSaveTimer) {
     clearTimeout(autoSaveTimer)
@@ -5204,16 +5345,102 @@ onUnmounted(() => {
 .left-sidebar, .right-sidebar {
   background: white;
   border-radius: 12px;
-  overflow: hidden;
+  overflow: visible; // 允许折叠按钮在侧栏收起时露出（不压到 3D）
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   min-height: 0;  // ✅ 让 grid 子元素可以收缩
+  position: relative;
+}
+
+.sidebar-content {
+  height: 100%;
+  box-sizing: border-box;
+  overflow: hidden; // 内容区继续裁剪，避免溢出破坏圆角
+  border-radius: 12px;
+}
+
+.left-sidebar.is-collapsed .sidebar-content,
+.right-sidebar.is-collapsed .sidebar-content {
+  display: none; // 收起时隐藏内容，避免出现“残字”
+}
+
+.split-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  cursor: col-resize;
+  background: linear-gradient(#eef1ff, #fafbff);
+  opacity: 0.18;
+  transition: opacity 0.15s;
+  user-select: none;
+  touch-action: none;
+}
+
+.split-handle:hover {
+  opacity: 0.9;
+}
+
+.split-handle-left {
+  right: 0;
+}
+
+.split-handle-right {
+  left: 0;
+}
+
+.split-toggle {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 30;
+  height: 28px;
+  width: 28px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  cursor: pointer;
+  user-select: none;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.split-toggle:hover {
+  transform: translateY(-50%) scale(1.06);
+}
+
+.split-toggle.left {
+  right: 0;
+  border-left: none;
+  border-radius: 0 14px 14px 0;
+}
+
+.split-toggle.right {
+  left: 0;
+  border-right: none;
+  border-radius: 14px 0 0 14px;
+}
+
+/* 默认隐藏：仅在悬浮侧栏边缘/拖拽线时展示 */
+.left-sidebar:hover .split-toggle.left,
+.right-sidebar:hover .split-toggle.right,
+.split-handle:hover + .split-toggle,
+.split-toggle:hover {
+  opacity: 0.95;
+  pointer-events: auto;
 }
 
 .left-sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 16px;
+  .sidebar-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+  }
 
   .section-title {
     font-size: 16px;
@@ -5544,7 +5771,10 @@ onUnmounted(() => {
 }
 
 .right-sidebar {
-  padding: 16px;
+  .sidebar-content {
+    height: 100%;
+    padding: 16px;
+  }
 
   .step-detail-card {
     margin-bottom: 16px;

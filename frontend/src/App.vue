@@ -4,7 +4,7 @@
     <nav class="app-nav">
       <div class="nav-content">
         <div class="nav-brand">
-          <img class="brand-icon" src="/image.png" alt="品牌Logo" />
+          <img class="brand-icon" src="/logo.png" alt="品牌Logo" />
           <div class="brand-text">
             <h1>易力特AI智能装配平台</h1>
             <span>AI Assembly Manual Generator</span>
@@ -191,9 +191,9 @@ const showHelp = () => {
     gap: 12px;
     
     .brand-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 10px;
+      width: 56px;
+      height: 56px;
+      border-radius: 12px;
       object-fit: contain;
       display: block;
       background: none;
