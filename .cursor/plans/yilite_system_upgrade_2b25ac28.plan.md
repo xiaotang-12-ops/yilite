@@ -1,4 +1,66 @@
-<!-- 072ca783-d5ea-4cdd-9f70-0b24fd63c6bf a24f9862-2423-4c08-9cfb-26f9718638ec -->
+---
+name: Yilite System Upgrade
+overview: ""
+todos:
+  - id: phase1-storage
+    content: "[Backend] 创建 core/storage.py 实现 ManualStorage 类"
+    status: pending
+  - id: phase1-api
+    content: "[Backend] 改造 simple_app.py 新增版本控制相关接口"
+    status: pending
+  - id: phase1-split-page
+    content: "[Frontend] 拆分 ManualViewer 为 Viewer 和 Editor 页面"
+    status: pending
+  - id: phase1-version-ui
+    content: "[Frontend] Editor页面增加版本历史和发布按钮"
+    status: pending
+  - id: phase1-description
+    content: "[Frontend] Editor页面新增步骤描述编辑tab"
+    status: pending
+  - id: phase2-planner
+    content: "[Backend] 新增 core/simple_planner.py 替代Agent1"
+    status: pending
+  - id: todo-1764038237806-nbbqucpn8
+    content: "[Backend] 重构 file_classifier.py 增加BOM内容分析"
+    status: pending
+  - id: phase2-api
+    content: "[Backend] 新增 upload_single/generate_single 接口"
+    status: pending
+  - id: phase2-generator
+    content: "[Frontend] 改造 Generator.vue 为单文件上传UI"
+    status: pending
+  - id: phase2-prompt
+    content: "[Prompt] 修改 Agent3/4 提示词强制BOM序号排序"
+    status: pending
+  - id: phase3-mobile-layout
+    content: "[Frontend] ManualViewer 增加手机端专属布局"
+    status: pending
+  - id: phase3-swipe
+    content: "[Frontend] 实现滑动手势切换步骤"
+    status: pending
+  - id: phase3-big-buttons
+    content: "[Frontend] 添加底部大按钮导航"
+    status: pending
+  - id: phase3-autoplay
+    content: "[Frontend] 实现自动播放功能"
+    status: pending
+  - id: phase3-step-display
+    content: "[Frontend] ThreeViewer 实现逐步显示逻辑"
+    status: pending
+  - id: phase4a-upload
+    content: "[Backend] 实现资产上传接口"
+    status: pending
+  - id: phase4a-transform
+    content: "[Frontend] 集成 TransformControls 实现模型拖拽"
+    status: pending
+  - id: phase4a-save
+    content: "[Frontend] 实现 external_models 数据保存与回显"
+    status: pending
+  - id: phase4b-insert
+    content: "[Frontend] (可选) 步骤插入与重新编号逻辑"
+    status: pending
+---
+
 # Yilite 系统升级技术方案 V10 (重组版)
 
 ## 📋 目录
@@ -329,282 +391,129 @@ PDF + STEP
 
 ## 阶段1：版本控制与草稿发布（基础设施）
 
-## 🎨 方案详细描述
+> **目标**：建立稳定的数据存储和版本管理机制
+> **依赖**：无
+> **预计时间**：1周
+> **验收标准**：
+> - ✅ 支持草稿保存和发布
+> - ✅ 自动生成版本历史
+> - ✅ 前端分离查看和编辑页面
+> - ✅ 支持步骤描述编辑
+> - ✅ 旧数据自动迁移
 
-### 一、ManualViewer.vue（当前页面，小幅调整）
+### 1.1 旧数据迁移 (自动)
 
-#### **1. 管理员按钮区域（改动）**
+**触发条件**: assembly_manual.json存在 且 versions/不存在
 
-**现在的样子：**
-```
-[管理员模式标签] [编辑内容] [退出]
-```
+**迁移动作**:
+1. 创建versions/目录
+2. 为现有数据添加version字段
+3. 归档为v1.json
+4. 添加迁移日志
 
-**改为：**
-```
-┌────────────────────────────────────────────────────┐
-│ [✅ 管理员模式] [✏️ 编辑内容] [🚀 发布新版本]       │
-│ [📜 历史版本] [退出]                                │
-└────────────────────────────────────────────────────┘
-```
+### 1.2 ManualStorage类 (core/storage.py)
 
-#### **2. 编辑 Dialog（保存按钮改名）**
+```python
+class ManualStorage:
+    """装配手册存储管理器"""
 
-**现在的按钮：**
-```html
-<el-button type="primary" @click="saveManualData">保存</el-button>
-```
+    def __init__(self, task_id: str):
+        self.task_id = task_id
+        self.output_dir = Path(f"output/{task_id}")
+        self.versions_dir = self.output_dir / "versions"
 
-**改为：**
-```html
-<el-button type="primary" @click="saveDraft">💾 保存草稿</el-button>
-```
+    def get_published(self) -> dict:
+        """获取已发布版本（工人查看）"""
 
-#### **3. 新增发布 Dialog**
+    def get_draft(self) -> dict:
+        """获取草稿（编辑者编辑）"""
 
-点击"发布新版本"按钮后弹出：
+    def save_draft(self, data: dict) -> None:
+        """保存草稿（不生成版本）"""
 
-```
-┌─────────────── 🚀 发布新版本 ───────────────┐
-│                                              │
-│  当前版本：v2                                │
-│  即将发布：v3                                │
-│                                              │
-│  📝 版本说明（必填）：                       │
-│  ┌──────────────────────────────────────┐  │
-│  │ 修改了步骤5的焊接要求                │  │
-│  │ 更新了步骤10的安全警告               │  │
-│  │                                      │  │
-│  └──────────────────────────────────────┘  │
-│                                              │
-│  变更预览：                                  │
-│  - 修改了 2 个步骤                           │
-│  - 新增了 1 条FAQ                            │
-│                                              │
-│           [取消]     [确认发布✅]            │
-└──────────────────────────────────────────────┘
-```
+    def publish(self, changelog: str = "") -> str:
+        """发布草稿（生成新版本）"""
 
----
+    def discard_draft(self) -> None:
+        """放弃草稿修改"""
 
-### 二、VersionHistory.vue（新页面，管理员专属）
+    def get_version_history(self) -> List[dict]:
+        """获取版本历史列表"""
 
-#### **页面入口**
-- 管理员在 ManualViewer.vue 点击"历史版本"按钮
-- 跳转到 `/version-history/:taskId`
+    def get_version(self, version: str) -> dict:
+        """获取指定版本"""
 
-#### **页面布局**
-
-```
-┌────────────────────────────────────────────────────────┐
-│  📜 装配手册历史版本 - 某产品名称                       │
-│  [← 返回当前版本]                                       │
-└────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────┐
-│  版本时间线                                              │
-├─────────────────────────────────────────────────────────┤
-│                                                          │
-│  🟢 v3（当前已发布）⭐                                  │
-│  📅 2025-01-20 14:30                                    │
-│  📝 修改了步骤5的焊接要求，更新了步骤10的安全警告       │
-│  [👁️ 预览] [⏪ 回滚到此版本]                           │
-│                                                          │
-│  ──────────────────────────────────────────────────── │
-│                                                          │
-│  ⚪ v2                                                   │
-│  📅 2025-01-15 09:15                                    │
-│  📝 增加了步骤20的质量检查项                            │
-│  [👁️ 预览] [⏪ 回滚到此版本]                           │
-│                                                          │
-│  ──────────────────────────────────────────────────── │
-│                                                          │
-│  ⚪ v1（初始版本）                                      │
-│  📅 2025-01-10 10:00                                    │
-│  📝 首次发布装配手册                                     │
-│  [👁️ 预览]                                              │
-│                                                          │
-└─────────────────────────────────────────────────────────┘
+    def _migrate_old_data(self) -> None:
+        """自动迁移旧数据"""
 ```
 
-#### **预览功能**
-点击"预览"按钮后：
-- 在新窗口/对话框中以**只读模式**显示该版本的装配手册
-- 界面与 ManualViewer.vue 相同，但无编辑功能
-- 可以查看3D模型、图纸、步骤详情
+### 1.3 API接口
 
-#### **回滚功能**
-点击"回滚到此版本"按钮后：
+```python
+# simple_app.py 新增接口
 
-```
-┌────────────── ⚠️ 确认回滚 ──────────────┐
-│                                          │
-│  确定要回滚到版本 v2 吗？                │
-│                                          │
-│  注意：                                  │
-│  - 当前草稿的修改将被丢弃                │
-│  - 回滚后会创建新版本 v4                 │
-│  - 原版本 v3 会保留在历史记录中          │
-│                                          │
-│        [取消]     [确认回滚]             │
-└──────────────────────────────────────────┘
+GET  /api/manual/{task_id}/view              # 获取已发布版本
+GET  /api/manual/{task_id}/edit              # 获取草稿
+POST /api/manual/{task_id}/save              # 保存草稿
+POST /api/manual/{task_id}/publish           # 发布（生成版本）
+POST /api/manual/{task_id}/discard           # 放弃草稿
+GET  /api/manual/{task_id}/history           # 版本历史
+GET  /api/manual/{task_id}/version/{v}       # 获取指定版本
 ```
 
----
+### 1.4 前端双页面
 
-### 三、完整操作流程演示
+**ManualViewer.vue (工人查看)**
+- 只读模式
+- 调用 `/api/manual/{task_id}/view`
+- 显示已发布的稳定版本
+- 无编辑按钮
 
-#### **场景1：编辑 → 草稿 → 发布**
+**ManualEditor.vue (管理员编辑)**
+- 可编辑模式
+- 调用 `/api/manual/{task_id}/edit`
+- 显示草稿版本
+- 提供 [保存草稿] [发布] [放弃修改] 按钮
+- 显示版本历史
 
-```
-[管理员登录]
-    ↓
-[点击"编辑内容"]
-    ↓
-[修改步骤5的焊接要求]
-    ↓
-[点击"保存草稿💾"]
-    ↓
-✅ 草稿已保存到 draft.json
-    ↓
-[继续修改步骤10、步骤15...]
-    ↓
-[多次点击"保存草稿"]
-    ↓
-所有修改都在 draft.json 中，不影响工人看到的版本
-    ↓
-[管理员满意后，点击"发布新版本🚀"]
-    ↓
-弹出发布对话框
-    ↓
-[填写版本说明："修改了5个步骤的焊接要求"]
-    ↓
-[点击"确认发布✅"]
-    ↓
-后端执行：
-- 旧的 assembly_manual.json → versions/v2.json
-- draft.json → assembly_manual.json（v3）
-- 更新 version_history.json
-- 删除 draft.json
-    ↓
-✅ 版本 v3 发布成功！
-    ↓
-工人刷新页面后看到最新的 v3 版本
-```
+### 1.5 描述编辑功能 (需求8)
 
----
+在ManualEditor.vue的编辑Dialog中新增"步骤描述"tab：
 
-#### **场景2：查看历史版本 → 回滚**
+```javascript
+// 数据结构
+editData: {
+  description: '',  // 新增字段
+  parts: [],
+  // ...其他字段
+}
 
-```
-[管理员点击"历史版本📜"]
-    ↓
-[跳转到 VersionHistory.vue]
-    ↓
-[看到版本列表：v3, v2, v1]
-    ↓
-[点击 v2 的"预览👁️"]
-    ↓
-[新窗口显示 v2 的内容（只读）]
-    ↓
-[发现 v2 比 v3 更好]
-    ↓
-[点击 v2 的"回滚⏪"]
-    ↓
-弹出确认对话框
-    ↓
-[确认回滚]
-    ↓
-后端执行：
-- versions/v2.json → assembly_manual.json（v4）
-- 更新 version_history.json
-    ↓
-✅ 已回滚到 v2，并发布为新版本 v4
-```
+// Tab切换
+editActiveTab: 'description'  // 默认显示描述tab
 
----
+// 加载步骤数据
+loadStepData(step) {
+  this.editData.description = step.description || ''
+  // ...
+}
 
-### 四、数据存储架构
-
-```
-output/某产品/
-├── assembly_manual.json         # 已发布的最新版本（v3）
-├── draft.json                   # 草稿（首次编辑时创建）
-├── versions/                    # 历史版本归档
-│   ├── v1.json                  
-│   ├── v2.json                  
-│   ├── v3.json                  
-│   └── version_history.json     # 版本元数据
-└── ...其他文件
-```
-
-**version_history.json 内容：**
-```json
-{
-  "current_version": "v3",
-  "versions": [
-    {
-      "version": "v3",
-      "published_at": "2025-01-20T14:30:00",
-      "changelog": "修改了步骤5的焊接要求，更新了步骤10的安全警告"
-    },
-    {
-      "version": "v2",
-      "published_at": "2025-01-15T09:15:00",
-      "changelog": "增加了步骤20的质量检查项"
-    },
-    {
-      "version": "v1",
-      "published_at": "2025-01-10T10:00:00",
-      "changelog": "首次发布装配手册"
-    }
-  ]
+// 保存步骤数据
+saveStep() {
+  currentStep.description = this.editData.description
+  // ...
 }
 ```
 
----
+### 1.6 任务清单
 
-### 五、后端 API 设计
-
-```python
-# 现有接口（需要改动）
-POST /api/manual/{task_id}/save          # 改为：保存草稿
-GET  /api/manual/{task_id}               # 获取最新发布版本（不变）
-
-# 新增接口
-POST /api/manual/{task_id}/save-draft    # 保存草稿（替代原save）
-POST /api/manual/{task_id}/publish       # 发布新版本
-GET  /api/manual/{task_id}/history       # 获取版本历史列表
-GET  /api/manual/{task_id}/version/{v}   # 获取指定版本
-POST /api/manual/{task_id}/rollback/{v}  # 回滚到指定版本
-```
-
----
-
-### 六、关键问题解决
-
-#### **Q1：如何避免"增删模型需要重新上传"的问题？**
-✅ **阶段1方案**：
-- 编辑时可以删除零件（从 parts 数组移除）
-- **阶段5扩展**：可以上传外部模型到 assets/ 目录
-
-#### **Q2：多次修改如何不影响已发布版本？**
-✅ 所有修改都保存到 draft.json，点击"发布"才更新 assembly_manual.json
-
-#### **Q3：历史版本如何管理？**
-✅ 每次发布自动归档到 versions/，VersionHistory.vue 可查看和回滚
-
----
-
-## 📝 总结
-
-1. ✅ **最小化改动**：ManualViewer.vue 只需改按钮和保存逻辑
-2. ✅ **草稿机制**：多次保存→最后发布，不影响工人
-3. ✅ **历史版本管理**：专门的页面查看和回滚
-4. ✅ **避免重新上传**：所有修改在JSON层面，不需要重新生成
-5. ✅ **权限控制**：只有管理员能编辑和查看历史版本
-
----
+- [ ] **[Backend]** 创建 `core/storage.py` 实现 ManualStorage 类
+- [ ] **[Backend]** 实现旧数据自动迁移逻辑
+- [ ] **[Backend]** 改造 `simple_app.py` 新增版本控制相关接口
+- [ ] **[Frontend]** 拆分 ManualViewer 为 Viewer 和 Editor 页面
+- [ ] **[Frontend]** Editor页面增加版本历史和发布按钮
+- [ ] **[Frontend]** Editor页面新增步骤描述编辑tab
+- [ ] **[Testing]** 测试草稿保存和发布流程
+- [ ] **[Testing]** 测试旧数据迁移功能
 
 ---
 
@@ -672,37 +581,11 @@ def identify_file_type(pdf_path, bom_data):
     if any("组焊件" in x.get("material","") for x in bom_data): return "product"
     return "component"
 ```
-### 3.3 文件命名规范（核心约定）
-
-- **task_id** = PDF 文件名（去掉 `.pdf` 后缀）
-- **STEP 文件名** 必须与 PDF 文件名完全一致（仅扩展名不同）
-- **项目名称** = task_id
-
-**示例：**
-
-- 上传文件：
-  - 装配图.pdf
-  - 装配图.step
-- 生成目录：
-  ```
-  output/装配图/
-  ├── assembly_manual.json
-  ├── draft.json
-  ├── pdf_files/装配图.pdf
-  ├── step_files/装配图.step
-  └── ...
-  ```
-
-**实现约束：**
-- 上传时自动取得 PDF 文件名作为 task_id
-- 校验 STEP 文件名与 PDF 文件名一致（或自动重命名）
-- 所有 API 调用使用 task_id 作为路径参数
-
-### 3.4 生成流程
+### 3.3 生成流程
 upload_single -> 提取BOM -> identify_file_type -> 返回识别结果
 generate_single -> SimplePlanner生成planning -> Agent2/3或4 -> Agent6 -> 整合
 
-### 3.5 Agent提示词修改 (需求9)
+### 3.4 Agent提示词修改 (需求9)
 修改Agent3/4提示词，强制按BOM序号排序 修改agent3的提示词，明确组件图都是数据焊接步骤，每个零件之间都是焊接。 修改agent4的提示词，明确产品总图之间的零件都是拼装步骤，每个组件零件之间都是零件连接起来的，而不是焊接。
 
 
@@ -850,5 +733,6 @@ output/{pdf文件名}/                    # task_id = PDF文件名（去后缀�
 - [ ] [Frontend] 前端TransformControls集成
 - [ ] [Frontend] external_models数据保存与回显
 - [ ] [Frontend] (可选) 步骤插入与重新编号逻辑
+
 
 

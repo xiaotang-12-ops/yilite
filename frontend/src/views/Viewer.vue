@@ -80,17 +80,39 @@
               </template>
             </el-table-column>
             
-            <el-table-column label="操作" width="200">
+            <el-table-column label="操作" width="240">
               <template #default="{ row }">
-                <el-button
-                  type="primary"
-                  size="small"
-                  @click.stop="viewProject(row)"
-                  :disabled="row.status !== 'completed'"
-                >
-                  <el-icon><View /></el-icon>
-                  查看说明书
-                </el-button>
+                <template v-if="row.status === 'completed'">
+                  <el-button
+                    type="primary"
+                    size="small"
+                    @click.stop="viewProject(row)"
+                  >
+                    <el-icon><View /></el-icon>
+                    查看说明书
+                  </el-button>
+                </template>
+                <template v-else-if="row.status === 'failed'">
+                  <el-button
+                    type="danger"
+                    size="small"
+                    @click.stop="deleteProject(row)"
+                  >
+                    <el-icon><Delete /></el-icon>
+                    删除任务
+                  </el-button>
+                </template>
+                <template v-else-if="row.status === 'processing'">
+                  <el-button
+                    type="danger"
+                    size="small"
+                    plain
+                    @click.stop="deleteProject(row)"
+                  >
+                    <el-icon><Delete /></el-icon>
+                    中断/删除
+                  </el-button>
+                </template>
               </template>
             </el-table-column>
           </el-table>
@@ -189,9 +211,9 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useMediaQuery } from '@vueuse/core'
 import {
-  Search, Document, View, Plus, FolderOpened
+  Search, Document, View, Plus, FolderOpened, Delete
 } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import axios from 'axios'
 
 const router = useRouter()
@@ -214,7 +236,7 @@ const loadHistory = async () => {
   try {
     // ✅ 优先从后端API获取所有已生成的说明书
     try {
-      const response = await axios.get('/api/manuals')
+      const response = await axios.get('/api/manuals', { params: { include_failed: true } })
       const manuals = response.data.manuals || []
 
       console.log(`✅ 从后端加载了 ${manuals.length} 个说明书`)
@@ -228,7 +250,9 @@ const loadHistory = async () => {
         pdfCount: 0,
         stepCount: item.stepCount || 0,
         processingTime: 0,
-        description: `装配步骤: ${item.stepCount || 0} 个`
+        description: item.status === 'failed'
+          ? '任务未完成或失败，可删除后重试'
+          : `装配步骤: ${item.stepCount || 0} 个`
       }))
 
       return
@@ -381,6 +405,24 @@ const viewProject = async (project: any) => {
   } catch (error: any) {
     console.error('加载说明书失败:', error)
     ElMessage.error('加载说明书失败: ' + (error.response?.data?.detail || error.message))
+  }
+}
+
+const deleteProject = async (project: any) => {
+  try {
+    await ElMessageBox.confirm(
+      `确认删除任务「${project.projectName}」吗？删除后可重新上传生成。`,
+      '删除确认',
+      { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' }
+    )
+
+    await axios.delete(`/api/manual/${project.id}`)
+    ElMessage.success('删除成功')
+    loadHistory()
+  } catch (error: any) {
+    if (error === 'cancel') return
+    console.error('删除任务失败:', error)
+    ElMessage.error('删除失败: ' + (error.response?.data?.detail || error.message))
   }
 }
 

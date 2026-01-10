@@ -27,6 +27,7 @@ from fastapi.responses import FileResponse, StreamingResponse, Response
 from pydantic import BaseModel
 import uvicorn
 import asyncio
+from fastapi import Query
 
 # 加载环境变量
 from dotenv import load_dotenv
@@ -115,6 +116,40 @@ class MoveStepRequest(BaseModel):
 tasks = {}
 upload_dir = Path("uploads")
 upload_dir.mkdir(exist_ok=True)
+
+def _persist_task_status(task_id: str) -> None:
+    """将内存任务状态持久化到 task_status.json，便于刷新后恢复/列出失败任务。"""
+    task = tasks.get(task_id)
+    if not task:
+        return
+
+    status_file = OUTPUT_DIR / task_id / "task_status.json"
+    status_file.parent.mkdir(parents=True, exist_ok=True)
+
+    def _convert(obj):
+        if isinstance(obj, (datetime,)):
+            return obj.isoformat()
+        return obj
+
+    try:
+        with open(status_file, "w", encoding="utf-8") as f:
+            json.dump(task, f, ensure_ascii=False, default=_convert)
+    except Exception as e:
+        print(f"⚠️ 持久化任务状态失败: {e}")
+
+
+def _load_task_status_from_file(task_id: str) -> Optional[Dict[str, Any]]:
+    """从 task_status.json 读取任务状态，供刷新后恢复或列出失败任务。"""
+    status_file = OUTPUT_DIR / task_id / "task_status.json"
+    if not status_file.exists():
+        return None
+    try:
+        with open(status_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return data
+    except Exception as e:
+        print(f"⚠️ 读取任务状态失败: {e}")
+        return None
 
 def get_storage(task_id: str) -> ManualStorage:
     """获取指定任务的存储管理器"""
@@ -299,9 +334,21 @@ async def generate_manual(request: GenerationRequest):
     task_id = pdf_base
     task_dir = OUTPUT_DIR / task_id
 
-    # 防止同名任务覆盖已有输出
+    # 防止同名任务覆盖已有输出；若残留目录未生成手册则自动清理后重试
     if task_dir.exists():
-        raise HTTPException(status_code=400, detail=f"任务 {task_id} 已存在，请更换 PDF 文件名或清理旧任务后再试")
+        assembly_manual_path = task_dir / "assembly_manual.json"
+        if assembly_manual_path.exists():
+            # 已有完整手册，保持原有防护
+            raise HTTPException(status_code=400, detail=f"任务 {task_id} 已存在，请更换 PDF 文件名或清理旧任务后再试")
+        # 无手册 => 判定为上次半途失败的残留，先清理再继续
+        try:
+            import shutil
+            shutil.rmtree(task_dir)
+            if task_id in tasks:
+                del tasks[task_id]
+            print(f"🧹 检测到未完成的残留任务 {task_id}，已自动清理目录后重新开始")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"清理残留任务 {task_id} 失败: {str(e)}")
 
     try:
         # 创建任务目录
@@ -345,6 +392,7 @@ async def generate_manual(request: GenerationRequest):
             "created_at": beijing_now(),
             "updated_at": beijing_now()
         }
+        _persist_task_status(task_id)
 
         # 直接调用gemini_pipeline（在后台线程中）
         import threading
@@ -396,12 +444,14 @@ async def generate_manual(request: GenerationRequest):
                     tasks[task_id]["progress"] = 0
                 tasks[task_id]["result"] = result
                 tasks[task_id]["updated_at"] = beijing_now()
+                _persist_task_status(task_id)
 
             except Exception as e:
                 print(f"Pipeline执行错误: {e}")
                 tasks[task_id]["status"] = "failed"
                 tasks[task_id]["error"] = str(e)
                 tasks[task_id]["updated_at"] = beijing_now()
+                _persist_task_status(task_id)
 
         # 在后台线程中运行
         thread = threading.Thread(target=run_pipeline)
@@ -421,6 +471,9 @@ async def generate_manual(request: GenerationRequest):
 async def get_status(task_id: str):
     """获取任务状态"""
     if task_id not in tasks:
+        persisted = _load_task_status_from_file(task_id)
+        if persisted:
+            return persisted
         raise HTTPException(status_code=404, detail="任务不存在")
 
     return tasks[task_id]
@@ -543,7 +596,7 @@ async def websocket_endpoint(websocket: WebSocket, task_id: str):
         print(f"❌ WebSocket错误: {e}")
 
 @app.get("/api/manuals")
-async def list_manuals():
+async def list_manuals(include_failed: bool = Query(False, description="是否包含失败/未完成的任务")):
     """
     获取所有已生成的装配说明书列表
     ✅ 扫描output目录，返回所有包含assembly_manual.json的任务
@@ -561,36 +614,53 @@ async def list_manuals():
                 continue
 
             manual_path = task_dir / "assembly_manual.json"
-            if not manual_path.exists():
-                continue
+            if manual_path.exists():
+                try:
+                    # 读取说明书元数据
+                    with open(manual_path, 'r', encoding='utf-8') as f:
+                        manual_data = json.load(f)
 
-            try:
-                # 读取说明书元数据
-                with open(manual_path, 'r', encoding='utf-8') as f:
-                    manual_data = json.load(f)
+                    # 获取文件修改时间（北京时区）
+                    mtime = manual_path.stat().st_mtime
+                    timestamp = datetime.fromtimestamp(mtime, tz=BEIJING_TZ).isoformat()
 
-                # 获取文件修改时间（北京时区）
-                mtime = manual_path.stat().st_mtime
-                timestamp = datetime.fromtimestamp(mtime, tz=BEIJING_TZ).isoformat()
+                    # 提取关键信息
+                    metadata = manual_data.get('metadata', {})
+                    product_name = metadata.get('product_name', '未命名产品')
 
-                # 提取关键信息
-                metadata = manual_data.get('metadata', {})
-                product_name = metadata.get('product_name', '未命名产品')
+                    # 统计信息
+                    assembly_steps = manual_data.get('assembly_steps', [])
+                    step_count = len(assembly_steps)
 
-                # 统计信息
-                assembly_steps = manual_data.get('assembly_steps', [])
-                step_count = len(assembly_steps)
-
+                    manuals.append({
+                        'taskId': task_dir.name,
+                        'productName': product_name,
+                        'timestamp': timestamp,
+                        'stepCount': step_count,
+                        'status': 'completed'
+                    })
+                except Exception as e:
+                    print(f"⚠️ 读取任务 {task_dir.name} 失败: {e}")
+                    continue
+            elif include_failed:
+                # 失败/未完成的任务，尝试读取持久化状态
+                persisted = _load_task_status_from_file(task_dir.name) or {}
+                status = persisted.get("status", "failed")
+                product_name = (
+                    (persisted.get("config") or {}).get("projectName")
+                    or persisted.get("task_id")
+                    or task_dir.name
+                )
+                timestamp = persisted.get("updated_at") or datetime.fromtimestamp(
+                    task_dir.stat().st_mtime, tz=BEIJING_TZ
+                ).isoformat()
                 manuals.append({
                     'taskId': task_dir.name,
                     'productName': product_name,
                     'timestamp': timestamp,
-                    'stepCount': step_count,
-                    'status': 'completed'
+                    'stepCount': 0,
+                    'status': status if status in ["processing", "failed"] else "failed"
                 })
-            except Exception as e:
-                print(f"⚠️ 读取任务 {task_dir.name} 失败: {e}")
-                continue
 
         # 按时间倒序排序
         manuals.sort(key=lambda x: x['timestamp'], reverse=True)

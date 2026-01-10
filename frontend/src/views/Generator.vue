@@ -151,6 +151,17 @@
             <div class="logs-header-large">
               <h2>📋 多智能体协作可视面板 </h2>
               <div class="header-actions">
+                <el-button
+                  v-if="isGenerating || taskId"
+                  type="danger"
+                  text
+                  :icon="CircleClose"
+                  :loading="isAborting"
+                  :disabled="isAborting || !taskId"
+                  @click="abortProcessing"
+                >
+                  强制中断/清理
+                </el-button>
                 <el-button text @click="clearLogs" :icon="Delete">清空日志</el-button>
               </div>
             </div>
@@ -255,7 +266,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onUnmounted, nextTick } from 'vue'
+import { ref, reactive, computed, onUnmounted, nextTick, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { UploadFile, UploadFiles } from 'element-plus'
@@ -270,6 +281,7 @@ import axios from 'axios'
 // 响应式数据
 const currentStep = ref(0)
 const isGenerating = ref(false)
+const isAborting = ref(false)
 const showLogs = ref(false)
 
 const pdfFiles = ref<UploadFiles>([])
@@ -601,6 +613,10 @@ const viewManual = async () => {
 // ✅ 重新生成
 const resetGenerator = () => {
   // 重置所有状态
+  if (eventSource) {
+    eventSource.close()
+    eventSource = null
+  }
   currentStep.value = 0
   pdfFiles.value = []
   modelFiles.value = []
@@ -620,6 +636,48 @@ const resetGenerator = () => {
   })
 
   ElMessage.info('已重置，可以重新上传文件')
+}
+
+// 手动中断当前任务，清理连接并删除后端残留，便于重新上传
+const abortProcessing = async () => {
+  if (isAborting.value) return
+
+  // 没有任务ID时直接重置前端状态
+  if (!taskId.value) {
+    resetGenerator()
+    ElMessage.info('已中断当前流程，可重新上传文件')
+    return
+  }
+
+  const confirmed = await ElMessageBox.confirm(
+    '确认要强制中断当前生成任务吗？可能已有的中间结果会被清理，需要重新上传后再生成。',
+    '确认中断',
+    { type: 'warning', confirmButtonText: '立即中断', cancelButtonText: '取消' }
+  ).catch(() => false)
+  if (!confirmed) return
+
+  isAborting.value = true
+  try {
+    if (eventSource) {
+      eventSource.close()
+      eventSource = null
+    }
+    // 请求后端删除任务目录/内存记录，后端若仍在处理会返回非 200；仍然继续清理前端状态
+    try {
+      await axios.delete(`/api/manual/${encodeURIComponent(taskId.value)}`)
+      addLog('⏹ 已请求后端清理当前任务', 'warning')
+    } catch (error: any) {
+      const detail = error?.response?.data?.detail || error?.message || '未知原因'
+      addLog(`⏹ 中断请求未完全成功：${detail}`, 'warning')
+    }
+    localStorage.removeItem(RECOVERY_TASK_KEY)
+    resetGenerator()
+    processingStatus.value = 'exception'
+    processingText.value = '已手动中断'
+    ElMessage.info('已手动中断，您可以重新上传文件重新生成')
+  } finally {
+    isAborting.value = false
+  }
 }
 
 const agentDialogs = ref([])
@@ -878,6 +936,7 @@ const uploadFiles = async () => {
 
 // EventSource 连接（SSE）
 let eventSource: EventSource | null = null
+const RECOVERY_TASK_KEY = 'generator_current_task'
 
 // 开始生成任务 - 使用 SSE 实时更新
 const startGenerationTask = async () => {
@@ -896,6 +955,7 @@ const startGenerationTask = async () => {
 
     const newTaskId = response.data.task_id
     taskId.value = newTaskId
+    localStorage.setItem(RECOVERY_TASK_KEY, newTaskId)
 
     // 建立 SSE 连接
     connectEventSource(newTaskId)
@@ -992,10 +1052,12 @@ const handleSSEMessage = (data: any) => {
           message: '装配说明书生成完成！',
           duration: 3000
         })
+        localStorage.removeItem(RECOVERY_TASK_KEY)
       } else {
         processingStatus.value = 'exception'
         processingText.value = data.error || '生成失败'
         addLog(`❌ ${data.error}`, 'error')
+        localStorage.removeItem(RECOVERY_TASK_KEY)
       }
 
       isGenerating.value = false
@@ -1009,6 +1071,7 @@ const handleSSEMessage = (data: any) => {
       eventSource?.close()
       eventSource = null
       isGenerating.value = false
+      localStorage.removeItem(RECOVERY_TASK_KEY)
       break
   }
 }
@@ -1317,6 +1380,39 @@ onUnmounted(() => {
     eventSource.close()
     eventSource = null
   }
+})
+
+// 刷新恢复：若存在未完成任务ID，则查询状态并重连
+const restoreTaskFromCache = async () => {
+  const cachedId = localStorage.getItem(RECOVERY_TASK_KEY)
+  if (!cachedId) return
+
+  try {
+    const resp = await axios.get(`/api/status/${cachedId}`)
+    const status = resp.data.status
+    taskId.value = cachedId
+
+    if (status === 'processing') {
+      ElMessage.info('检测到未完成的生成任务，已自动恢复连接')
+      connectEventSource(cachedId)
+      isGenerating.value = true
+      processingStatus.value = undefined
+      processingText.value = '正在处理中...'
+    } else if (status === 'completed') {
+      ElMessage.success('上次任务已完成，可以到查看器查看')
+      localStorage.removeItem(RECOVERY_TASK_KEY)
+    } else if (status === 'failed') {
+      ElMessage.warning('上次任务已失败，可重新上传生成')
+      localStorage.removeItem(RECOVERY_TASK_KEY)
+    }
+  } catch (e) {
+    // 无法恢复则清理缓存
+    localStorage.removeItem(RECOVERY_TASK_KEY)
+  }
+}
+
+onMounted(() => {
+  restoreTaskFromCache()
 })
 </script>
 
