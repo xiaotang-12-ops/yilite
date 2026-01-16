@@ -49,6 +49,7 @@
           :percentage="progressPercentage"
           :stroke-width="10"
           :color="progressColor"
+          :format="formatProgress"
         />
       </div>
 
@@ -63,6 +64,30 @@
           <el-button type="primary" :disabled="currentStepIndex === totalSteps - 1" @click="nextStep">
             下一步
             <el-icon><ArrowRight /></el-icon>
+          </el-button>
+          <el-select
+            v-if="!isMobile"
+            v-model="currentStepIndex"
+            class="step-jump-select"
+            size="default"
+            :disabled="totalSteps <= 1"
+            filterable
+          >
+            <el-option
+              v-for="(step, index) in allSteps"
+              :key="step.step_id"
+              :label="`步骤${index + 1} - ${getStepDisplayTitle(step)}`"
+              :value="index"
+            />
+          </el-select>
+          <el-button
+            v-if="isMobile"
+            class="step-jump-button"
+            :disabled="totalSteps <= 1"
+            @click="showStepJumpDrawer = true"
+          >
+            <el-icon><Document /></el-icon>
+            步骤
           </el-button>
         </div>
 
@@ -323,6 +348,15 @@
               <span class="slider-value">{{ explodeScale }}%</span>
             </div>
 
+            <div v-if="isExploded && !isMobile" class="explode-mode-inline">
+              <span class="mode-label">爆炸方向:</span>
+              <el-radio-group v-model="explodeMode" size="small">
+                <el-radio-button label="legacy">默认</el-radio-button>
+                <el-radio-button label="geometry">分散</el-radio-button>
+                <el-radio-button label="distance">强分散</el-radio-button>
+              </el-radio-group>
+            </div>
+
             <!-- 已删除零件下拉菜单（放在按钮组同一行） -->
             <el-dropdown v-if="deletedParts.size > 0 && isAdmin && !isMobile" trigger="click" @command="restorePart">
               <el-button type="warning" plain size="default">
@@ -356,6 +390,15 @@
               :style="{ width: '100%', margin: '0 8px' }"
             />
             <span class="slider-value">{{ explodeScale }}%</span>
+          </div>
+
+          <div v-if="isExploded && isMobile" class="explode-mode">
+            <span class="mode-label">爆炸方向:</span>
+            <el-radio-group v-model="explodeMode" size="small">
+              <el-radio-button label="legacy">默认</el-radio-button>
+              <el-radio-button label="geometry">分散</el-radio-button>
+              <el-radio-button label="distance">强分散</el-radio-button>
+            </el-radio-group>
           </div>
 
           <!-- 移动端：已删除零件单独一行 -->
@@ -723,6 +766,32 @@
         </el-scrollbar>
       </div>
     </el-drawer>
+
+    <el-drawer
+      v-if="isMobile"
+      v-model="showStepJumpDrawer"
+      title="选择步骤"
+      size="90%"
+      direction="rtl"
+    >
+      <div class="mobile-drawer-body">
+        <el-scrollbar height="100%">
+          <div class="step-jump-list">
+            <el-button
+              v-for="(step, index) in allSteps"
+              :key="step.step_id"
+              class="step-jump-item"
+              :type="index === currentStepIndex ? 'primary' : 'info'"
+              plain
+              @click="handleStepJump(index)"
+            >
+              步骤{{ index + 1 }} - {{ getStepDisplayTitle(step) }}
+            </el-button>
+            <el-empty v-if="!allSteps.length" description="暂无步骤" />
+          </div>
+        </el-scrollbar>
+      </div>
+    </el-drawer>
     </template>
 
     <template v-else>
@@ -896,11 +965,50 @@
         </div>
       </el-tab-pane>
 
+      <!-- 所需工具 -->
+      <el-tab-pane label="所需工具" name="tools">
+        <div class="edit-section">
+          <el-alert
+            title="提示"
+            type="info"
+            :closable="false"
+            style="margin-bottom: 12px"
+          >
+            当前步骤的所需工具（步骤{{ currentStepData?.step_number }}）
+          </el-alert>
+
+          <el-form label-width="100px">
+            <el-form-item label="工具清单">
+              <el-select
+                v-model="editData.tools_required"
+                multiple
+                filterable
+                allow-create
+                default-first-option
+                :reserve-keyword="false"
+                placeholder="输入工具名称，回车添加"
+                style="width: 100%"
+              >
+                <el-option
+                  v-for="tool in editData.tools_required"
+                  :key="tool"
+                  :label="tool"
+                  :value="tool"
+                />
+              </el-select>
+              <el-text type="info" size="small" style="margin-top: 6px; display: inline-block;">
+                输入工具名称后回车即可添加
+              </el-text>
+            </el-form-item>
+          </el-form>
+        </div>
+      </el-tab-pane>
+
       <!-- 焊接注意事项 -->
       <el-tab-pane label="焊接注意事项" name="welding">
         <div class="edit-section">
           <el-alert
-              title="提示"
+            title="提示"
               type="info"
               :closable="false"
               style="margin-bottom: 12px"
@@ -1273,7 +1381,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, nextTick, reactive, type CSSProperties } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter, useRoute, onBeforeRouteLeave } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Loading, ArrowLeft, ArrowRight, ArrowDown, Picture, Box,
@@ -1449,6 +1557,7 @@ const toggleRightSidebar = () => {
 
 const showDrawingsDrawer = ref(false)
 const showDetailsDrawer = ref(false)
+const showStepJumpDrawer = ref(false)
 let viewerInitAttempts = 0
 const lastPreviewKey = computed(() => `last_preview_version_${props.taskId}`)
 const draftPromptSuppressKey = computed(() => `draft_prompt_suppress_once_${props.taskId}`)
@@ -1654,8 +1763,19 @@ const editData = ref({
   quality_check: '' as string,
   step_title: '' as string,
   step_description: '' as string,
+  tools_required: [] as string[],
   faq_items: [] as Array<{ question: string; answer: string }>
 })
+
+const normalizeToolsRequired = (tools: unknown): string[] => {
+  if (!tools) return []
+  const list = Array.isArray(tools)
+    ? tools.map(tool => String(tool).trim())
+    : typeof tools === 'string'
+      ? tools.split(/[,，\n]/).map(tool => tool.trim())
+      : []
+  return Array.from(new Set(list.filter(tool => tool)))
+}
 
 // 🔧 记录编辑前的原始步骤号（用于保存时精确删除）
 const originalStepNumber = ref<number>(0)
@@ -1687,11 +1807,15 @@ let meshExplodeDirections: Map<string, THREE.Vector3> = new Map()
 // ✅ 使用世界坐标系存储，以避免层级导致的局部位置重合问题
 let meshWorldOriginalPositions: Map<string, THREE.Vector3> = new Map()
 let meshWorldExplodeDirections: Map<string, THREE.Vector3> = new Map()
+let meshWorldExplodeDirectionsGeo: Map<string, THREE.Vector3> = new Map()
+let meshWorldExplodeDistances: Map<string, number> = new Map()
+let meshWorldExplodeMaxDistance = 0
 
 
 const isExploded = ref(true) // 初始爆炸，未装配件分散
 const isWireframe = ref(false)
 const explodeScale = ref(25) // 爆炸比例（0-50，默认25）
+const explodeMode = ref<'legacy' | 'geometry' | 'distance'>('legacy')
 
 // ============ 零件交互选中功能（管理员专用） ============
 // 装配状态类型定义
@@ -2286,24 +2410,51 @@ const handleMobileImageTap = () => {
   closeMobileImagePreview()
 }
 
-const closeMobileImagePreview = () => {
+const closeMobileImagePreview = (skipHistory = false) => {
   mobileImagePreviewVisible.value = false
   resetMobileImageTransform()
   mobileImageNaturalSize.w = 0
   mobileImageNaturalSize.h = 0
-  if (overlayStack.length > 0 && overlayStack[overlayStack.length - 1] === 'image' && typeof window !== 'undefined') {
-    // 手动关闭时只消费自身的历史层
-    try {
-      closingOverlayFromManual = true
-      overlayStack.pop()
-      window.history.back()
-    } catch (err) {
-      console.warn('⚠️ 关闭预览回退历史失败:', err)
+  if (overlayStack.length > 0 && overlayStack[overlayStack.length - 1] === 'image') {
+    overlayStack.pop()
+    if (!skipHistory && typeof window !== 'undefined') {
+      // 手动关闭时只消费自身的历史层
+      try {
+        closingOverlayFromManual = true
+        window.history.back()
+      } catch (err) {
+        console.warn('⚠️ 关闭预览回退历史失败:', err)
+      }
+      // 异步重置标记，避免 popstate 将抽屉一起关闭
+      setTimeout(() => { closingOverlayFromManual = false }, 0)
     }
-    // 异步重置标记，避免 popstate 将抽屉一起关闭
-    setTimeout(() => { closingOverlayFromManual = false }, 0)
   }
 }
+
+const closeMobileDrawers = () => {
+  showDrawingsDrawer.value = false
+  showDetailsDrawer.value = false
+  showStepJumpDrawer.value = false
+}
+
+const closeMobileOverlays = () => {
+  closeMobileDrawers()
+  if (mobileImagePreviewVisible.value) {
+    closeMobileImagePreview(true)
+  }
+}
+
+onBeforeRouteLeave((_to, _from, next) => {
+  if (
+    isMobile.value &&
+    (mobileImagePreviewVisible.value || showDrawingsDrawer.value || showDetailsDrawer.value || showStepJumpDrawer.value)
+  ) {
+    closeMobileOverlays()
+    next(false)
+    return
+  }
+  next()
+})
 
 // ✅ 过滤当前步骤的焊接信息（只从步骤内嵌字段读取）
 const currentStepWeldingRequirements = computed(() => {
@@ -2393,6 +2544,11 @@ const progressColor = computed(() => {
   return '#67c23a'
 })
 
+const formatProgress = (percentage: number) => {
+  if (!Number.isFinite(percentage)) return '0%'
+  return `${Math.round(percentage)}%`
+}
+
 // ✅ 初始化3D查看器和模型
 const init3DViewerAndModel = async () => {
   console.log('🚀 开始初始化3D查看器和模型...')
@@ -2481,6 +2637,7 @@ watch(showEditDialog, (newVal) => {
     const safetyAndFaq = manualData.value.safety_and_faq || {}
     editData.value.faq_items = JSON.parse(JSON.stringify(safetyAndFaq.faq_items || []))
     editData.value.step_description = currentStep.description || currentStep.operation || ''
+    editData.value.tools_required = normalizeToolsRequired(currentStep.tools_required)
 
     console.log('📝 [编辑数据初始化完成]')
     console.log('  - 原始步骤号:', originalStepNumber.value)
@@ -2564,6 +2721,7 @@ const saveDraft = async () => {
     // 更新manualData
     const updatedData = { ...manualData.value }
     const newDescription = (editData.value.step_description || '').trim()
+    const normalizedToolsRequired = normalizeToolsRequired(editData.value.tools_required)
 
     // 统一同步名称到编辑表单，避免多个来源不一致
     editData.value.welding_requirements = editData.value.welding_requirements.map(req => ({
@@ -2720,6 +2878,42 @@ const saveDraft = async () => {
       for (const step of updatedData.product_assembly.steps) {
         if (step.step_id === currentStepId) {
           step.quality_check = editData.value.quality_check
+          stepUpdated = true
+          break
+        }
+      }
+    }
+
+    // ========== 更新所需工具 ==========
+    stepUpdated = false
+
+    if (updatedData.component_assembly) {
+      for (const component of updatedData.component_assembly) {
+        if (component.steps) {
+          for (const step of component.steps) {
+            if (step.step_id === currentStepId) {
+              if (normalizedToolsRequired.length > 0) {
+                step.tools_required = normalizedToolsRequired
+              } else {
+                delete step.tools_required
+              }
+              stepUpdated = true
+              break
+            }
+          }
+        }
+        if (stepUpdated) break
+      }
+    }
+
+    if (!stepUpdated && updatedData.product_assembly?.steps) {
+      for (const step of updatedData.product_assembly.steps) {
+        if (step.step_id === currentStepId) {
+          if (normalizedToolsRequired.length > 0) {
+            step.tools_required = normalizedToolsRequired
+          } else {
+            delete step.tools_required
+          }
           stepUpdated = true
           break
         }
@@ -3523,6 +3717,11 @@ const goToStep = (index: number) => {
   currentStepIndex.value = index
 }
 
+const handleStepJump = (index: number) => {
+  goToStep(index)
+  showStepJumpDrawer.value = false
+}
+
 const getImportanceType = (importance: string) => {
   const map: any = { '关键': 'danger', '重要': 'warning', '一般': 'info' }
   return map[importance] || 'info'
@@ -3536,10 +3735,26 @@ const getSeverityType = (severity: string) => {
 // 根据模型尺寸自适应缩放，避免极端放大导致视锥体精度问题
 const computeAdaptiveScale = (maxDimOriginal: number) => {
   if (!isFinite(maxDimOriginal) || maxDimOriginal <= 0) return 1
-  const targetSize = 1500 // 希望模型最大边落在可视范围的目标尺寸
-  const maxScale = 10000  // 上限，避免 100 万倍级别放大
-  const scale = targetSize / maxDimOriginal
+  const defaultTargetMaxDim = 1500 // 常规模型目标尺寸
+  const TARGET_MAX_DIM = 90        // 超大装配模型兜底尺寸（S2）
+  const largeScaleThreshold = 200  // 只有默认缩放过大时才触发 S2
+  const maxScale = 10000           // 上限，避免 100 万倍级别放大
+  const scaleByDefault = defaultTargetMaxDim / maxDimOriginal
+  const targetMaxDim = scaleByDefault > largeScaleThreshold ? TARGET_MAX_DIM : defaultTargetMaxDim
+  const scale = targetMaxDim / maxDimOriginal
   return Math.min(maxScale, Math.max(1, scale))
+}
+
+// 获取 mesh 几何体中心的世界坐标（避免 mesh 原点集中导致爆炸方向一致）
+const getMeshGeometryCenterWorld = (mesh: THREE.Mesh, fallbackWorldPos: THREE.Vector3) => {
+  const geometry = mesh.geometry
+  if (!geometry) return fallbackWorldPos.clone()
+  if (!geometry.boundingBox) {
+    geometry.computeBoundingBox()
+  }
+  if (!geometry.boundingBox) return fallbackWorldPos.clone()
+  const localCenter = geometry.boundingBox.getCenter(new THREE.Vector3())
+  return mesh.localToWorld(localCenter)
 }
 
 // 依据固定配置刷新网格：小范围 + 边界，高度锁定
@@ -3661,6 +3876,9 @@ const cleanup3DViewer = () => {
   meshExplodeDirections = new Map()
   meshWorldOriginalPositions = new Map()
   meshWorldExplodeDirections = new Map()
+  meshWorldExplodeDirectionsGeo = new Map()
+  meshWorldExplodeDistances = new Map()
+  meshWorldExplodeMaxDistance = 0
 }
 
 // 历史预览版本的暂存（用于返回当前页面时创建草稿）
@@ -3940,6 +4158,10 @@ const load3DModel = async () => {
 
     // 移动模型到中心
     model.position.sub(center)
+    model.updateMatrixWorld(true)
+    meshWorldExplodeDirectionsGeo.clear()
+    meshWorldExplodeDistances.clear()
+    meshWorldExplodeMaxDistance = 0
 
     // ✅ 模型居中后，保存每个mesh的世界坐标位置和爆炸方向（世界坐标系）
     const worldCenter = new THREE.Vector3(0, 0, 0) // 已经居中到(0,0,0)
@@ -3986,8 +4208,22 @@ const load3DModel = async () => {
           directionWorld.normalize()
         }
 
+        // 几何中心方向（避免所有 mesh 原点集中导致平移）
+        const geoCenterWorld = getMeshGeometryCenterWorld(child, worldPos)
+        let directionGeo = geoCenterWorld.clone().sub(worldCenter)
+        let distanceGeo = directionGeo.length()
+        if (distanceGeo < 1e-6) {
+          directionGeo = directionWorld.clone()
+          distanceGeo = distance
+        } else {
+          directionGeo.normalize()
+        }
+
         meshExplodeDirections.set(child.name, directionWorld.clone()) // 兼容旧逻辑（按名称）
         meshWorldExplodeDirections.set(child.uuid, directionWorld)
+        meshWorldExplodeDirectionsGeo.set(child.uuid, directionGeo)
+        meshWorldExplodeDistances.set(child.uuid, distanceGeo)
+        meshWorldExplodeMaxDistance = Math.max(meshWorldExplodeMaxDistance, distanceGeo)
       }
     })
     console.log('✅ 已保存', meshWorldOriginalPositions.size, '个mesh的世界位置和爆炸方向')
@@ -4057,6 +4293,9 @@ const switchGLBModel = async (glbFile: string) => {
     // ✅ 清空世界坐标缓存
     meshWorldOriginalPositions.clear()
     meshWorldExplodeDirections.clear()
+    meshWorldExplodeDirectionsGeo.clear()
+    meshWorldExplodeDistances.clear()
+    meshWorldExplodeMaxDistance = 0
 
     // 3. 加载新模型
     const loader = new GLTFLoader()
@@ -4104,6 +4343,7 @@ const switchGLBModel = async (glbFile: string) => {
     }
 
     model.position.set(-center.x, -center.y, -center.z)
+    model.updateMatrixWorld(true)
 
     // ✅ 6. 模型居中后，保存每个mesh的世界坐标位置和爆炸方向（世界坐标系）
     const worldCenter = new THREE.Vector3(0, 0, 0) // 已经居中到(0,0,0)
@@ -4147,6 +4387,19 @@ const switchGLBModel = async (glbFile: string) => {
 
         meshExplodeDirections.set(child.name, directionWorld.clone()) // 兼容旧逻辑（按名称）
         meshWorldExplodeDirections.set(child.uuid, directionWorld)
+        // 几何中心方向（避免所有 mesh 原点集中导致平移）
+        const geoCenterWorld = getMeshGeometryCenterWorld(child, worldPos)
+        let directionGeo = geoCenterWorld.clone().sub(worldCenter)
+        let distanceGeo = directionGeo.length()
+        if (distanceGeo < 1e-6) {
+          directionGeo = directionWorld.clone()
+          distanceGeo = distance
+        } else {
+          directionGeo.normalize()
+        }
+        meshWorldExplodeDirectionsGeo.set(child.uuid, directionGeo)
+        meshWorldExplodeDistances.set(child.uuid, distanceGeo)
+        meshWorldExplodeMaxDistance = Math.max(meshWorldExplodeMaxDistance, distanceGeo)
       }
     })
     console.log('✅ 已保存', meshWorldOriginalPositions.size, '个mesh的世界位置和爆炸方向')
@@ -4189,6 +4442,22 @@ const animateMeshPosition = (mesh: THREE.Mesh, targetLocal: THREE.Vector3, durat
   }
 
   requestAnimationFrame(step)
+}
+
+const getExplodeDirection = (mesh: THREE.Mesh) => {
+  if (explodeMode.value === 'legacy') {
+    return meshWorldExplodeDirections.get(mesh.uuid) || null
+  }
+  return meshWorldExplodeDirectionsGeo.get(mesh.uuid)
+    || meshWorldExplodeDirections.get(mesh.uuid)
+    || null
+}
+
+const getExplodeDistanceFactor = (mesh: THREE.Mesh) => {
+  if (explodeMode.value !== 'distance') return 1
+  const distance = meshWorldExplodeDistances.get(mesh.uuid)
+  if (distance == null || !isFinite(distance) || meshWorldExplodeMaxDistance <= 0) return 1
+  return Math.max(distance / meshWorldExplodeMaxDistance, 0.15)
 }
 
 // 累积归位 + 高亮：当前步高亮，已装配正常色，未装配半透明且保持爆炸
@@ -4266,8 +4535,9 @@ const updateStepDisplay = (animate = true) => {
   model.traverse((child: any) => {
     if (!child.isMesh) return
     const originalWorldPos = meshWorldOriginalPositions.get(child.uuid)
-    const explodeDir = meshWorldExplodeDirections.get(child.uuid)
+    const explodeDir = getExplodeDirection(child)
     if (!originalWorldPos || !explodeDir) return
+    const distanceFactor = getExplodeDistanceFactor(child)
 
     // ✅ 检查是否是已删除的零件
     const meshKey = child.name || child.uuid
@@ -4288,7 +4558,7 @@ const updateStepDisplay = (animate = true) => {
       // 手动状态优先（与 applyPartPosition 逻辑一致）
       if (manualStatus === 'not_installed') {
         // 未装：始终爆炸到指定位置（不受 isExploded 影响）
-        const explodeDistance = maxDim * (explodeScale.value / 100 || 0.25)
+        const explodeDistance = maxDim * (explodeScale.value / 100 || 0.25) * distanceFactor
         targetWorld = originalWorldPos.clone().add(explodeDir.clone().multiplyScalar(explodeDistance))
       } else {
         // 正在装/已装：归位
@@ -4296,9 +4566,10 @@ const updateStepDisplay = (animate = true) => {
       }
     } else {
       // 自动逻辑（原有逻辑）
-      targetWorld = isAssembled || isCurrent || explodeDistanceBase === 0
+      const autoExplodeDistance = explodeDistanceBase * distanceFactor
+      targetWorld = isAssembled || isCurrent || autoExplodeDistance === 0
         ? originalWorldPos.clone()
-        : originalWorldPos.clone().add(explodeDir.clone().multiplyScalar(explodeDistanceBase))
+        : originalWorldPos.clone().add(explodeDir.clone().multiplyScalar(autoExplodeDistance))
     }
 
     const targetLocal = child.parent.worldToLocal(targetWorld.clone())
@@ -4339,6 +4610,10 @@ const toggleExplode = () => {
 
 // 监听爆炸比例变化
 watch(explodeScale, () => {
+  updateStepDisplay(true)
+})
+
+watch(explodeMode, () => {
   updateStepDisplay(true)
 })
 
@@ -4754,8 +5029,9 @@ const applyPartPosition = (mesh: THREE.Mesh, status: AssemblyStatus) => {
   if (!model) return
 
   const originalWorldPos = meshWorldOriginalPositions.get(mesh.uuid)
-  const explodeDir = meshWorldExplodeDirections.get(mesh.uuid)
+  const explodeDir = getExplodeDirection(mesh)
   if (!originalWorldPos || !explodeDir) return
+  const distanceFactor = getExplodeDistanceFactor(mesh)
 
   // 计算爆炸距离（未装状态始终使用爆炸距离，不受 isExploded 影响）
   const box = new THREE.Box3().setFromObject(model)
@@ -4763,7 +5039,7 @@ const applyPartPosition = (mesh: THREE.Mesh, status: AssemblyStatus) => {
   box.getSize(size)
   const maxDim = Math.max(size.x, size.y, size.z)
   // 未装状态：始终使用爆炸比例计算距离（即使当前是收起视图）
-  const explodeDistance = maxDim * (explodeScale.value / 100 || 0.25)
+  const explodeDistance = maxDim * (explodeScale.value / 100 || 0.25) * distanceFactor
 
   let targetWorld: THREE.Vector3
   if (status === 'not_installed') {
@@ -4893,43 +5169,13 @@ onMounted(() => {
         } else if (type === 'drawer') {
           showDrawingsDrawer.value = false
           showDetailsDrawer.value = false
+          showStepJumpDrawer.value = false
         }
         closingOverlayFromPopstate = false
       }
     }
     window.addEventListener('popstate', handlePopState)
 
-    // 抽屉打开/关闭时同步历史栈，保证返回键先关抽屉
-    watch([showDrawingsDrawer, showDetailsDrawer], ([newDraw, newDetail], [oldDraw, oldDetail]) => {
-      if (!isMobile.value) return
-      const wasOpen = oldDraw || oldDetail
-      const nowOpen = newDraw || newDetail
-
-      if (nowOpen && !wasOpen && typeof window !== 'undefined') {
-        try {
-          window.history.pushState({ overlay: 'drawer' }, '', window.location.href)
-          overlayStack.push('drawer')
-        } catch (err) {
-          console.warn('⚠️ 抽屉 pushState 失败，返回键行为可能异常:', err)
-        }
-      }
-
-      if (!nowOpen && wasOpen && overlayStack.length > 0 && typeof window !== 'undefined') {
-        if (closingOverlayFromPopstate) return
-        const top = overlayStack[overlayStack.length - 1]
-        if (top === 'drawer') {
-          try {
-            closingOverlayFromManual = true
-            overlayStack.pop()
-            window.history.back()
-          } catch (err) {
-            console.warn('⚠️ 抽屉关闭回退历史失败:', err)
-          } finally {
-            closingOverlayFromManual = false
-          }
-        }
-      }
-    })
   }
 })
 
@@ -5288,6 +5534,18 @@ onUnmounted(() => {
       padding: 0 8px;
       min-width: 60px;
       text-align: center;
+    }
+
+    .step-jump-button {
+      min-width: 72px;
+    }
+
+    .step-jump-select {
+      min-width: 240px;
+    }
+
+    :deep(.step-jump-select .el-input__inner) {
+      height: 40px;
     }
   }
 
@@ -5735,6 +5993,25 @@ onUnmounted(() => {
       }
     }
 
+    .explode-mode-inline {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: 4px;
+
+      .mode-label {
+        font-size: 13px;
+        color: #666;
+        white-space: nowrap;
+      }
+
+      .el-radio-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+    }
+
     // 移动端：滑块单独一行
     .explode-slider {
       display: flex;
@@ -5757,6 +6034,31 @@ onUnmounted(() => {
         color: #7c3aed;
         min-width: 45px;
         text-align: right;
+      }
+    }
+
+    // 移动端：爆炸方向单独一行
+    .explode-mode {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: #f5f7fa;
+      border-radius: 8px;
+      width: 100%;
+      justify-content: space-between;
+
+      .mode-label {
+        font-size: 14px;
+        color: #666;
+        white-space: nowrap;
+      }
+
+      .el-radio-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        justify-content: flex-end;
       }
     }
   }
@@ -5955,6 +6257,20 @@ onUnmounted(() => {
   overflow-y: auto;
 }
 
+.step-jump-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 4px 16px;
+}
+
+.step-jump-item {
+  width: 100%;
+  justify-content: flex-start;
+  text-align: left;
+  white-space: normal;
+}
+
 /* 全屏查看图纸时，隐藏全局导航栏并去掉顶部间距 */
 @media (max-width: 1024px) {
   .worker-manual-viewer {
@@ -6037,6 +6353,10 @@ onUnmounted(() => {
         display: flex;
       }
       .explode-slider {
+        width: 100%;
+        justify-content: space-between;
+      }
+      .explode-mode {
         width: 100%;
         justify-content: space-between;
       }

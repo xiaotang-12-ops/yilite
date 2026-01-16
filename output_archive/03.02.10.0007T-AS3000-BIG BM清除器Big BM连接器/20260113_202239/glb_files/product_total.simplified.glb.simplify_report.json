@@ -1,0 +1,349 @@
+{
+  "applied": true,
+  "kept_nodes_geometry": 16671,
+  "kept_geometry": 16671,
+  "merged_nodes_geometry": 67,
+  "merged_geometry": 67,
+  "removed_nodes_geometry": 19229,
+  "groups": [
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬012",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片012",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬025",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片025",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬038",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片038",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬051",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片051",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬064",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片064",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬077",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片077",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬090",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片090",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬103",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片103",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬116",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片116",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬129",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片129",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬142",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片142",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬155",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片155",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬168",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片168",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬181",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片181",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬194",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片194",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬207",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片207",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬220",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片220",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬233",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片233",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬246",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片246",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬259",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片259",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬272",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片272",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬285",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片285",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬298",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片298",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬311",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片311",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬324",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片324",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬337",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片337",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬350",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片350",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬363",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片363",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬376",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片376",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬389",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片389",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬402",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片402",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬415",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片415",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬428",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片428",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬441",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片441",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬454",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片454",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬467",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片467",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬480",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片480",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬493",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片493",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬506",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片506",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬519",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片519",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬532",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片532",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬545",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片545",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬558",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片558",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬571",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片571",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬584",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片584",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬597",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片597",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬610",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片610",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬623",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片623",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬636",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片636",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬649",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片649",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬662",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片662",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬675",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片675",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬688",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片688",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬701",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片701",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬714",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片714",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬727",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片727",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬740",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片740",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬753",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片753",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬766",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片766",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬779",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片779",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬792",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片792",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬805",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片805",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬818",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片818",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬831",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片831",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬844",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片844",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬857",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片857",
+      "descendant_geometry_count": 287
+    },
+    {
+      "root_node": "MS-¦Õ254-¦Õ900-45È«ËÜÃ«Ë¢Æ¬870",
+      "root_node_decoded": "MS-φ254-φ900-45全塑毛刷片870",
+      "descendant_geometry_count": 287
+    }
+  ],
+  "nodes_geometry_before": 35900,
+  "nodes_geometry_after": 16738,
+  "groups_count": 67,
+  "total_collapsed_geometry": 19229
+}

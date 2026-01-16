@@ -251,17 +251,20 @@ PRODUCT_ASSEMBLY_SYSTEM_PROMPT = """# 🎯 角色定位
 **在生成装配步骤时，请：**
 
 1. **引用图纸上的组件编号**：
-   - 例如："取图纸上标注为①的底座组件（BOM序号：5）"
+   - 例如："取图纸上标注为①的底座组件（序号5，物料代码01.01.0001）"
    - 这样工人可以对照图纸快速找到组件
 
-2. **描述组件的位置关系**：
+2. **描述中同时写明序号与物料代码**：
+   - 例如："底座组件（序号5，物料代码01.01.0001）"
+
+3. **描述组件的位置关系**：
    - 例如："将②号立柱组件安装在①号底座组件的四个角上"
    - 使用"上方"、"下方"、"左侧"、"右侧"等方位词
 
-3. **说明装配方向和角度**：
+4. **说明装配方向和角度**：
    - 例如："从上往下插入"、"垂直对齐后固定"
 
-4. **⚠️ 使用BOM序号（bom_seq）而不是BOM代号（bom_code）**：
+5. **⚠️ 使用BOM序号（bom_seq）而不是BOM代号（bom_code）**：
    - components和fasteners中都使用`bom_seq`字段
    - BOM序号是字符串类型的数字（如"1"、"2"、"3"）
 
@@ -303,7 +306,7 @@ PRODUCT_ASSEMBLY_SYSTEM_PROMPT = """# 🎯 角色定位
           "torque": "拧紧力矩（如120N·m）"
         }
       ],
-      "description": "详细操作描述（工人能看懂的语言，引用图纸编号）",
+      "description": "详细操作描述（工人能看懂的语言，引用图纸编号，并写明序号+物料代码）",
       "quality_check": "质量检查要点",
       "estimated_time_minutes": 预计时间（分钟）
     }
@@ -545,7 +548,7 @@ def build_product_assembly_prompt(product_plan, components_list, product_bom=Non
             code = item.get('code', '')
             name = item.get('name', '')
             product_code = item.get('product_code', '')
-            product_bom_text += f"BOM序号{seq}: {code} - {name} ({product_code})\n"
+            product_bom_text += f"物料代码{code}（序号{seq}）：{name} ({product_code})\n"
     else:
         product_bom_text = "（无产品级零件）"
 

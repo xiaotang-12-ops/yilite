@@ -8,6 +8,7 @@ import sys
 import json
 import uuid
 import traceback
+import ctypes
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -20,10 +21,12 @@ if str(project_root) not in sys.path:
 # ✅ 定义output目录的绝对路径（确保无论从哪里启动都能找到正确的目录）
 OUTPUT_DIR = project_root / "output"
 OUTPUT_DIR.mkdir(exist_ok=True)  # 确保目录存在
+OUTPUT_ARCHIVE_DIR = project_root / "output_archive"
+OUTPUT_ARCHIVE_DIR.mkdir(exist_ok=True)  # 归档目录，覆盖时用于备份
 
 from fastapi import FastAPI, UploadFile, File, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, StreamingResponse, Response
+from fastapi.responses import FileResponse, StreamingResponse, Response, JSONResponse
 from pydantic import BaseModel
 import uvicorn
 import asyncio
@@ -86,6 +89,7 @@ class GenerationRequest(BaseModel):
     config: GenerationConfig
     pdf_files: List[str]
     model_files: List[str]
+    conflict_strategy: Optional[str] = "prompt"  # prompt | overwrite | duplicate
 
 # 版本管理请求模型
 class SaveDraftRequest(BaseModel):
@@ -116,6 +120,31 @@ class MoveStepRequest(BaseModel):
 tasks = {}
 upload_dir = Path("uploads")
 upload_dir.mkdir(exist_ok=True)
+
+
+def _cancel_task_thread(task_id: str) -> str:
+    """尝试中断后台线程，标记任务为已取消。"""
+    task = tasks.get(task_id)
+    if not task:
+        return "task_not_found"
+    task["cancelled"] = True
+    thread = task.get("thread")
+    if thread and thread.is_alive():
+        try:
+            res = ctypes.pythonapi.PyThreadState_SetAsyncExc(
+                ctypes.c_long(thread.ident),
+                ctypes.py_object(SystemExit)
+            )
+            if res > 1:
+                # 恢复，避免影响其他线程
+                ctypes.pythonapi.PyThreadState_SetAsyncExc(ctypes.c_long(thread.ident), 0)
+                return "cancel_failed"
+            else:
+                return "cancelled"
+        except Exception as e:
+            print(f"⚠️ 取消任务线程失败: {e}")
+            return "cancel_failed"
+    return "no_thread"
 
 def _persist_task_status(task_id: str) -> None:
     """将内存任务状态持久化到 task_status.json，便于刷新后恢复/列出失败任务。"""
@@ -240,6 +269,88 @@ def _find_step_location(manual: Dict[str, Any], step_id: str):
 def _resort_steps(steps: List[Dict[str, Any]]) -> None:
     steps.sort(key=lambda s: s.get("display_order", 0))
 
+
+def _normalize_time(val: Any) -> Optional[str]:
+    """将 datetime/字符串 统一为 ISO 字符串，其他类型返回 None。"""
+    if isinstance(val, datetime):
+        return val.isoformat()
+    if isinstance(val, str):
+        return val
+    return None
+
+
+def _next_duplicate_task_id(base_task_id: str) -> str:
+    """
+    生成下一个可用的 _v_n task_id，扫描 output 下已存在的目录。
+    例如 base=foo，已有 foo_v_1/foo_v_2，则返回 foo_v_3。
+    """
+    max_idx = 0
+    prefix = f"{base_task_id}_v_"
+    if OUTPUT_DIR.exists():
+        for child in OUTPUT_DIR.iterdir():
+            if not child.is_dir():
+                continue
+            name = child.name
+            if name.startswith(prefix):
+                try:
+                    num = int(name[len(prefix):])
+                    max_idx = max(max_idx, num)
+                except ValueError:
+                    continue
+    return f"{base_task_id}_v_{max_idx + 1}"
+
+
+def _build_conflict_payload(task_id: str, task_dir: Path, status: Optional[Dict[str, Any]], manual_exists: bool, code: str) -> Dict[str, Any]:
+    """构造冲突响应 payload，便于前端展示与决策。"""
+    manual_path = task_dir / "assembly_manual.json"
+    manual_mtime = None
+    if manual_path.exists():
+        manual_mtime = datetime.fromtimestamp(manual_path.stat().st_mtime, tz=BEIJING_TZ).isoformat()
+
+    created_at = None
+    updated_at = None
+    task_status = status or {}
+    if task_status:
+        created_at = _normalize_time(task_status.get("created_at"))
+        updated_at = _normalize_time(task_status.get("updated_at"))
+
+    return {
+        "success": False,
+        "code": code,
+        "message": f"任务 {task_id} 已存在",
+        "task_id": task_id,
+        "is_processing": bool(task_status.get("status") == "processing"),
+        "manual_exists": manual_exists,
+        "created_at": created_at,
+        "updated_at": updated_at,
+        "manual_mtime": manual_mtime,
+        "suggested_duplicate_id": _next_duplicate_task_id(task_id)
+    }
+
+
+def _archive_task_dir(task_id: str, task_dir: Path, reason: str = "overwrite") -> Path:
+    """
+    将现有任务目录移动到归档目录，并写入 archive_meta.json。
+    返回归档后的目录路径。
+    """
+    import shutil
+
+    timestamp = beijing_now().strftime("%Y%m%d_%H%M%S")
+    archive_dir = OUTPUT_ARCHIVE_DIR / task_id / timestamp
+    archive_dir.parent.mkdir(parents=True, exist_ok=True)
+    shutil.move(str(task_dir), str(archive_dir))
+
+    meta = {
+        "task_id": task_id,
+        "archived_at": beijing_now().isoformat(),
+        "reason": reason,
+        "archive_dir": str(archive_dir),
+        "source_dir": str(task_dir)
+    }
+    with open(archive_dir / "archive_meta.json", "w", encoding="utf-8") as f:
+        json.dump(meta, f, ensure_ascii=False, indent=2)
+    return archive_dir
+
 @app.get("/")
 async def root():
     return {"message": "智能装配说明书生成系统 API"}
@@ -327,28 +438,63 @@ async def generate_manual(request: GenerationRequest):
     step_suffix = Path(step_filename).suffix.lower()
     pdf_base = Path(pdf_filename).stem or pdf_filename
 
-    # 若 STEP 与 PDF 基名不一致，则强制对齐（生成阶段重命名）
-    step_target_name = f"{pdf_base}{step_suffix or ''}"
-    pdf_target_name = f"{pdf_base}{pdf_suffix or ''}"
+    conflict_strategy = (request.conflict_strategy or "prompt").lower()
+    if conflict_strategy not in {"prompt", "overwrite", "duplicate"}:
+        raise HTTPException(status_code=400, detail="conflict_strategy 只能是 prompt/overwrite/duplicate")
 
+    # 若 STEP 与 PDF 基名不一致，则强制对齐（生成阶段重命名）
     task_id = pdf_base
     task_dir = OUTPUT_DIR / task_id
 
-    # 防止同名任务覆盖已有输出；若残留目录未生成手册则自动清理后重试
+    # 冲突检测：存在已发布手册/任务正在运行时，按策略处理
     if task_dir.exists():
         assembly_manual_path = task_dir / "assembly_manual.json"
-        if assembly_manual_path.exists():
-            # 已有完整手册，保持原有防护
-            raise HTTPException(status_code=400, detail=f"任务 {task_id} 已存在，请更换 PDF 文件名或清理旧任务后再试")
-        # 无手册 => 判定为上次半途失败的残留，先清理再继续
-        try:
-            import shutil
-            shutil.rmtree(task_dir)
-            if task_id in tasks:
-                del tasks[task_id]
-            print(f"🧹 检测到未完成的残留任务 {task_id}，已自动清理目录后重新开始")
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"清理残留任务 {task_id} 失败: {str(e)}")
+        manual_exists = assembly_manual_path.exists()
+        status = tasks.get(task_id) or _load_task_status_from_file(task_id)
+        is_processing = bool(status and status.get("status") == "processing")
+
+        if manual_exists or status:
+            conflict_code = "TASK_RUNNING" if is_processing else "TASK_EXISTS"
+            conflict_payload = _build_conflict_payload(task_id, task_dir, status, manual_exists, conflict_code)
+
+            # prompt 模式：直接返回冲突信息，不启动任务
+            if conflict_strategy == "prompt":
+                return JSONResponse(status_code=409, content=conflict_payload)
+
+            # 运行中禁止覆盖
+            if is_processing and conflict_strategy == "overwrite":
+                return JSONResponse(status_code=409, content=conflict_payload)
+
+            if conflict_strategy == "overwrite":
+                _archive_task_dir(task_id, task_dir, reason="overwrite")
+                if task_id in tasks:
+                    _cancel_task_thread(task_id)
+                    del tasks[task_id]
+                status = None
+                manual_exists = False
+                task_dir = OUTPUT_DIR / task_id  # 归档后路径已被移走
+
+            elif conflict_strategy == "duplicate":
+                # 生成新的 task_id/_v_n
+                new_task_id = _next_duplicate_task_id(task_id)
+                task_id = pdf_base = new_task_id
+                task_dir = OUTPUT_DIR / task_id
+
+        else:
+            # 无手册也无任务状态：视为残留，安全清理后继续
+            try:
+                import shutil
+                shutil.rmtree(task_dir)
+                if task_id in tasks:
+                    _cancel_task_thread(task_id)
+                    del tasks[task_id]
+                print(f"🧹 检测到未完成的残留任务 {task_id}，已自动清理目录后重新开始")
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=f"清理残留任务 {task_id} 失败: {str(e)}")
+
+    # 依据最终 task_id 重新计算目标文件名
+    step_target_name = f"{pdf_base}{step_suffix or ''}"
+    pdf_target_name = f"{pdf_base}{pdf_suffix or ''}"
 
     try:
         # 创建任务目录
@@ -448,13 +594,19 @@ async def generate_manual(request: GenerationRequest):
 
             except Exception as e:
                 print(f"Pipeline执行错误: {e}")
-                tasks[task_id]["status"] = "failed"
-                tasks[task_id]["error"] = str(e)
+                # 允许外部取消：SystemExit 归类为 cancelled
+                if isinstance(e, SystemExit) or tasks.get(task_id, {}).get("cancelled"):
+                    tasks[task_id]["status"] = "cancelled"
+                    tasks[task_id]["error"] = "cancelled"
+                else:
+                    tasks[task_id]["status"] = "failed"
+                    tasks[task_id]["error"] = str(e)
                 tasks[task_id]["updated_at"] = beijing_now()
                 _persist_task_status(task_id)
 
         # 在后台线程中运行
-        thread = threading.Thread(target=run_pipeline)
+        thread = threading.Thread(target=run_pipeline, name=f"pipeline-{task_id}")
+        tasks[task_id]["thread"] = thread
         thread.start()
 
         return {
@@ -847,6 +999,11 @@ async def delete_manual(task_id: str):
 
         if not output_dir.exists():
             raise HTTPException(status_code=404, detail=f"任务不存在: {task_id}")
+
+        # 若任务正在处理，尝试中断后台线程
+        cancel_status = _cancel_task_thread(task_id)
+        if cancel_status in {"cancelled", "cancel_failed"}:
+            print(f"🛑 已请求中断任务 {task_id}，状态: {cancel_status}")
 
         # 删除整个目录
         import shutil

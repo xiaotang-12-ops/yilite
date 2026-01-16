@@ -21,6 +21,7 @@ services:
       # 持久化数据卷
       - ./uploads:/app/uploads
       - ./output:/app/output
+      - ./output_archive:/app/output_archive
       - ./static:/app/static
       - ./pipeline_output:/app/pipeline_output
       - ./debug_output:/app/debug_output
@@ -68,6 +69,7 @@ volumes:
   # 命名卷（可选，如果不想使用绑定挂载）
   uploads:
   output:
+  output_archive:
   static:
   pipeline_output:
   debug_output:

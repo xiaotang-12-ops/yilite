@@ -1,6 +1,6 @@
 # 智能装配说明书生成系统
 
-[![Version](https://img.shields.io/badge/version-v2.0.0-blue.svg)](https://github.com/xiaotang-12-ops/yilite/releases)
+[![Version](https://img.shields.io/badge/version-v2.0.90-blue.svg)](https://github.com/xiaotang-12-ops/yilite/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Docker](https://img.shields.io/badge/docker-ready-brightgreen.svg)](DOCKER_DEPLOYMENT.md)
 
@@ -8,13 +8,13 @@
 
 一个基于AI的智能装配说明书生成系统，能够自动解析PDF工程图纸和3D模型，生成工人友好的交互式HTML装配说明书。
 
-**当前版本**: v2.0.74 | [查看版本历史](https://github.com/xiaotang-12-ops/yilite/releases) | [部署指南](DOCKER_DEPLOYMENT.md)
+**当前版本**: v2.0.90 | [查看版本历史](https://github.com/xiaotang-12-ops/yilite/releases) | [部署指南](DOCKER_DEPLOYMENT.md)
 
-## 🆕 最新更新 (v2.0.74)
+## 🆕 最新更新 (v2.0.90)
 
-- **🖥️ 桌面端交互升级**：ManualViewer 侧栏支持拖拽调整宽度，折叠按钮智能悬浮显示，解决 3D 画布遮挡问题。
-- **📱 移动端体验优化**：修复移动端首页与导航的显示逻辑，优化小屏下的操作流。
-- **🔧 稳定性修复**：修正侧栏收起时的渲染问题，优化 3D 画布尺寸重算逻辑。
+- **🧭 步骤导航顺序调整**：桌面端“下一步/查看步骤”位置互换，操作更顺手。
+- **🧰 工具输入体验修复**：所需工具回车添加后不再残留文字，并新增“回车添加”提示。
+- **📱 移动端返回稳定性**：抽屉返回不再触发页面刷新，避免步骤重置。
 
 ### 🌟 v2.0.x 系列演进亮点
 

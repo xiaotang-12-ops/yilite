@@ -2,7 +2,7 @@
 
 本文档说明如何从 GitHub 克隆项目并使用 Docker 部署智能装配说明书生成系统。
 
-**当前版本**: v2.0.0 | [查看所有版本](https://github.com/xiaotang-12-ops/yilite/releases)
+**当前版本**: v2.0.90 | [查看所有版本](https://github.com/xiaotang-12-ops/yilite/releases)
 
 ---
 
@@ -43,12 +43,12 @@ git --version
 git clone https://github.com/xiaotang-12-ops/yilite.git
 
 # 进入项目目录
-cd yilite/Mecagent
+cd yilite
 ```
 
 #### 部署特定版本
 
-如果你想部署特定版本（例如 v1.1.4），可以使用以下命令：
+如果你想部署特定版本（例如 v2.0.90），可以使用以下命令：
 
 ```bash
 # 克隆项目
@@ -59,10 +59,10 @@ cd yilite
 git tag
 
 # 切换到特定版本
-git checkout v1.1.4
+git checkout v2.0.90
 
 # 进入项目目录
-cd Mecagent
+cd yilite
 ```
 
 **查看所有版本**: https://github.com/xiaotang-12-ops/yilite/releases

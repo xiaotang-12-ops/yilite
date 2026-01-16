@@ -1,5 +1,93 @@
 # Memory Changelog
 
+## v2.0.90 (2026-01-15)
+- **步骤导航位置调整 + 工具输入修复**：
+  - 桌面端“下一步/查看步骤”位置互换，确保下一步按钮更靠近主操作区。
+  - 所需工具输入回车后保留文字的问题修复，新增“回车添加”提示文案。
+- 影响文件：`frontend/src/views/ManualViewer.vue`、`Memory_Development/index.md`、`VERSION`
+
+## v2.0.89 (2026-01-15)
+- **移动端步骤入口顺序 + 抽屉返回修复**：
+  - 导航按钮顺序调整为“上一步 → 下一步 → 步骤”，避免步骤按钮插在中间造成误触。
+  - 移动端抽屉关闭不再触发历史回退，新增路由守卫优先关闭抽屉/预览，避免返回导致页面刷新与步骤重置。
+- 影响文件：`frontend/src/views/ManualViewer.vue`、`Memory_Development/index.md`、`VERSION`
+
+## v2.0.88 (2026-01-15)
+- **移动端步骤跳转 + 进度显示优化**：
+  - 导航“上一步/下一步”区域新增移动端步骤跳转按钮，打开抽屉列表点击即跳转并自动关闭。
+  - 进度条百分比改为整数显示，避免长小数占位。
+- 影响文件：`frontend/src/views/ManualViewer.vue`、`Memory_Development/index.md`、`VERSION`
+
+## v2.0.87 (2026-01-14)
+- **步骤跳转 + 物料代码描述**：
+  - ManualViewer 顶部导航新增步骤下拉选择，点击可直接跳转到目标步骤（保留标题展示）。
+  - Agent3/Agent4 提示词要求描述同时包含“序号 + 物料代码”，并调整 BOM 列表输入格式为“物料代码优先”。
+- 影响文件：`frontend/src/views/ManualViewer.vue`、`prompts/agent_3_component_assembly.py`、`prompts/agent_4_product_assembly.py`、`Memory_Development/index.md`、`VERSION`
+
+## v2.0.86 (2026-01-14)
+- **爆炸方向文案优化**：
+  - 将选项文案改为“默认/分散/强分散”，保持逻辑不变，降低用户理解成本。
+- 影响文件：`frontend/src/views/ManualViewer.vue`、`Memory_Development/index.md`、`VERSION`
+
+## v2.0.85 (2026-01-14)
+- **ManualViewer 超大模型缩放兜底 + 爆炸方向模式**：
+  - `computeAdaptiveScale` 在默认缩放超过阈值时使用 `TARGET_MAX_DIM=90`（S2）避免极端放大导致网格比例失衡。
+  - 爆炸视图新增方向模式：原始（mesh 原点方向）、几何中心、距离加权；默认 `legacy` 保持旧逻辑。
+- 影响文件：`frontend/src/views/ManualViewer.vue`、`Memory_Development/index.md`、`VERSION`
+
+## v2.0.84 (2026-01-14)
+- **管理员可编辑步骤所需工具**：
+  - ManualViewer 编辑弹窗新增“所需工具”页签，支持输入并创建多项工具名称。
+  - 打开编辑时从步骤读取 `tools_required`，保存草稿时同步写回步骤（为空则移除字段）。
+- 影响文件：`frontend/src/views/ManualViewer.vue`
+
+## v2.0.83 (2026-01-13)
+- **生成任务可中断**：
+  - 后端生成线程记录到 `tasks[task_id]["thread"]`，删除/覆盖/残留清理时会标记 `cancelled` 并向线程注入 `SystemExit`，避免 AI 匹配继续跑。
+  - `/api/manual/{task_id}` 删除接口清理目录前先尝试中断后台线程，任务状态写入 `cancelled`。
+  - 同名覆盖前也会中断旧线程，防止覆盖期间仍在写日志/占用算力。
+- 影响文件：`backend/simple_app.py`、`Memory_Development/index.md`、`VERSION`
+
+## v2.0.82 (2026-01-13)
+- **生成冲突处理（覆盖/复制可选）**：
+  - `/api/generate` 新增 `conflict_strategy`（prompt/overwrite/duplicate），同名任务返回 409 并附 `suggested_duplicate_id`、任务/手册时间信息。
+  - 选择覆盖时，先将原 `output/{task_id}` 目录移动到 `output_archive/{task_id}/<timestamp>/` 并写入 `archive_meta.json`，确保可恢复；运行中的任务禁止覆盖。
+  - 选择生成第二套时，后端统一分配下一个可用的 `{task_id}_v_n`，避免前端与后端编号冲突。
+- **前端生成器交互**：
+  - 冲突弹窗改为自定义对话框，提供明确三按钮：覆盖并备份、生成第二套（显示建议 ID）、取消；重复点击覆盖/复制会带策略再次调用生成接口。
+  - 生成请求携带 `conflict_strategy`，duplicate 场景返回的新 `task_id` 会同步到前端状态和项目名。
+- **冲突弹窗可见性修复**：显式开启取消按钮并使用次要样式，确保“生成第二套”选项在弹窗中可见。
+- **取消返回上传页**：冲突弹窗点“取消”会将生成器恢复到上传步骤（保留已选文件，退出日志页）。
+- 影响文件：`backend/simple_app.py`、`frontend/src/views/Generator.vue`、`Memory_Development/index.md`、`Memory_Development/backend/api.md`、`VERSION`
+
+## v2.0.81 (2026-01-13)
+- **自动简化（仅在超大模型触发）**：在 STEP→GLB 转换成功后、导出 GLB 前自动执行一次“渲染友好化”简化，用于解决“刷丝/毛刷”这类高精度建模导致的节点爆炸（万级 nodes）问题。
+  - **触发条件（默认）**：`nodes_geometry >= 5000` 且识别到“毛刷类父节点”并满足折叠规模阈值；常规模型不触发，不改变原有逻辑。
+  - **识别策略**：在 `SceneGraph` 中寻找 **无 geometry 的父节点**（装配/组件节点），名称包含 `毛刷/刷片/刷丝/brush/bristle` 且带数字后缀（如 `...毛刷片090`）。
+  - **折叠规则**：对每个命中的父节点：收集其所有带 geometry 的后代节点（geometry descendants），把这些子 mesh 变换到父节点局部坐标后合并为 1 个 mesh；删除原子节点；父节点保持 world 变换，作为“盘/组件级” mesh 输出。
+  - **产物与回传**：`ModelProcessor.step_to_glb` 返回新增 `simplification` 字段（是否触发、前后 nodes 统计、合并组信息），便于排查与前端提示。
+  - **环境变量**：`AUTO_SIMPLIFY_GLB`（开关，默认 true）、`AUTO_SIMPLIFY_TRIGGER_NODES_GEOMETRY`、`AUTO_SIMPLIFY_MIN_ROOT_DESC_GEOM`、`AUTO_SIMPLIFY_MIN_TOTAL_COLLAPSED`。
+  - **样本（AS3000 连接器）**：`nodes_geometry 35900 -> 16738`；合并 67 组“盘级父节点”，移除 19229 个刷丝节点（每盘 287 个）。注意：合并会破坏实例化复用，GLB 文件体积可能变大，但 draw calls 与拾取/高亮压力显著下降。
+    - 示例产物：`output/03.02.10.0007T-AS3000-BIG BM清除器Big BM连接器/glb_files/product_total.simplified.glb` + `output/03.02.10.0007T-AS3000-BIG BM清除器Big BM连接器/glb_files/product_total.simplified.glb.simplify_report.json`
+  - **本地验证脚本**：`python scripts/simplify_glb.py <input.glb> <output.glb> --force`（会同时输出 `*.simplify_report.json` 统计报告）。
+- **OCP(OpenCASCADE) 兜底转换（解决 Step4 卡死/超时）**：
+  - **触发方式**：`trimesh.load(..., force='scene')` 超时/失败时自动回退到 OCP；对命中“超长参数行”的 STEP，会预检后优先走 OCP（避免先等 120s 硬超时）。
+  - **实现**：新增 `processors/ocp_step_to_glb.py`，使用 `cadquery-ocp` 的 XDE(STEPCAFControl) 读取 STEP 并按“组件/刷毛特征层折叠”策略导出 GLB。
+  - **粒度策略**：默认尽量下钻拿到组件层级；刷毛类（名称含 `毛刷/刷片/刷丝/brush/bristle` 且带数字后缀）优先折叠为组件级 mesh；若输出 mesh 仍过多则回退到更粗层级以保证可生成与可渲染。
+  - **环境变量**：`OCP_STEP_FALLBACK`、`OCP_STEP_FALLBACK_TIMEOUT_SECONDS`、`OCP_MESH_LINEAR_DEFLECTION`、`OCP_MESH_ANGULAR_DEFLECTION`、`OCP_MAX_MESHES`、`OCP_COLLAPSE_LEAF_THRESHOLD`、`STEP_TO_GLB_PREFER_OCP`、`STEP_LONG_LINE_THRESHOLD`、`STEP_LONG_LINE_HIT_COUNT`。
+- **Windows 兼容修复（spawn/pickle）**：将 `trimesh` 子进程 worker 从嵌套函数移到模块顶层，避免 Windows `multiprocessing` 的 pickling 失败。
+- 影响文件：`processors/glb_simplifier.py`、`processors/ocp_step_to_glb.py`、`processors/file_processor.py`、`scripts/simplify_glb.py`、`requirements.txt`、`docker_requirements.txt`、`Memory_Development/index.md`
+
+## v2.0.80 (2026-01-12)
+- **移除 OCP 兜底依赖**：撤回 `ocp_tessellate` 低精度兜底路径，保持 `trimesh` 子进程 120s 硬超时（超时强制终止）以防卡死，依赖不再包含 OCP/ocp-tessellate。
+- 影响文件：`processors/file_processor.py`、`docker_requirements.txt`、`Memory_Development/index.md`
+
+## v2.0.78 (2026-01-12)
+- **STEP→GLB 硬超时兜底**：
+  - 将 STEP 转 GLB 的 `trimesh.load` 转换放入子进程，默认 120s 硬超时，超时直接终止子进程并返回失败，避免接口/流水线被卡死。
+  - 失败返回明确 `trimesh转换超时`，便于前端展示和重试/删除卡任务。
+- 影响文件：`processors/file_processor.py`、`Memory_Development/index.md`
+
 ## v2.0.77 (2026-01-10)
 - **生成/查看器卡死兜底入口**：
   - 生成页（`Generator.vue`）新增“强制中断/清理”按钮：有 taskId 或处理中时可见，确认后关闭 SSE、调用删除接口并重置状态，便于清理卡任务后重传。

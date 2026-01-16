@@ -7,6 +7,7 @@ attrs==25.3.0
 black==25.9.0
 camelot-py==1.0.9
 cascadio==0.0.16
+cadquery-ocp==7.9.3.0
 certifi==2025.10.5
 cffi==2.0.0
 chardet==5.2.0

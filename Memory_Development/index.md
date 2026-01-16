@@ -1,8 +1,8 @@
 # 📸 项目快照 - Memory Development
 
 **创建时间**: 2025-11-18
-**最后校对**: 2026-01-10
-**当前版本**: v2.0.77
+**最后校对**: 2026-01-15
+**当前版本**: v2.0.90
 **项目状态**: 核心功能完成，可用
 
 ---
@@ -40,7 +40,7 @@ output/{task_id} (JSON + GLB + 图片)
 | --- | --- | --- | --- |
 | GET | `/api/health` | 健康检查 | Docker HC 使用 |
 | POST | `/api/upload` | 上传 PDF/STEP/STL | 保存到 `uploads/`，每次上传前清空目录 |
-| POST | `/api/generate` | 启动生成任务 | 复制上传文件到 `output/{task}/`，后台线程跑 gemini_pipeline |
+| POST | `/api/generate` | 启动生成任务 | JSON：`config.projectName`、`pdf_files[]`(1)、`model_files[]`(1)、`conflict_strategy`（prompt/overwrite/duplicate）；复制上传文件到 `output/{task}/`，后台线程跑 gemini_pipeline；同名返回 409 携带建议 `_v_n`，覆盖前会归档旧目录到 `output_archive/` |
 | GET | `/api/status/{task_id}` | 查询任务状态 | 内存任务表 |
 | GET | `/api/stream/{task_id}` | SSE 日志/进度流 | 结合 utils.logger 缓冲 |
 | WS | `/ws/task/{task_id}` | WebSocket 进度流 | 周期推送进度/完成/失败 |
@@ -104,16 +104,29 @@ output/{task_id} (JSON + GLB + 图片)
 ## 最近 3 个版本快照
 | 版本 | 日期 | 关键变更 |
 | --- | --- | --- |
-| v2.0.77 | 2026-01-10 | **卡死兜底入口**：生成页新增“强制中断/清理”按钮（有 taskId 或处理中可见）；查看器对 processing 任务新增“中断/删除”按钮，调用删除接口清理卡住任务；并在 .cursor 记录超大 STEP 卡死原因。 |
-| v2.0.76 | 2026-01-09 | **任务状态持久化 + 失败任务可视化**：/api/manuals 支持 include_failed 列出未完成任务；生成状态写入 task_status.json 供刷新恢复；查看器新增失败任务删除入口；生成页刷新可恢复未完成任务。 |
-| v2.0.75 | 2026-01-09 | **生成时自动清理未完成残留目录**：/api/generate 若检测到同名任务目录但无 `assembly_manual.json`，会先清空残留后再启动新任务，避免“任务已存在”阻塞重跑。 |
+| v2.0.90 | 2026-01-15 | **步骤导航位置调整 + 工具输入修复**：桌面端“下一步/查看步骤”位置互换；工具输入回车后残留文字问题修复并新增提示。 |
+| v2.0.89 | 2026-01-15 | **移动端步骤入口顺序 + 抽屉返回修复**：步骤按钮调整为“上一步/下一步”之后；移动端抽屉返回不再触发页面刷新与步骤重置。 |
+| v2.0.88 | 2026-01-15 | **移动端步骤跳转 + 进度显示优化**：移动端在“上一步/下一步”区域新增步骤跳转按钮；进度条百分比改为整数展示。 |
+
+---
+
+## 🔥 重要未发布变更（v2.0.81 记录）
+- **STEP→GLB 自动简化（仅超大模型触发）**：在导出 GLB 前自动识别“毛刷/刷丝”这类高重复特征层父节点并合并子 mesh，降低 nodes 数与 draw calls，解决连接器类模型渲染/交互卡顿问题。
+  - 默认触发：`nodes_geometry >= 5000` 且折叠规模满足阈值；可用 `AUTO_SIMPLIFY_GLB=false` 关闭。
+  - 典型效果（AS3000 连接器）：`nodes_geometry 35900 -> 16738`（合并 67 个盘级节点、移除 19229 个刷丝节点）。
+  - 代价：可能增大 GLB 体积（合并会破坏实例化复用），但前端性能显著改善。
+- **STEP→GLB OCP 兜底转换（解决卡死/超时）**：当 `trimesh.load(..., force='scene')` 在加载/三角化阶段超时或失败时，自动改用 OpenCASCADE（`cadquery-ocp`）读取并三角化导出 GLB；对“超长参数行 STEP”会预检后优先走 OCP，避免先等 120s 超时。
+  - 主要开关：`OCP_STEP_FALLBACK`（默认 true）、`OCP_STEP_FALLBACK_TIMEOUT_SECONDS`、`OCP_MESH_LINEAR_DEFLECTION`、`OCP_MESH_ANGULAR_DEFLECTION`、`OCP_MAX_MESHES`、`OCP_COLLAPSE_LEAF_THRESHOLD`。
+  - 预检开关：`STEP_TO_GLB_PREFER_OCP` 强制优先 OCP；或通过 `STEP_LONG_LINE_THRESHOLD/STEP_LONG_LINE_HIT_COUNT` 自动命中后优先 OCP。
 
 ---
 
 ## 状态与注意事项
 - 正常：上传、生成、日志流、手册读取/编辑、模型与图片下载、设置管理。
-- 注意：需安装 Blender；`OPENROUTER_API_KEY` 必填；大文件性能与 Three.js 渲染待优化；前端路由默认走 8008 端口；一次任务仅支持上传 1 个 PDF + 1 个 STEP；task_id = PDF 文件名（去后缀），STEP 文件名可不同，后端生成时会按 task_id 重命名存储，同名 task_id 已存在会拒绝生成以防覆盖；模式判定：PDF 文件名前缀 01* → 组件模式；03/06/07/08* → 产品模式；未命中前缀默认组件模式；产品模式跳过 Step5，仅执行 Step6+Step7/8。
+- 注意：需安装 Blender；`OPENROUTER_API_KEY` 必填；大文件性能与 Three.js 渲染待优化；前端路由默认走 8008 端口；一次任务仅支持上传 1 个 PDF + 1 个 STEP；task_id = PDF 文件名（去后缀），STEP 文件名可不同，后端生成时会按 task_id 重命名存储；同名生成返回 409，可在前端选择覆盖（旧目录归档到 `output_archive/`）或生成第二套 `_v_n`；生成任务可被中断（删除/覆盖/残留清理时会中断后台线程并写入 `cancelled`）；模式判定：PDF 文件名前缀 01* → 组件模式；03/06/07/08* → 产品模式；未命中前缀默认组件模式；产品模式跳过 Step5，仅执行 Step6+Step7/8。
 - ManualViewer 相机：加载/切换 GLB 时基于包围盒自动框选，动态设置 near/far，并收敛模型放大上限（≤1e4）以避免深度闪烁和“需大幅放大才能看到”问题；移动端图纸/抽屉不再写入浏览器历史，切换页面不会留下触控禁用或返回键异常；移动端预览支持“返回键先关预览/抽屉”“轻点图片关闭”。
+- STEP→GLB：`trimesh` 子进程 120s 硬超时（超时强制终止），不再启用 ocp_tessellate 兜底；并新增“自动简化”兜底（仅超大 nodes 模型触发，合并刷丝/毛刷等特征层为盘级 mesh），需要时可在上传前提示大文件转 STL。
+  - 现已新增 OCP(cadquery-ocp) 兜底：trimesh/cascadio 超时/失败或预检命中超长行时，会自动回退/优先走 OCP 导出可用 GLB（粒度可能更粗，以保证能生成与可渲染）。
 
 ---
 

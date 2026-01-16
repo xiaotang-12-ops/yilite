@@ -9,12 +9,242 @@ import json
 import re
 import tempfile
 import subprocess
+import signal
+from multiprocessing import Process, Queue
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple
 from datetime import datetime
 import fitz  # PyMuPDF
 from PIL import Image
 from utils.time_utils import beijing_now
+
+
+def _terminate_process(process: Process) -> None:
+    if not process.is_alive():
+        return
+    process.terminate()
+    process.join(timeout=5)
+    if not process.is_alive():
+        return
+    if process.pid:
+        try:
+            os.kill(process.pid, getattr(signal, "SIGKILL", signal.SIGTERM))
+        except Exception:
+            pass
+    process.join(timeout=2)
+
+
+def _step_has_very_long_lines(step_path: str) -> Tuple[bool, Dict[str, int]]:
+    """
+    预检 STEP 文本特征：超长参数行通常会让 cascadio/trimesh 的三角化复杂度爆炸。
+    仅用于决定是否优先走 OCP 兜底，不改变正常模型的默认链路。
+    """
+    threshold = 20000
+    hit_count = 1
+    try:
+        threshold = int(os.getenv("STEP_LONG_LINE_THRESHOLD", str(threshold)))
+    except Exception:
+        pass
+    try:
+        hit_count = int(os.getenv("STEP_LONG_LINE_HIT_COUNT", str(hit_count)))
+    except Exception:
+        pass
+
+    max_len = 0
+    hits = 0
+    try:
+        with open(step_path, "rb") as f:
+            for line in f:
+                length = len(line)
+                if length > max_len:
+                    max_len = length
+                if length >= threshold:
+                    hits += 1
+                    if hits >= hit_count:
+                        return True, {"max_len": max_len, "hits": hits, "threshold": threshold}
+    except Exception:
+        return False, {"max_len": 0, "hits": 0, "threshold": threshold}
+
+    return False, {"max_len": max_len, "hits": hits, "threshold": threshold}
+
+
+def _trimesh_step_to_glb_worker(in_path: str, out_path: str, scale: float, queue: Queue) -> None:
+    """
+    顶层 worker（Windows spawn 兼容）：用于把 trimesh.load 放到子进程里做硬超时。
+    """
+    try:
+        import os
+        import trimesh
+
+        print(f"   🔄 开始加载STEP文件: {os.path.basename(in_path)}")
+
+        file_ext = os.path.splitext(in_path)[1].lower()
+        if file_ext in [".step", ".stp"]:
+            try:
+                import cascadio  # noqa: F401
+
+                print(f"   ✅ 检测到cascadio库，支持STEP文件")
+            except ImportError:
+                print(f"   ⚠️  cascadio库未安装，STEP文件支持受限")
+                queue.put(
+                    {
+                        "success": False,
+                        "error": "STEP文件需要cascadio库支持，但该库未正确安装。建议：1) 重新构建Docker镜像 2) 或将STEP文件转换为STL格式后上传",
+                        "message": "缺少STEP文件支持库",
+                    }
+                )
+                return
+
+        try:
+            mesh = trimesh.load(in_path, force="scene")
+        except Exception as load_error:
+            error_str = str(load_error)
+            print(f"   ⚠️  STEP文件加载错误: {error_str}")
+            print(f"   🔄 尝试使用备用加载方式...")
+            try:
+                mesh = trimesh.load(in_path)
+                print(f"   ✅ 备用加载方式成功")
+            except Exception as retry_error:
+                print(f"   ❌ 备用加载方式也失败: {str(retry_error)}")
+                if "unexpected" in error_str or "{" in error_str or "}" in error_str:
+                    queue.put(
+                        {
+                            "success": False,
+                            "error": "STEP文件解析失败。这可能是因为：1. STEP文件格式不被trimesh/cascadio支持 2. 文件包含特殊字符或非标准格式 3. 建议：使用CAD软件将STEP转换为STL格式后再上传",
+                            "message": "trimesh转换失败",
+                        }
+                    )
+                else:
+                    queue.put(
+                        {
+                            "success": False,
+                            "error": error_str,
+                            "message": "trimesh转换失败",
+                        }
+                    )
+                return
+
+        if mesh.is_empty:
+            queue.put(
+                {
+                    "success": False,
+                    "error": f"文件 {in_path} 不包含任何几何体",
+                    "message": "转换失败",
+                }
+            )
+            return
+
+        if isinstance(mesh, trimesh.Scene):
+            scene = mesh
+            part_count = len(list(scene.graph.nodes_geometry))
+            print(f"   📦 检测到装配体，包含 {part_count} 个零件")
+        else:
+            scene = trimesh.Scene(mesh)
+            print(f"   📦 单个网格，创建场景")
+
+        if scale != 1.0:
+            scene.apply_scale(scale)
+            print(f"   📏 应用缩放因子: {scale}")
+
+        def _decode_name(name: str) -> str:
+            if not name:
+                return name
+            if re.search(r"[\u4e00-\u9fff]", str(name)):
+                return str(name)
+            try:
+                raw_bytes = str(name).encode("latin1", errors="ignore")
+            except Exception:
+                return str(name)
+            for enc in ("gbk", "gb18030"):
+                try:
+                    decoded = raw_bytes.decode(enc)
+                    if decoded:
+                        return decoded
+                except Exception:
+                    continue
+            return str(name)
+
+        if isinstance(scene, trimesh.Scene):
+            new_geometry = {}
+            name_map = {}
+            for old_name, geom in scene.geometry.items():
+                fixed_name = _decode_name(old_name)
+                if fixed_name in new_geometry and new_geometry[fixed_name] is not geom:
+                    fixed_name = f"{fixed_name}_{len(new_geometry)}"
+                new_geometry[fixed_name] = geom
+                name_map[old_name] = fixed_name
+            scene.geometry = new_geometry
+
+            for node in list(scene.graph.nodes_geometry):
+                try:
+                    transform, geom_name = scene.graph[node]
+                    fixed_geom_name = name_map.get(geom_name, _decode_name(geom_name))
+                    scene.graph.update(
+                        frame_from=None,
+                        frame_to=node,
+                        matrix=transform,
+                        geometry=fixed_geom_name,
+                    )
+                except Exception:
+                    continue
+
+            with_geom = [n for n in scene.graph.nodes if scene.graph[n][1] is not None]
+            if scene.geometry and len(with_geom) / len(scene.geometry) < 0.95:
+                raise ValueError(f"节点与geometry绑定缺失：with_geom={len(with_geom)}, geometry={len(scene.geometry)}")
+        else:
+            mesh_name = _decode_name(getattr(scene, "metadata", {}).get("name", "mesh_0"))
+            scene.metadata["name"] = mesh_name
+
+        # 自动简化：仅在超大节点数模型触发（不影响常规模型）
+        simplification_report = None
+        try:
+            from processors.glb_simplifier import auto_simplify_scene
+
+            scene_simplified, simplification_report = auto_simplify_scene(scene)
+            if simplification_report and simplification_report.get("applied"):
+                before_n = simplification_report.get("nodes_geometry_before")
+                after_n = simplification_report.get("nodes_geometry_after")
+                print(f"   🧹 自动简化已应用: nodes_geometry {before_n} -> {after_n}")
+                scene = scene_simplified
+        except Exception as simplify_err:
+            print(f"   ⚠️  自动简化失败，继续使用原模型: {simplify_err}")
+
+        os.makedirs(os.path.dirname(out_path), exist_ok=True)
+        glb_data = scene.export(file_type="glb")
+        with open(out_path, "wb") as f:
+            f.write(glb_data)
+
+        parts_info = []
+        if isinstance(scene, trimesh.Scene):
+            for node_name in scene.graph.nodes_geometry:
+                try:
+                    _, geometry_name = scene.graph[node_name]
+                    if not isinstance(geometry_name, str):
+                        geometry_name = str(geometry_name)
+                except Exception:
+                    geometry_name = f"geometry_{len(parts_info)}"
+                parts_info.append({"node_name": str(node_name), "geometry_name": geometry_name})
+            part_count = len(parts_info)
+            print(f"   📊 提取零件信息: {part_count} 个零件")
+        else:
+            part_count = 1
+            parts_info.append({"node_name": "single_mesh", "geometry_name": "mesh_0"})
+            print(f"   📊 单个网格，计为1个零件")
+
+        queue.put(
+            {
+                "success": True,
+                "output_path": out_path,
+                "message": "转换成功",
+                "method": "trimesh",
+                "log": f"使用trimesh成功转换 {in_path} -> {out_path}",
+                "parts_count": part_count,
+                "parts_info": parts_info,
+                "simplification": simplification_report,
+            }
+        )
+    except Exception as e:
+        queue.put({"success": False, "error": str(e), "message": "trimesh转换失败"})
 
 
 class PDFProcessor:
@@ -125,7 +355,8 @@ class ModelProcessor:
         self,
         step_path: str,
         output_path: str,
-        scale_factor: float = 1.0
+        scale_factor: float = 1.0,
+        timeout_seconds: int = 120
     ) -> Dict:
         """
         将STEP/STL文件转换为GLB格式
@@ -134,206 +365,109 @@ class ModelProcessor:
             step_path: STEP/STL文件路径
             output_path: 输出GLB文件路径
             scale_factor: 缩放因子
+            timeout_seconds: 子进程硬超时
 
         Returns:
             转换结果信息
         """
-        if self.use_trimesh:
-            return self._convert_with_trimesh(step_path, output_path, scale_factor)
-        else:
+        file_ext = os.path.splitext(step_path)[1].lower()
+        is_step = file_ext in [".step", ".stp"]
+
+        # ✅ 对“高风险 STEP”优先走 OCP 兜底（避免先等 trimesh 硬超时）
+        prefer_ocp_first = False
+        if is_step:
+            prefer_ocp_first = os.getenv("STEP_TO_GLB_PREFER_OCP", "").strip().lower() in (
+                "1",
+                "true",
+                "yes",
+                "y",
+                "on",
+            )
+            if not prefer_ocp_first:
+                risky, info = _step_has_very_long_lines(step_path)
+                if risky:
+                    prefer_ocp_first = True
+                    print(f"   ⚠️  STEP 预检命中超长行，优先走 OCP：{info}")
+
+        if not self.use_trimesh:
             return self._convert_with_blender(step_path, output_path, scale_factor)
 
-    def _convert_with_trimesh(self, input_path: str, output_path: str, scale_factor: float = 1.0) -> Dict:
-        """
-        使用trimesh进行转换（保留装配层级）
+        ocp_attempted = False
+        if prefer_ocp_first:
+            ocp_attempted = True
+            ocp_result = self._convert_with_ocp(step_path, output_path, scale_factor)
+            if ocp_result.get("success"):
+                return ocp_result
 
-        重要：不合并场景，保留所有零件的独立性，以便：
-        1. 爆炸图动画
-        2. 零件高亮显示
-        3. BOM匹配
+        result = self._convert_with_trimesh(
+            step_path,
+            output_path,
+            scale_factor,
+            timeout_seconds=timeout_seconds,
+        )
+        if result.get("success"):
+            return result
+
+        # ✅ 兜底：trimesh 超时/失败时，尝试 OCP 转换
+        if is_step and not ocp_attempted:
+            ocp_result = self._convert_with_ocp(step_path, output_path, scale_factor)
+            if ocp_result.get("success"):
+                ocp_result["fallback_from"] = {
+                    "method": "trimesh",
+                    "error": result.get("error"),
+                    "message": result.get("message"),
+                }
+                return ocp_result
+
+        return result
+
+    def _convert_with_ocp(self, input_path: str, output_path: str, scale_factor: float = 1.0) -> Dict:
+        """
+        OCP(OpenCASCADE) 兜底转换：用于处理 trimesh/cascadio 卡死/失败的 STEP 文件。
         """
         try:
-            print(f"   🔄 开始加载STEP文件: {os.path.basename(input_path)}")
+            from processors.ocp_step_to_glb import convert_step_to_glb_with_ocp
 
-            # 检查文件扩展名
-            file_ext = os.path.splitext(input_path)[1].lower()
-
-            # 如果是STEP文件，检查cascadio是否可用
-            if file_ext in ['.step', '.stp']:
-                try:
-                    import cascadio
-                    print(f"   ✅ 检测到cascadio库，支持STEP文件")
-                except ImportError:
-                    print(f"   ⚠️  cascadio库未安装，STEP文件支持受限")
-                    return {
-                        "success": False,
-                        "error": "STEP文件需要cascadio库支持，但该库未正确安装。建议：1) 重新构建Docker镜像 2) 或将STEP文件转换为STL格式后上传",
-                        "message": "缺少STEP文件支持库"
-                    }
-
-            # 加载模型文件（force='scene'保留装配结构）
-            # ✅ 添加错误处理：STEP文件格式问题
-            try:
-                mesh = self.trimesh.load(input_path, force='scene')
-            except Exception as load_error:
-                # STEP文件格式错误的特殊处理
-                error_str = str(load_error)
-                print(f"   ⚠️  STEP文件加载错误: {error_str}")
-
-                # 尝试使用不同的加载方式
-                print(f"   🔄 尝试使用备用加载方式...")
-                try:
-                    # 尝试不强制为scene
-                    mesh = self.trimesh.load(input_path)
-                    print(f"   ✅ 备用加载方式成功")
-                except Exception as retry_error:
-                    print(f"   ❌ 备用加载方式也失败: {str(retry_error)}")
-
-                    # 如果是JSON解析错误，可能是trimesh的STEP解析器问题
-                    if "unexpected" in error_str or "{" in error_str or "}" in error_str:
-                        raise Exception(f"STEP文件解析失败。这可能是因为：\n1. STEP文件格式不被trimesh/cascadio支持\n2. 文件包含特殊字符或非标准格式\n3. 建议：使用CAD软件将STEP转换为STL格式后再上传")
-                    else:
-                        raise load_error
-
-            if mesh.is_empty:
-                return {
-                    "success": False,
-                    "error": f"文件 {input_path} 不包含任何几何体",
-                    "message": "转换失败"
-                }
-
-            # 处理场景或单个网格
-            if isinstance(mesh, self.trimesh.Scene):
-                # 保留场景结构，不合并
-                scene = mesh
-                part_count = len(list(scene.graph.nodes_geometry))
-                print(f"   📦 检测到装配体，包含 {part_count} 个零件")
-            else:
-                # 如果是单个网格，创建场景
-                scene = self.trimesh.Scene(mesh)
-                print(f"   📦 单个网格，创建场景")
-
-            # 应用缩放
-            if scale_factor != 1.0:
-                scene.apply_scale(scale_factor)
-                print(f"   📏 应用缩放因子: {scale_factor}")
-
-            # 尝试修复节点/几何名称的编码（常见场景：latin1字节需按GBK/GB18030解码）
-            def _decode_name(name: str) -> str:
-                if not name:
-                    return name
-                # ✅ 如果已经包含中文，直接返回（避免重复编解码导致丢失）
-                if re.search(r'[\u4e00-\u9fff]', str(name)):
-                    return str(name)
-                try:
-                    raw_bytes = str(name).encode("latin1", errors="ignore")
-                except Exception:
-                    return str(name)
-                for enc in ("gbk", "gb18030"):
-                    try:
-                        decoded = raw_bytes.decode(enc)
-                        if decoded:
-                            return decoded
-                    except Exception:
-                        continue
-                return str(name)
-
-            if isinstance(scene, self.trimesh.Scene):
-                # 先修复 geometry 名称，避免导出 GLB 时出现乱码，使用官方 graph.update 保持引用一致
-                new_geometry = {}
-                name_map = {}
-                for old_name, geom in scene.geometry.items():
-                    fixed_name = _decode_name(old_name)
-                    if fixed_name in new_geometry and new_geometry[fixed_name] is not geom:
-                        fixed_name = f"{fixed_name}_{len(new_geometry)}"
-                    new_geometry[fixed_name] = geom
-                    name_map[old_name] = fixed_name
-                scene.geometry = new_geometry
-
-                # 同步 graph 引用的 geometry 名称，避免直接赋值导致绑定失效
-                for node in list(scene.graph.nodes_geometry):
-                    try:
-                        transform, geom_name = scene.graph[node]
-                        fixed_geom_name = name_map.get(geom_name, _decode_name(geom_name))
-                        scene.graph.update(
-                            frame_from=None,
-                            frame_to=node,
-                            matrix=transform,
-                            geometry=fixed_geom_name
-                        )
-                    except Exception:
-                        continue
-
-                # 绑定完整性自检：节点绑定数量应与 geometry 数量接近
-                with_geom = [n for n in scene.graph.nodes if scene.graph[n][1] is not None]
-                if scene.geometry and len(with_geom) / len(scene.geometry) < 0.95:
-                    raise ValueError(
-                        f"节点与geometry绑定缺失：with_geom={len(with_geom)}, geometry={len(scene.geometry)}"
-                    )
-            else:
-                # 单网格场景，尝试修复元数据名称
-                mesh_name = _decode_name(getattr(scene, "metadata", {}).get("name", "mesh_0"))
-                scene.metadata["name"] = mesh_name
-
-            # 确保输出目录存在
-            os.makedirs(os.path.dirname(output_path), exist_ok=True)
-
-            # 导出GLB（保留场景层级）
-            glb_data = scene.export(file_type='glb')
-
-            # 写入文件
-            with open(output_path, 'wb') as f:
-                f.write(glb_data)
-
-            # 提取零件信息
-            parts_info = []
-            part_count = 0
-
-            if isinstance(scene, self.trimesh.Scene):
-                for node_name in scene.graph.nodes_geometry:
-                    # scene.graph[node_name] 返回 (transform_matrix, geometry_name)
-                    # 但有时geometry_name可能是对象而不是字符串
-                    try:
-                        transform, geometry_name = scene.graph[node_name]
-                        # 确保geometry_name是字符串
-                        if not isinstance(geometry_name, str):
-                            geometry_name = str(geometry_name)
-                    except (ValueError, TypeError) as e:
-                        # 如果解包失败，使用默认值
-                        geometry_name = f"geometry_{len(parts_info)}"
-
-                    parts_info.append({
-                        "node_name": str(node_name),  # 确保是字符串
-                        "geometry_name": geometry_name
-                    })
-                part_count = len(parts_info)
-                print(f"   📊 提取零件信息: {part_count} 个零件")
-            else:
-                # 单个网格也算1个零件
-                part_count = 1
-                parts_info.append({
-                    "node_name": "single_mesh",
-                    "geometry_name": "mesh_0"
-                })
-                print(f"   📊 单个网格，计为1个零件")
-
-            return {
-                "success": True,
-                "output_path": output_path,
-                "message": "转换成功",
-                "method": "trimesh",
-                "log": f"使用trimesh成功转换 {input_path} -> {output_path}",
-                # "scene": scene,  # ❌ 不能序列化Scene对象！会导致WebSocket错误
-                "parts_count": part_count,
-                "parts_info": parts_info  # 零件信息列表
-            }
-
+            return convert_step_to_glb_with_ocp(
+                step_path=input_path,
+                output_path=output_path,
+                scale_factor=scale_factor,
+            )
         except Exception as e:
             return {
                 "success": False,
-                "error": str(e),
+                "error": f"OCP 兜底转换不可用: {e}",
+                "message": "ocp转换失败",
+            }
+
+    def _convert_with_trimesh(self, input_path: str, output_path: str, scale_factor: float = 1.0, timeout_seconds: int = 120) -> Dict:
+        """
+        使用trimesh进行转换（保留装配层级），并在独立进程中设置硬超时。
+        """
+        result_queue: Queue = Queue()
+        process: Process = Process(
+            target=_trimesh_step_to_glb_worker,
+            args=(input_path, output_path, scale_factor, result_queue),
+        )
+        process.start()
+        process.join(timeout_seconds)
+
+        if process.is_alive():
+            _terminate_process(process)
+            return {
+                "success": False,
+                "error": f"STEP->GLB 转换超时（{timeout_seconds}s）",
+                "message": "trimesh转换超时"
+            }
+
+        if result_queue.empty():
+            return {
+                "success": False,
+                "error": "转换进程未返回结果",
                 "message": "trimesh转换失败"
             }
+
+        return result_queue.get()
 
     def generate_glb_inventory(
         self,

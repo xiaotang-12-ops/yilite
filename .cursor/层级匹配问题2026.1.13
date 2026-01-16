@@ -1,0 +1,391 @@
+上面的问题都要继续分析哈，不好意思打断你了， 你都要分析，加油
+
+
+我还在（微笑）。
+
+我做了什么
+
+读取了 step4_matching_result.json、step_assembly_hierarchy.json、product_code_correction_log.json，确认层级匹配为 0 的直接证据链。
+检查了 hierarchical_bom_matcher_v2.py 的层级匹配逻辑与“叶子判定”。
+检查了 ManualViewer.vue 的网格大小与爆炸逻辑实现。
+检查了 manifest_product.json 是否存在爆炸向量数据。
+我的发现（证据表）
+
+涉及文件 (File)	关键位置 (Location)	发现的具体数据/代码 (Evidence)	结论
+step4_matching_result.json	 (line 2312)	见证据 E1	层级匹配统计值确实为 0
+product_code_correction_log.json	记录头部	见证据 E2	所有 BOM 被标记 no_leaf_nodes
+hierarchical_bom_matcher_v2.py	 (line 820)	见证据 E3	只要 child_name 出现在 hierarchy key 中就被当成“非叶子”跳过
+step_assembly_hierarchy.json	 (lines 428-429)	见证据 E4	叶子件在 hierarchy 里也作为 key 存在（“名义叶子”仍有子节点）
+step3_glb_inventory.json	 (line 1316)	见证据 E5	GLB 几何名包含“-镀锌”，而层级叶子名缺“-镀锌”
+ManualViewer.vue	:1675-1680, (lines 3554-3573)	见证据 E6	网格大小是固定值 GRID_SIZE=150，与模型尺寸无关
+ManualViewer.vue	 (lines 4223-4301)	见证据 E7	爆炸只对“未装且非当前件”生效
+manifest_product.json	:426+	见证据 E8	爆炸向量数据存在（distance≈413）
+证据原文
+E1（层级匹配为 0）
+
+// output/03.02.10.0007T-AS3000-BIG BM清除器Big BM连接器/step4_matching_result.json:2310-2314
+"matched_3d_count": 420,
+"parts_matching_rate": 1.0,
+"hierarchy_matched": 0,
+"code_matched": 0,
+"ai_matched": 74
+E2（全部被判定为 no_leaf_nodes）
+
+// debug_output/2026年01月13日_20时41分29秒_03.02.10.0007T-AS3000-BIG BM清除器Big BM连接器/product_code_correction_log.json (首条记录)
+{
+  "code": "01.09.2990",
+  "name": "支架组件-漆后",
+  "decision": "skipped",
+  "reasons": ["code_match", "no_leaf_nodes"],
+  "assembly_key_selected": "T-AS3000-BIG BM-01支架组件-漆后"
+}
+E3（叶子判定逻辑）
+
+# core/hierarchical_bom_matcher_v2.py:819-821
+# child_name 出现在 hierarchy key 中，说明它还是装配体（非叶子）
+if child_name in hierarchy:
+    continue
+E4（“名义叶子”仍是层级 key）
+
+// output/03.02.10.0007T-AS3000-BIG BM清除器Big BM连接器/step_assembly_hierarchy.json:428-429
+"XZ-φ40×10-φ30×110-φ9×8-45#销轴-镀锌": [
+  "XZ-φ40×10-φ30×110-φ9×8-45#销轴"
+]
+E5（GLB 的零件名含“镀锌”，与层级叶子名不一致）
+
+// output/03.02.10.0007T-AS3000-BIG BM清除器Big BM连接器/step3_glb_inventory.json:1315-1317
+{
+  "node": "NAUO326",
+  "geometry": "XZ-φ40×10-φ30×110-φ9×8-45#销轴-镀锌"
+}
+E6（网格固定大小）
+
+// frontend/src/views/ManualViewer.vue:1675-1680
+const GRID_SIZE = 150
+const GRID_DIVISIONS = 40
+const GRID_HEIGHT = -5
+
+// frontend/src/views/ManualViewer.vue:3554-3573
+gridHelper = new THREE.GridHelper(GRID_SIZE, GRID_DIVISIONS, GRID_COLOR_CENTER, GRID_COLOR_LINE)
+const half = GRID_SIZE / 2
+E7（爆炸只针对未装/非当前件）
+
+// frontend/src/views/ManualViewer.vue:4223-4301
+const explodeDistanceBase = isExploded.value ? maxDim * (explodeScale.value / 100 || 0.25) : 0
+...
+targetWorld = isAssembled || isCurrent || explodeDistanceBase === 0
+  ? originalWorldPos.clone()
+  : originalWorldPos.clone().add(explodeDir.clone().multiplyScalar(explodeDistanceBase))
+E8（爆炸向量存在）
+
+// output/03.02.10.0007T-AS3000-BIG BM清除器Big BM连接器/glb_files/manifest_product.json:426-437
+"explosion_vectors": {
+  "NAUO1": {
+    "direction": [0.8666, 0.4974, 0.0380],
+    "distance": 413.66601410624247,
+    "original_position": [-0.0365, -0.0343, 0.0176]
+  }
+}
+🧠 深度分析报告
+根因定位（层级匹配为 0）
+
+这份 STEP 的“叶子件”在 hierarchy 里依然是 key（例如 XZ-...-镀锌），但 _build_assembly_mesh_mapping 把“出现在 hierarchy key 中的 child_name”统一当作“非叶子”跳过（见 E3 + E4），导致 parent_to_leaf_nodes 为空，最终所有 BOM 都落到 no_leaf_nodes（见 E2），所以 hierarchy_matched=0（见 E1）。
+根因定位（网格太小）
+
+手册页的网格大小是固定常量 GRID_SIZE=150，没有跟模型的实际尺寸或爆炸范围做联动（见 E6），所以当模型尺寸远大于 150 时，网格视觉上必然“很小”。
+根因定位（爆炸视图“看起来不爆”）
+
+你的爆炸逻辑是“只爆炸未装且非当前件”（见 E7），而已装/当前件会强制归位。这会造成“到了中后期步骤几乎不动”的感受。
+另外，后端已经生成了爆炸向量 manifest_product.json（见 E8），但 ManualViewer 当前并未使用这些向量，而是按 meshWorldExplodeDirections 现场计算方向（见 E7 前后的逻辑）。如果模型导出使得 mesh 的变换接近原点（常见 CAD 场景），爆炸方向可能“接近随机/不明显”。
+风险预判
+
+放宽“叶子判定”可能导致“同名件串件”或重复件被过度展开，需要谨慎做去重和父级上下文校验。
+网格随模型自适应可能导致“过大网格遮挡/视觉噪点”，需做上限/下限夹紧。
+爆炸逻辑改为“全爆炸”会改变手册语义（原本强调“未装件突出”），可能影响装配引导体验。
+🛠️ 解决方案（多选）
+【方案 A：层级匹配修正（推荐）】
+实现思路：在 _build_assembly_mesh_mapping 里不要仅凭 child_name in hierarchy 判定“非叶子”。改为：
+递归下钻到“无子项”的真实叶子；
+或者允许 child_name 在 hierarchy 中，但若其子项只是一条“无镀锌/无处理”的名称变体，则仍视作叶子并映射。
+🟢 优点：恢复“层级匹配”的核心能力。
+🔴 缺点：需要防止同名件串父级。
+⚠️ 适用场景：你希望产品级装配按层级稳定匹配。
+【方案 B：名称归一化兜底（层级 + 名称映射）】
+实现思路：在层级匹配时加入“表面处理后缀”归一化（如去掉 -镀锌/漆后），把 XZ-...-镀锌 映射到 GLB 的 XZ-...-镀锌 或其基名。
+🟢 优点：改动小，能快速补齐 no_leaf_nodes。
+🔴 缺点：对命名不一致的型号仍不稳。
+⚠️ 适用场景：你要快速提升层级匹配率。
+【方案 C：爆炸视图分离开关】
+实现思路：新增“全爆炸 / 装配爆炸”开关：
+全爆炸：不受 isAssembled / isCurrent 限制；
+装配爆炸：保留现逻辑。
+🟢 优点：用户理解更直观。
+🔴 缺点：界面上需要多一个状态。
+⚠️ 适用场景：用户经常抱怨“爆炸没效果”。
+【方案 D：网格自适应尺寸】
+实现思路：GRID_SIZE = clamp(maxDim * k, min, max)，且 refreshGridHelper 接收 fitBox 计算。
+🟢 优点：网格始终贴合模型尺寸。
+🔴 缺点：极大模型会引入视觉干扰，需要阈值控制。
+⚠️ 适用场景：模型尺寸跨度很大。
+🧪 验证与防御
+防御性编程：对层级匹配的叶子展开加上“最大节点数保护”和“父级上下文校验”。
+自测建议：
+任选一条有 no_leaf_nodes 的 BOM，修正后检查 hierarchy_matched 是否 >0；
+切换到第 3 步，点击“爆炸视图”，观察是否有明显位移；
+调整爆炸比例为 50%，观察“未装件是否明显分离”。
+参考来源 & 不确定性
+参考来源：step4_matching_result.json、product_code_correction_log.json、step_assembly_hierarchy.json、step3_glb_inventory.json、manifest_product.json、ManualViewer.vue。
+不确定性：当前未拿到你的浏览器控制台日志；如果 assembledSet 实际已覆盖绝大多数节点，爆炸“没效果”会更明显，需用运行时日志确认。
+需要你确认
+你截图所在的步骤是第几步？按钮上显示的是“爆炸视图”还是“收起视图”？
+你希望“爆炸”是全爆炸还是仅未装件爆炸？
+你允许我修改代码吗？如果允许，我建议先落地【方案 A + D】最小闭环。
+如果你愿意，我也可以给你一个很短的浏览器控制台检查脚本（只读），用来回传 assembledSet 与 explodeBase 的实际值，快速确认“爆炸不动”的真实原因。
+
+我不是很理解，是因为我们这个图纸的特殊性嘛？其他的文件似乎没有过这种情况。还是说现在都这样？
+
+
+我还在（微笑）。
+
+结论先说：层级匹配=0 是这份 STEP 的结构特殊导致，不是“现在所有文件都这样”；网格太小/爆炸不明显是前端固定逻辑，任何大模型或步骤后期都会暴露出来，但在这份数据上更明显。
+
+【做了什么】
+
+检查了层级匹配结果：step4_matching_result.json
+核对装配层级数据：step_assembly_hierarchy.json
+追踪层级匹配逻辑：hierarchical_bom_matcher_v2.py
+查看网格/爆炸逻辑：ManualViewer.vue
+【我的发现】
+
+涉及文件 (File)	关键位置 (Location)	发现的具体数据/代码 (Evidence)	结论
+step4_matching_result.json	 (line 2312)	见 E1	层级匹配统计确实为 0
+hierarchical_bom_matcher_v2.py	 (lines 819-821)	见 E2	只要子项出现在 hierarchy key 中，就被当作“非叶子”跳过
+step_assembly_hierarchy.json	 (lines 428-429)	见 E3	“零件名”本身仍作为父级存在，导致“无叶子可映射”
+ManualViewer.vue	 (lines 1675-1680)	见 E4	网格大小是固定值 150，与模型尺寸无关
+ManualViewer.vue	 (lines 4223-4301)	见 E5	爆炸只对“未装且非当前件”生效
+E1
+
+// output/03.02.10.0007T-AS3000-BIG BM清除器Big BM连接器/step4_matching_result.json:2310-2314
+"matched_3d_count": 420,
+"parts_matching_rate": 1.0,
+"hierarchy_matched": 0,
+"code_matched": 0,
+"ai_matched": 74
+E2
+
+# core/hierarchical_bom_matcher_v2.py:819-821
+# child_name 出现在 hierarchy key 中，说明它还是装配体（非叶子）
+if child_name in hierarchy:
+    continue
+E3
+
+// output/03.02.10.0007T-AS3000-BIG BM清除器Big BM连接器/step_assembly_hierarchy.json:428-429
+"XZ-φ40×10-φ30×110-φ9×8-45#销轴-镀锌": [
+  "XZ-φ40×10-φ30×110-φ9×8-45#销轴"
+]
+E4
+
+// frontend/src/views/ManualViewer.vue:1675-1680
+const GRID_SIZE = 150
+const GRID_DIVISIONS = 40
+const GRID_HEIGHT = -5
+E5
+
+// frontend/src/views/ManualViewer.vue:4223-4301
+targetWorld = isAssembled || isCurrent || explodeDistanceBase === 0
+  ? originalWorldPos.clone()
+  : originalWorldPos.clone().add(explodeDir.clone().multiplyScalar(explodeDistanceBase))
+🧠 深度分析报告
+根因定位：这份 STEP 的“零件级”仍存在子级（特征/构造层），导致 child_name in hierarchy 被当作“非叶子”全部跳过，层级映射清空，所以 hierarchy_matched=0。这属于数据结构特殊而非系统普遍现象。
+风险预判：若不修正叶子判定，所有“特征层/伪装配层”STEP都会失去层级匹配；若强行放宽判定，可能出现同名件串父级风险。
+你问“现在都这样吗？”的答案：
+层级匹配=0：不是所有文件都会；但同类建模风格（零件仍有子级）会持续触发。
+网格太小/爆炸不明显：是前端固定逻辑，任何大模型/步骤后期都会出现，只是这份更明显。
+🛠️ 解决方案（多选）
+【方案 A：层级匹配修正（推荐）】
+
+实现思路：叶子判定从“是否出现在 hierarchy key”改为“是否还有真正的装配子级”，或允许“只有单一子级且为名称变体”的节点作为叶子。
+🟢 优点：恢复层级匹配的主路径；结构稳定。
+🔴 缺点：需小心同名件串父级。
+【方案 B：名称归一化兜底】
+
+实现思路：对“漆后/镀锌”等后缀做归一化，层级叶子与 GLB 几何名可互相命中。
+🟢 优点：改动小，见效快。
+🔴 缺点：对命名噪声仍敏感。
+【方案 C：爆炸视图双模式】
+
+实现思路：新增“全爆炸/装配爆炸”开关；全爆炸忽略 isAssembled/isCurrent 限制。
+🟢 优点：用户直觉更一致。
+🔴 缺点：体验语义需要你确认。
+【方案 D：网格自适应】
+
+实现思路：GRID_SIZE = clamp(maxDim * k, min, max)，跟模型尺寸联动。
+🟢 优点：大模型不再显得“网格太小”。
+🔴 缺点：极大模型可能视觉噪点增加。
+🧪 验证与防御
+防御性编程：层级匹配加入最大展开节点数限制与父级上下文校验，防止误串。
+自测建议：
+在修正后确认 hierarchy_matched > 0；
+切换到中后期步骤，看爆炸是否仍可见；
+观察大模型下网格是否不再“缩成一小块”。
+参考来源
+
+step4_matching_result.json
+step_assembly_hierarchy.json
+hierarchical_bom_matcher_v2.py
+ManualViewer.vue
+不确定性说明
+
+我还没对其他任务的 step_assembly_hierarchy.json 做横向对比；如果你同意，我可以对比一份正常案例确认“是否只有这类文件才触发”。
+需要你确认
+
+你希望爆炸是“全爆炸”还是“仅未装件爆炸”？
+你是否允许我修改代码？如果允许，请直接说“可以改代码”，并选方案（A/B/C/D）里你先要落地的。
+我还是没理解为什么，你可以参考其他的文件，看看他们的层级匹配，为什么我们这个这么特殊， 你说的通俗易懂的。不然我是看不懂是
+
+爆炸视图和网格问题我们稍后讨论，我要先了解为什么我们层级匹配针对这个文件失效了。
+
+
+我还在（微笑）。
+先用一句话回答你：这是这份 STEP 的层级/命名结构“特殊”，不是所有文件都这样；它把“表面处理（镀锌/漆后）”放在父层，而真正的叶子零件名去掉了处理后缀，导致层级匹配时叶子名对不上 GLB 的零件名，所以整批层级匹配变成 0。
+
+【做了什么】
+对比了 AS3000 与 滑移清扫器 两个任务的 step_assembly_hierarchy.json 与 step3_glb_inventory.json。
+验证了 AS3000 层级匹配=0 的真实输出日志。
+对比了层级叶子名与GLB 零件名是否一致。
+【关键证据对比（通俗解释版）】
+通俗理解：
+你这份 STEP 像“外箱贴了标签（镀锌/漆后）”，但里面的“内盒”才是叶子零件；
+我们现在只拿内盒名字去找，而 GLB 的零件名写在外箱上，所以“找不到”。
+
+✅ AS3000：层级叶子名 ≠ GLB 零件名
+层级里：镀锌件下面是“无镀锌”的叶子名
+
+// output/03.02.10.0007T-AS3000-BIG BM清除器Big BM连接器/step_assembly_hierarchy.json:428-429
+"XZ-φ40×10-φ30×110-φ9×8-45#销轴-镀锌": [
+  "XZ-φ40×10-φ30×110-φ9×8-45#销轴"
+]
+GLB 里：实际零件名是“镀锌”版本
+
+// output/03.02.10.0007T-AS3000-BIG BM清除器Big BM连接器/step3_glb_inventory.json:1316-1320
+"geometry": "XZ-φ40×10-φ30×110-φ9×8-45#销轴-镀锌"
+"geometry": "XZ-φ40×10-φ30×110-φ9×8-45#销轴-镀锌_2"
+层级匹配最终结果为 0
+
+// output/03.02.10.0007T-AS3000-BIG BM清除器Big BM连接器/step4_matching_result.json:2310-2314
+"parts_matching_rate": 1.0,
+"hierarchy_matched": 0,
+"code_matched": 0,
+"ai_matched": 74
+✅ 滑移清扫器：层级叶子名 = GLB 零件名
+层级里：叶子名直接就是零件名
+
+// output/03.03.04.0002S-AB1830(72IN)-MP1140滑移清扫器（斜角型）/step_assembly_hierarchy.json:9-11
+"S-RB1830-08-Q235插销"
+GLB 里：名字完全一致
+
+// output/03.03.04.0002S-AB1830(72IN)-MP1140滑移清扫器（斜角型）/step3_glb_inventory.json:27-47
+"geometry": "S-RB1830-08-Q235插销"
+"geometry": "S-RB1830-08-Q235插销_1"
+🧠 深度分析报告
+根因定位：
+AS3000 的 STEP 把“表面处理层（镀锌/漆后）”作为父节点，而叶子节点被命名为“未处理的原始件名”。
+层级匹配逻辑目前只用叶子名去找 GLB，但 GLB 的零件名是带处理后缀的父名，导致完全对不上，所以层级匹配归零。
+
+风险预判：
+
+只要遇到同样“表面处理层”建模风格的 STEP，层级匹配都会失效。
+直接放开规则可能导致同名件串父级。
+🛠️ 解决方案（多选）
+方案 A：层级匹配改用“父名兜底”（推荐）
+思路：如果叶子名找不到 GLB，允许用**父节点名（带镀锌/漆后）**再试一次。
+优点：对这类 STEP 结构最稳定。
+缺点：可能把“真正的叶子细节”折叠到父层。
+方案 B：名称归一化双向匹配
+思路：把层级叶子名与 GLB 名都做“去镀锌/去漆后”归一化，再匹配。
+优点：对旧数据改动小。
+缺点：有些零件本身名字包含“镀锌”，可能误伤。
+方案 C：遇到“父=处理件、子=原件”时直接提升叶子
+思路：在解析层级时，若发现父名包含“镀锌/漆后”，而子名不包含，直接把父当叶子。
+优点：最贴合你这类文件。
+缺点：规则需要仔细校验避免误判。
+🧪 验证建议
+任选一个“镀锌销轴”类 BOM，检查是否能从层级匹配到 GLB（不要再落到 AI）。
+对比修复前后 hierarchy_matched 数量变化。
+参考来源 & 不确定性说明
+参考来源：
+step_assembly_hierarchy.json
+step3_glb_inventory.json
+step4_matching_result.json
+step_assembly_hierarchy.json
+step3_glb_inventory.json
+不确定性：03.03.04... 的 step4_matching_result.json 没有 hierarchy_matched 字段，所以我只能用“层级名与 GLB 名是否一致”来判断可匹配性，无法直接对比“数值”。
+如果你认可这个解释，我可以继续：
+
+你选一个方案（A/B/C），我再给出最小修改路径；
+或者我再选一份“明确层级匹配成功”的任务做对比（你指定任务名即可）。
+你对比错了吧兄弟，层级匹配不是你这样对比的把，你看D:\yilite\output\03.03.04.0002S-AB1830(72IN)-MP1140滑移清扫器（斜角型）\step_assembly_hierarchy.json文件里面的199行，这不就是这个组件下面有两个零件嘛？这不就是层级匹配吗，我都没懂你什么意思，这个不就是和连接器的一样嘛？没理解
+
+
+
+你不要对比滑移清扫器，你用连接器对比D:\yilite\output\03.03.13.0017S-BH1830(72IN)-MP1140滑移碎木机
+这个就有层级匹配的
+
+
+我还在（微笑）。
+
+先用通俗一句话解释
+
+层级结构≠层级匹配：层级结构只是“有父子关系”，而层级匹配是“这些子件名字能在 3D 零件清单里找到并对上”。
+连接器特殊点：它把“镀锌/漆后”放在父层，叶子名反而是“去掉处理后缀”的名字，导致叶子名和 GLB 名对不上，所以匹配为 0。
+证据对比（按你要求：连接器 vs 滑移碎木机）
+✅ 滑移碎木机：叶子名 = GLB 名（能匹配）
+层级里出现的子件名：
+
+// output/03.03.13.0017S-BH1830(72IN)-MP1140滑移碎木机/step_assembly_hierarchy.json
+"S-BH1830(72IN)-MP1140滑移碎木机": [
+  "18×11-68平键",
+  "8M-80-70-202大带轮"
+]
+GLB 里也有同名零件：
+
+// output/03.03.13.0017S-BH1830(72IN)-MP1140滑移碎木机/step3_glb_inventory.json
+"geometry": "18×11-68平键"
+"geometry": "8M-80-70-202大带轮"
+匹配结果：
+
+// output/03.03.13.0017S-BH1830(72IN)-MP1140滑移碎木机/step4_matching_result.json
+"hierarchy_matched": 23
+❌ 连接器：叶子名 ≠ GLB 名（对不上）
+层级里“镀锌件”的叶子名被“去镀锌”：
+
+// output/03.02.10.0007T-AS3000-BIG BM清除器Big BM连接器/step_assembly_hierarchy.json
+"XZ-φ40×10-φ30×110-φ9×8-45#销轴-镀锌": [
+  "XZ-φ40×10-φ30×110-φ9×8-45#销轴"
+]
+GLB 里只有“带镀锌”的名字：
+
+// output/03.02.10.0007T-AS3000-BIG BM清除器Big BM连接器/step3_glb_inventory.json
+"geometry": "XZ-φ40×10-φ30×110-φ9×8-45#销轴-镀锌"
+匹配结果：
+
+// output/03.02.10.0007T-AS3000-BIG BM清除器Big BM连接器/step4_matching_result.json
+"hierarchy_matched": 0
+你说“199行有两个零件”这件事
+你说得对，那确实是层级结构存在。
+但层级匹配是“叶子名要能在 GLB 里找到同名零件”。
+连接器这份数据的叶子名被“去镀锌”，所以找不到 GLB 对应零件，就变成 0。
+
+🧠 深度分析报告（通俗版）
+根因定位：连接器 STEP 把“表面处理（镀锌/漆后）”放在父层，叶子名反而是“裸件名”，而 GLB 用的是“镀锌名”，名字错位导致找不到。
+风险预判：凡是这种“处理层在父节点、叶子是原件”的 STEP，都会复现。
+参考来源
+step_assembly_hierarchy.json
+step3_glb_inventory.json
+step4_matching_result.json
+step_assembly_hierarchy.json
+step3_glb_inventory.json
+step4_matching_result.json
+不确定性说明
+我还没去读连接器对应的“名称归一化/纠正日志”的全量内容，只展示了关键命中点；如果你希望，我可以把具体哪些 BOM 被“no_leaf_nodes”卡住的列表整理给你。
+如果你认可这个解释，我可以继续给你最小修复方案（不改业务逻辑，只补“叶子名和 GLB 名对齐”的兜底）。你要不要我继续？

@@ -1,0 +1,4438 @@
+{
+  "success": true,
+  "product_name": "03.02.10.0007T-AS3000-BIG BM清除器Big BM连接器",
+  "assembly_steps": [
+    {
+      "step_id": "product_step_1",
+      "step_number": 1,
+      "title": "放置支架组件",
+      "component_code": "01.09.2990",
+      "component_name": "支架组件-漆后",
+      "drawing_number": "1",
+      "connection_type": "定位",
+      "position_description": "作为总装配的基准，放置在装配平台上。",
+      "components": [
+        {
+          "bom_seq": "1",
+          "bom_name": "支架组件-漆后",
+          "quantity": 1
+        }
+      ],
+      "fasteners": [],
+      "description": "将图纸上标注为1号的支架组件（01.09.2990）吊装并放置在平稳的装配平台上，确保其稳定。",
+      "quality_check": "检查支架组件放置是否平稳，无晃动。",
+      "estimated_time_minutes": 10
+    },
+    {
+      "step_id": "product_step_2",
+      "step_number": 2,
+      "title": "安装侧板组件",
+      "component_code": "01.09.2991",
+      "component_name": "侧板组件-漆后",
+      "drawing_number": "2",
+      "connection_type": "螺栓连接",
+      "position_description": "安装在1号支架组件的两侧。",
+      "components": [
+        {
+          "bom_seq": "2",
+          "bom_name": "侧板组件-漆后",
+          "quantity": 2
+        }
+      ],
+      "fasteners": [
+        {
+          "bom_seq": "29",
+          "bom_name": "六角头螺栓全螺纹12.9级GB/T5783-2016",
+          "spec": "M14*45",
+          "quantity": 16,
+          "torque": "150N·m"
+        },
+        {
+          "bom_seq": "30",
+          "bom_name": "平垫圈8.8级GB/T95-2002",
+          "spec": "14*2.5",
+          "quantity": 16,
+          "torque": ""
+        },
+        {
+          "bom_seq": "31",
+          "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+          "spec": "M14",
+          "quantity": 16,
+          "torque": "150N·m"
+        }
+      ],
+      "description": "将2个2号侧板组件（01.09.2991）分别安装在1号支架组件（01.09.2990）的两侧，对齐螺栓孔。使用16套M14*45螺栓（29）、平垫圈（30）和M14锁紧螺母（31）进行紧固。螺栓从外侧穿入，螺母在内侧拧紧。",
+      "quality_check": "检查侧板与支架的连接面是否贴合紧密，所有螺栓扭矩达到150N·m。",
+      "estimated_time_minutes": 30
+    },
+    {
+      "step_id": "product_step_3",
+      "step_number": 3,
+      "title": "安装液压马达",
+      "component_code": "02.08.02.0126",
+      "component_name": "液压马达",
+      "drawing_number": "3",
+      "connection_type": "螺栓连接",
+      "position_description": "安装在2号侧板组件的内侧安装面上。",
+      "components": [
+        {
+          "bom_seq": "3",
+          "bom_name": "液压马达",
+          "quantity": 2
+        }
+      ],
+      "fasteners": [
+        {
+          "bom_seq": "50",
+          "bom_name": "内六角圆柱头螺钉8.8级GB/T70.1-2008",
+          "spec": "M12*50",
+          "quantity": 8,
+          "torque": "80N·m"
+        },
+        {
+          "bom_seq": "37",
+          "bom_name": "平垫圈8.8级GB/T95-2002",
+          "spec": "12*2.5",
+          "quantity": 8,
+          "torque": ""
+        }
+      ],
+      "description": "将2个3号液压马达（02.08.02.0126）安装在两侧2号侧板组件的内侧安装面上。使用8套M12*50内六角螺钉（50）和平垫圈（37）固定马达。注意马达的油口方向应朝上或朝向便于接管的方向。",
+      "quality_check": "检查马达安装是否牢固，轴心是否与安装孔同心，螺钉扭矩达到80N·m。",
+      "estimated_time_minutes": 25
+    },
+    {
+      "step_id": "product_step_4",
+      "step_number": 4,
+      "title": "安装柔性联轴器",
+      "component_code": "02.04.0341",
+      "component_name": "SGF柔性联轴器",
+      "drawing_number": "4",
+      "connection_type": "键连接/螺栓连接",
+      "position_description": "安装在3号液压马达的输出轴上。",
+      "components": [
+        {
+          "bom_seq": "4",
+          "bom_name": "SGF柔性联轴器",
+          "quantity": 2
+        }
+      ],
+      "fasteners": [],
+      "description": "将2个4号SGF柔性联轴器（02.04.0341）安装到两侧3号液压马达的输出轴上，确保键槽对齐并推到位。",
+      "quality_check": "检查联轴器与马达轴的配合是否紧密，无轴向或径向间隙。",
+      "estimated_time_minutes": 15
+    },
+    {
+      "step_id": "product_step_5",
+      "step_number": 5,
+      "title": "安装联轴器安装组件",
+      "component_code": "01.09.2082",
+      "component_name": "联轴器安装组件-镀锌",
+      "drawing_number": "5",
+      "connection_type": "螺栓连接",
+      "position_description": "安装在4号柔性联轴器的另一端。",
+      "components": [
+        {
+          "bom_seq": "5",
+          "bom_name": "联轴器安装组件-镀锌",
+          "quantity": 2
+        }
+      ],
+      "fasteners": [
+        {
+          "bom_seq": "52",
+          "bom_name": "内六角圆柱头螺钉8.8级GB/T70.1-2008",
+          "spec": "M14*60",
+          "quantity": 6,
+          "torque": "120N·m"
+        },
+        {
+          "bom_seq": "73",
+          "bom_name": "标准型弹性垫圈8.8级GB/T93-1987",
+          "spec": "14#",
+          "quantity": 6,
+          "torque": ""
+        }
+      ],
+      "description": "将2个5号联轴器安装组件（01.09.2082）与4号柔性联轴器（02.04.0341）连接。使用6套M14*60内六角螺钉（52）和14#弹性垫圈（73）进行紧固。",
+      "quality_check": "检查联轴器安装组件与柔性联轴器的连接是否可靠，螺钉扭矩达到120N·m。",
+      "estimated_time_minutes": 20
+    },
+    {
+      "step_id": "product_step_6",
+      "step_number": 6,
+      "title": "安装轴套组件",
+      "component_code": "01.09.2081",
+      "component_name": "轴套组件-镀锌",
+      "drawing_number": "6",
+      "connection_type": "螺栓连接",
+      "position_description": "安装在2号侧板组件的另一侧（远离马达的一侧）。",
+      "components": [
+        {
+          "bom_seq": "6",
+          "bom_name": "轴套组件-镀锌",
+          "quantity": 2
+        }
+      ],
+      "fasteners": [
+        {
+          "bom_seq": "53",
+          "bom_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+          "spec": "M14*60",
+          "quantity": 10,
+          "torque": "120N·m"
+        },
+        {
+          "bom_seq": "30",
+          "bom_name": "平垫圈8.8级GB/T95-2002",
+          "spec": "14*2.5",
+          "quantity": 10,
+          "torque": ""
+        },
+        {
+          "bom_seq": "31",
+          "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+          "spec": "M14",
+          "quantity": 10,
+          "torque": "120N·m"
+        }
+      ],
+      "description": "将2个6号轴套组件（01.09.2081）安装在两侧2号侧板组件（01.09.2991）的对应安装面上。使用10套M14*60螺栓（53）、平垫圈（30）和M14锁紧螺母（31）进行紧固。",
+      "quality_check": "检查轴套组件安装是否牢固，螺栓扭矩达到120N·m。",
+      "estimated_time_minutes": 20
+    },
+    {
+      "step_id": "product_step_7",
+      "step_number": 7,
+      "title": "安装毛刷固定组件",
+      "component_code": "01.09.2993",
+      "component_name": "毛刷固定组件-漆后",
+      "drawing_number": "7",
+      "connection_type": "销轴连接",
+      "position_description": "安装在1号支架组件的下方。",
+      "components": [
+        {
+          "bom_seq": "7",
+          "bom_name": "毛刷固定组件-漆后",
+          "quantity": 1
+        }
+      ],
+      "fasteners": [
+        {
+          "bom_seq": "43",
+          "bom_name": "销轴组件-镀锌",
+          "quantity": 2
+        }
+      ],
+      "description": "将7号毛刷固定组件（01.09.2993）安装在1号支架组件（01.09.2990）下方的连接耳板之间。使用2个43号销轴组件（01.09.3010）进行连接。销轴穿入后，使用开口销或R型销固定（销轴组件自带）。",
+      "quality_check": "检查销轴连接是否灵活，销轴组件是否安装到位并可靠锁定。",
+      "estimated_time_minutes": 15
+    },
+    {
+      "step_id": "product_step_8",
+      "step_number": 8,
+      "title": "安装旋转组件",
+      "component_code": "01.09.2994",
+      "component_name": "旋转组件-漆后",
+      "drawing_number": "8",
+      "connection_type": "轴承配合",
+      "position_description": "安装在5号联轴器安装组件和6号轴套组件之间。",
+      "components": [
+        {
+          "bom_seq": "8",
+          "bom_name": "旋转组件-漆后",
+          "quantity": 1
+        }
+      ],
+      "fasteners": [
+        {
+          "bom_seq": "9",
+          "bom_name": "石墨铜套",
+          "spec": "TT-φ80/φ70-50-Cu",
+          "quantity": 2,
+          "torque": ""
+        },
+        {
+          "bom_seq": "10",
+          "bom_name": "推力球轴承GB/T301-2015",
+          "spec": "51214",
+          "quantity": 2,
+          "torque": ""
+        }
+      ],
+      "description": "将8号旋转组件（01.09.2994）的主轴穿过两侧的5号联轴器安装组件和6号轴套组件。在安装过程中，将2个9号石墨铜套（02.04.0342）和2个10号推力球轴承（02.19.0084）分别安装在旋转组件的两端，确保轴承和铜套正确就位，并涂抹润滑脂。",
+      "quality_check": "检查旋转组件转动是否灵活，轴向间隙是否符合要求，轴承和铜套是否正确安装。",
+      "estimated_time_minutes": 40
+    },
+    {
+      "step_id": "product_step_9",
+      "step_number": 9,
+      "title": "安装后座组件",
+      "component_code": "01.09.2992",
+      "component_name": "后座组件-漆后",
+      "drawing_number": "11",
+      "connection_type": "螺栓连接",
+      "position_description": "安装在1号支架组件的后部上方。",
+      "components": [
+        {
+          "bom_seq": "11",
+          "bom_name": "后座组件-漆后",
+          "quantity": 1
+        }
+      ],
+      "fasteners": [
+        {
+          "bom_seq": "29",
+          "bom_name": "六角头螺栓全螺纹12.9级GB/T5783-2016",
+          "spec": "M14*45",
+          "quantity": 4,
+          "torque": "150N·m"
+        },
+        {
+          "bom_seq": "30",
+          "bom_name": "平垫圈8.8级GB/T95-2002",
+          "spec": "14*2.5",
+          "quantity": 4,
+          "torque": ""
+        },
+        {
+          "bom_seq": "31",
+          "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+          "spec": "M14",
+          "quantity": 4,
+          "torque": "150N·m"
+        }
+      ],
+      "description": "将11号后座组件（01.09.2992）安装在1号支架组件（01.09.2990）后部的安装位置。使用4套M14*45螺栓（29）、平垫圈（30）和M14锁紧螺母（31）进行紧固。",
+      "quality_check": "检查后座组件安装是否牢固，螺栓扭矩达到150N·m。",
+      "estimated_time_minutes": 15
+    },
+    {
+      "step_id": "product_step_10",
+      "step_number": 10,
+      "title": "安装上连杆组件",
+      "component_code": "01.09.2995",
+      "component_name": "上连杆组件-漆后",
+      "drawing_number": "12",
+      "connection_type": "销轴连接",
+      "position_description": "连接11号后座组件和1号支架组件。",
+      "components": [
+        {
+          "bom_seq": "12",
+          "bom_name": "上连杆组件-漆后",
+          "quantity": 2
+        }
+      ],
+      "fasteners": [
+        {
+          "bom_seq": "44",
+          "bom_name": "销轴-镀锌",
+          "quantity": 2
+        },
+        {
+          "bom_seq": "45",
+          "bom_name": "销轴-镀锌",
+          "quantity": 2
+        },
+        {
+          "bom_seq": "67",
+          "bom_name": "开口销GB/T91-2000",
+          "spec": "4*60",
+          "quantity": 4,
+          "torque": ""
+        },
+        {
+          "bom_seq": "59",
+          "bom_name": "石墨铜套",
+          "spec": "TT-φ35/φ30-60-Cu",
+          "quantity": 4,
+          "torque": ""
+        }
+      ],
+      "description": "将2个12号上连杆组件（01.09.2995）分别安装在11号后座组件和1号支架组件的连接耳板之间。在连接孔内预先安装4个59号石墨铜套（02.04.0346）。使用2个44号销轴（01.09.3018）连接上端，使用2个45号销轴（01.09.1440）连接下端。销轴穿入后，使用4个4*60开口销（67）锁定。",
+      "quality_check": "检查连杆连接是否灵活，销轴是否可靠锁定，铜套是否安装到位。",
+      "estimated_time_minutes": 35
+    },
+    {
+      "step_id": "product_step_11",
+      "step_number": 11,
+      "title": "安装拉板组件",
+      "component_code": "01.09.2996",
+      "component_name": "拉板组件-漆后",
+      "drawing_number": "13",
+      "connection_type": "销轴连接",
+      "position_description": "连接1号支架组件和12号上连杆组件。",
+      "components": [
+        {
+          "bom_seq": "13",
+          "bom_name": "拉板组件-漆后",
+          "quantity": 2
+        }
+      ],
+      "fasteners": [
+        {
+          "bom_seq": "60",
+          "bom_name": "销轴-镀锌",
+          "quantity": 2
+        },
+        {
+          "bom_seq": "67",
+          "bom_name": "开口销GB/T91-2000",
+          "spec": "4*60",
+          "quantity": 2,
+          "torque": ""
+        },
+        {
+          "bom_seq": "62",
+          "bom_name": "石墨铜套",
+          "spec": "TT-φ35/φ30-80-Cu",
+          "quantity": 2,
+          "torque": ""
+        }
+      ],
+      "description": "将2个13号拉板组件（01.09.2996）安装在1号支架组件（01.09.2990）的连接耳板上。在连接孔内预先安装2个62号石墨铜套（02.04.0347）。使用2个60号销轴（01.09.3016）连接，并用2个4*60开口销（67）锁定。",
+      "quality_check": "检查拉板连接是否灵活，销轴是否可靠锁定。",
+      "estimated_time_minutes": 25
+    },
+    {
+      "step_id": "product_step_12",
+      "step_number": 12,
+      "title": "安装杆组件",
+      "component_code": "01.09.2997",
+      "component_name": "杆组件-镀锌",
+      "drawing_number": "14",
+      "connection_type": "销轴连接",
+      "position_description": "连接13号拉板组件和12号上连杆组件。",
+      "components": [
+        {
+          "bom_seq": "14",
+          "bom_name": "杆组件-镀锌",
+          "quantity": 2
+        }
+      ],
+      "fasteners": [
+        {
+          "bom_seq": "63",
+          "bom_name": "销轴-镀锌",
+          "quantity": 2
+        },
+        {
+          "bom_seq": "67",
+          "bom_name": "开口销GB/T91-2000",
+          "spec": "4*60",
+          "quantity": 2,
+          "torque": ""
+        },
+        {
+          "bom_seq": "65",
+          "bom_name": "石墨铜套",
+          "spec": "TT-φ35/φ30-100-Cu",
+          "quantity": 2,
+          "torque": ""
+        }
+      ],
+      "description": "将2个14号杆组件（01.09.2997）连接到13号拉板组件（01.09.2996）和12号上连杆组件（01.09.2995）上。在连接孔内预先安装2个65号石墨铜套（02.04.0348）。使用2个63号销轴（01.09.3017）连接，并用2个4*60开口销（67）锁定。",
+      "quality_check": "检查杆组件连接是否灵活，销轴是否可靠锁定。",
+      "estimated_time_minutes": 30
+    },
+    {
+      "step_id": "product_step_13",
+      "step_number": 13,
+      "title": "安装下连杆组件",
+      "component_code": "01.09.2998",
+      "component_name": "下连杆组件-漆后",
+      "drawing_number": "15",
+      "connection_type": "销轴连接",
+      "position_description": "连接1号支架组件和7号毛刷固定组件。",
+      "components": [
+        {
+          "bom_seq": "15",
+          "bom_name": "下连杆组件-漆后",
+          "quantity": 2
+        }
+      ],
+      "fasteners": [
+        {
+          "bom_seq": "64",
+          "bom_name": "销轴-镀锌",
+          "quantity": 2
+        },
+        {
+          "bom_seq": "67",
+          "bom_name": "开口销GB/T91-2000",
+          "spec": "4*60",
+          "quantity": 2,
+          "torque": ""
+        },
+        {
+          "bom_seq": "62",
+          "bom_name": "石墨铜套",
+          "spec": "TT-φ35/φ30-80-Cu",
+          "quantity": 2,
+          "torque": ""
+        }
+      ],
+      "description": "将2个15号下连杆组件（01.09.2998）连接到1号支架组件（01.09.2990）和7号毛刷固定组件（01.09.2993）上。在连接孔内预先安装2个62号石墨铜套（02.04.0347）。使用2个64号销轴（01.09.3015）连接，并用2个4*60开口销（67）锁定。",
+      "quality_check": "检查下连杆连接是否灵活，销轴是否可靠锁定。",
+      "estimated_time_minutes": 30
+    },
+    {
+      "step_id": "product_step_14",
+      "step_number": 14,
+      "title": "安装弹簧拉紧装置",
+      "component_code": "01.09.2999",
+      "component_name": "弹簧拉紧装置组件-镀锌",
+      "drawing_number": "16",
+      "connection_type": "螺栓连接",
+      "position_description": "安装在1号支架组件的上方。",
+      "components": [
+        {
+          "bom_seq": "16",
+          "bom_name": "弹簧拉紧装置组件-镀锌",
+          "quantity": 2
+        }
+      ],
+      "fasteners": [
+        {
+          "bom_seq": "55",
+          "bom_name": "六角头螺栓8.8级GB/T5782-2016",
+          "spec": "M8*80",
+          "quantity": 2,
+          "torque": "25N·m"
+        },
+        {
+          "bom_seq": "40",
+          "bom_name": "平垫圈8.8级GB/T95-2002",
+          "spec": "8*1.6",
+          "quantity": 4,
+          "torque": ""
+        },
+        {
+          "bom_seq": "56",
+          "bom_name": "标准型弹性垫圈8.8级GB/T93-1987",
+          "spec": "8*2.1",
+          "quantity": 2,
+          "torque": ""
+        },
+        {
+          "bom_seq": "39",
+          "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+          "spec": "M8",
+          "quantity": 2,
+          "torque": "25N·m"
+        }
+      ],
+      "description": "将2个16号弹簧拉紧装置组件（01.09.2999）安装在1号支架组件（01.09.2990）上方的预留孔位。使用2套M8*80螺栓（55）、平垫圈（40）、弹性垫圈（56）和M8锁紧螺母（39）进行紧固。",
+      "quality_check": "检查弹簧拉紧装置安装是否牢固，螺栓扭矩达到25N·m。",
+      "estimated_time_minutes": 20
+    },
+    {
+      "step_id": "product_step_15",
+      "step_number": 15,
+      "title": "安装保护盖",
+      "component_code": "01.09.3000",
+      "component_name": "保护盖-镀锌",
+      "drawing_number": "17",
+      "connection_type": "螺栓连接",
+      "position_description": "安装在1号支架组件的侧面。",
+      "components": [
+        {
+          "bom_seq": "17",
+          "bom_name": "保护盖-镀锌",
+          "quantity": 2
+        }
+      ],
+      "fasteners": [
+        {
+          "bom_seq": "38",
+          "bom_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+          "spec": "M8*30",
+          "quantity": 4,
+          "torque": "25N·m"
+        },
+        {
+          "bom_seq": "40",
+          "bom_name": "平垫圈8.8级GB/T95-2002",
+          "spec": "8*1.6",
+          "quantity": 4,
+          "torque": ""
+        },
+        {
+          "bom_seq": "39",
+          "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+          "spec": "M8",
+          "quantity": 4,
+          "torque": "25N·m"
+        }
+      ],
+      "description": "将2个17号保护盖（01.09.3000）安装在1号支架组件（01.09.2990）的侧面。使用4套M8*30螺栓（38）、平垫圈（40）和M8锁紧螺母（39）进行紧固。",
+      "quality_check": "检查保护盖安装是否到位，螺栓扭矩达到25N·m。",
+      "estimated_time_minutes": 15
+    },
+    {
+      "step_id": "product_step_16",
+      "step_number": 16,
+      "title": "安装连接板",
+      "component_code": "01.09.3001",
+      "component_name": "连接板-镀锌",
+      "drawing_number": "18",
+      "connection_type": "螺栓连接",
+      "position_description": "安装在1号支架组件的顶部。",
+      "components": [
+        {
+          "bom_seq": "18",
+          "bom_name": "连接板-镀锌",
+          "quantity": 2
+        }
+      ],
+      "fasteners": [
+        {
+          "bom_seq": "29",
+          "bom_name": "六角头螺栓全螺纹12.9级GB/T5783-2016",
+          "spec": "M14*45",
+          "quantity": 4,
+          "torque": "150N·m"
+        },
+        {
+          "bom_seq": "30",
+          "bom_name": "平垫圈8.8级GB/T95-2002",
+          "spec": "14*2.5",
+          "quantity": 4,
+          "torque": ""
+        },
+        {
+          "bom_seq": "31",
+          "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+          "spec": "M14",
+          "quantity": 4,
+          "torque": "150N·m"
+        }
+      ],
+      "description": "将2个18号连接板（01.09.3001）安装在1号支架组件（01.09.2990）顶部的连接位置。使用4套M14*45螺栓（29）、平垫圈（30）和M14锁紧螺母（31）进行紧固。",
+      "quality_check": "检查连接板安装是否牢固，螺栓扭矩达到150N·m。",
+      "estimated_time_minutes": 15
+    },
+    {
+      "step_id": "product_step_17",
+      "step_number": 17,
+      "title": "安装圆钢",
+      "component_code": "01.09.3002",
+      "component_name": "圆钢-机加-镀锌",
+      "drawing_number": "19",
+      "connection_type": "螺栓连接",
+      "position_description": "安装在18号连接板上。",
+      "components": [
+        {
+          "bom_seq": "19",
+          "bom_name": "圆钢-机加-镀锌",
+          "quantity": 2
+        }
+      ],
+      "fasteners": [
+        {
+          "bom_seq": "29",
+          "bom_name": "六角头螺栓全螺纹12.9级GB/T5783-2016",
+          "spec": "M14*45",
+          "quantity": 4,
+          "torque": "150N·m"
+        },
+        {
+          "bom_seq": "30",
+          "bom_name": "平垫圈8.8级GB/T95-2002",
+          "spec": "14*2.5",
+          "quantity": 4,
+          "torque": ""
+        },
+        {
+          "bom_seq": "31",
+          "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+          "spec": "M14",
+          "quantity": 4,
+          "torque": "150N·m"
+        }
+      ],
+      "description": "将2个19号圆钢（01.09.3002）安装在18号连接板（01.09.3001）上。使用4套M14*45螺栓（29）、平垫圈（30）和M14锁紧螺母（31）进行紧固。",
+      "quality_check": "检查圆钢安装是否牢固，螺栓扭矩达到150N·m。",
+      "estimated_time_minutes": 15
+    },
+    {
+      "step_id": "product_step_18",
+      "step_number": 18,
+      "title": "安装油缸",
+      "component_code": "02.08.01.0339",
+      "component_name": "油缸",
+      "drawing_number": "20",
+      "connection_type": "销轴连接",
+      "position_description": "连接1号支架组件和11号后座组件。",
+      "components": [
+        {
+          "bom_seq": "20",
+          "bom_name": "油缸",
+          "quantity": 1
+        }
+      ],
+      "fasteners": [
+        {
+          "bom_seq": "48",
+          "bom_name": "销轴组件-镀锌",
+          "quantity": 1
+        },
+        {
+          "bom_seq": "47",
+          "bom_name": "支撑组件-镀锌",
+          "quantity": 1
+        }
+      ],
+      "description": "将1个20号油缸（02.08.01.0339）安装在1号支架组件（01.09.2990）和11号后座组件（01.09.2992）之间。油缸底部使用1个48号销轴组件（01.09.3011）连接到支架上，油缸顶部使用1个47号支撑组件（01.09.3012）连接到后座组件上。确保销轴锁定可靠。",
+      "quality_check": "检查油缸安装是否灵活，销轴锁定是否可靠，油口方向是否正确。",
+      "estimated_time_minutes": 30
+    },
+    {
+      "step_id": "product_step_19",
+      "step_number": 19,
+      "title": "安装弹簧固定板",
+      "component_code": "01.09.3003",
+      "component_name": "弹簧固定板-镀锌",
+      "drawing_number": "21",
+      "connection_type": "螺栓连接",
+      "position_description": "安装在16号弹簧拉紧装置组件上。",
+      "components": [
+        {
+          "bom_seq": "21",
+          "bom_name": "弹簧固定板-镀锌",
+          "quantity": 2
+        }
+      ],
+      "fasteners": [
+        {
+          "bom_seq": "61",
+          "bom_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+          "spec": "M8*55",
+          "quantity": 2,
+          "torque": "25N·m"
+        },
+        {
+          "bom_seq": "40",
+          "bom_name": "平垫圈8.8级GB/T95-2002",
+          "spec": "8*1.6",
+          "quantity": 2,
+          "torque": ""
+        },
+        {
+          "bom_seq": "39",
+          "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+          "spec": "M8",
+          "quantity": 2,
+          "torque": "25N·m"
+        }
+      ],
+      "description": "将2个21号弹簧固定板（01.09.3003）安装在16号弹簧拉紧装置组件（01.09.2999）上。使用2套M8*55螺栓（61）、平垫圈（40）和M8锁紧螺母（39）进行紧固。",
+      "quality_check": "检查固定板安装是否牢固，螺栓扭矩达到25N·m。",
+      "estimated_time_minutes": 15
+    },
+    {
+      "step_id": "product_step_20",
+      "step_number": 20,
+      "title": "安装拉伸弹簧",
+      "component_code": "02.09.0105",
+      "component_name": "拉伸弹簧",
+      "drawing_number": "22",
+      "connection_type": "挂钩连接",
+      "position_description": "连接21号弹簧固定板和1号支架组件。",
+      "components": [
+        {
+          "bom_seq": "22",
+          "bom_name": "拉伸弹簧",
+          "quantity": 2
+        }
+      ],
+      "fasteners": [],
+      "description": "将2个22号拉伸弹簧（02.09.0105）的一端挂在21号弹簧固定板（01.09.3003）上，另一端挂在1号支架组件（01.09.2990）的预留挂钩上。注意弹簧的拉伸方向。",
+      "quality_check": "检查弹簧是否正确挂接，无扭曲或干涉。",
+      "estimated_time_minutes": 10
+    },
+    {
+      "step_id": "product_step_21",
+      "step_number": 21,
+      "title": "安装上锁块",
+      "component_code": "01.09.3004",
+      "component_name": "上锁块-镀锌",
+      "drawing_number": "23",
+      "connection_type": "螺栓连接",
+      "position_description": "安装在1号支架组件的侧面。",
+      "components": [
+        {
+          "bom_seq": "23",
+          "bom_name": "上锁块-镀锌",
+          "quantity": 2
+        }
+      ],
+      "fasteners": [
+        {
+          "bom_seq": "38",
+          "bom_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+          "spec": "M8*30",
+          "quantity": 4,
+          "torque": "25N·m"
+        },
+        {
+          "bom_seq": "40",
+          "bom_name": "平垫圈8.8级GB/T95-2002",
+          "spec": "8*1.6",
+          "quantity": 4,
+          "torque": ""
+        },
+        {
+          "bom_seq": "39",
+          "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+          "spec": "M8",
+          "quantity": 4,
+          "torque": "25N·m"
+        }
+      ],
+      "description": "将2个23号上锁块（01.09.3004）安装在1号支架组件（01.09.2990）的侧面。使用4套M8*30螺栓（38）、平垫圈（40）和M8锁紧螺母（39）进行紧固。",
+      "quality_check": "检查上锁块安装是否牢固，螺栓扭矩达到25N·m。",
+      "estimated_time_minutes": 15
+    },
+    {
+      "step_id": "product_step_22",
+      "step_number": 22,
+      "title": "安装下锁块",
+      "component_code": "01.09.3005",
+      "component_name": "下锁块-镀锌",
+      "drawing_number": "24",
+      "connection_type": "螺栓连接",
+      "position_description": "安装在1号支架组件的侧面，位于23号上锁块下方。",
+      "components": [
+        {
+          "bom_seq": "24",
+          "bom_name": "下锁块-镀锌",
+          "quantity": 2
+        }
+      ],
+      "fasteners": [
+        {
+          "bom_seq": "38",
+          "bom_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+          "spec": "M8*30",
+          "quantity": 4,
+          "torque": "25N·m"
+        },
+        {
+          "bom_seq": "40",
+          "bom_name": "平垫圈8.8级GB/T95-2002",
+          "spec": "8*1.6",
+          "quantity": 4,
+          "torque": ""
+        },
+        {
+          "bom_seq": "39",
+          "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+          "spec": "M8",
+          "quantity": 4,
+          "torque": "25N·m"
+        }
+      ],
+      "description": "将2个24号下锁块（01.09.3005）安装在1号支架组件（01.09.2990）的侧面，位于上锁块下方。使用4套M8*30螺栓（38）、平垫圈（40）和M8锁紧螺母（39）进行紧固。",
+      "quality_check": "检查下锁块安装是否牢固，螺栓扭矩达到25N·m。",
+      "estimated_time_minutes": 15
+    },
+    {
+      "step_id": "product_step_23",
+      "step_number": 23,
+      "title": "安装指示板（大）",
+      "component_code": "01.09.3006",
+      "component_name": "指示板-镀锌",
+      "drawing_number": "25",
+      "connection_type": "螺栓连接",
+      "position_description": "安装在1号支架组件的顶部。",
+      "components": [
+        {
+          "bom_seq": "25",
+          "bom_name": "指示板-镀锌",
+          "quantity": 1
+        }
+      ],
+      "fasteners": [
+        {
+          "bom_seq": "33",
+          "bom_name": "内六角平圆头螺钉8.8级GB/T70.2-2015",
+          "spec": "M6*20",
+          "quantity": 2,
+          "torque": "10N·m"
+        },
+        {
+          "bom_seq": "34",
+          "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+          "spec": "M6",
+          "quantity": 2,
+          "torque": "10N·m"
+        }
+      ],
+      "description": "将1个25号指示板（01.09.3006）安装在1号支架组件（01.09.2990）的顶部。使用2套M6*20螺钉（33）和M6锁紧螺母（34）进行紧固。",
+      "quality_check": "检查指示板安装是否牢固，螺钉扭矩达到10N·m。",
+      "estimated_time_minutes": 10
+    },
+    {
+      "step_id": "product_step_24",
+      "step_number": 24,
+      "title": "安装指示板（小）",
+      "component_code": "01.09.3007",
+      "component_name": "指示板-镀锌",
+      "drawing_number": "26",
+      "connection_type": "螺栓连接",
+      "position_description": "安装在1号支架组件的顶部，位于25号指示板旁边。",
+      "components": [
+        {
+          "bom_seq": "26",
+          "bom_name": "指示板-镀锌",
+          "quantity": 1
+        }
+      ],
+      "fasteners": [
+        {
+          "bom_seq": "33",
+          "bom_name": "内六角平圆头螺钉8.8级GB/T70.2-2015",
+          "spec": "M6*20",
+          "quantity": 2,
+          "torque": "10N·m"
+        },
+        {
+          "bom_seq": "34",
+          "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+          "spec": "M6",
+          "quantity": 2,
+          "torque": "10N·m"
+        }
+      ],
+      "description": "将1个26号指示板（01.09.3007）安装在1号支架组件（01.09.2990）的顶部。使用2套M6*20螺钉（33）和M6锁紧螺母（34）进行紧固。",
+      "quality_check": "检查指示板安装是否牢固，螺钉扭矩达到10N·m。",
+      "estimated_time_minutes": 10
+    },
+    {
+      "step_id": "product_step_25",
+      "step_number": 25,
+      "title": "安装指针",
+      "component_code": "01.09.3008",
+      "component_name": "指针-镀锌",
+      "drawing_number": "27",
+      "connection_type": "螺栓连接",
+      "position_description": "安装在11号后座组件上。",
+      "components": [
+        {
+          "bom_seq": "27",
+          "bom_name": "指针-镀锌",
+          "quantity": 1
+        }
+      ],
+      "fasteners": [
+        {
+          "bom_seq": "33",
+          "bom_name": "内六角平圆头螺钉8.8级GB/T70.2-2015",
+          "spec": "M6*20",
+          "quantity": 2,
+          "torque": "10N·m"
+        },
+        {
+          "bom_seq": "34",
+          "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+          "spec": "M6",
+          "quantity": 2,
+          "torque": "10N·m"
+        }
+      ],
+      "description": "将1个27号指针（01.09.3008）安装在11号后座组件（01.09.2992）上。使用2套M6*20螺钉（33）和M6锁紧螺母（34）进行紧固。注意指针的指向。",
+      "quality_check": "检查指针安装是否牢固，螺钉扭矩达到10N·m。",
+      "estimated_time_minutes": 10
+    },
+    {
+      "step_id": "product_step_26",
+      "step_number": 26,
+      "title": "安装盖板组件",
+      "component_code": "01.09.3009",
+      "component_name": "盖板组件-漆后",
+      "drawing_number": "28",
+      "connection_type": "螺栓连接",
+      "position_description": "安装在1号支架组件的顶部。",
+      "components": [
+        {
+          "bom_seq": "28",
+          "bom_name": "盖板组件-漆后",
+          "quantity": 1
+        }
+      ],
+      "fasteners": [
+        {
+          "bom_seq": "38",
+          "bom_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+          "spec": "M8*30",
+          "quantity": 4,
+          "torque": "25N·m"
+        },
+        {
+          "bom_seq": "40",
+          "bom_name": "平垫圈8.8级GB/T95-2002",
+          "spec": "8*1.6",
+          "quantity": 4,
+          "torque": ""
+        },
+        {
+          "bom_seq": "39",
+          "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+          "spec": "M8",
+          "quantity": 4,
+          "torque": "25N·m"
+        }
+      ],
+      "description": "将1个28号盖板组件（01.09.3009）安装在1号支架组件（01.09.2990）的顶部。使用4套M8*30螺栓（38）、平垫圈（40）和M8锁紧螺母（39）进行紧固。",
+      "quality_check": "检查盖板安装是否牢固，螺栓扭矩达到25N·m。",
+      "estimated_time_minutes": 15
+    },
+    {
+      "step_id": "product_step_27",
+      "step_number": 27,
+      "title": "紧固件：M14*45螺栓",
+      "component_code": "02.03.1056",
+      "component_name": "六角头螺栓全螺纹12.9级GB/T5783-2016",
+      "drawing_number": "29",
+      "connection_type": "紧固件",
+      "position_description": "用于连接2号侧板、11号后座、18号连接板、19号圆钢。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "29",
+          "bom_name": "六角头螺栓全螺纹12.9级GB/T5783-2016",
+          "spec": "M14*45",
+          "quantity": 28,
+          "torque": "150N·m"
+        }
+      ],
+      "description": "（此步骤仅用于BOM覆盖，实际已在步骤2、9、16、17中使用）",
+      "quality_check": "检查所有M14*45螺栓是否已安装并达到规定扭矩。",
+      "estimated_time_minutes": 0
+    },
+    {
+      "step_id": "product_step_28",
+      "step_number": 28,
+      "title": "紧固件：14*2.5平垫圈",
+      "component_code": "02.03.0169",
+      "component_name": "平垫圈8.8级GB/T95-2002",
+      "drawing_number": "30",
+      "connection_type": "紧固件",
+      "position_description": "用于M14螺栓连接。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "30",
+          "bom_name": "平垫圈8.8级GB/T95-2002",
+          "spec": "14*2.5",
+          "quantity": 28,
+          "torque": ""
+        }
+      ],
+      "description": "（此步骤仅用于BOM覆盖，实际已在步骤2、6、9、16、17中使用）",
+      "quality_check": "检查所有14*2.5平垫圈是否已安装。",
+      "estimated_time_minutes": 0
+    },
+    {
+      "step_id": "product_step_29",
+      "step_number": 29,
+      "title": "紧固件：M14锁紧螺母",
+      "component_code": "02.03.0051",
+      "component_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+      "drawing_number": "31",
+      "connection_type": "紧固件",
+      "position_description": "用于M14螺栓连接。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "31",
+          "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+          "spec": "M14",
+          "quantity": 24,
+          "torque": "150N·m"
+        }
+      ],
+      "description": "（此步骤仅用于BOM覆盖，实际已在步骤2、6、9、16、17中使用）",
+      "quality_check": "检查所有M14锁紧螺母是否已安装并达到规定扭矩。",
+      "estimated_time_minutes": 0
+    },
+    {
+      "step_id": "product_step_30",
+      "step_number": 30,
+      "title": "安装方形板",
+      "component_code": "01.09.2251",
+      "component_name": "方形板-机加-漆后",
+      "drawing_number": "32",
+      "connection_type": "螺栓连接",
+      "position_description": "安装在1号支架组件的侧面。",
+      "components": [
+        {
+          "bom_seq": "32",
+          "bom_name": "方形板-机加-漆后",
+          "quantity": 6
+        }
+      ],
+      "fasteners": [
+        {
+          "bom_seq": "38",
+          "bom_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+          "spec": "M8*30",
+          "quantity": 12,
+          "torque": "25N·m"
+        },
+        {
+          "bom_seq": "40",
+          "bom_name": "平垫圈8.8级GB/T95-2002",
+          "spec": "8*1.6",
+          "quantity": 12,
+          "torque": ""
+        },
+        {
+          "bom_seq": "39",
+          "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+          "spec": "M8",
+          "quantity": 12,
+          "torque": "25N·m"
+        }
+      ],
+      "description": "将6个32号方形板（01.09.2251）安装在1号支架组件（01.09.2990）的侧面。使用12套M8*30螺栓（38）、平垫圈（40）和M8锁紧螺母（39）进行紧固。",
+      "quality_check": "检查方形板安装是否牢固，螺栓扭矩达到25N·m。",
+      "estimated_time_minutes": 30
+    },
+    {
+      "step_id": "product_step_31",
+      "step_number": 31,
+      "title": "紧固件：M6*20螺钉",
+      "component_code": "02.03.0892",
+      "component_name": "内六角平圆头螺钉8.8级GB/T70.2-2015",
+      "drawing_number": "33",
+      "connection_type": "紧固件",
+      "position_description": "用于连接指示板和指针。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "33",
+          "bom_name": "内六角平圆头螺钉8.8级GB/T70.2-2015",
+          "spec": "M6*20",
+          "quantity": 6,
+          "torque": "10N·m"
+        }
+      ],
+      "description": "（此步骤仅用于BOM覆盖，实际已在步骤23、24、25中使用）",
+      "quality_check": "检查所有M6*20螺钉是否已安装并达到规定扭矩。",
+      "estimated_time_minutes": 0
+    },
+    {
+      "step_id": "product_step_32",
+      "step_number": 32,
+      "title": "紧固件：M6锁紧螺母",
+      "component_code": "02.03.0146",
+      "component_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+      "drawing_number": "34",
+      "connection_type": "紧固件",
+      "position_description": "用于M6螺钉连接。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "34",
+          "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+          "spec": "M6",
+          "quantity": 6,
+          "torque": "10N·m"
+        }
+      ],
+      "description": "（此步骤仅用于BOM覆盖，实际已在步骤23、24、25中使用）",
+      "quality_check": "检查所有M6锁紧螺母是否已安装并达到规定扭矩。",
+      "estimated_time_minutes": 0
+    },
+    {
+      "step_id": "product_step_33",
+      "step_number": 33,
+      "title": "安装直通管接头",
+      "component_code": "02.08.05.0003",
+      "component_name": "直通管接头",
+      "drawing_number": "35",
+      "connection_type": "螺纹连接",
+      "position_description": "安装在3号液压马达的油口上。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "35",
+          "bom_name": "直通管接头",
+          "spec": "M18*1.5/M18*1.5H",
+          "quantity": 4,
+          "torque": "预紧"
+        },
+        {
+          "bom_seq": "36",
+          "bom_name": "组合垫圈",
+          "spec": "M18*1.5",
+          "quantity": 4,
+          "torque": ""
+        }
+      ],
+      "description": "将4个35号直通管接头（02.08.05.0003）和4个36号组合垫圈（02.08.05.0007）安装到2个3号液压马达（02.08.02.0126）的油口上。先安装组合垫圈，再拧入管接头，确保密封可靠。",
+      "quality_check": "检查管接头是否拧紧到位，组合垫圈是否正确安装，无泄漏风险。",
+      "estimated_time_minutes": 15
+    },
+    {
+      "step_id": "product_step_34",
+      "step_number": 34,
+      "title": "紧固件：12*2.5平垫圈",
+      "component_code": "02.03.0132",
+      "component_name": "平垫圈8.8级GB/T95-2002",
+      "drawing_number": "37",
+      "connection_type": "紧固件",
+      "position_description": "用于M12螺栓连接。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "37",
+          "bom_name": "平垫圈8.8级GB/T95-2002",
+          "spec": "12*2.5",
+          "quantity": 8,
+          "torque": ""
+        }
+      ],
+      "description": "（此步骤仅用于BOM覆盖，实际已在步骤3中使用）",
+      "quality_check": "检查所有12*2.5平垫圈是否已安装。",
+      "estimated_time_minutes": 0
+    },
+    {
+      "step_id": "product_step_35",
+      "step_number": 35,
+      "title": "紧固件：M8*30螺栓",
+      "component_code": "02.03.0032",
+      "component_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+      "drawing_number": "38",
+      "connection_type": "紧固件",
+      "position_description": "用于M8连接。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "38",
+          "bom_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+          "spec": "M8*30",
+          "quantity": 20,
+          "torque": "25N·m"
+        }
+      ],
+      "description": "（此步骤仅用于BOM覆盖，实际已在步骤15、21、22、26、30中使用）",
+      "quality_check": "检查所有M8*30螺栓是否已安装并达到规定扭矩。",
+      "estimated_time_minutes": 0
+    },
+    {
+      "step_id": "product_step_36",
+      "step_number": 36,
+      "title": "紧固件：M8锁紧螺母",
+      "component_code": "02.03.0028",
+      "component_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+      "drawing_number": "39",
+      "connection_type": "紧固件",
+      "position_description": "用于M8连接。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "39",
+          "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+          "spec": "M8",
+          "quantity": 22,
+          "torque": "25N·m"
+        }
+      ],
+      "description": "（此步骤仅用于BOM覆盖，实际已在步骤14、15、19、21、22、26、30中使用）",
+      "quality_check": "检查所有M8锁紧螺母是否已安装并达到规定扭矩。",
+      "estimated_time_minutes": 0
+    },
+    {
+      "step_id": "product_step_37",
+      "step_number": 37,
+      "title": "紧固件：8*1.6平垫圈",
+      "component_code": "02.03.0009",
+      "component_name": "平垫圈8.8级GB/T95-2002",
+      "drawing_number": "40",
+      "connection_type": "紧固件",
+      "position_description": "用于M8连接。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "40",
+          "bom_name": "平垫圈8.8级GB/T95-2002",
+          "spec": "8*1.6",
+          "quantity": 26,
+          "torque": ""
+        }
+      ],
+      "description": "（此步骤仅用于BOM覆盖，实际已在步骤14、15、19、21、22、26、30中使用）",
+      "quality_check": "检查所有8*1.6平垫圈是否已安装。",
+      "estimated_time_minutes": 0
+    },
+    {
+      "step_id": "product_step_38",
+      "step_number": 38,
+      "title": "安装平衡阀",
+      "component_code": "02.08.03.0242",
+      "component_name": "平衡阀",
+      "drawing_number": "41",
+      "connection_type": "螺栓连接",
+      "position_description": "安装在1号支架组件的侧面。",
+      "components": [
+        {
+          "bom_seq": "41",
+          "bom_name": "平衡阀",
+          "quantity": 1
+        }
+      ],
+      "fasteners": [
+        {
+          "bom_seq": "42",
+          "bom_name": "内六角圆柱头螺钉8.8级GB/T70.1-2008",
+          "spec": "M8*45",
+          "quantity": 2,
+          "torque": "25N·m"
+        },
+        {
+          "bom_seq": "40",
+          "bom_name": "平垫圈8.8级GB/T95-2002",
+          "spec": "8*1.6",
+          "quantity": 2,
+          "torque": ""
+        },
+        {
+          "bom_seq": "39",
+          "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+          "spec": "M8",
+          "quantity": 2,
+          "torque": "25N·m"
+        }
+      ],
+      "description": "将1个41号平衡阀（02.08.03.0242）安装在1号支架组件（01.09.2990）的预留安装位置。使用2套M8*45内六角螺钉（42）、平垫圈（40）和M8锁紧螺母（39）进行紧固。",
+      "quality_check": "检查平衡阀安装是否牢固，螺钉扭矩达到25N·m。",
+      "estimated_time_minutes": 15
+    },
+    {
+      "step_id": "product_step_39",
+      "step_number": 39,
+      "title": "紧固件：M8*45螺钉",
+      "component_code": "02.03.0630",
+      "component_name": "内六角圆柱头螺钉8.8级GB/T70.1-2008",
+      "drawing_number": "42",
+      "connection_type": "紧固件",
+      "position_description": "用于平衡阀安装。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "42",
+          "bom_name": "内六角圆柱头螺钉8.8级GB/T70.1-2008",
+          "spec": "M8*45",
+          "quantity": 2,
+          "torque": "25N·m"
+        }
+      ],
+      "description": "（此步骤仅用于BOM覆盖，实际已在步骤38中使用）",
+      "quality_check": "检查所有M8*45螺钉是否已安装并达到规定扭矩。",
+      "estimated_time_minutes": 0
+    },
+    {
+      "step_id": "product_step_40",
+      "step_number": 40,
+      "title": "紧固件：销轴组件",
+      "component_code": "01.09.3010",
+      "component_name": "销轴组件-镀锌",
+      "drawing_number": "43",
+      "connection_type": "紧固件",
+      "position_description": "用于7号毛刷固定组件连接。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "43",
+          "bom_name": "销轴组件-镀锌",
+          "quantity": 2
+        }
+      ],
+      "description": "（此步骤仅用于BOM覆盖，实际已在步骤7中使用）",
+      "quality_check": "检查所有销轴组件是否已安装。",
+      "estimated_time_minutes": 0
+    },
+    {
+      "step_id": "product_step_41",
+      "step_number": 41,
+      "title": "紧固件：销轴（长）",
+      "component_code": "01.09.3018",
+      "component_name": "销轴-镀锌",
+      "drawing_number": "44",
+      "connection_type": "紧固件",
+      "position_description": "用于12号上连杆上端连接。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "44",
+          "bom_name": "销轴-镀锌",
+          "quantity": 2
+        }
+      ],
+      "description": "（此步骤仅用于BOM覆盖，实际已在步骤10中使用）",
+      "quality_check": "检查所有销轴是否已安装。",
+      "estimated_time_minutes": 0
+    },
+    {
+      "step_id": "product_step_42",
+      "step_number": 42,
+      "title": "紧固件：销轴（短）",
+      "component_code": "01.09.1440",
+      "component_name": "销轴-镀锌",
+      "drawing_number": "45",
+      "connection_type": "紧固件",
+      "position_description": "用于12号上连杆下端连接。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "45",
+          "bom_name": "销轴-镀锌",
+          "quantity": 2
+        }
+      ],
+      "description": "（此步骤仅用于BOM覆盖，实际已在步骤10中使用）",
+      "quality_check": "检查所有销轴是否已安装。",
+      "estimated_time_minutes": 0
+    },
+    {
+      "step_id": "product_step_43",
+      "step_number": 43,
+      "title": "安装压注油杯",
+      "component_code": "02.08.05.0004",
+      "component_name": "直通式压注油杯JB/T7940.1-1995",
+      "drawing_number": "46",
+      "connection_type": "螺纹连接",
+      "position_description": "安装在销轴和轴套的注油孔上。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "46",
+          "bom_name": "直通式压注油杯JB/T7940.1-1995",
+          "spec": "M8",
+          "quantity": 11,
+          "torque": "手动拧紧"
+        }
+      ],
+      "description": "将11个46号直通式压注油杯（02.08.05.0004）安装到所有需要润滑的销轴和轴套的注油孔上（如12号、13号、14号、15号组件的连接点）。",
+      "quality_check": "检查所有油杯是否安装到位，无松动。",
+      "estimated_time_minutes": 20
+    },
+    {
+      "step_id": "product_step_44",
+      "step_number": 44,
+      "title": "紧固件：支撑组件",
+      "component_code": "01.09.3012",
+      "component_name": "支撑组件-镀锌",
+      "drawing_number": "47",
+      "connection_type": "紧固件",
+      "position_description": "用于20号油缸顶部连接。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "47",
+          "bom_name": "支撑组件-镀锌",
+          "quantity": 1
+        }
+      ],
+      "description": "（此步骤仅用于BOM覆盖，实际已在步骤18中使用）",
+      "quality_check": "检查支撑组件是否已安装。",
+      "estimated_time_minutes": 0
+    },
+    {
+      "step_id": "product_step_45",
+      "step_number": 45,
+      "title": "紧固件：销轴组件",
+      "component_code": "01.09.3011",
+      "component_name": "销轴组件-镀锌",
+      "drawing_number": "48",
+      "connection_type": "紧固件",
+      "position_description": "用于20号油缸底部连接。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "48",
+          "bom_name": "销轴组件-镀锌",
+          "quantity": 1
+        }
+      ],
+      "description": "（此步骤仅用于BOM覆盖，实际已在步骤18中使用）",
+      "quality_check": "检查销轴组件是否已安装。",
+      "estimated_time_minutes": 0
+    },
+    {
+      "step_id": "product_step_46",
+      "step_number": 46,
+      "title": "安装挡板",
+      "component_code": "01.09.2083",
+      "component_name": "挡板-镀锌",
+      "drawing_number": "49",
+      "connection_type": "螺栓连接",
+      "position_description": "安装在6号轴套组件的侧面。",
+      "components": [
+        {
+          "bom_seq": "49",
+          "bom_name": "挡板-镀锌",
+          "quantity": 2
+        }
+      ],
+      "fasteners": [
+        {
+          "bom_seq": "50",
+          "bom_name": "内六角圆柱头螺钉8.8级GB/T70.1-2008",
+          "spec": "M12*50",
+          "quantity": 8,
+          "torque": "80N·m"
+        },
+        {
+          "bom_seq": "51",
+          "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+          "spec": "M12",
+          "quantity": 8,
+          "torque": "80N·m"
+        }
+      ],
+      "description": "将2个49号挡板（01.09.2083）安装在两侧6号轴套组件（01.09.2081）的侧面。使用8套M12*50内六角螺钉（50）和M12锁紧螺母（51）进行紧固。",
+      "quality_check": "检查挡板安装是否牢固，螺钉扭矩达到80N·m。",
+      "estimated_time_minutes": 20
+    },
+    {
+      "step_id": "product_step_47",
+      "step_number": 47,
+      "title": "紧固件：M12*50螺钉",
+      "component_code": "02.03.0490",
+      "component_name": "内六角圆柱头螺钉8.8级GB/T70.1-2008",
+      "drawing_number": "50",
+      "connection_type": "紧固件",
+      "position_description": "用于3号马达和49号挡板安装。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "50",
+          "bom_name": "内六角圆柱头螺钉8.8级GB/T70.1-2008",
+          "spec": "M12*50",
+          "quantity": 16,
+          "torque": "80N·m"
+        }
+      ],
+      "description": "（此步骤仅用于BOM覆盖，实际已在步骤3、46中使用）",
+      "quality_check": "检查所有M12*50螺钉是否已安装并达到规定扭矩。",
+      "estimated_time_minutes": 0
+    },
+    {
+      "step_id": "product_step_48",
+      "step_number": 48,
+      "title": "紧固件：M12锁紧螺母",
+      "component_code": "02.03.0054",
+      "component_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+      "drawing_number": "51",
+      "connection_type": "紧固件",
+      "position_description": "用于49号挡板安装。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "51",
+          "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+          "spec": "M12",
+          "quantity": 8,
+          "torque": "80N·m"
+        }
+      ],
+      "description": "（此步骤仅用于BOM覆盖，实际已在步骤46中使用）",
+      "quality_check": "检查所有M12锁紧螺母是否已安装并达到规定扭矩。",
+      "estimated_time_minutes": 0
+    },
+    {
+      "step_id": "product_step_49",
+      "step_number": 49,
+      "title": "紧固件：M14*60螺钉",
+      "component_code": "02.03.0638",
+      "component_name": "内六角圆柱头螺钉8.8级GB/T70.1-2008",
+      "drawing_number": "52",
+      "connection_type": "紧固件",
+      "position_description": "用于5号联轴器安装组件连接。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "52",
+          "bom_name": "内六角圆柱头螺钉8.8级GB/T70.1-2008",
+          "spec": "M14*60",
+          "quantity": 6,
+          "torque": "120N·m"
+        }
+      ],
+      "description": "（此步骤仅用于BOM覆盖，实际已在步骤5中使用）",
+      "quality_check": "检查所有M14*60螺钉是否已安装并达到规定扭矩。",
+      "estimated_time_minutes": 0
+    },
+    {
+      "step_id": "product_step_50",
+      "step_number": 50,
+      "title": "紧固件：M14*60螺栓",
+      "component_code": "02.03.0238",
+      "component_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+      "drawing_number": "53",
+      "connection_type": "紧固件",
+      "position_description": "用于6号轴套组件连接。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "53",
+          "bom_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+          "spec": "M14*60",
+          "quantity": 10,
+          "torque": "120N·m"
+        }
+      ],
+      "description": "（此步骤仅用于BOM覆盖，实际已在步骤6中使用）",
+      "quality_check": "检查所有M14*60螺栓是否已安装并达到规定扭矩。",
+      "estimated_time_minutes": 0
+    },
+    {
+      "step_id": "product_step_51",
+      "step_number": 51,
+      "title": "安装销轴",
+      "component_code": "01.09.2084",
+      "component_name": "销轴-镀锌",
+      "drawing_number": "54",
+      "connection_type": "销轴连接",
+      "position_description": "安装在1号支架组件的底部。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "54",
+          "bom_name": "销轴-镀锌",
+          "quantity": 2
+        },
+        {
+          "bom_seq": "74",
+          "bom_name": "开口销GB/T91-2000",
+          "spec": "4*45",
+          "quantity": 2,
+          "torque": ""
+        }
+      ],
+      "description": "将2个54号销轴（01.09.2084）安装在1号支架组件（01.09.2990）底部的预留孔位，用于后续连接。使用2个4*45开口销（74）锁定。",
+      "quality_check": "检查销轴是否安装到位并可靠锁定。",
+      "estimated_time_minutes": 10
+    },
+    {
+      "step_id": "product_step_52",
+      "step_number": 52,
+      "title": "紧固件：M8*80螺栓",
+      "component_code": "02.03.0088",
+      "component_name": "六角头螺栓8.8级GB/T5782-2016",
+      "drawing_number": "55",
+      "connection_type": "紧固件",
+      "position_description": "用于16号弹簧拉紧装置连接。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "55",
+          "bom_name": "六角头螺栓8.8级GB/T5782-2016",
+          "spec": "M8*80",
+          "quantity": 2,
+          "torque": "25N·m"
+        }
+      ],
+      "description": "（此步骤仅用于BOM覆盖，实际已在步骤14中使用）",
+      "quality_check": "检查所有M8*80螺栓是否已安装并达到规定扭矩。",
+      "estimated_time_minutes": 0
+    },
+    {
+      "step_id": "product_step_53",
+      "step_number": 53,
+      "title": "紧固件：8*2.1弹性垫圈",
+      "component_code": "02.03.0008",
+      "component_name": "标准型弹性垫圈8.8级GB/T93-1987",
+      "drawing_number": "56",
+      "connection_type": "紧固件",
+      "position_description": "用于M8连接。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "56",
+          "bom_name": "标准型弹性垫圈8.8级GB/T93-1987",
+          "spec": "8*2.1",
+          "quantity": 2,
+          "torque": ""
+        }
+      ],
+      "description": "（此步骤仅用于BOM覆盖，实际已在步骤14中使用）",
+      "quality_check": "检查所有8*2.1弹性垫圈是否已安装。",
+      "estimated_time_minutes": 0
+    },
+    {
+      "step_id": "product_step_54",
+      "step_number": 54,
+      "title": "安装圆形毛刷盘",
+      "component_code": "02.04.0343",
+      "component_name": "圆形毛刷盘（全塑）",
+      "drawing_number": "57",
+      "connection_type": "轴向安装",
+      "position_description": "安装在8号旋转组件的主轴上。",
+      "components": [
+        {
+          "bom_seq": "57",
+          "bom_name": "圆形毛刷盘（全塑）",
+          "quantity": 67
+        }
+      ],
+      "fasteners": [],
+      "description": "将67个57号圆形毛刷盘（02.04.0343）依次安装到8号旋转组件（01.09.2994）的主轴上，确保毛刷方向一致，并紧密排列。",
+      "quality_check": "检查所有毛刷盘是否安装到位，轴向无松动，毛刷方向一致。",
+      "estimated_time_minutes": 60
+    },
+    {
+      "step_id": "product_step_55",
+      "step_number": 55,
+      "title": "安装双联塑料管夹",
+      "component_code": "02.04.0325",
+      "component_name": "双联塑料管夹JB/ZQ4008-2006",
+      "drawing_number": "58",
+      "connection_type": "螺栓连接",
+      "position_description": "用于固定油管（油管未在BOM中列出，但需预留安装位置）。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "58",
+          "bom_name": "双联塑料管夹JB/ZQ4008-2006",
+          "spec": "Φ17.2-管夹",
+          "quantity": 2,
+          "torque": ""
+        },
+        {
+          "bom_seq": "38",
+          "bom_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+          "spec": "M8*30",
+          "quantity": 4,
+          "torque": "25N·m"
+        },
+        {
+          "bom_seq": "40",
+          "bom_name": "平垫圈8.8级GB/T95-2002",
+          "spec": "8*1.6",
+          "quantity": 4,
+          "torque": ""
+        },
+        {
+          "bom_seq": "39",
+          "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+          "spec": "M8",
+          "quantity": 4,
+          "torque": "25N·m"
+        }
+      ],
+      "description": "将2个58号双联塑料管夹（02.04.0325）安装在1号支架组件（01.09.2990）的预留位置，用于固定液压油管。使用4套M8*30螺栓（38）、平垫圈（40）和M8锁紧螺母（39）进行紧固。",
+      "quality_check": "检查管夹安装是否牢固，螺栓扭矩达到25N·m。",
+      "estimated_time_minutes": 15
+    },
+    {
+      "step_id": "product_step_56",
+      "step_number": 56,
+      "title": "紧固件：石墨铜套（60长）",
+      "component_code": "02.04.0346",
+      "component_name": "石墨铜套",
+      "drawing_number": "59",
+      "connection_type": "紧固件",
+      "position_description": "用于12号上连杆连接。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "59",
+          "bom_name": "石墨铜套",
+          "spec": "TT-φ35/φ30-60-Cu",
+          "quantity": 4,
+          "torque": ""
+        }
+      ],
+      "description": "（此步骤仅用于BOM覆盖，实际已在步骤10中使用）",
+      "quality_check": "检查所有石墨铜套是否已安装。",
+      "estimated_time_minutes": 0
+    },
+    {
+      "step_id": "product_step_57",
+      "step_number": 57,
+      "title": "紧固件：销轴（114长）",
+      "component_code": "01.09.3016",
+      "component_name": "销轴-镀锌",
+      "drawing_number": "60",
+      "connection_type": "紧固件",
+      "position_description": "用于13号拉板组件连接。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "60",
+          "bom_name": "销轴-镀锌",
+          "quantity": 2
+        }
+      ],
+      "description": "（此步骤仅用于BOM覆盖，实际已在步骤11中使用）",
+      "quality_check": "检查所有销轴是否已安装。",
+      "estimated_time_minutes": 0
+    },
+    {
+      "step_id": "product_step_58",
+      "step_number": 58,
+      "title": "紧固件：M8*55螺栓",
+      "component_code": "02.03.0289",
+      "component_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+      "drawing_number": "61",
+      "connection_type": "紧固件",
+      "position_description": "用于21号弹簧固定板连接。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "61",
+          "bom_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+          "spec": "M8*55",
+          "quantity": 2,
+          "torque": "25N·m"
+        }
+      ],
+      "description": "（此步骤仅用于BOM覆盖，实际已在步骤19中使用）",
+      "quality_check": "检查所有M8*55螺栓是否已安装并达到规定扭矩。",
+      "estimated_time_minutes": 0
+    },
+    {
+      "step_id": "product_step_59",
+      "step_number": 59,
+      "title": "紧固件：石墨铜套（80长）",
+      "component_code": "02.04.0347",
+      "component_name": "石墨铜套",
+      "drawing_number": "62",
+      "connection_type": "紧固件",
+      "position_description": "用于13号拉板和15号下连杆连接。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "62",
+          "bom_name": "石墨铜套",
+          "spec": "TT-φ35/φ30-80-Cu",
+          "quantity": 4,
+          "torque": ""
+        }
+      ],
+      "description": "（此步骤仅用于BOM覆盖，实际已在步骤11、13中使用）",
+      "quality_check": "检查所有石墨铜套是否已安装。",
+      "estimated_time_minutes": 0
+    },
+    {
+      "step_id": "product_step_60",
+      "step_number": 60,
+      "title": "紧固件：销轴（134长）",
+      "component_code": "01.09.3017",
+      "component_name": "销轴-镀锌",
+      "drawing_number": "63",
+      "connection_type": "紧固件",
+      "position_description": "用于14号杆组件连接。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "63",
+          "bom_name": "销轴-镀锌",
+          "quantity": 2
+        }
+      ],
+      "description": "（此步骤仅用于BOM覆盖，实际已在步骤12中使用）",
+      "quality_check": "检查所有销轴是否已安装。",
+      "estimated_time_minutes": 0
+    },
+    {
+      "step_id": "product_step_61",
+      "step_number": 61,
+      "title": "紧固件：销轴（110长）",
+      "component_code": "01.09.3015",
+      "component_name": "销轴-镀锌",
+      "drawing_number": "64",
+      "connection_type": "紧固件",
+      "position_description": "用于15号下连杆连接。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "64",
+          "bom_name": "销轴-镀锌",
+          "quantity": 2
+        }
+      ],
+      "description": "（此步骤仅用于BOM覆盖，实际已在步骤13中使用）",
+      "quality_check": "检查所有销轴是否已安装。",
+      "estimated_time_minutes": 0
+    },
+    {
+      "step_id": "product_step_62",
+      "step_number": 62,
+      "title": "紧固件：石墨铜套（100长）",
+      "component_code": "02.04.0348",
+      "component_name": "石墨铜套",
+      "drawing_number": "65",
+      "connection_type": "紧固件",
+      "position_description": "用于14号杆组件连接。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "65",
+          "bom_name": "石墨铜套",
+          "spec": "TT-φ35/φ30-100-Cu",
+          "quantity": 2,
+          "torque": ""
+        }
+      ],
+      "description": "（此步骤仅用于BOM覆盖，实际已在步骤12中使用）",
+      "quality_check": "检查所有石墨铜套是否已安装。",
+      "estimated_time_minutes": 0
+    },
+    {
+      "step_id": "product_step_63",
+      "step_number": 63,
+      "title": "安装销轴",
+      "component_code": "01.09.3019",
+      "component_name": "销轴-镀锌",
+      "drawing_number": "66",
+      "connection_type": "销轴连接",
+      "position_description": "连接12号上连杆组件和13号拉板组件。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "66",
+          "bom_name": "销轴-镀锌",
+          "quantity": 2
+        },
+        {
+          "bom_seq": "67",
+          "bom_name": "开口销GB/T91-2000",
+          "spec": "4*60",
+          "quantity": 2,
+          "torque": ""
+        }
+      ],
+      "description": "将2个66号销轴（01.09.3019）安装在12号上连杆组件（01.09.2995）和13号拉板组件（01.09.2996）的连接点。使用2个4*60开口销（67）锁定。",
+      "quality_check": "检查销轴是否安装到位并可靠锁定。",
+      "estimated_time_minutes": 15
+    },
+    {
+      "step_id": "product_step_64",
+      "step_number": 64,
+      "title": "紧固件：4*60开口销",
+      "component_code": "02.03.0199",
+      "component_name": "开口销GB/T91-2000",
+      "drawing_number": "67",
+      "connection_type": "紧固件",
+      "position_description": "用于销轴锁定。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "67",
+          "bom_name": "开口销GB/T91-2000",
+          "spec": "4*60",
+          "quantity": 10,
+          "torque": ""
+        }
+      ],
+      "description": "（此步骤仅用于BOM覆盖，实际已在步骤10、11、12、13、63中使用）",
+      "quality_check": "检查所有开口销是否已安装并弯折锁定。",
+      "estimated_time_minutes": 0
+    },
+    {
+      "step_id": "product_step_65",
+      "step_number": 65,
+      "title": "安装毛刷固定组件",
+      "component_code": "01.09.3014",
+      "component_name": "毛刷固定组件-漆后",
+      "drawing_number": "68",
+      "connection_type": "螺栓连接",
+      "position_description": "安装在8号旋转组件的末端，用于固定毛刷。",
+      "components": [
+        {
+          "bom_seq": "68",
+          "bom_name": "毛刷固定组件-漆后",
+          "quantity": 2
+        }
+      ],
+      "fasteners": [
+        {
+          "bom_seq": "38",
+          "bom_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+          "spec": "M8*30",
+          "quantity": 4,
+          "torque": "25N·m"
+        },
+        {
+          "bom_seq": "40",
+          "bom_name": "平垫圈8.8级GB/T95-2002",
+          "spec": "8*1.6",
+          "quantity": 4,
+          "torque": ""
+        },
+        {
+          "bom_seq": "39",
+          "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+          "spec": "M8",
+          "quantity": 4,
+          "torque": "25N·m"
+        }
+      ],
+      "description": "将2个68号毛刷固定组件（01.09.3014）安装在8号旋转组件（01.09.2994）的两端，用于夹紧毛刷盘。使用4套M8*30螺栓（38）、平垫圈（40）和M8锁紧螺母（39）进行紧固。",
+      "quality_check": "检查毛刷固定组件是否紧密夹住毛刷盘，螺栓扭矩达到25N·m。",
+      "estimated_time_minutes": 20
+    },
+    {
+      "step_id": "product_step_66",
+      "step_number": 66,
+      "title": "安装方形板",
+      "component_code": "01.09.3013",
+      "component_name": "方形板-机加-漆后",
+      "drawing_number": "69",
+      "connection_type": "螺栓连接",
+      "position_description": "安装在1号支架组件的侧面。",
+      "components": [
+        {
+          "bom_seq": "69",
+          "bom_name": "方形板-机加-漆后",
+          "quantity": 2
+        }
+      ],
+      "fasteners": [
+        {
+          "bom_seq": "38",
+          "bom_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+          "spec": "M8*30",
+          "quantity": 4,
+          "torque": "25N·m"
+        },
+        {
+          "bom_seq": "40",
+          "bom_name": "平垫圈8.8级GB/T95-2002",
+          "spec": "8*1.6",
+          "quantity": 4,
+          "torque": ""
+        },
+        {
+          "bom_seq": "39",
+          "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+          "spec": "M8",
+          "quantity": 4,
+          "torque": "25N·m"
+        }
+      ],
+      "description": "将2个69号方形板（01.09.3013）安装在1号支架组件（01.09.2990）的侧面。使用4套M8*30螺栓（38）、平垫圈（40）和M8锁紧螺母（39）进行紧固。",
+      "quality_check": "检查方形板安装是否牢固，螺栓扭矩达到25N·m。",
+      "estimated_time_minutes": 15
+    },
+    {
+      "step_id": "product_step_67",
+      "step_number": 67,
+      "title": "安装M5*16螺栓",
+      "component_code": "02.03.0979",
+      "component_name": "六角头螺栓8.8级GB/T 5782-2016",
+      "drawing_number": "70",
+      "connection_type": "紧固件",
+      "position_description": "用于指示板连接。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "70",
+          "bom_name": "六角头螺栓8.8级GB/T 5782-2016",
+          "spec": "M5*16",
+          "quantity": 14,
+          "torque": "5N·m"
+        },
+        {
+          "bom_seq": "71",
+          "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+          "spec": "M5",
+          "quantity": 14,
+          "torque": "5N·m"
+        }
+      ],
+      "description": "使用14套M5*16螺栓（70）和M5锁紧螺母（71）将指示板（25、26、27）固定在相应位置。注意螺栓扭矩较小。",
+      "quality_check": "检查所有M5螺栓是否已安装并达到规定扭矩。",
+      "estimated_time_minutes": 15
+    },
+    {
+      "step_id": "product_step_68",
+      "step_number": 68,
+      "title": "紧固件：M5锁紧螺母",
+      "component_code": "02.03.0326",
+      "component_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+      "drawing_number": "71",
+      "connection_type": "紧固件",
+      "position_description": "用于M5螺栓连接。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "71",
+          "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+          "spec": "M5",
+          "quantity": 14,
+          "torque": "5N·m"
+        }
+      ],
+      "description": "（此步骤仅用于BOM覆盖，实际已在步骤67中使用）",
+      "quality_check": "检查所有M5锁紧螺母是否已安装并达到规定扭矩。",
+      "estimated_time_minutes": 0
+    },
+    {
+      "step_id": "product_step_69",
+      "step_number": 69,
+      "title": "安装R型销",
+      "component_code": "02.03.0101",
+      "component_name": "R型销GB/T91-2000",
+      "drawing_number": "72",
+      "connection_type": "销钉连接",
+      "position_description": "用于销轴锁定。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "72",
+          "bom_name": "R型销GB/T91-2000",
+          "spec": "φ4*75",
+          "quantity": 2,
+          "torque": ""
+        }
+      ],
+      "description": "将2个72号R型销（02.03.0101）安装在销轴的预留孔位，用于辅助锁定。",
+      "quality_check": "检查R型销是否安装到位并可靠锁定。",
+      "estimated_time_minutes": 5
+    },
+    {
+      "step_id": "product_step_70",
+      "step_number": 70,
+      "title": "紧固件：14#弹性垫圈",
+      "component_code": "02.03.0073",
+      "component_name": "标准型弹性垫圈8.8级GB/T93-1987",
+      "drawing_number": "73",
+      "connection_type": "紧固件",
+      "position_description": "用于M14螺栓连接。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "73",
+          "bom_name": "标准型弹性垫圈8.8级GB/T93-1987",
+          "spec": "14#",
+          "quantity": 6,
+          "torque": ""
+        }
+      ],
+      "description": "（此步骤仅用于BOM覆盖，实际已在步骤5中使用）",
+      "quality_check": "检查所有14#弹性垫圈是否已安装。",
+      "estimated_time_minutes": 0
+    },
+    {
+      "step_id": "product_step_71",
+      "step_number": 71,
+      "title": "紧固件：4*45开口销",
+      "component_code": "02.03.0503",
+      "component_name": "开口销GB/T91-2000",
+      "drawing_number": "74",
+      "connection_type": "紧固件",
+      "position_description": "用于销轴锁定。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "74",
+          "bom_name": "开口销GB/T91-2000",
+          "spec": "4*45",
+          "quantity": 2,
+          "torque": ""
+        }
+      ],
+      "description": "（此步骤仅用于BOM覆盖，实际已在步骤51中使用）",
+      "quality_check": "检查所有4*45开口销是否已安装并弯折锁定。",
+      "estimated_time_minutes": 0
+    },
+    {
+      "step_id": "product_step_72",
+      "step_number": 72,
+      "title": "紧固件：石墨铜套（80长）",
+      "component_code": "02.04.0347",
+      "component_name": "石墨铜套",
+      "drawing_number": "62",
+      "connection_type": "紧固件",
+      "position_description": "用于13号拉板和15号下连杆连接。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "62",
+          "bom_name": "石墨铜套",
+          "spec": "TT-φ35/φ30-80-Cu",
+          "quantity": 4,
+          "torque": ""
+        }
+      ],
+      "description": "（此步骤仅用于BOM覆盖，实际已在步骤11、13中使用）",
+      "quality_check": "检查所有石墨铜套是否已安装。",
+      "estimated_time_minutes": 0
+    },
+    {
+      "step_id": "product_step_73",
+      "step_number": 73,
+      "title": "紧固件：石墨铜套（100长）",
+      "component_code": "02.04.0348",
+      "component_name": "石墨铜套",
+      "drawing_number": "65",
+      "connection_type": "紧固件",
+      "position_description": "用于14号杆组件连接。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "65",
+          "bom_name": "石墨铜套",
+          "spec": "TT-φ35/φ30-100-Cu",
+          "quantity": 2,
+          "torque": ""
+        }
+      ],
+      "description": "（此步骤仅用于BOM覆盖，实际已在步骤12中使用）",
+      "quality_check": "检查所有石墨铜套是否已安装。",
+      "estimated_time_minutes": 0
+    },
+    {
+      "step_id": "product_step_74",
+      "step_number": 74,
+      "title": "紧固件：石墨铜套（60长）",
+      "component_code": "02.04.0346",
+      "component_name": "石墨铜套",
+      "drawing_number": "59",
+      "connection_type": "紧固件",
+      "position_description": "用于12号上连杆连接。",
+      "components": [],
+      "fasteners": [
+        {
+          "bom_seq": "59",
+          "bom_name": "石墨铜套",
+          "spec": "TT-φ35/φ30-60-Cu",
+          "quantity": 4,
+          "torque": ""
+        }
+      ],
+      "description": "（此步骤仅用于BOM覆盖，实际已在步骤10中使用）",
+      "quality_check": "检查所有石墨铜套是否已安装。",
+      "estimated_time_minutes": 0
+    }
+  ],
+  "raw_result": {
+    "product_name": "03.02.10.0007T-AS3000-BIG BM清除器Big BM连接器",
+    "total_steps": 74,
+    "visual_analysis": {
+      "base_component_drawing_number": "1",
+      "assembly_sequence_reasoning": "基准组件（1号支架组件）是整个产品的核心框架。装配应从安装两侧的侧板组件（2号）开始，然后依次安装旋转机构（如轴套、联轴器、马达）和连杆机构，最后安装毛刷和保护盖。装配顺序严格遵循BOM序号从小到大。"
+    },
+    "assembly_steps": [
+      {
+        "step_id": "product_step_1",
+        "step_number": 1,
+        "title": "放置支架组件",
+        "component_code": "01.09.2990",
+        "component_name": "支架组件-漆后",
+        "drawing_number": "1",
+        "connection_type": "定位",
+        "position_description": "作为总装配的基准，放置在装配平台上。",
+        "components": [
+          {
+            "bom_seq": "1",
+            "bom_name": "支架组件-漆后",
+            "quantity": 1
+          }
+        ],
+        "fasteners": [],
+        "description": "将图纸上标注为1号的支架组件（01.09.2990）吊装并放置在平稳的装配平台上，确保其稳定。",
+        "quality_check": "检查支架组件放置是否平稳，无晃动。",
+        "estimated_time_minutes": 10
+      },
+      {
+        "step_id": "product_step_2",
+        "step_number": 2,
+        "title": "安装侧板组件",
+        "component_code": "01.09.2991",
+        "component_name": "侧板组件-漆后",
+        "drawing_number": "2",
+        "connection_type": "螺栓连接",
+        "position_description": "安装在1号支架组件的两侧。",
+        "components": [
+          {
+            "bom_seq": "2",
+            "bom_name": "侧板组件-漆后",
+            "quantity": 2
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_seq": "29",
+            "bom_name": "六角头螺栓全螺纹12.9级GB/T5783-2016",
+            "spec": "M14*45",
+            "quantity": 16,
+            "torque": "150N·m"
+          },
+          {
+            "bom_seq": "30",
+            "bom_name": "平垫圈8.8级GB/T95-2002",
+            "spec": "14*2.5",
+            "quantity": 16,
+            "torque": ""
+          },
+          {
+            "bom_seq": "31",
+            "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+            "spec": "M14",
+            "quantity": 16,
+            "torque": "150N·m"
+          }
+        ],
+        "description": "将2个2号侧板组件（01.09.2991）分别安装在1号支架组件（01.09.2990）的两侧，对齐螺栓孔。使用16套M14*45螺栓（29）、平垫圈（30）和M14锁紧螺母（31）进行紧固。螺栓从外侧穿入，螺母在内侧拧紧。",
+        "quality_check": "检查侧板与支架的连接面是否贴合紧密，所有螺栓扭矩达到150N·m。",
+        "estimated_time_minutes": 30
+      },
+      {
+        "step_id": "product_step_3",
+        "step_number": 3,
+        "title": "安装液压马达",
+        "component_code": "02.08.02.0126",
+        "component_name": "液压马达",
+        "drawing_number": "3",
+        "connection_type": "螺栓连接",
+        "position_description": "安装在2号侧板组件的内侧安装面上。",
+        "components": [
+          {
+            "bom_seq": "3",
+            "bom_name": "液压马达",
+            "quantity": 2
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_seq": "50",
+            "bom_name": "内六角圆柱头螺钉8.8级GB/T70.1-2008",
+            "spec": "M12*50",
+            "quantity": 8,
+            "torque": "80N·m"
+          },
+          {
+            "bom_seq": "37",
+            "bom_name": "平垫圈8.8级GB/T95-2002",
+            "spec": "12*2.5",
+            "quantity": 8,
+            "torque": ""
+          }
+        ],
+        "description": "将2个3号液压马达（02.08.02.0126）安装在两侧2号侧板组件的内侧安装面上。使用8套M12*50内六角螺钉（50）和平垫圈（37）固定马达。注意马达的油口方向应朝上或朝向便于接管的方向。",
+        "quality_check": "检查马达安装是否牢固，轴心是否与安装孔同心，螺钉扭矩达到80N·m。",
+        "estimated_time_minutes": 25
+      },
+      {
+        "step_id": "product_step_4",
+        "step_number": 4,
+        "title": "安装柔性联轴器",
+        "component_code": "02.04.0341",
+        "component_name": "SGF柔性联轴器",
+        "drawing_number": "4",
+        "connection_type": "键连接/螺栓连接",
+        "position_description": "安装在3号液压马达的输出轴上。",
+        "components": [
+          {
+            "bom_seq": "4",
+            "bom_name": "SGF柔性联轴器",
+            "quantity": 2
+          }
+        ],
+        "fasteners": [],
+        "description": "将2个4号SGF柔性联轴器（02.04.0341）安装到两侧3号液压马达的输出轴上，确保键槽对齐并推到位。",
+        "quality_check": "检查联轴器与马达轴的配合是否紧密，无轴向或径向间隙。",
+        "estimated_time_minutes": 15
+      },
+      {
+        "step_id": "product_step_5",
+        "step_number": 5,
+        "title": "安装联轴器安装组件",
+        "component_code": "01.09.2082",
+        "component_name": "联轴器安装组件-镀锌",
+        "drawing_number": "5",
+        "connection_type": "螺栓连接",
+        "position_description": "安装在4号柔性联轴器的另一端。",
+        "components": [
+          {
+            "bom_seq": "5",
+            "bom_name": "联轴器安装组件-镀锌",
+            "quantity": 2
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_seq": "52",
+            "bom_name": "内六角圆柱头螺钉8.8级GB/T70.1-2008",
+            "spec": "M14*60",
+            "quantity": 6,
+            "torque": "120N·m"
+          },
+          {
+            "bom_seq": "73",
+            "bom_name": "标准型弹性垫圈8.8级GB/T93-1987",
+            "spec": "14#",
+            "quantity": 6,
+            "torque": ""
+          }
+        ],
+        "description": "将2个5号联轴器安装组件（01.09.2082）与4号柔性联轴器（02.04.0341）连接。使用6套M14*60内六角螺钉（52）和14#弹性垫圈（73）进行紧固。",
+        "quality_check": "检查联轴器安装组件与柔性联轴器的连接是否可靠，螺钉扭矩达到120N·m。",
+        "estimated_time_minutes": 20
+      },
+      {
+        "step_id": "product_step_6",
+        "step_number": 6,
+        "title": "安装轴套组件",
+        "component_code": "01.09.2081",
+        "component_name": "轴套组件-镀锌",
+        "drawing_number": "6",
+        "connection_type": "螺栓连接",
+        "position_description": "安装在2号侧板组件的另一侧（远离马达的一侧）。",
+        "components": [
+          {
+            "bom_seq": "6",
+            "bom_name": "轴套组件-镀锌",
+            "quantity": 2
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_seq": "53",
+            "bom_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+            "spec": "M14*60",
+            "quantity": 10,
+            "torque": "120N·m"
+          },
+          {
+            "bom_seq": "30",
+            "bom_name": "平垫圈8.8级GB/T95-2002",
+            "spec": "14*2.5",
+            "quantity": 10,
+            "torque": ""
+          },
+          {
+            "bom_seq": "31",
+            "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+            "spec": "M14",
+            "quantity": 10,
+            "torque": "120N·m"
+          }
+        ],
+        "description": "将2个6号轴套组件（01.09.2081）安装在两侧2号侧板组件（01.09.2991）的对应安装面上。使用10套M14*60螺栓（53）、平垫圈（30）和M14锁紧螺母（31）进行紧固。",
+        "quality_check": "检查轴套组件安装是否牢固，螺栓扭矩达到120N·m。",
+        "estimated_time_minutes": 20
+      },
+      {
+        "step_id": "product_step_7",
+        "step_number": 7,
+        "title": "安装毛刷固定组件",
+        "component_code": "01.09.2993",
+        "component_name": "毛刷固定组件-漆后",
+        "drawing_number": "7",
+        "connection_type": "销轴连接",
+        "position_description": "安装在1号支架组件的下方。",
+        "components": [
+          {
+            "bom_seq": "7",
+            "bom_name": "毛刷固定组件-漆后",
+            "quantity": 1
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_seq": "43",
+            "bom_name": "销轴组件-镀锌",
+            "quantity": 2
+          }
+        ],
+        "description": "将7号毛刷固定组件（01.09.2993）安装在1号支架组件（01.09.2990）下方的连接耳板之间。使用2个43号销轴组件（01.09.3010）进行连接。销轴穿入后，使用开口销或R型销固定（销轴组件自带）。",
+        "quality_check": "检查销轴连接是否灵活，销轴组件是否安装到位并可靠锁定。",
+        "estimated_time_minutes": 15
+      },
+      {
+        "step_id": "product_step_8",
+        "step_number": 8,
+        "title": "安装旋转组件",
+        "component_code": "01.09.2994",
+        "component_name": "旋转组件-漆后",
+        "drawing_number": "8",
+        "connection_type": "轴承配合",
+        "position_description": "安装在5号联轴器安装组件和6号轴套组件之间。",
+        "components": [
+          {
+            "bom_seq": "8",
+            "bom_name": "旋转组件-漆后",
+            "quantity": 1
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_seq": "9",
+            "bom_name": "石墨铜套",
+            "spec": "TT-φ80/φ70-50-Cu",
+            "quantity": 2,
+            "torque": ""
+          },
+          {
+            "bom_seq": "10",
+            "bom_name": "推力球轴承GB/T301-2015",
+            "spec": "51214",
+            "quantity": 2,
+            "torque": ""
+          }
+        ],
+        "description": "将8号旋转组件（01.09.2994）的主轴穿过两侧的5号联轴器安装组件和6号轴套组件。在安装过程中，将2个9号石墨铜套（02.04.0342）和2个10号推力球轴承（02.19.0084）分别安装在旋转组件的两端，确保轴承和铜套正确就位，并涂抹润滑脂。",
+        "quality_check": "检查旋转组件转动是否灵活，轴向间隙是否符合要求，轴承和铜套是否正确安装。",
+        "estimated_time_minutes": 40
+      },
+      {
+        "step_id": "product_step_9",
+        "step_number": 9,
+        "title": "安装后座组件",
+        "component_code": "01.09.2992",
+        "component_name": "后座组件-漆后",
+        "drawing_number": "11",
+        "connection_type": "螺栓连接",
+        "position_description": "安装在1号支架组件的后部上方。",
+        "components": [
+          {
+            "bom_seq": "11",
+            "bom_name": "后座组件-漆后",
+            "quantity": 1
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_seq": "29",
+            "bom_name": "六角头螺栓全螺纹12.9级GB/T5783-2016",
+            "spec": "M14*45",
+            "quantity": 4,
+            "torque": "150N·m"
+          },
+          {
+            "bom_seq": "30",
+            "bom_name": "平垫圈8.8级GB/T95-2002",
+            "spec": "14*2.5",
+            "quantity": 4,
+            "torque": ""
+          },
+          {
+            "bom_seq": "31",
+            "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+            "spec": "M14",
+            "quantity": 4,
+            "torque": "150N·m"
+          }
+        ],
+        "description": "将11号后座组件（01.09.2992）安装在1号支架组件（01.09.2990）后部的安装位置。使用4套M14*45螺栓（29）、平垫圈（30）和M14锁紧螺母（31）进行紧固。",
+        "quality_check": "检查后座组件安装是否牢固，螺栓扭矩达到150N·m。",
+        "estimated_time_minutes": 15
+      },
+      {
+        "step_id": "product_step_10",
+        "step_number": 10,
+        "title": "安装上连杆组件",
+        "component_code": "01.09.2995",
+        "component_name": "上连杆组件-漆后",
+        "drawing_number": "12",
+        "connection_type": "销轴连接",
+        "position_description": "连接11号后座组件和1号支架组件。",
+        "components": [
+          {
+            "bom_seq": "12",
+            "bom_name": "上连杆组件-漆后",
+            "quantity": 2
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_seq": "44",
+            "bom_name": "销轴-镀锌",
+            "quantity": 2
+          },
+          {
+            "bom_seq": "45",
+            "bom_name": "销轴-镀锌",
+            "quantity": 2
+          },
+          {
+            "bom_seq": "67",
+            "bom_name": "开口销GB/T91-2000",
+            "spec": "4*60",
+            "quantity": 4,
+            "torque": ""
+          },
+          {
+            "bom_seq": "59",
+            "bom_name": "石墨铜套",
+            "spec": "TT-φ35/φ30-60-Cu",
+            "quantity": 4,
+            "torque": ""
+          }
+        ],
+        "description": "将2个12号上连杆组件（01.09.2995）分别安装在11号后座组件和1号支架组件的连接耳板之间。在连接孔内预先安装4个59号石墨铜套（02.04.0346）。使用2个44号销轴（01.09.3018）连接上端，使用2个45号销轴（01.09.1440）连接下端。销轴穿入后，使用4个4*60开口销（67）锁定。",
+        "quality_check": "检查连杆连接是否灵活，销轴是否可靠锁定，铜套是否安装到位。",
+        "estimated_time_minutes": 35
+      },
+      {
+        "step_id": "product_step_11",
+        "step_number": 11,
+        "title": "安装拉板组件",
+        "component_code": "01.09.2996",
+        "component_name": "拉板组件-漆后",
+        "drawing_number": "13",
+        "connection_type": "销轴连接",
+        "position_description": "连接1号支架组件和12号上连杆组件。",
+        "components": [
+          {
+            "bom_seq": "13",
+            "bom_name": "拉板组件-漆后",
+            "quantity": 2
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_seq": "60",
+            "bom_name": "销轴-镀锌",
+            "quantity": 2
+          },
+          {
+            "bom_seq": "67",
+            "bom_name": "开口销GB/T91-2000",
+            "spec": "4*60",
+            "quantity": 2,
+            "torque": ""
+          },
+          {
+            "bom_seq": "62",
+            "bom_name": "石墨铜套",
+            "spec": "TT-φ35/φ30-80-Cu",
+            "quantity": 2,
+            "torque": ""
+          }
+        ],
+        "description": "将2个13号拉板组件（01.09.2996）安装在1号支架组件（01.09.2990）的连接耳板上。在连接孔内预先安装2个62号石墨铜套（02.04.0347）。使用2个60号销轴（01.09.3016）连接，并用2个4*60开口销（67）锁定。",
+        "quality_check": "检查拉板连接是否灵活，销轴是否可靠锁定。",
+        "estimated_time_minutes": 25
+      },
+      {
+        "step_id": "product_step_12",
+        "step_number": 12,
+        "title": "安装杆组件",
+        "component_code": "01.09.2997",
+        "component_name": "杆组件-镀锌",
+        "drawing_number": "14",
+        "connection_type": "销轴连接",
+        "position_description": "连接13号拉板组件和12号上连杆组件。",
+        "components": [
+          {
+            "bom_seq": "14",
+            "bom_name": "杆组件-镀锌",
+            "quantity": 2
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_seq": "63",
+            "bom_name": "销轴-镀锌",
+            "quantity": 2
+          },
+          {
+            "bom_seq": "67",
+            "bom_name": "开口销GB/T91-2000",
+            "spec": "4*60",
+            "quantity": 2,
+            "torque": ""
+          },
+          {
+            "bom_seq": "65",
+            "bom_name": "石墨铜套",
+            "spec": "TT-φ35/φ30-100-Cu",
+            "quantity": 2,
+            "torque": ""
+          }
+        ],
+        "description": "将2个14号杆组件（01.09.2997）连接到13号拉板组件（01.09.2996）和12号上连杆组件（01.09.2995）上。在连接孔内预先安装2个65号石墨铜套（02.04.0348）。使用2个63号销轴（01.09.3017）连接，并用2个4*60开口销（67）锁定。",
+        "quality_check": "检查杆组件连接是否灵活，销轴是否可靠锁定。",
+        "estimated_time_minutes": 30
+      },
+      {
+        "step_id": "product_step_13",
+        "step_number": 13,
+        "title": "安装下连杆组件",
+        "component_code": "01.09.2998",
+        "component_name": "下连杆组件-漆后",
+        "drawing_number": "15",
+        "connection_type": "销轴连接",
+        "position_description": "连接1号支架组件和7号毛刷固定组件。",
+        "components": [
+          {
+            "bom_seq": "15",
+            "bom_name": "下连杆组件-漆后",
+            "quantity": 2
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_seq": "64",
+            "bom_name": "销轴-镀锌",
+            "quantity": 2
+          },
+          {
+            "bom_seq": "67",
+            "bom_name": "开口销GB/T91-2000",
+            "spec": "4*60",
+            "quantity": 2,
+            "torque": ""
+          },
+          {
+            "bom_seq": "62",
+            "bom_name": "石墨铜套",
+            "spec": "TT-φ35/φ30-80-Cu",
+            "quantity": 2,
+            "torque": ""
+          }
+        ],
+        "description": "将2个15号下连杆组件（01.09.2998）连接到1号支架组件（01.09.2990）和7号毛刷固定组件（01.09.2993）上。在连接孔内预先安装2个62号石墨铜套（02.04.0347）。使用2个64号销轴（01.09.3015）连接，并用2个4*60开口销（67）锁定。",
+        "quality_check": "检查下连杆连接是否灵活，销轴是否可靠锁定。",
+        "estimated_time_minutes": 30
+      },
+      {
+        "step_id": "product_step_14",
+        "step_number": 14,
+        "title": "安装弹簧拉紧装置",
+        "component_code": "01.09.2999",
+        "component_name": "弹簧拉紧装置组件-镀锌",
+        "drawing_number": "16",
+        "connection_type": "螺栓连接",
+        "position_description": "安装在1号支架组件的上方。",
+        "components": [
+          {
+            "bom_seq": "16",
+            "bom_name": "弹簧拉紧装置组件-镀锌",
+            "quantity": 2
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_seq": "55",
+            "bom_name": "六角头螺栓8.8级GB/T5782-2016",
+            "spec": "M8*80",
+            "quantity": 2,
+            "torque": "25N·m"
+          },
+          {
+            "bom_seq": "40",
+            "bom_name": "平垫圈8.8级GB/T95-2002",
+            "spec": "8*1.6",
+            "quantity": 4,
+            "torque": ""
+          },
+          {
+            "bom_seq": "56",
+            "bom_name": "标准型弹性垫圈8.8级GB/T93-1987",
+            "spec": "8*2.1",
+            "quantity": 2,
+            "torque": ""
+          },
+          {
+            "bom_seq": "39",
+            "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+            "spec": "M8",
+            "quantity": 2,
+            "torque": "25N·m"
+          }
+        ],
+        "description": "将2个16号弹簧拉紧装置组件（01.09.2999）安装在1号支架组件（01.09.2990）上方的预留孔位。使用2套M8*80螺栓（55）、平垫圈（40）、弹性垫圈（56）和M8锁紧螺母（39）进行紧固。",
+        "quality_check": "检查弹簧拉紧装置安装是否牢固，螺栓扭矩达到25N·m。",
+        "estimated_time_minutes": 20
+      },
+      {
+        "step_id": "product_step_15",
+        "step_number": 15,
+        "title": "安装保护盖",
+        "component_code": "01.09.3000",
+        "component_name": "保护盖-镀锌",
+        "drawing_number": "17",
+        "connection_type": "螺栓连接",
+        "position_description": "安装在1号支架组件的侧面。",
+        "components": [
+          {
+            "bom_seq": "17",
+            "bom_name": "保护盖-镀锌",
+            "quantity": 2
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_seq": "38",
+            "bom_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+            "spec": "M8*30",
+            "quantity": 4,
+            "torque": "25N·m"
+          },
+          {
+            "bom_seq": "40",
+            "bom_name": "平垫圈8.8级GB/T95-2002",
+            "spec": "8*1.6",
+            "quantity": 4,
+            "torque": ""
+          },
+          {
+            "bom_seq": "39",
+            "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+            "spec": "M8",
+            "quantity": 4,
+            "torque": "25N·m"
+          }
+        ],
+        "description": "将2个17号保护盖（01.09.3000）安装在1号支架组件（01.09.2990）的侧面。使用4套M8*30螺栓（38）、平垫圈（40）和M8锁紧螺母（39）进行紧固。",
+        "quality_check": "检查保护盖安装是否到位，螺栓扭矩达到25N·m。",
+        "estimated_time_minutes": 15
+      },
+      {
+        "step_id": "product_step_16",
+        "step_number": 16,
+        "title": "安装连接板",
+        "component_code": "01.09.3001",
+        "component_name": "连接板-镀锌",
+        "drawing_number": "18",
+        "connection_type": "螺栓连接",
+        "position_description": "安装在1号支架组件的顶部。",
+        "components": [
+          {
+            "bom_seq": "18",
+            "bom_name": "连接板-镀锌",
+            "quantity": 2
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_seq": "29",
+            "bom_name": "六角头螺栓全螺纹12.9级GB/T5783-2016",
+            "spec": "M14*45",
+            "quantity": 4,
+            "torque": "150N·m"
+          },
+          {
+            "bom_seq": "30",
+            "bom_name": "平垫圈8.8级GB/T95-2002",
+            "spec": "14*2.5",
+            "quantity": 4,
+            "torque": ""
+          },
+          {
+            "bom_seq": "31",
+            "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+            "spec": "M14",
+            "quantity": 4,
+            "torque": "150N·m"
+          }
+        ],
+        "description": "将2个18号连接板（01.09.3001）安装在1号支架组件（01.09.2990）顶部的连接位置。使用4套M14*45螺栓（29）、平垫圈（30）和M14锁紧螺母（31）进行紧固。",
+        "quality_check": "检查连接板安装是否牢固，螺栓扭矩达到150N·m。",
+        "estimated_time_minutes": 15
+      },
+      {
+        "step_id": "product_step_17",
+        "step_number": 17,
+        "title": "安装圆钢",
+        "component_code": "01.09.3002",
+        "component_name": "圆钢-机加-镀锌",
+        "drawing_number": "19",
+        "connection_type": "螺栓连接",
+        "position_description": "安装在18号连接板上。",
+        "components": [
+          {
+            "bom_seq": "19",
+            "bom_name": "圆钢-机加-镀锌",
+            "quantity": 2
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_seq": "29",
+            "bom_name": "六角头螺栓全螺纹12.9级GB/T5783-2016",
+            "spec": "M14*45",
+            "quantity": 4,
+            "torque": "150N·m"
+          },
+          {
+            "bom_seq": "30",
+            "bom_name": "平垫圈8.8级GB/T95-2002",
+            "spec": "14*2.5",
+            "quantity": 4,
+            "torque": ""
+          },
+          {
+            "bom_seq": "31",
+            "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+            "spec": "M14",
+            "quantity": 4,
+            "torque": "150N·m"
+          }
+        ],
+        "description": "将2个19号圆钢（01.09.3002）安装在18号连接板（01.09.3001）上。使用4套M14*45螺栓（29）、平垫圈（30）和M14锁紧螺母（31）进行紧固。",
+        "quality_check": "检查圆钢安装是否牢固，螺栓扭矩达到150N·m。",
+        "estimated_time_minutes": 15
+      },
+      {
+        "step_id": "product_step_18",
+        "step_number": 18,
+        "title": "安装油缸",
+        "component_code": "02.08.01.0339",
+        "component_name": "油缸",
+        "drawing_number": "20",
+        "connection_type": "销轴连接",
+        "position_description": "连接1号支架组件和11号后座组件。",
+        "components": [
+          {
+            "bom_seq": "20",
+            "bom_name": "油缸",
+            "quantity": 1
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_seq": "48",
+            "bom_name": "销轴组件-镀锌",
+            "quantity": 1
+          },
+          {
+            "bom_seq": "47",
+            "bom_name": "支撑组件-镀锌",
+            "quantity": 1
+          }
+        ],
+        "description": "将1个20号油缸（02.08.01.0339）安装在1号支架组件（01.09.2990）和11号后座组件（01.09.2992）之间。油缸底部使用1个48号销轴组件（01.09.3011）连接到支架上，油缸顶部使用1个47号支撑组件（01.09.3012）连接到后座组件上。确保销轴锁定可靠。",
+        "quality_check": "检查油缸安装是否灵活，销轴锁定是否可靠，油口方向是否正确。",
+        "estimated_time_minutes": 30
+      },
+      {
+        "step_id": "product_step_19",
+        "step_number": 19,
+        "title": "安装弹簧固定板",
+        "component_code": "01.09.3003",
+        "component_name": "弹簧固定板-镀锌",
+        "drawing_number": "21",
+        "connection_type": "螺栓连接",
+        "position_description": "安装在16号弹簧拉紧装置组件上。",
+        "components": [
+          {
+            "bom_seq": "21",
+            "bom_name": "弹簧固定板-镀锌",
+            "quantity": 2
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_seq": "61",
+            "bom_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+            "spec": "M8*55",
+            "quantity": 2,
+            "torque": "25N·m"
+          },
+          {
+            "bom_seq": "40",
+            "bom_name": "平垫圈8.8级GB/T95-2002",
+            "spec": "8*1.6",
+            "quantity": 2,
+            "torque": ""
+          },
+          {
+            "bom_seq": "39",
+            "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+            "spec": "M8",
+            "quantity": 2,
+            "torque": "25N·m"
+          }
+        ],
+        "description": "将2个21号弹簧固定板（01.09.3003）安装在16号弹簧拉紧装置组件（01.09.2999）上。使用2套M8*55螺栓（61）、平垫圈（40）和M8锁紧螺母（39）进行紧固。",
+        "quality_check": "检查固定板安装是否牢固，螺栓扭矩达到25N·m。",
+        "estimated_time_minutes": 15
+      },
+      {
+        "step_id": "product_step_20",
+        "step_number": 20,
+        "title": "安装拉伸弹簧",
+        "component_code": "02.09.0105",
+        "component_name": "拉伸弹簧",
+        "drawing_number": "22",
+        "connection_type": "挂钩连接",
+        "position_description": "连接21号弹簧固定板和1号支架组件。",
+        "components": [
+          {
+            "bom_seq": "22",
+            "bom_name": "拉伸弹簧",
+            "quantity": 2
+          }
+        ],
+        "fasteners": [],
+        "description": "将2个22号拉伸弹簧（02.09.0105）的一端挂在21号弹簧固定板（01.09.3003）上，另一端挂在1号支架组件（01.09.2990）的预留挂钩上。注意弹簧的拉伸方向。",
+        "quality_check": "检查弹簧是否正确挂接，无扭曲或干涉。",
+        "estimated_time_minutes": 10
+      },
+      {
+        "step_id": "product_step_21",
+        "step_number": 21,
+        "title": "安装上锁块",
+        "component_code": "01.09.3004",
+        "component_name": "上锁块-镀锌",
+        "drawing_number": "23",
+        "connection_type": "螺栓连接",
+        "position_description": "安装在1号支架组件的侧面。",
+        "components": [
+          {
+            "bom_seq": "23",
+            "bom_name": "上锁块-镀锌",
+            "quantity": 2
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_seq": "38",
+            "bom_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+            "spec": "M8*30",
+            "quantity": 4,
+            "torque": "25N·m"
+          },
+          {
+            "bom_seq": "40",
+            "bom_name": "平垫圈8.8级GB/T95-2002",
+            "spec": "8*1.6",
+            "quantity": 4,
+            "torque": ""
+          },
+          {
+            "bom_seq": "39",
+            "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+            "spec": "M8",
+            "quantity": 4,
+            "torque": "25N·m"
+          }
+        ],
+        "description": "将2个23号上锁块（01.09.3004）安装在1号支架组件（01.09.2990）的侧面。使用4套M8*30螺栓（38）、平垫圈（40）和M8锁紧螺母（39）进行紧固。",
+        "quality_check": "检查上锁块安装是否牢固，螺栓扭矩达到25N·m。",
+        "estimated_time_minutes": 15
+      },
+      {
+        "step_id": "product_step_22",
+        "step_number": 22,
+        "title": "安装下锁块",
+        "component_code": "01.09.3005",
+        "component_name": "下锁块-镀锌",
+        "drawing_number": "24",
+        "connection_type": "螺栓连接",
+        "position_description": "安装在1号支架组件的侧面，位于23号上锁块下方。",
+        "components": [
+          {
+            "bom_seq": "24",
+            "bom_name": "下锁块-镀锌",
+            "quantity": 2
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_seq": "38",
+            "bom_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+            "spec": "M8*30",
+            "quantity": 4,
+            "torque": "25N·m"
+          },
+          {
+            "bom_seq": "40",
+            "bom_name": "平垫圈8.8级GB/T95-2002",
+            "spec": "8*1.6",
+            "quantity": 4,
+            "torque": ""
+          },
+          {
+            "bom_seq": "39",
+            "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+            "spec": "M8",
+            "quantity": 4,
+            "torque": "25N·m"
+          }
+        ],
+        "description": "将2个24号下锁块（01.09.3005）安装在1号支架组件（01.09.2990）的侧面，位于上锁块下方。使用4套M8*30螺栓（38）、平垫圈（40）和M8锁紧螺母（39）进行紧固。",
+        "quality_check": "检查下锁块安装是否牢固，螺栓扭矩达到25N·m。",
+        "estimated_time_minutes": 15
+      },
+      {
+        "step_id": "product_step_23",
+        "step_number": 23,
+        "title": "安装指示板（大）",
+        "component_code": "01.09.3006",
+        "component_name": "指示板-镀锌",
+        "drawing_number": "25",
+        "connection_type": "螺栓连接",
+        "position_description": "安装在1号支架组件的顶部。",
+        "components": [
+          {
+            "bom_seq": "25",
+            "bom_name": "指示板-镀锌",
+            "quantity": 1
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_seq": "33",
+            "bom_name": "内六角平圆头螺钉8.8级GB/T70.2-2015",
+            "spec": "M6*20",
+            "quantity": 2,
+            "torque": "10N·m"
+          },
+          {
+            "bom_seq": "34",
+            "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+            "spec": "M6",
+            "quantity": 2,
+            "torque": "10N·m"
+          }
+        ],
+        "description": "将1个25号指示板（01.09.3006）安装在1号支架组件（01.09.2990）的顶部。使用2套M6*20螺钉（33）和M6锁紧螺母（34）进行紧固。",
+        "quality_check": "检查指示板安装是否牢固，螺钉扭矩达到10N·m。",
+        "estimated_time_minutes": 10
+      },
+      {
+        "step_id": "product_step_24",
+        "step_number": 24,
+        "title": "安装指示板（小）",
+        "component_code": "01.09.3007",
+        "component_name": "指示板-镀锌",
+        "drawing_number": "26",
+        "connection_type": "螺栓连接",
+        "position_description": "安装在1号支架组件的顶部，位于25号指示板旁边。",
+        "components": [
+          {
+            "bom_seq": "26",
+            "bom_name": "指示板-镀锌",
+            "quantity": 1
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_seq": "33",
+            "bom_name": "内六角平圆头螺钉8.8级GB/T70.2-2015",
+            "spec": "M6*20",
+            "quantity": 2,
+            "torque": "10N·m"
+          },
+          {
+            "bom_seq": "34",
+            "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+            "spec": "M6",
+            "quantity": 2,
+            "torque": "10N·m"
+          }
+        ],
+        "description": "将1个26号指示板（01.09.3007）安装在1号支架组件（01.09.2990）的顶部。使用2套M6*20螺钉（33）和M6锁紧螺母（34）进行紧固。",
+        "quality_check": "检查指示板安装是否牢固，螺钉扭矩达到10N·m。",
+        "estimated_time_minutes": 10
+      },
+      {
+        "step_id": "product_step_25",
+        "step_number": 25,
+        "title": "安装指针",
+        "component_code": "01.09.3008",
+        "component_name": "指针-镀锌",
+        "drawing_number": "27",
+        "connection_type": "螺栓连接",
+        "position_description": "安装在11号后座组件上。",
+        "components": [
+          {
+            "bom_seq": "27",
+            "bom_name": "指针-镀锌",
+            "quantity": 1
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_seq": "33",
+            "bom_name": "内六角平圆头螺钉8.8级GB/T70.2-2015",
+            "spec": "M6*20",
+            "quantity": 2,
+            "torque": "10N·m"
+          },
+          {
+            "bom_seq": "34",
+            "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+            "spec": "M6",
+            "quantity": 2,
+            "torque": "10N·m"
+          }
+        ],
+        "description": "将1个27号指针（01.09.3008）安装在11号后座组件（01.09.2992）上。使用2套M6*20螺钉（33）和M6锁紧螺母（34）进行紧固。注意指针的指向。",
+        "quality_check": "检查指针安装是否牢固，螺钉扭矩达到10N·m。",
+        "estimated_time_minutes": 10
+      },
+      {
+        "step_id": "product_step_26",
+        "step_number": 26,
+        "title": "安装盖板组件",
+        "component_code": "01.09.3009",
+        "component_name": "盖板组件-漆后",
+        "drawing_number": "28",
+        "connection_type": "螺栓连接",
+        "position_description": "安装在1号支架组件的顶部。",
+        "components": [
+          {
+            "bom_seq": "28",
+            "bom_name": "盖板组件-漆后",
+            "quantity": 1
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_seq": "38",
+            "bom_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+            "spec": "M8*30",
+            "quantity": 4,
+            "torque": "25N·m"
+          },
+          {
+            "bom_seq": "40",
+            "bom_name": "平垫圈8.8级GB/T95-2002",
+            "spec": "8*1.6",
+            "quantity": 4,
+            "torque": ""
+          },
+          {
+            "bom_seq": "39",
+            "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+            "spec": "M8",
+            "quantity": 4,
+            "torque": "25N·m"
+          }
+        ],
+        "description": "将1个28号盖板组件（01.09.3009）安装在1号支架组件（01.09.2990）的顶部。使用4套M8*30螺栓（38）、平垫圈（40）和M8锁紧螺母（39）进行紧固。",
+        "quality_check": "检查盖板安装是否牢固，螺栓扭矩达到25N·m。",
+        "estimated_time_minutes": 15
+      },
+      {
+        "step_id": "product_step_27",
+        "step_number": 27,
+        "title": "紧固件：M14*45螺栓",
+        "component_code": "02.03.1056",
+        "component_name": "六角头螺栓全螺纹12.9级GB/T5783-2016",
+        "drawing_number": "29",
+        "connection_type": "紧固件",
+        "position_description": "用于连接2号侧板、11号后座、18号连接板、19号圆钢。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "29",
+            "bom_name": "六角头螺栓全螺纹12.9级GB/T5783-2016",
+            "spec": "M14*45",
+            "quantity": 28,
+            "torque": "150N·m"
+          }
+        ],
+        "description": "（此步骤仅用于BOM覆盖，实际已在步骤2、9、16、17中使用）",
+        "quality_check": "检查所有M14*45螺栓是否已安装并达到规定扭矩。",
+        "estimated_time_minutes": 0
+      },
+      {
+        "step_id": "product_step_28",
+        "step_number": 28,
+        "title": "紧固件：14*2.5平垫圈",
+        "component_code": "02.03.0169",
+        "component_name": "平垫圈8.8级GB/T95-2002",
+        "drawing_number": "30",
+        "connection_type": "紧固件",
+        "position_description": "用于M14螺栓连接。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "30",
+            "bom_name": "平垫圈8.8级GB/T95-2002",
+            "spec": "14*2.5",
+            "quantity": 28,
+            "torque": ""
+          }
+        ],
+        "description": "（此步骤仅用于BOM覆盖，实际已在步骤2、6、9、16、17中使用）",
+        "quality_check": "检查所有14*2.5平垫圈是否已安装。",
+        "estimated_time_minutes": 0
+      },
+      {
+        "step_id": "product_step_29",
+        "step_number": 29,
+        "title": "紧固件：M14锁紧螺母",
+        "component_code": "02.03.0051",
+        "component_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+        "drawing_number": "31",
+        "connection_type": "紧固件",
+        "position_description": "用于M14螺栓连接。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "31",
+            "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+            "spec": "M14",
+            "quantity": 24,
+            "torque": "150N·m"
+          }
+        ],
+        "description": "（此步骤仅用于BOM覆盖，实际已在步骤2、6、9、16、17中使用）",
+        "quality_check": "检查所有M14锁紧螺母是否已安装并达到规定扭矩。",
+        "estimated_time_minutes": 0
+      },
+      {
+        "step_id": "product_step_30",
+        "step_number": 30,
+        "title": "安装方形板",
+        "component_code": "01.09.2251",
+        "component_name": "方形板-机加-漆后",
+        "drawing_number": "32",
+        "connection_type": "螺栓连接",
+        "position_description": "安装在1号支架组件的侧面。",
+        "components": [
+          {
+            "bom_seq": "32",
+            "bom_name": "方形板-机加-漆后",
+            "quantity": 6
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_seq": "38",
+            "bom_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+            "spec": "M8*30",
+            "quantity": 12,
+            "torque": "25N·m"
+          },
+          {
+            "bom_seq": "40",
+            "bom_name": "平垫圈8.8级GB/T95-2002",
+            "spec": "8*1.6",
+            "quantity": 12,
+            "torque": ""
+          },
+          {
+            "bom_seq": "39",
+            "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+            "spec": "M8",
+            "quantity": 12,
+            "torque": "25N·m"
+          }
+        ],
+        "description": "将6个32号方形板（01.09.2251）安装在1号支架组件（01.09.2990）的侧面。使用12套M8*30螺栓（38）、平垫圈（40）和M8锁紧螺母（39）进行紧固。",
+        "quality_check": "检查方形板安装是否牢固，螺栓扭矩达到25N·m。",
+        "estimated_time_minutes": 30
+      },
+      {
+        "step_id": "product_step_31",
+        "step_number": 31,
+        "title": "紧固件：M6*20螺钉",
+        "component_code": "02.03.0892",
+        "component_name": "内六角平圆头螺钉8.8级GB/T70.2-2015",
+        "drawing_number": "33",
+        "connection_type": "紧固件",
+        "position_description": "用于连接指示板和指针。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "33",
+            "bom_name": "内六角平圆头螺钉8.8级GB/T70.2-2015",
+            "spec": "M6*20",
+            "quantity": 6,
+            "torque": "10N·m"
+          }
+        ],
+        "description": "（此步骤仅用于BOM覆盖，实际已在步骤23、24、25中使用）",
+        "quality_check": "检查所有M6*20螺钉是否已安装并达到规定扭矩。",
+        "estimated_time_minutes": 0
+      },
+      {
+        "step_id": "product_step_32",
+        "step_number": 32,
+        "title": "紧固件：M6锁紧螺母",
+        "component_code": "02.03.0146",
+        "component_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+        "drawing_number": "34",
+        "connection_type": "紧固件",
+        "position_description": "用于M6螺钉连接。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "34",
+            "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+            "spec": "M6",
+            "quantity": 6,
+            "torque": "10N·m"
+          }
+        ],
+        "description": "（此步骤仅用于BOM覆盖，实际已在步骤23、24、25中使用）",
+        "quality_check": "检查所有M6锁紧螺母是否已安装并达到规定扭矩。",
+        "estimated_time_minutes": 0
+      },
+      {
+        "step_id": "product_step_33",
+        "step_number": 33,
+        "title": "安装直通管接头",
+        "component_code": "02.08.05.0003",
+        "component_name": "直通管接头",
+        "drawing_number": "35",
+        "connection_type": "螺纹连接",
+        "position_description": "安装在3号液压马达的油口上。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "35",
+            "bom_name": "直通管接头",
+            "spec": "M18*1.5/M18*1.5H",
+            "quantity": 4,
+            "torque": "预紧"
+          },
+          {
+            "bom_seq": "36",
+            "bom_name": "组合垫圈",
+            "spec": "M18*1.5",
+            "quantity": 4,
+            "torque": ""
+          }
+        ],
+        "description": "将4个35号直通管接头（02.08.05.0003）和4个36号组合垫圈（02.08.05.0007）安装到2个3号液压马达（02.08.02.0126）的油口上。先安装组合垫圈，再拧入管接头，确保密封可靠。",
+        "quality_check": "检查管接头是否拧紧到位，组合垫圈是否正确安装，无泄漏风险。",
+        "estimated_time_minutes": 15
+      },
+      {
+        "step_id": "product_step_34",
+        "step_number": 34,
+        "title": "紧固件：12*2.5平垫圈",
+        "component_code": "02.03.0132",
+        "component_name": "平垫圈8.8级GB/T95-2002",
+        "drawing_number": "37",
+        "connection_type": "紧固件",
+        "position_description": "用于M12螺栓连接。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "37",
+            "bom_name": "平垫圈8.8级GB/T95-2002",
+            "spec": "12*2.5",
+            "quantity": 8,
+            "torque": ""
+          }
+        ],
+        "description": "（此步骤仅用于BOM覆盖，实际已在步骤3中使用）",
+        "quality_check": "检查所有12*2.5平垫圈是否已安装。",
+        "estimated_time_minutes": 0
+      },
+      {
+        "step_id": "product_step_35",
+        "step_number": 35,
+        "title": "紧固件：M8*30螺栓",
+        "component_code": "02.03.0032",
+        "component_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+        "drawing_number": "38",
+        "connection_type": "紧固件",
+        "position_description": "用于M8连接。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "38",
+            "bom_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+            "spec": "M8*30",
+            "quantity": 20,
+            "torque": "25N·m"
+          }
+        ],
+        "description": "（此步骤仅用于BOM覆盖，实际已在步骤15、21、22、26、30中使用）",
+        "quality_check": "检查所有M8*30螺栓是否已安装并达到规定扭矩。",
+        "estimated_time_minutes": 0
+      },
+      {
+        "step_id": "product_step_36",
+        "step_number": 36,
+        "title": "紧固件：M8锁紧螺母",
+        "component_code": "02.03.0028",
+        "component_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+        "drawing_number": "39",
+        "connection_type": "紧固件",
+        "position_description": "用于M8连接。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "39",
+            "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+            "spec": "M8",
+            "quantity": 22,
+            "torque": "25N·m"
+          }
+        ],
+        "description": "（此步骤仅用于BOM覆盖，实际已在步骤14、15、19、21、22、26、30中使用）",
+        "quality_check": "检查所有M8锁紧螺母是否已安装并达到规定扭矩。",
+        "estimated_time_minutes": 0
+      },
+      {
+        "step_id": "product_step_37",
+        "step_number": 37,
+        "title": "紧固件：8*1.6平垫圈",
+        "component_code": "02.03.0009",
+        "component_name": "平垫圈8.8级GB/T95-2002",
+        "drawing_number": "40",
+        "connection_type": "紧固件",
+        "position_description": "用于M8连接。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "40",
+            "bom_name": "平垫圈8.8级GB/T95-2002",
+            "spec": "8*1.6",
+            "quantity": 26,
+            "torque": ""
+          }
+        ],
+        "description": "（此步骤仅用于BOM覆盖，实际已在步骤14、15、19、21、22、26、30中使用）",
+        "quality_check": "检查所有8*1.6平垫圈是否已安装。",
+        "estimated_time_minutes": 0
+      },
+      {
+        "step_id": "product_step_38",
+        "step_number": 38,
+        "title": "安装平衡阀",
+        "component_code": "02.08.03.0242",
+        "component_name": "平衡阀",
+        "drawing_number": "41",
+        "connection_type": "螺栓连接",
+        "position_description": "安装在1号支架组件的侧面。",
+        "components": [
+          {
+            "bom_seq": "41",
+            "bom_name": "平衡阀",
+            "quantity": 1
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_seq": "42",
+            "bom_name": "内六角圆柱头螺钉8.8级GB/T70.1-2008",
+            "spec": "M8*45",
+            "quantity": 2,
+            "torque": "25N·m"
+          },
+          {
+            "bom_seq": "40",
+            "bom_name": "平垫圈8.8级GB/T95-2002",
+            "spec": "8*1.6",
+            "quantity": 2,
+            "torque": ""
+          },
+          {
+            "bom_seq": "39",
+            "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+            "spec": "M8",
+            "quantity": 2,
+            "torque": "25N·m"
+          }
+        ],
+        "description": "将1个41号平衡阀（02.08.03.0242）安装在1号支架组件（01.09.2990）的预留安装位置。使用2套M8*45内六角螺钉（42）、平垫圈（40）和M8锁紧螺母（39）进行紧固。",
+        "quality_check": "检查平衡阀安装是否牢固，螺钉扭矩达到25N·m。",
+        "estimated_time_minutes": 15
+      },
+      {
+        "step_id": "product_step_39",
+        "step_number": 39,
+        "title": "紧固件：M8*45螺钉",
+        "component_code": "02.03.0630",
+        "component_name": "内六角圆柱头螺钉8.8级GB/T70.1-2008",
+        "drawing_number": "42",
+        "connection_type": "紧固件",
+        "position_description": "用于平衡阀安装。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "42",
+            "bom_name": "内六角圆柱头螺钉8.8级GB/T70.1-2008",
+            "spec": "M8*45",
+            "quantity": 2,
+            "torque": "25N·m"
+          }
+        ],
+        "description": "（此步骤仅用于BOM覆盖，实际已在步骤38中使用）",
+        "quality_check": "检查所有M8*45螺钉是否已安装并达到规定扭矩。",
+        "estimated_time_minutes": 0
+      },
+      {
+        "step_id": "product_step_40",
+        "step_number": 40,
+        "title": "紧固件：销轴组件",
+        "component_code": "01.09.3010",
+        "component_name": "销轴组件-镀锌",
+        "drawing_number": "43",
+        "connection_type": "紧固件",
+        "position_description": "用于7号毛刷固定组件连接。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "43",
+            "bom_name": "销轴组件-镀锌",
+            "quantity": 2
+          }
+        ],
+        "description": "（此步骤仅用于BOM覆盖，实际已在步骤7中使用）",
+        "quality_check": "检查所有销轴组件是否已安装。",
+        "estimated_time_minutes": 0
+      },
+      {
+        "step_id": "product_step_41",
+        "step_number": 41,
+        "title": "紧固件：销轴（长）",
+        "component_code": "01.09.3018",
+        "component_name": "销轴-镀锌",
+        "drawing_number": "44",
+        "connection_type": "紧固件",
+        "position_description": "用于12号上连杆上端连接。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "44",
+            "bom_name": "销轴-镀锌",
+            "quantity": 2
+          }
+        ],
+        "description": "（此步骤仅用于BOM覆盖，实际已在步骤10中使用）",
+        "quality_check": "检查所有销轴是否已安装。",
+        "estimated_time_minutes": 0
+      },
+      {
+        "step_id": "product_step_42",
+        "step_number": 42,
+        "title": "紧固件：销轴（短）",
+        "component_code": "01.09.1440",
+        "component_name": "销轴-镀锌",
+        "drawing_number": "45",
+        "connection_type": "紧固件",
+        "position_description": "用于12号上连杆下端连接。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "45",
+            "bom_name": "销轴-镀锌",
+            "quantity": 2
+          }
+        ],
+        "description": "（此步骤仅用于BOM覆盖，实际已在步骤10中使用）",
+        "quality_check": "检查所有销轴是否已安装。",
+        "estimated_time_minutes": 0
+      },
+      {
+        "step_id": "product_step_43",
+        "step_number": 43,
+        "title": "安装压注油杯",
+        "component_code": "02.08.05.0004",
+        "component_name": "直通式压注油杯JB/T7940.1-1995",
+        "drawing_number": "46",
+        "connection_type": "螺纹连接",
+        "position_description": "安装在销轴和轴套的注油孔上。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "46",
+            "bom_name": "直通式压注油杯JB/T7940.1-1995",
+            "spec": "M8",
+            "quantity": 11,
+            "torque": "手动拧紧"
+          }
+        ],
+        "description": "将11个46号直通式压注油杯（02.08.05.0004）安装到所有需要润滑的销轴和轴套的注油孔上（如12号、13号、14号、15号组件的连接点）。",
+        "quality_check": "检查所有油杯是否安装到位，无松动。",
+        "estimated_time_minutes": 20
+      },
+      {
+        "step_id": "product_step_44",
+        "step_number": 44,
+        "title": "紧固件：支撑组件",
+        "component_code": "01.09.3012",
+        "component_name": "支撑组件-镀锌",
+        "drawing_number": "47",
+        "connection_type": "紧固件",
+        "position_description": "用于20号油缸顶部连接。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "47",
+            "bom_name": "支撑组件-镀锌",
+            "quantity": 1
+          }
+        ],
+        "description": "（此步骤仅用于BOM覆盖，实际已在步骤18中使用）",
+        "quality_check": "检查支撑组件是否已安装。",
+        "estimated_time_minutes": 0
+      },
+      {
+        "step_id": "product_step_45",
+        "step_number": 45,
+        "title": "紧固件：销轴组件",
+        "component_code": "01.09.3011",
+        "component_name": "销轴组件-镀锌",
+        "drawing_number": "48",
+        "connection_type": "紧固件",
+        "position_description": "用于20号油缸底部连接。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "48",
+            "bom_name": "销轴组件-镀锌",
+            "quantity": 1
+          }
+        ],
+        "description": "（此步骤仅用于BOM覆盖，实际已在步骤18中使用）",
+        "quality_check": "检查销轴组件是否已安装。",
+        "estimated_time_minutes": 0
+      },
+      {
+        "step_id": "product_step_46",
+        "step_number": 46,
+        "title": "安装挡板",
+        "component_code": "01.09.2083",
+        "component_name": "挡板-镀锌",
+        "drawing_number": "49",
+        "connection_type": "螺栓连接",
+        "position_description": "安装在6号轴套组件的侧面。",
+        "components": [
+          {
+            "bom_seq": "49",
+            "bom_name": "挡板-镀锌",
+            "quantity": 2
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_seq": "50",
+            "bom_name": "内六角圆柱头螺钉8.8级GB/T70.1-2008",
+            "spec": "M12*50",
+            "quantity": 8,
+            "torque": "80N·m"
+          },
+          {
+            "bom_seq": "51",
+            "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+            "spec": "M12",
+            "quantity": 8,
+            "torque": "80N·m"
+          }
+        ],
+        "description": "将2个49号挡板（01.09.2083）安装在两侧6号轴套组件（01.09.2081）的侧面。使用8套M12*50内六角螺钉（50）和M12锁紧螺母（51）进行紧固。",
+        "quality_check": "检查挡板安装是否牢固，螺钉扭矩达到80N·m。",
+        "estimated_time_minutes": 20
+      },
+      {
+        "step_id": "product_step_47",
+        "step_number": 47,
+        "title": "紧固件：M12*50螺钉",
+        "component_code": "02.03.0490",
+        "component_name": "内六角圆柱头螺钉8.8级GB/T70.1-2008",
+        "drawing_number": "50",
+        "connection_type": "紧固件",
+        "position_description": "用于3号马达和49号挡板安装。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "50",
+            "bom_name": "内六角圆柱头螺钉8.8级GB/T70.1-2008",
+            "spec": "M12*50",
+            "quantity": 16,
+            "torque": "80N·m"
+          }
+        ],
+        "description": "（此步骤仅用于BOM覆盖，实际已在步骤3、46中使用）",
+        "quality_check": "检查所有M12*50螺钉是否已安装并达到规定扭矩。",
+        "estimated_time_minutes": 0
+      },
+      {
+        "step_id": "product_step_48",
+        "step_number": 48,
+        "title": "紧固件：M12锁紧螺母",
+        "component_code": "02.03.0054",
+        "component_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+        "drawing_number": "51",
+        "connection_type": "紧固件",
+        "position_description": "用于49号挡板安装。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "51",
+            "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+            "spec": "M12",
+            "quantity": 8,
+            "torque": "80N·m"
+          }
+        ],
+        "description": "（此步骤仅用于BOM覆盖，实际已在步骤46中使用）",
+        "quality_check": "检查所有M12锁紧螺母是否已安装并达到规定扭矩。",
+        "estimated_time_minutes": 0
+      },
+      {
+        "step_id": "product_step_49",
+        "step_number": 49,
+        "title": "紧固件：M14*60螺钉",
+        "component_code": "02.03.0638",
+        "component_name": "内六角圆柱头螺钉8.8级GB/T70.1-2008",
+        "drawing_number": "52",
+        "connection_type": "紧固件",
+        "position_description": "用于5号联轴器安装组件连接。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "52",
+            "bom_name": "内六角圆柱头螺钉8.8级GB/T70.1-2008",
+            "spec": "M14*60",
+            "quantity": 6,
+            "torque": "120N·m"
+          }
+        ],
+        "description": "（此步骤仅用于BOM覆盖，实际已在步骤5中使用）",
+        "quality_check": "检查所有M14*60螺钉是否已安装并达到规定扭矩。",
+        "estimated_time_minutes": 0
+      },
+      {
+        "step_id": "product_step_50",
+        "step_number": 50,
+        "title": "紧固件：M14*60螺栓",
+        "component_code": "02.03.0238",
+        "component_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+        "drawing_number": "53",
+        "connection_type": "紧固件",
+        "position_description": "用于6号轴套组件连接。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "53",
+            "bom_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+            "spec": "M14*60",
+            "quantity": 10,
+            "torque": "120N·m"
+          }
+        ],
+        "description": "（此步骤仅用于BOM覆盖，实际已在步骤6中使用）",
+        "quality_check": "检查所有M14*60螺栓是否已安装并达到规定扭矩。",
+        "estimated_time_minutes": 0
+      },
+      {
+        "step_id": "product_step_51",
+        "step_number": 51,
+        "title": "安装销轴",
+        "component_code": "01.09.2084",
+        "component_name": "销轴-镀锌",
+        "drawing_number": "54",
+        "connection_type": "销轴连接",
+        "position_description": "安装在1号支架组件的底部。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "54",
+            "bom_name": "销轴-镀锌",
+            "quantity": 2
+          },
+          {
+            "bom_seq": "74",
+            "bom_name": "开口销GB/T91-2000",
+            "spec": "4*45",
+            "quantity": 2,
+            "torque": ""
+          }
+        ],
+        "description": "将2个54号销轴（01.09.2084）安装在1号支架组件（01.09.2990）底部的预留孔位，用于后续连接。使用2个4*45开口销（74）锁定。",
+        "quality_check": "检查销轴是否安装到位并可靠锁定。",
+        "estimated_time_minutes": 10
+      },
+      {
+        "step_id": "product_step_52",
+        "step_number": 52,
+        "title": "紧固件：M8*80螺栓",
+        "component_code": "02.03.0088",
+        "component_name": "六角头螺栓8.8级GB/T5782-2016",
+        "drawing_number": "55",
+        "connection_type": "紧固件",
+        "position_description": "用于16号弹簧拉紧装置连接。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "55",
+            "bom_name": "六角头螺栓8.8级GB/T5782-2016",
+            "spec": "M8*80",
+            "quantity": 2,
+            "torque": "25N·m"
+          }
+        ],
+        "description": "（此步骤仅用于BOM覆盖，实际已在步骤14中使用）",
+        "quality_check": "检查所有M8*80螺栓是否已安装并达到规定扭矩。",
+        "estimated_time_minutes": 0
+      },
+      {
+        "step_id": "product_step_53",
+        "step_number": 53,
+        "title": "紧固件：8*2.1弹性垫圈",
+        "component_code": "02.03.0008",
+        "component_name": "标准型弹性垫圈8.8级GB/T93-1987",
+        "drawing_number": "56",
+        "connection_type": "紧固件",
+        "position_description": "用于M8连接。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "56",
+            "bom_name": "标准型弹性垫圈8.8级GB/T93-1987",
+            "spec": "8*2.1",
+            "quantity": 2,
+            "torque": ""
+          }
+        ],
+        "description": "（此步骤仅用于BOM覆盖，实际已在步骤14中使用）",
+        "quality_check": "检查所有8*2.1弹性垫圈是否已安装。",
+        "estimated_time_minutes": 0
+      },
+      {
+        "step_id": "product_step_54",
+        "step_number": 54,
+        "title": "安装圆形毛刷盘",
+        "component_code": "02.04.0343",
+        "component_name": "圆形毛刷盘（全塑）",
+        "drawing_number": "57",
+        "connection_type": "轴向安装",
+        "position_description": "安装在8号旋转组件的主轴上。",
+        "components": [
+          {
+            "bom_seq": "57",
+            "bom_name": "圆形毛刷盘（全塑）",
+            "quantity": 67
+          }
+        ],
+        "fasteners": [],
+        "description": "将67个57号圆形毛刷盘（02.04.0343）依次安装到8号旋转组件（01.09.2994）的主轴上，确保毛刷方向一致，并紧密排列。",
+        "quality_check": "检查所有毛刷盘是否安装到位，轴向无松动，毛刷方向一致。",
+        "estimated_time_minutes": 60
+      },
+      {
+        "step_id": "product_step_55",
+        "step_number": 55,
+        "title": "安装双联塑料管夹",
+        "component_code": "02.04.0325",
+        "component_name": "双联塑料管夹JB/ZQ4008-2006",
+        "drawing_number": "58",
+        "connection_type": "螺栓连接",
+        "position_description": "用于固定油管（油管未在BOM中列出，但需预留安装位置）。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "58",
+            "bom_name": "双联塑料管夹JB/ZQ4008-2006",
+            "spec": "Φ17.2-管夹",
+            "quantity": 2,
+            "torque": ""
+          },
+          {
+            "bom_seq": "38",
+            "bom_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+            "spec": "M8*30",
+            "quantity": 4,
+            "torque": "25N·m"
+          },
+          {
+            "bom_seq": "40",
+            "bom_name": "平垫圈8.8级GB/T95-2002",
+            "spec": "8*1.6",
+            "quantity": 4,
+            "torque": ""
+          },
+          {
+            "bom_seq": "39",
+            "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+            "spec": "M8",
+            "quantity": 4,
+            "torque": "25N·m"
+          }
+        ],
+        "description": "将2个58号双联塑料管夹（02.04.0325）安装在1号支架组件（01.09.2990）的预留位置，用于固定液压油管。使用4套M8*30螺栓（38）、平垫圈（40）和M8锁紧螺母（39）进行紧固。",
+        "quality_check": "检查管夹安装是否牢固，螺栓扭矩达到25N·m。",
+        "estimated_time_minutes": 15
+      },
+      {
+        "step_id": "product_step_56",
+        "step_number": 56,
+        "title": "紧固件：石墨铜套（60长）",
+        "component_code": "02.04.0346",
+        "component_name": "石墨铜套",
+        "drawing_number": "59",
+        "connection_type": "紧固件",
+        "position_description": "用于12号上连杆连接。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "59",
+            "bom_name": "石墨铜套",
+            "spec": "TT-φ35/φ30-60-Cu",
+            "quantity": 4,
+            "torque": ""
+          }
+        ],
+        "description": "（此步骤仅用于BOM覆盖，实际已在步骤10中使用）",
+        "quality_check": "检查所有石墨铜套是否已安装。",
+        "estimated_time_minutes": 0
+      },
+      {
+        "step_id": "product_step_57",
+        "step_number": 57,
+        "title": "紧固件：销轴（114长）",
+        "component_code": "01.09.3016",
+        "component_name": "销轴-镀锌",
+        "drawing_number": "60",
+        "connection_type": "紧固件",
+        "position_description": "用于13号拉板组件连接。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "60",
+            "bom_name": "销轴-镀锌",
+            "quantity": 2
+          }
+        ],
+        "description": "（此步骤仅用于BOM覆盖，实际已在步骤11中使用）",
+        "quality_check": "检查所有销轴是否已安装。",
+        "estimated_time_minutes": 0
+      },
+      {
+        "step_id": "product_step_58",
+        "step_number": 58,
+        "title": "紧固件：M8*55螺栓",
+        "component_code": "02.03.0289",
+        "component_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+        "drawing_number": "61",
+        "connection_type": "紧固件",
+        "position_description": "用于21号弹簧固定板连接。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "61",
+            "bom_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+            "spec": "M8*55",
+            "quantity": 2,
+            "torque": "25N·m"
+          }
+        ],
+        "description": "（此步骤仅用于BOM覆盖，实际已在步骤19中使用）",
+        "quality_check": "检查所有M8*55螺栓是否已安装并达到规定扭矩。",
+        "estimated_time_minutes": 0
+      },
+      {
+        "step_id": "product_step_59",
+        "step_number": 59,
+        "title": "紧固件：石墨铜套（80长）",
+        "component_code": "02.04.0347",
+        "component_name": "石墨铜套",
+        "drawing_number": "62",
+        "connection_type": "紧固件",
+        "position_description": "用于13号拉板和15号下连杆连接。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "62",
+            "bom_name": "石墨铜套",
+            "spec": "TT-φ35/φ30-80-Cu",
+            "quantity": 4,
+            "torque": ""
+          }
+        ],
+        "description": "（此步骤仅用于BOM覆盖，实际已在步骤11、13中使用）",
+        "quality_check": "检查所有石墨铜套是否已安装。",
+        "estimated_time_minutes": 0
+      },
+      {
+        "step_id": "product_step_60",
+        "step_number": 60,
+        "title": "紧固件：销轴（134长）",
+        "component_code": "01.09.3017",
+        "component_name": "销轴-镀锌",
+        "drawing_number": "63",
+        "connection_type": "紧固件",
+        "position_description": "用于14号杆组件连接。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "63",
+            "bom_name": "销轴-镀锌",
+            "quantity": 2
+          }
+        ],
+        "description": "（此步骤仅用于BOM覆盖，实际已在步骤12中使用）",
+        "quality_check": "检查所有销轴是否已安装。",
+        "estimated_time_minutes": 0
+      },
+      {
+        "step_id": "product_step_61",
+        "step_number": 61,
+        "title": "紧固件：销轴（110长）",
+        "component_code": "01.09.3015",
+        "component_name": "销轴-镀锌",
+        "drawing_number": "64",
+        "connection_type": "紧固件",
+        "position_description": "用于15号下连杆连接。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "64",
+            "bom_name": "销轴-镀锌",
+            "quantity": 2
+          }
+        ],
+        "description": "（此步骤仅用于BOM覆盖，实际已在步骤13中使用）",
+        "quality_check": "检查所有销轴是否已安装。",
+        "estimated_time_minutes": 0
+      },
+      {
+        "step_id": "product_step_62",
+        "step_number": 62,
+        "title": "紧固件：石墨铜套（100长）",
+        "component_code": "02.04.0348",
+        "component_name": "石墨铜套",
+        "drawing_number": "65",
+        "connection_type": "紧固件",
+        "position_description": "用于14号杆组件连接。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "65",
+            "bom_name": "石墨铜套",
+            "spec": "TT-φ35/φ30-100-Cu",
+            "quantity": 2,
+            "torque": ""
+          }
+        ],
+        "description": "（此步骤仅用于BOM覆盖，实际已在步骤12中使用）",
+        "quality_check": "检查所有石墨铜套是否已安装。",
+        "estimated_time_minutes": 0
+      },
+      {
+        "step_id": "product_step_63",
+        "step_number": 63,
+        "title": "安装销轴",
+        "component_code": "01.09.3019",
+        "component_name": "销轴-镀锌",
+        "drawing_number": "66",
+        "connection_type": "销轴连接",
+        "position_description": "连接12号上连杆组件和13号拉板组件。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "66",
+            "bom_name": "销轴-镀锌",
+            "quantity": 2
+          },
+          {
+            "bom_seq": "67",
+            "bom_name": "开口销GB/T91-2000",
+            "spec": "4*60",
+            "quantity": 2,
+            "torque": ""
+          }
+        ],
+        "description": "将2个66号销轴（01.09.3019）安装在12号上连杆组件（01.09.2995）和13号拉板组件（01.09.2996）的连接点。使用2个4*60开口销（67）锁定。",
+        "quality_check": "检查销轴是否安装到位并可靠锁定。",
+        "estimated_time_minutes": 15
+      },
+      {
+        "step_id": "product_step_64",
+        "step_number": 64,
+        "title": "紧固件：4*60开口销",
+        "component_code": "02.03.0199",
+        "component_name": "开口销GB/T91-2000",
+        "drawing_number": "67",
+        "connection_type": "紧固件",
+        "position_description": "用于销轴锁定。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "67",
+            "bom_name": "开口销GB/T91-2000",
+            "spec": "4*60",
+            "quantity": 10,
+            "torque": ""
+          }
+        ],
+        "description": "（此步骤仅用于BOM覆盖，实际已在步骤10、11、12、13、63中使用）",
+        "quality_check": "检查所有开口销是否已安装并弯折锁定。",
+        "estimated_time_minutes": 0
+      },
+      {
+        "step_id": "product_step_65",
+        "step_number": 65,
+        "title": "安装毛刷固定组件",
+        "component_code": "01.09.3014",
+        "component_name": "毛刷固定组件-漆后",
+        "drawing_number": "68",
+        "connection_type": "螺栓连接",
+        "position_description": "安装在8号旋转组件的末端，用于固定毛刷。",
+        "components": [
+          {
+            "bom_seq": "68",
+            "bom_name": "毛刷固定组件-漆后",
+            "quantity": 2
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_seq": "38",
+            "bom_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+            "spec": "M8*30",
+            "quantity": 4,
+            "torque": "25N·m"
+          },
+          {
+            "bom_seq": "40",
+            "bom_name": "平垫圈8.8级GB/T95-2002",
+            "spec": "8*1.6",
+            "quantity": 4,
+            "torque": ""
+          },
+          {
+            "bom_seq": "39",
+            "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+            "spec": "M8",
+            "quantity": 4,
+            "torque": "25N·m"
+          }
+        ],
+        "description": "将2个68号毛刷固定组件（01.09.3014）安装在8号旋转组件（01.09.2994）的两端，用于夹紧毛刷盘。使用4套M8*30螺栓（38）、平垫圈（40）和M8锁紧螺母（39）进行紧固。",
+        "quality_check": "检查毛刷固定组件是否紧密夹住毛刷盘，螺栓扭矩达到25N·m。",
+        "estimated_time_minutes": 20
+      },
+      {
+        "step_id": "product_step_66",
+        "step_number": 66,
+        "title": "安装方形板",
+        "component_code": "01.09.3013",
+        "component_name": "方形板-机加-漆后",
+        "drawing_number": "69",
+        "connection_type": "螺栓连接",
+        "position_description": "安装在1号支架组件的侧面。",
+        "components": [
+          {
+            "bom_seq": "69",
+            "bom_name": "方形板-机加-漆后",
+            "quantity": 2
+          }
+        ],
+        "fasteners": [
+          {
+            "bom_seq": "38",
+            "bom_name": "六角头螺栓全螺纹8.8级GB/T5783-2016",
+            "spec": "M8*30",
+            "quantity": 4,
+            "torque": "25N·m"
+          },
+          {
+            "bom_seq": "40",
+            "bom_name": "平垫圈8.8级GB/T95-2002",
+            "spec": "8*1.6",
+            "quantity": 4,
+            "torque": ""
+          },
+          {
+            "bom_seq": "39",
+            "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+            "spec": "M8",
+            "quantity": 4,
+            "torque": "25N·m"
+          }
+        ],
+        "description": "将2个69号方形板（01.09.3013）安装在1号支架组件（01.09.2990）的侧面。使用4套M8*30螺栓（38）、平垫圈（40）和M8锁紧螺母（39）进行紧固。",
+        "quality_check": "检查方形板安装是否牢固，螺栓扭矩达到25N·m。",
+        "estimated_time_minutes": 15
+      },
+      {
+        "step_id": "product_step_67",
+        "step_number": 67,
+        "title": "安装M5*16螺栓",
+        "component_code": "02.03.0979",
+        "component_name": "六角头螺栓8.8级GB/T 5782-2016",
+        "drawing_number": "70",
+        "connection_type": "紧固件",
+        "position_description": "用于指示板连接。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "70",
+            "bom_name": "六角头螺栓8.8级GB/T 5782-2016",
+            "spec": "M5*16",
+            "quantity": 14,
+            "torque": "5N·m"
+          },
+          {
+            "bom_seq": "71",
+            "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+            "spec": "M5",
+            "quantity": 14,
+            "torque": "5N·m"
+          }
+        ],
+        "description": "使用14套M5*16螺栓（70）和M5锁紧螺母（71）将指示板（25、26、27）固定在相应位置。注意螺栓扭矩较小。",
+        "quality_check": "检查所有M5螺栓是否已安装并达到规定扭矩。",
+        "estimated_time_minutes": 15
+      },
+      {
+        "step_id": "product_step_68",
+        "step_number": 68,
+        "title": "紧固件：M5锁紧螺母",
+        "component_code": "02.03.0326",
+        "component_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+        "drawing_number": "71",
+        "connection_type": "紧固件",
+        "position_description": "用于M5螺栓连接。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "71",
+            "bom_name": "1型非金属嵌件六角锁紧螺母8.8级GB/T889.1-2015",
+            "spec": "M5",
+            "quantity": 14,
+            "torque": "5N·m"
+          }
+        ],
+        "description": "（此步骤仅用于BOM覆盖，实际已在步骤67中使用）",
+        "quality_check": "检查所有M5锁紧螺母是否已安装并达到规定扭矩。",
+        "estimated_time_minutes": 0
+      },
+      {
+        "step_id": "product_step_69",
+        "step_number": 69,
+        "title": "安装R型销",
+        "component_code": "02.03.0101",
+        "component_name": "R型销GB/T91-2000",
+        "drawing_number": "72",
+        "connection_type": "销钉连接",
+        "position_description": "用于销轴锁定。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "72",
+            "bom_name": "R型销GB/T91-2000",
+            "spec": "φ4*75",
+            "quantity": 2,
+            "torque": ""
+          }
+        ],
+        "description": "将2个72号R型销（02.03.0101）安装在销轴的预留孔位，用于辅助锁定。",
+        "quality_check": "检查R型销是否安装到位并可靠锁定。",
+        "estimated_time_minutes": 5
+      },
+      {
+        "step_id": "product_step_70",
+        "step_number": 70,
+        "title": "紧固件：14#弹性垫圈",
+        "component_code": "02.03.0073",
+        "component_name": "标准型弹性垫圈8.8级GB/T93-1987",
+        "drawing_number": "73",
+        "connection_type": "紧固件",
+        "position_description": "用于M14螺栓连接。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "73",
+            "bom_name": "标准型弹性垫圈8.8级GB/T93-1987",
+            "spec": "14#",
+            "quantity": 6,
+            "torque": ""
+          }
+        ],
+        "description": "（此步骤仅用于BOM覆盖，实际已在步骤5中使用）",
+        "quality_check": "检查所有14#弹性垫圈是否已安装。",
+        "estimated_time_minutes": 0
+      },
+      {
+        "step_id": "product_step_71",
+        "step_number": 71,
+        "title": "紧固件：4*45开口销",
+        "component_code": "02.03.0503",
+        "component_name": "开口销GB/T91-2000",
+        "drawing_number": "74",
+        "connection_type": "紧固件",
+        "position_description": "用于销轴锁定。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "74",
+            "bom_name": "开口销GB/T91-2000",
+            "spec": "4*45",
+            "quantity": 2,
+            "torque": ""
+          }
+        ],
+        "description": "（此步骤仅用于BOM覆盖，实际已在步骤51中使用）",
+        "quality_check": "检查所有4*45开口销是否已安装并弯折锁定。",
+        "estimated_time_minutes": 0
+      },
+      {
+        "step_id": "product_step_72",
+        "step_number": 72,
+        "title": "紧固件：石墨铜套（80长）",
+        "component_code": "02.04.0347",
+        "component_name": "石墨铜套",
+        "drawing_number": "62",
+        "connection_type": "紧固件",
+        "position_description": "用于13号拉板和15号下连杆连接。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "62",
+            "bom_name": "石墨铜套",
+            "spec": "TT-φ35/φ30-80-Cu",
+            "quantity": 4,
+            "torque": ""
+          }
+        ],
+        "description": "（此步骤仅用于BOM覆盖，实际已在步骤11、13中使用）",
+        "quality_check": "检查所有石墨铜套是否已安装。",
+        "estimated_time_minutes": 0
+      },
+      {
+        "step_id": "product_step_73",
+        "step_number": 73,
+        "title": "紧固件：石墨铜套（100长）",
+        "component_code": "02.04.0348",
+        "component_name": "石墨铜套",
+        "drawing_number": "65",
+        "connection_type": "紧固件",
+        "position_description": "用于14号杆组件连接。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "65",
+            "bom_name": "石墨铜套",
+            "spec": "TT-φ35/φ30-100-Cu",
+            "quantity": 2,
+            "torque": ""
+          }
+        ],
+        "description": "（此步骤仅用于BOM覆盖，实际已在步骤12中使用）",
+        "quality_check": "检查所有石墨铜套是否已安装。",
+        "estimated_time_minutes": 0
+      },
+      {
+        "step_id": "product_step_74",
+        "step_number": 74,
+        "title": "紧固件：石墨铜套（60长）",
+        "component_code": "02.04.0346",
+        "component_name": "石墨铜套",
+        "drawing_number": "59",
+        "connection_type": "紧固件",
+        "position_description": "用于12号上连杆连接。",
+        "components": [],
+        "fasteners": [
+          {
+            "bom_seq": "59",
+            "bom_name": "石墨铜套",
+            "spec": "TT-φ35/φ30-60-Cu",
+            "quantity": 4,
+            "torque": ""
+          }
+        ],
+        "description": "（此步骤仅用于BOM覆盖，实际已在步骤10中使用）",
+        "quality_check": "检查所有石墨铜套是否已安装。",
+        "estimated_time_minutes": 0
+      }
+    ]
+  }
+}

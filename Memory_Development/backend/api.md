@@ -6,7 +6,7 @@
 | --- | --- | --- | --- | --- |
 | GET | `/api/health` | 健康检查 | - | `status`,`version`,`timestamp` |
 | POST | `/api/upload` | 上传 PDF/STEP 文件 | FormData：`pdf_files[]`、`model_files[]`；后端限制一次**仅 1 个 PDF + 1 个 STEP**，上传前清空 `uploads/` | 返回文件名/size/path，写入磁盘 |
-| POST | `/api/generate` | 启动生成任务 | JSON：`config.projectName`，`pdf_files[]`(1)，`model_files[]`(1)；task_id = PDF 基名，STEP 名可不同，生成时会按 task_id 重命名存储；若同名 task_id 已存在则拒绝启动；复制上传文件到 `output/{task}/` | 返回 `task_id`，后台线程跑 `GeminiAssemblyPipeline.run`，任务状态写入 `tasks` |
+| POST | `/api/generate` | 启动生成任务 | JSON：`config.projectName`，`pdf_files[]`(1)，`model_files[]`(1)，`conflict_strategy`（可选：`prompt` 默认/`overwrite` 覆盖且备份/`duplicate` 生成 `_v_n`）；task_id = PDF 基名，STEP 名可不同，生成时会按最终 task_id 重命名存储 | 200：启动成功返回 `task_id`；409：`code=TASK_EXISTS/TASK_RUNNING`，附 `suggested_duplicate_id`、`manual_exists`、时间信息；`overwrite` 会先把旧目录归档到 `output_archive/{task_id}/<timestamp>/` |
 | GET | `/api/status/{task_id}` | 查询任务状态 | 路径参数 | 返回内存中的任务字典 |
 | GET | `/api/stream/{task_id}` | SSE 日志/进度流 | 路径参数 | 文本/event-stream，读取 utils.logger 日志缓冲 |
 | WS | `/ws/task/{task_id}` | WebSocket 进度流 | 路径参数 | 周期推送进度/完成/失败 |

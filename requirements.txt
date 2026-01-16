@@ -48,6 +48,7 @@ six==1.17.0                      # Python 2/3兼容
 # 3D模型处理
 trimesh==4.8.2                   # 3D网格处理库
 cascadio==0.0.16                 # STEP文件加载 (OpenCASCADE封装)
+cadquery-ocp==7.9.3.0            # OpenCASCADE兜底转换 (trimesh/cascadio超时/失败时)
 
 # 模板和生成
 Jinja2==3.1.6                    # HTML模板引擎

@@ -263,12 +263,48 @@
       </div>
     </div>
   </div>
+
+  <!-- 同名冲突自定义弹窗 -->
+  <el-dialog
+    v-model="conflictDialogVisible"
+    title="任务已存在"
+    width="520px"
+    :close-on-click-modal="false"
+    :close-on-press-escape="false"
+  >
+    <p style="margin-bottom: 12px;">{{ conflictDialog.message || '检测到同名任务，请选择操作：' }}</p>
+    <ul class="conflict-list">
+      <li v-if="conflictDialog.taskId">任务ID：{{ conflictDialog.taskId }}</li>
+      <li v-if="conflictDialog.isProcessing">当前状态：生成中（建议等待或生成第二套）</li>
+      <li v-else-if="conflictDialog.manualExists">当前状态：已生成手册</li>
+      <li v-if="conflictDialog.createdAt">创建时间：{{ formatConflictTime(conflictDialog.createdAt) }}</li>
+      <li v-if="conflictDialog.manualMtime">手册更新时间：{{ formatConflictTime(conflictDialog.manualMtime) }}</li>
+      <li v-if="conflictDialog.suggested">建议第二套名称：{{ conflictDialog.suggested }}</li>
+    </ul>
+    <template #footer>
+      <div class="conflict-footer">
+        <el-button @click="handleConflictChoice('cancel')">取消</el-button>
+        <el-button
+          type="default"
+          @click="handleConflictChoice('duplicate')"
+        >
+          生成第二套
+        </el-button>
+        <el-button
+          type="primary"
+          @click="handleConflictChoice('overwrite')"
+        >
+          覆盖并备份
+        </el-button>
+      </div>
+    </template>
+  </el-dialog>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, onUnmounted, nextTick, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import type { UploadFile, UploadFiles } from 'element-plus'
 import {
   Document, UploadFilled, Right, CircleCheck,
@@ -695,6 +731,46 @@ const processingStepsRef = ref()
 const taskId = ref('')
 const generatedManualUrl = ref('')
 
+// 同名冲突弹窗数据
+const conflictDialogVisible = ref(false)
+const conflictDialog = reactive<{
+  taskId: string
+  isProcessing: boolean
+  manualExists: boolean
+  createdAt?: string
+  manualMtime?: string
+  suggested?: string
+  message?: string
+}>({
+  taskId: '',
+  isProcessing: false,
+  manualExists: false,
+  createdAt: '',
+  manualMtime: '',
+  suggested: '',
+  message: ''
+})
+
+const resetToUploadStep = (keepFiles: boolean = true) => {
+  currentStep.value = 0
+  processingStatus.value = undefined
+  processingText.value = ''
+  processingProgress.value = 0
+  isGenerating.value = false
+  processingLogs.value = []
+  taskId.value = ''
+  agents.value.forEach(agent => {
+    agent.status = 'idle'
+    agent.currentTask = '等待启动...'
+    agent.progress = 0
+    agent.results = []
+  })
+  if (!keepFiles) {
+    pdfFiles.value = []
+    modelFiles.value = []
+  }
+}
+
 const processingLogs = ref<Array<{
   id: number
   time: string
@@ -869,25 +945,23 @@ const startGeneration = async () => {
     processingText.value = '启动并行处理流水线...'
     processingStepsRef.value?.addLog('🚀 启动生产级并行处理流水线', 'info')
 
-    await startGenerationTask()
+    await startGenerationTask('prompt')
 
     // WebSocket会处理后续的进度更新和完成通知
     // 不需要在这里设置完成状态
 
   } catch (error: any) {
     console.error('生成失败:', error)
-    const detail = error.detail || error.message || error.response?.data?.detail
-    const status = error.status || error.response?.status
+    const status = error?.status || error?.response?.status
+    const data = error?.data || error?.response?.data
+    const detail = data?.detail || error?.detail || error?.message || error?.response?.data?.detail
 
-    // 若因同名 task_id 冲突，弹窗提示用户更换 PDF 名称或清理旧任务
-    if (status === 400 && detail && String(detail).includes('已存在')) {
-      ElMessageBox.alert(
-        detail || '已存在同名任务，请更换 PDF 文件名或清理旧任务后再试',
-        '任务已存在',
-        { type: 'warning' }
-      )
-    } else {
-      ElMessage.error('生成失败: ' + (detail || '未知错误'))
+    // 409 冲突：展示自定义弹窗，三选项
+    const conflict = data?.code ? data : data?.detail
+    if (status === 409 && conflict?.code) {
+      openConflictDialog(conflict)
+      isGenerating.value = false
+      return
     }
 
     processingStatus.value = 'exception'
@@ -939,14 +1013,46 @@ let eventSource: EventSource | null = null
 const RECOVERY_TASK_KEY = 'generator_current_task'
 
 // 开始生成任务 - 使用 SSE 实时更新
-const startGenerationTask = async () => {
+const formatConflictTime = (value?: string) => {
+  if (!value) return ''
+  const d = new Date(value)
+  return isNaN(d.getTime()) ? value : d.toLocaleString()
+}
+
+const openConflictDialog = (conflict: any) => {
+  conflictDialog.taskId = conflict.task_id || ''
+  conflictDialog.isProcessing = Boolean(conflict.is_processing)
+  conflictDialog.manualExists = Boolean(conflict.manual_exists)
+  conflictDialog.createdAt = conflict.created_at
+  conflictDialog.manualMtime = conflict.manual_mtime
+  conflictDialog.suggested = conflict.suggested_duplicate_id || ''
+  conflictDialog.message = conflict.message || '检测到同名任务，请选择操作：'
+  conflictDialogVisible.value = true
+}
+
+const handleConflictChoice = async (action: 'overwrite' | 'duplicate' | 'cancel') => {
+  conflictDialogVisible.value = false
+  if (action === 'cancel') {
+    resetToUploadStep(true)
+    return
+  }
+  try {
+    isGenerating.value = true
+    await startGenerationTask(action)
+  } catch (e) {
+    // startGeneration 已有错误处理，这里不重复提示
+  }
+}
+
+const startGenerationTask = async (conflictStrategy: 'prompt' | 'overwrite' | 'duplicate' = 'prompt') => {
   try {
     const response = await axios.post('/api/generate', {
       config: {
         projectName: config.projectName
       },
       pdf_files: pdfFiles.value.map(f => f.name),
-      model_files: modelFiles.value.map(f => f.name)
+      model_files: modelFiles.value.map(f => f.name),
+      conflict_strategy: conflictStrategy
     })
 
     if (!response.data.success) {
@@ -955,6 +1061,10 @@ const startGenerationTask = async () => {
 
     const newTaskId = response.data.task_id
     taskId.value = newTaskId
+    // 若后端生成了新的 task_id（duplicate 场景），保持项目名与 task_id 对齐
+    if (config.projectName !== newTaskId) {
+      config.projectName = newTaskId
+    }
     localStorage.setItem(RECOVERY_TASK_KEY, newTaskId)
 
     // 建立 SSE 连接
@@ -964,11 +1074,22 @@ const startGenerationTask = async () => {
   } catch (error: any) {
     const detail = error.response?.data?.detail || error.message || '未知错误'
     const status = error.response?.status
+    const data = error.response?.data
     // 抛出结构化错误，供上层区分是否为同名任务冲突
+    if (status === 409 && data?.code) {
+      openConflictDialog(data)
+      throw {
+        message: detail,
+        detail,
+        status,
+        data
+      }
+    }
     throw {
       message: detail,
       detail,
-      status
+      status,
+      data
     }
   }
 }
@@ -2176,5 +2297,27 @@ onMounted(() => {
   .dialog-container {
     max-height: 300px;
   }
+}
+
+.conflict-list {
+  padding-left: 18px;
+  margin: 8px 0 0;
+  color: var(--el-text-color-primary);
+  line-height: 1.6;
+}
+
+.conflict-list li + li {
+  margin-top: 4px;
+}
+
+.conflict-footer {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+}
+
+.conflict-footer .el-button {
+  white-space: nowrap;
 }
 </style>
