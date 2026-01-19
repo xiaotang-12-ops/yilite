@@ -57,11 +57,29 @@ from utils.logger import (
 )
 from utils.time_utils import beijing_now, init_debug_output_dir
 
+DEFAULT_OPENROUTER_MODEL = "google/gemini-2.5-flash-preview-09-2025"
+DEFAULT_DEEPSEEK_MODEL = "deepseek-chat"
+DEFAULT_DOUBAO_MODEL = "doubao-seed-1-8-251228"
+PROVIDER_BASE_URLS = {
+    "openrouter": "https://openrouter.ai/api/v1",
+    "deepseek": "https://api.deepseek.com",
+    "doubao": "https://ark.cn-beijing.volces.com/api/v3",
+}
+
 
 class GeminiAssemblyPipeline:
     """基于Gemini 2.5 Flash的6-Agent装配说明书生成工作流"""
 
-    def __init__(self, api_key: str, output_dir: str = "pipeline_output", product_name: str = "", model_name: str = None):
+    def __init__(
+        self,
+        api_key: str,
+        output_dir: str = "pipeline_output",
+        product_name: str = "",
+        model_name: str = None,
+        call_point_settings: Optional[Dict[str, Dict[str, str]]] = None,
+        deepseek_api_key: Optional[str] = None,
+        doubao_api_key: Optional[str] = None
+    ):
         """
         初始化工作流
 
@@ -69,42 +87,110 @@ class GeminiAssemblyPipeline:
             api_key: OpenRouter API密钥
             output_dir: 输出目录
             product_name: 产品名称（用户输入）
-            model_name: AI模型名称（可选，如果不提供则从环境变量读取）
+            model_name: AI模型名称（兼容旧参数）
+            call_point_settings: 按调用点配置的provider/model映射
+            deepseek_api_key: DeepSeek API密钥（可选）
+            doubao_api_key: 豆包(ARK) API密钥（可选）
         """
         self.api_key = api_key
+        self.deepseek_api_key = deepseek_api_key
+        self.doubao_api_key = doubao_api_key
+        self.call_point_settings = call_point_settings or {}
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.product_name = product_name  # ✅ 保存产品名称
-        self.model_name = model_name or os.getenv("OPENROUTER_MODEL") or "google/gemini-2.0-flash-exp:free"
 
-        # 设置API密钥和模型名称到环境变量
+        # 设置API密钥到环境变量（避免下游调用丢失）
         os.environ["OPENROUTER_API_KEY"] = api_key
-        os.environ["OPENROUTER_MODEL"] = self.model_name
+        if deepseek_api_key:
+            os.environ["DEEPSEEK_API_KEY"] = deepseek_api_key
+        if doubao_api_key:
+            os.environ["ARK_API_KEY"] = doubao_api_key
 
-        print(f"🤖 Pipeline 初始化 - 使用模型: {self.model_name}")
+        if model_name:
+            for call_point_id in ["matching", "assembly", "welding", "safety", "bom_vision"]:
+                self.call_point_settings.setdefault(call_point_id, {"provider": "openrouter", "model": model_name})
+
+        self.matching_call_point = self._resolve_call_point("matching", requires_images=False)
+        self.assembly_call_point = self._resolve_call_point("assembly", requires_images=True)
+        self.welding_call_point = self._resolve_call_point("welding", requires_images=True)
+        self.safety_call_point = self._resolve_call_point("safety", requires_images=False)
+        self.bom_vision_call_point = self._resolve_call_point("bom_vision", requires_images=True)
+
+        self.matching_api_key = self._get_api_key(self.matching_call_point["provider"])
+        self.bom_vision_api_key = self._get_api_key(self.bom_vision_call_point["provider"])
+
+        print("🤖 Pipeline 初始化 - 已加载调用点模型配置")
 
         # 初始化复用的Core组件
         self.file_classifier = FileClassifier()
         self.bom_matcher = HierarchicalBOMMatcher()
         self.integrator = ManualIntegratorV2(product_name=product_name)  # ✅ 传入产品名称
 
-        # 初始化Agent - 传入model_name确保使用正确的模型
-        self.component_agent = ComponentAssemblyAgent()
-        self.product_agent = ProductAssemblyAgent()
-        self.welding_agent = WeldingAgent()
-        self.safety_agent = SafetyFAQAgent()
+        # 初始化Agent - 按调用点配置模型
+        self.component_agent = ComponentAssemblyAgent(
+            api_key=self._get_api_key(self.assembly_call_point["provider"]),
+            model_name=self.assembly_call_point["model"],
+            provider=self.assembly_call_point["provider"]
+        )
+        self.product_agent = ProductAssemblyAgent(
+            api_key=self._get_api_key(self.assembly_call_point["provider"]),
+            model_name=self.assembly_call_point["model"],
+            provider=self.assembly_call_point["provider"]
+        )
+        self.welding_agent = WeldingAgent(
+            api_key=self._get_api_key(self.welding_call_point["provider"]),
+            model_name=self.welding_call_point["model"],
+            provider=self.welding_call_point["provider"]
+        )
+        self.safety_agent = SafetyFAQAgent(
+            api_key=self._get_api_key(self.safety_call_point["provider"]),
+            model_name=self.safety_call_point["model"],
+            provider=self.safety_call_point["provider"]
+        )
         self.simple_planner = SimplePlanner()
         self.is_product_mode = False  # 判定当前任务是否按产品总图流程
 
         # 初始化Gemini视觉模型（用于BOM提取）
         from models.gemini_model import GeminiVisionModel
-        self.gemini_model = GeminiVisionModel(api_key=api_key, model_name=self.model_name)
+        self.bom_vision_model = self.bom_vision_call_point["model"]
+        self.gemini_model = GeminiVisionModel(
+            api_key=self.bom_vision_api_key,
+            model_name=self.bom_vision_model,
+            provider=self.bom_vision_call_point["provider"]
+        )
 
         # 工作流状态
         self.start_time = None
         self.current_step = 0
         self.total_steps = 8
         
+    def _resolve_call_point(self, call_point_id: str, requires_images: bool) -> Dict[str, str]:
+        config = self.call_point_settings.get(call_point_id, {})
+        provider = config.get("provider", "openrouter")
+        if provider == "deepseek":
+            model = config.get("model") or DEFAULT_DEEPSEEK_MODEL
+        elif provider == "doubao":
+            model = config.get("model") or DEFAULT_DOUBAO_MODEL
+        else:
+            model = config.get("model") or DEFAULT_OPENROUTER_MODEL
+
+        if requires_images and provider not in {"openrouter", "doubao"}:
+            raise ValueError(f"调用点 {call_point_id} 需要视觉输入，仅支持 OpenRouter/豆包")
+        return {"provider": provider, "model": model}
+
+    def _get_api_key(self, provider: str) -> str:
+        if provider == "deepseek":
+            key = self.deepseek_api_key or os.getenv("DEEPSEEK_API_KEY")
+            if not key:
+                raise ValueError("未设置 DeepSeek API Key，请在设置页面配置")
+            return key
+        if provider == "doubao":
+            key = self.doubao_api_key or os.getenv("ARK_API_KEY")
+            if not key:
+                raise ValueError("未设置 豆包(ARK) API Key，请在设置页面配置")
+            return key
+        return self.api_key
     def log_agent_call(self, agent_name: str, action: str, status: str = "running"):
         """记录Agent调用日志（生动的AI员工工作描述）"""
         timestamp = beijing_now().strftime("%H:%M:%S")
@@ -633,17 +719,13 @@ class GeminiAssemblyPipeline:
                 # 调用Gemini Vision API
                 from openai import OpenAI
                 client = OpenAI(
-                    base_url="https://openrouter.ai/api/v1",
-                    api_key=self.api_key
+                    base_url=PROVIDER_BASE_URLS.get(self.bom_vision_call_point["provider"], PROVIDER_BASE_URLS["openrouter"]),
+                    api_key=self.bom_vision_api_key
                 )
 
-                completion = client.chat.completions.create(
-                    extra_headers={
-                        "HTTP-Referer": "https://mecagent.com",
-                        "X-Title": "MecAgent BOM Extraction"
-                    },
-                    model=self.model_name,
-                    messages=[
+                request_payload = {
+                    "model": self.bom_vision_model,
+                    "messages": [
                         {
                             "role": "user",
                             "content": [
@@ -655,9 +737,16 @@ class GeminiAssemblyPipeline:
                             ]
                         }
                     ],
-                    temperature=0.0,
-                    max_tokens=4096
-                )
+                    "temperature": 0.0,
+                    "max_tokens": 4096
+                }
+                if self.bom_vision_call_point["provider"] == "openrouter":
+                    request_payload["extra_headers"] = {
+                        "HTTP-Referer": "https://mecagent.com",
+                        "X-Title": "MecAgent BOM Extraction"
+                    }
+
+                completion = client.chat.completions.create(**request_payload)
 
                 response = {"content": completion.choices[0].message.content}
 
@@ -802,7 +891,10 @@ class GeminiAssemblyPipeline:
             bom_data=bom_data,
             component_plans=component_plans,
             output_dir=str(self.output_dir / "glb_files"),
-            file_hierarchy=file_hierarchy  # ✅ 传入文件层级结构
+            file_hierarchy=file_hierarchy,  # ✅ 传入文件层级结构
+            ai_provider=self.matching_call_point["provider"],
+            ai_model=self.matching_call_point["model"],
+            ai_api_key=self.matching_api_key
         )
 
         if matching_result["success"]:

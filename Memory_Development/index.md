@@ -1,8 +1,8 @@
 # 📸 项目快照 - Memory Development
 
 **创建时间**: 2025-11-18
-**最后校对**: 2026-01-15
-**当前版本**: v2.0.90
+**最后校对**: 2026-01-16
+**当前版本**: v2.0.93
 **项目状态**: 核心功能完成，可用
 
 ---
@@ -18,7 +18,7 @@
   ↕ HTTP API + WebSocket
 后端 (FastAPI + Uvicorn)
   ↕
-6 个 AI Agent (Gemini 2.5 Flash)
+6 个 AI Agent（OpenRouter/DeepSeek/豆包 可配置）
   ↕
 3 个核心处理器 (文件分类 + BOM匹配 + 手册集成)
   ↕
@@ -62,9 +62,9 @@ output/{task_id} (JSON + GLB + 图片)
 | HEAD | `/api/manual/{task_id}/version` | 获取手册版本 | Header `X-Manual-Version` |
 | GET | `/api/manual/{task_id}/glb/{glb}` | 下载 GLB | 支持 `glb_files/` 或根目录 |
 | GET | `/api/manual/{task_id}/pdf_images/{path}` | 下载 PDF 图片 | 统一 `pdf_images/{pdf_name}/page_xxx.png` |
-| POST | `/api/settings` | 保存 API Key/模型 | 仅内存存储，同时写 env |
-| GET | `/api/settings` | 获取已保存设置 | API Key 脱敏 |
-| POST | `/api/test-model` | 连通性测试 | 调用 OpenRouter ChatCompletion |
+| POST | `/api/settings` | 保存 AI 设置 | OpenRouter/DeepSeek/豆包 Key + 调用点模型配置，内存存储并写入 env |
+| GET | `/api/settings` | 获取 AI 设置 | 返回脱敏 key、调用点配置（含可选提供方） |
+| POST | `/api/test-model` | 连通性测试 | 支持 OpenRouter/DeepSeek/豆包 |
 
 ---
 
@@ -77,7 +77,7 @@ output/{task_id} (JSON + GLB + 图片)
 | `/manual/:taskId` | ManualViewer.vue | 装配手册查看/编辑 | 管理员支持草稿保存/发布 |
 | `/version-history/:taskId` | VersionHistory.vue | 历史版本与回滚 | 调 /api/manual/* history/version/rollback |
 | `/engineer` | Engineer.vue | 工程师视图（质检/分发） | |
-| `/settings` | Settings.vue | API Key / 模型配置 | 调 /api/settings |
+| `/settings` | Settings.vue | AI 设置（隐藏入口） | Logo 10 秒内连点 10 次解锁；调 /api/settings |
 | `/glb-test` | GLBTest.vue | GLB 场景调试 | |
 | `/simple-glb-test` | SimpleGLBTest.vue | 轻量 GLB 测试 | |
 | `/icon-test` | IconTest.vue | 图标展示 | |
@@ -97,16 +97,16 @@ output/{task_id} (JSON + GLB + 图片)
 ## 运行与环境
 - Docker：`docker-compose up --build`（映射 8008:8008 后端，3008:80 前端）；镜像名附版本 `assembly-manual-*-v2.0.0`。
 - 本地调试：后端 `uvicorn backend.simple_app:app --host 0.0.0.0 --port 8008`；前端 `npm install && npm run dev`（默认 3000）。
-- 必需环境变量：`OPENROUTER_API_KEY`；可选 `BLENDER_EXE` 指向 Blender 可执行文件。
+- 必需环境变量：按调用点配置需要 `OPENROUTER_API_KEY` / `DEEPSEEK_API_KEY` / `ARK_API_KEY`；可选 `BLENDER_EXE` 指向 Blender 可执行文件。
 
 ---
 
 ## 最近 3 个版本快照
 | 版本 | 日期 | 关键变更 |
 | --- | --- | --- |
-| v2.0.90 | 2026-01-15 | **步骤导航位置调整 + 工具输入修复**：桌面端“下一步/查看步骤”位置互换；工具输入回车后残留文字问题修复并新增提示。 |
-| v2.0.89 | 2026-01-15 | **移动端步骤入口顺序 + 抽屉返回修复**：步骤按钮调整为“上一步/下一步”之后；移动端抽屉返回不再触发页面刷新与步骤重置。 |
-| v2.0.88 | 2026-01-15 | **移动端步骤跳转 + 进度显示优化**：移动端在“上一步/下一步”区域新增步骤跳转按钮；进度条百分比改为整数展示。 |
+| v2.0.95 | 2026-01-16 | **AI匹配与提示优化**：豆包匹配启用 medium 思考并将输出上限设为 64k；冲突弹窗改为“下一套”并隐藏任务ID。 |
+| v2.0.94 | 2026-01-16 | **豆包调用点接入**：支持 OpenRouter/DeepSeek/豆包，切换提供方自动填默认模型。 |
+| v2.0.93 | 2026-01-16 | **全局单任务运行锁**：上传/生成检测运行中任务，返回 `TASK_BUSY` 并提示等待。 |
 
 ---
 
@@ -123,7 +123,7 @@ output/{task_id} (JSON + GLB + 图片)
 
 ## 状态与注意事项
 - 正常：上传、生成、日志流、手册读取/编辑、模型与图片下载、设置管理。
-- 注意：需安装 Blender；`OPENROUTER_API_KEY` 必填；大文件性能与 Three.js 渲染待优化；前端路由默认走 8008 端口；一次任务仅支持上传 1 个 PDF + 1 个 STEP；task_id = PDF 文件名（去后缀），STEP 文件名可不同，后端生成时会按 task_id 重命名存储；同名生成返回 409，可在前端选择覆盖（旧目录归档到 `output_archive/`）或生成第二套 `_v_n`；生成任务可被中断（删除/覆盖/残留清理时会中断后台线程并写入 `cancelled`）；模式判定：PDF 文件名前缀 01* → 组件模式；03/06/07/08* → 产品模式；未命中前缀默认组件模式；产品模式跳过 Step5，仅执行 Step6+Step7/8。
+- 注意：需安装 Blender；`OPENROUTER_API_KEY`/`DEEPSEEK_API_KEY`/`ARK_API_KEY` 按调用点配置；设置页默认隐藏，Logo 10 秒内连点 10 次可进入；大文件性能与 Three.js 渲染待优化；前端路由默认走 8008 端口；一次任务仅支持上传 1 个 PDF + 1 个 STEP；运行中全局仅允许 1 个任务，上传/生成会返回 409 `TASK_BUSY` 提示等待；task_id = PDF 文件名（去后缀），STEP 文件名可不同，后端生成时会按 task_id 重命名存储；同名生成返回 409，可在前端选择覆盖（旧目录归档到 `output_archive/`）或生成第二套 `_v_n`；生成任务可被中断（删除/覆盖/残留清理时会中断后台线程并写入 `cancelled`）；模式判定：PDF 文件名前缀 01* → 组件模式；03/06/07/08* → 产品模式；未命中前缀默认组件模式；产品模式跳过 Step5，仅执行 Step6+Step7/8。
 - ManualViewer 相机：加载/切换 GLB 时基于包围盒自动框选，动态设置 near/far，并收敛模型放大上限（≤1e4）以避免深度闪烁和“需大幅放大才能看到”问题；移动端图纸/抽屉不再写入浏览器历史，切换页面不会留下触控禁用或返回键异常；移动端预览支持“返回键先关预览/抽屉”“轻点图片关闭”。
 - STEP→GLB：`trimesh` 子进程 120s 硬超时（超时强制终止），不再启用 ocp_tessellate 兜底；并新增“自动简化”兜底（仅超大 nodes 模型触发，合并刷丝/毛刷等特征层为盘级 mesh），需要时可在上传前提示大文件转 STL。
   - 现已新增 OCP(cadquery-ocp) 兜底：trimesh/cascadio 超时/失败或预检命中超长行时，会自动回退/优先走 OCP 导出可用 GLB（粒度可能更粗，以保证能生成与可渲染）。

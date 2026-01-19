@@ -5,8 +5,8 @@
 | 方法 | 路径 | 目的 | 请求要点 | 响应/副作用 |
 | --- | --- | --- | --- | --- |
 | GET | `/api/health` | 健康检查 | - | `status`,`version`,`timestamp` |
-| POST | `/api/upload` | 上传 PDF/STEP 文件 | FormData：`pdf_files[]`、`model_files[]`；后端限制一次**仅 1 个 PDF + 1 个 STEP**，上传前清空 `uploads/` | 返回文件名/size/path，写入磁盘 |
-| POST | `/api/generate` | 启动生成任务 | JSON：`config.projectName`，`pdf_files[]`(1)，`model_files[]`(1)，`conflict_strategy`（可选：`prompt` 默认/`overwrite` 覆盖且备份/`duplicate` 生成 `_v_n`）；task_id = PDF 基名，STEP 名可不同，生成时会按最终 task_id 重命名存储 | 200：启动成功返回 `task_id`；409：`code=TASK_EXISTS/TASK_RUNNING`，附 `suggested_duplicate_id`、`manual_exists`、时间信息；`overwrite` 会先把旧目录归档到 `output_archive/{task_id}/<timestamp>/` |
+| POST | `/api/upload` | 上传 PDF/STEP 文件 | FormData：`pdf_files[]`、`model_files[]`；后端限制一次**仅 1 个 PDF + 1 个 STEP**，上传前清空 `uploads/` | 200：返回文件名/size/path；409：`code=TASK_BUSY`（全局已有任务运行，返回 `task_id/project_name/created_at/updated_at`） |
+| POST | `/api/generate` | 启动生成任务 | JSON：`config.projectName`，`pdf_files[]`(1)，`model_files[]`(1)，`conflict_strategy`（可选：`prompt` 默认/`overwrite` 覆盖且备份/`duplicate` 生成 `_v_n`）；task_id = PDF 基名，STEP 名可不同，生成时会按最终 task_id 重命名存储 | 200：启动成功返回 `task_id`；409：`code=TASK_BUSY`（已有任务运行）或 `TASK_EXISTS/TASK_RUNNING`（同名冲突）；`overwrite` 会先把旧目录归档到 `output_archive/{task_id}/<timestamp>/` |
 | GET | `/api/status/{task_id}` | 查询任务状态 | 路径参数 | 返回内存中的任务字典 |
 | GET | `/api/stream/{task_id}` | SSE 日志/进度流 | 路径参数 | 文本/event-stream，读取 utils.logger 日志缓冲 |
 | WS | `/ws/task/{task_id}` | WebSocket 进度流 | 路径参数 | 周期推送进度/完成/失败 |
@@ -23,9 +23,9 @@
 | HEAD | `/api/manual/{task_id}/version` | 取已发布版本号 | 路径参数 | Header `X-Manual-Version` |
 | GET | `/api/manual/{task_id}/glb/{glb}` | 下载 GLB | 路径参数 | 查找 `output/{task}/glb_files/{glb}` 或根目录 |
 | GET | `/api/manual/{task_id}/pdf_images/{path}` | 下载 PDF 图片 | 路径参数 | 访问 `output/{task}/pdf_images/{pdf_name}/page_xxx.png` |
-| POST | `/api/settings` | 保存 API Key & 模型 | JSON：`openrouter_api_key`,`default_model` | 保存在内存 `app_settings`，更新环境变量 |
-| GET | `/api/settings` | 获取已保存设置 | - | 返回脱敏的 key、默认模型、是否已配置 |
-| POST | `/api/test-model` | OpenRouter 连通性测试 | JSON：`openrouter_api_key`,`model` | 调用 ChatCompletion，返回测试响应文本 |
+| POST | `/api/settings` | 保存 AI 设置 | JSON：`openrouter_api_key`,`deepseek_api_key`,`doubao_api_key`,`call_points`（`matching/assembly/welding/safety/bom_vision` → `{provider,model}`），兼容 `default_model` | 保存在内存 `app_settings`，更新环境变量 |
+| GET | `/api/settings` | 获取 AI 设置 | - | 返回脱敏的 key、`has_*`、`call_points`（含 `allowed_providers`/`requires_images`） |
+| POST | `/api/test-model` | 模型连通性测试 | JSON：`provider`,`model`，可选 `openrouter_api_key`/`deepseek_api_key`/`doubao_api_key`/`api_key` | 调用 ChatCompletion，返回测试响应文本 |
 
 ### 任务/输出目录结构
 - 上传：`uploads/`（每次上传会清空旧文件）

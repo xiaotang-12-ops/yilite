@@ -39,6 +39,23 @@ const router = createRouter({
   routes
 })
 
+const SETTINGS_UNLOCK_KEY = 'settings_unlock_until'
+
+router.beforeEach((to, _from, next) => {
+  if (to.path === '/settings') {
+    const unlockUntil = Number(sessionStorage.getItem(SETTINGS_UNLOCK_KEY) || 0)
+    if (unlockUntil && unlockUntil >= Date.now()) {
+      sessionStorage.removeItem(SETTINGS_UNLOCK_KEY)
+      next()
+      return
+    }
+    sessionStorage.removeItem(SETTINGS_UNLOCK_KEY)
+    next({ path: '/' })
+    return
+  }
+  next()
+})
+
 // 捕获路由错误，避免静默失败
 router.onError((err) => {
   console.error('router error', err)

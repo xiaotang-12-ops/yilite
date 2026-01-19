@@ -10,7 +10,7 @@
 | `/viewer/:id?` | Viewer.vue | 3D 预览、结果查看 | 读取输出目录或任务数据 |
 | `/manual/:taskId` | ManualViewer.vue | 装配手册查看与编辑、版本自增 | `/api/manual*`, `/api/manual/{task}/glb/*`, `/api/manual/{task}/pdf_images/*` |
 | `/engineer` | Engineer.vue | 工程师视图：质检/分发 | 复用任务与手册数据 |
-| `/settings` | Settings.vue | 配置 API Key / 模型 | `/api/settings`, `/api/test-model` |
+| `/settings` | Settings.vue | 配置 AI Key / 模型（隐藏入口） | `/api/settings`, `/api/test-model` |
 | `/glb-test` | GLBTest.vue | GLB 场景调试 | 本地 mock 资源 |
 | `/simple-glb-test` | SimpleGLBTest.vue | 轻量 GLB 测试 | 本地 mock 资源 |
 | `/icon-test` | IconTest.vue | 图标样例 | - |

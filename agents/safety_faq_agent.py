@@ -12,11 +12,13 @@ from prompts.agent_6_safety_faq import build_safety_faq_prompt
 class SafetyFAQAgent(BaseGeminiAgent):
     """FAQ"""
     
-    def __init__(self, api_key: str = None):
+    def __init__(self, api_key: str = None, model_name: str = None, provider: str = "openrouter"):
         super().__init__(
             agent_name="Agent6_FAQ",
             api_key=api_key,
-            temperature=0.2  # 
+            temperature=0.2,  # 
+            model_name=model_name,
+            provider=provider
         )
     
     def process(

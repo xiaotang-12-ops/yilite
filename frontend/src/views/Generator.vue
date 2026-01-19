@@ -264,38 +264,42 @@
     </div>
   </div>
 
-  <!-- 同名冲突自定义弹窗 -->
+  <!-- 同名冲突/任务占用弹窗 -->
   <el-dialog
     v-model="conflictDialogVisible"
-    title="任务已存在"
+    :title="conflictDialogTitle"
     width="520px"
     :close-on-click-modal="false"
     :close-on-press-escape="false"
   >
-    <p style="margin-bottom: 12px;">{{ conflictDialog.message || '检测到同名任务，请选择操作：' }}</p>
+    <p style="margin-bottom: 12px;">{{ conflictDialogMessage }}</p>
     <ul class="conflict-list">
-      <li v-if="conflictDialog.taskId">任务ID：{{ conflictDialog.taskId }}</li>
-      <li v-if="conflictDialog.isProcessing">当前状态：生成中（建议等待或生成第二套）</li>
-      <li v-else-if="conflictDialog.manualExists">当前状态：已生成手册</li>
-      <li v-if="conflictDialog.createdAt">创建时间：{{ formatConflictTime(conflictDialog.createdAt) }}</li>
-      <li v-if="conflictDialog.manualMtime">手册更新时间：{{ formatConflictTime(conflictDialog.manualMtime) }}</li>
-      <li v-if="conflictDialog.suggested">建议第二套名称：{{ conflictDialog.suggested }}</li>
+        <li v-if="conflictDialog.projectName">任务名称：{{ conflictDialog.projectName }}</li>
+        <li v-if="conflictDialog.isProcessing">当前状态：生成中（建议等待或生成第二套）</li>
+        <li v-else-if="conflictDialog.manualExists">当前状态：已生成手册</li>
+        <li v-if="conflictDialog.createdAt">创建时间：{{ formatConflictTime(conflictDialog.createdAt) }}</li>
+        <li v-if="conflictDialog.updatedAt">最后更新：{{ formatConflictTime(conflictDialog.updatedAt) }}</li>
+        <li v-if="conflictDialog.manualMtime">手册更新时间：{{ formatConflictTime(conflictDialog.manualMtime) }}</li>
+        <li v-if="conflictDialog.suggested">建议下一套名称：{{ conflictDialog.suggested }}</li>
     </ul>
     <template #footer>
-      <div class="conflict-footer">
+      <div v-if="!isBusyConflict" class="conflict-footer">
         <el-button @click="handleConflictChoice('cancel')">取消</el-button>
-        <el-button
-          type="default"
-          @click="handleConflictChoice('duplicate')"
-        >
-          生成第二套
-        </el-button>
+          <el-button
+            type="default"
+            @click="handleConflictChoice('duplicate')"
+          >
+            生成下一套
+          </el-button>
         <el-button
           type="primary"
           @click="handleConflictChoice('overwrite')"
         >
           覆盖并备份
         </el-button>
+      </div>
+      <div v-else class="conflict-footer">
+        <el-button type="primary" @click="handleConflictChoice('cancel')">知道了</el-button>
       </div>
     </template>
   </el-dialog>
@@ -734,21 +738,36 @@ const generatedManualUrl = ref('')
 // 同名冲突弹窗数据
 const conflictDialogVisible = ref(false)
 const conflictDialog = reactive<{
+  code?: string
   taskId: string
+  projectName?: string
   isProcessing: boolean
   manualExists: boolean
   createdAt?: string
+  updatedAt?: string
   manualMtime?: string
   suggested?: string
   message?: string
 }>({
+  code: '',
   taskId: '',
+  projectName: '',
   isProcessing: false,
   manualExists: false,
   createdAt: '',
+  updatedAt: '',
   manualMtime: '',
   suggested: '',
   message: ''
+})
+
+const isBusyConflict = computed(() => conflictDialog.code === 'TASK_BUSY')
+const conflictDialogTitle = computed(() => (isBusyConflict.value ? '当前任务运行中' : '任务已存在'))
+const conflictDialogMessage = computed(() => {
+  if (conflictDialog.message) {
+    return conflictDialog.message
+  }
+  return isBusyConflict.value ? '当前有任务正在运行，请等待完成后再试。' : '检测到同名任务，请选择操作：'
 })
 
 const resetToUploadStep = (keepFiles: boolean = true) => {
@@ -1020,10 +1039,13 @@ const formatConflictTime = (value?: string) => {
 }
 
 const openConflictDialog = (conflict: any) => {
+  conflictDialog.code = conflict.code || ''
   conflictDialog.taskId = conflict.task_id || ''
+  conflictDialog.projectName = conflict.project_name || ''
   conflictDialog.isProcessing = Boolean(conflict.is_processing)
   conflictDialog.manualExists = Boolean(conflict.manual_exists)
   conflictDialog.createdAt = conflict.created_at
+  conflictDialog.updatedAt = conflict.updated_at
   conflictDialog.manualMtime = conflict.manual_mtime
   conflictDialog.suggested = conflict.suggested_duplicate_id || ''
   conflictDialog.message = conflict.message || '检测到同名任务，请选择操作：'

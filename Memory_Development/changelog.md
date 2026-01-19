@@ -1,5 +1,42 @@
 # Memory Changelog
 
+## v2.0.95 (2026-01-16)
+- **AI匹配输出长度与思考模式调整**：
+  - 豆包调用点启用深度思考（`reasoning_effort=medium`），并将输出上限设置为 `max_completion_tokens=64000`。
+  - 豆包调用点超时提升到 1800 秒，避免深度思考导致超时。
+- **冲突弹窗文案优化**：
+  - 隐藏任务ID显示，避免无关信息干扰。
+  - 文案改为“下一套”，避免多套场景误导。
+- **AI匹配日志显示实际模型**：
+  - 匹配阶段日志输出 `provider/model`，避免固定写死模型名。
+- 影响文件：`core/ai_matcher.py`、`frontend/src/views/Generator.vue`、`Memory_Development/index.md`、`VERSION`
+
+## v2.0.94 (2026-01-16)
+- **豆包调用点接入 + 默认模型自动填充**：
+  - 新增豆包(ARK)提供方与 `ARK_API_KEY` 支持，视觉调用点支持 OpenRouter/豆包，文本调用点支持 OpenRouter/DeepSeek/豆包。
+  - 设置页切换提供方后自动填入默认模型ID，减少手动输入。
+  - 模型测试与流水线调用按提供方选择 Base URL 与 API Key。
+- 影响文件：`backend/simple_app.py`、`core/gemini_pipeline.py`、`core/ai_matcher.py`、`agents/base_gemini_agent.py`、`models/gemini_model.py`、`core/hierarchical_bom_matcher_v2.py`、`frontend/src/views/Settings.vue`、`.env.example`、`Memory_Development/index.md`、`Memory_Development/backend/api.md`、`VERSION`
+
+## v2.0.93 (2026-01-16)
+- **全局单任务运行锁 + 上传冲突提示**：
+  - 上传/生成时检测全局运行中任务，返回 `TASK_BUSY` 提示并阻止并发启动。
+  - 前端冲突弹窗增加运行中任务信息（名称/时间）并提供清晰提示。
+- 影响文件：`backend/simple_app.py`、`frontend/src/views/Generator.vue`、`Memory_Development/index.md`、`Memory_Development/backend/api.md`、`VERSION`
+
+## v2.0.92 (2026-01-16)
+- **设置页一键全测模型连接**：
+  - 测试按钮改为依次测试所有调用点模型，结果展示成功/失败明细。
+  - 状态提示支持多行，便于定位失败调用点。
+- 影响文件：`frontend/src/views/Settings.vue`、`Memory_Development/index.md`、`VERSION`
+
+## v2.0.91 (2026-01-16)
+- **AI调用点配置 + 隐藏设置入口**：
+  - 新增按调用点配置 OpenRouter/DeepSeek 模型；视觉调用点仅允许 OpenRouter。
+  - 前端设置页支持 DeepSeek Key 与调用点模型配置；Logo 10 秒内连点 10 次一次性解锁设置页入口。
+  - 默认模型统一为 `google/gemini-2.5-flash-preview-09-2025`。
+- 影响文件：`backend/simple_app.py`、`core/gemini_pipeline.py`、`core/ai_matcher.py`、`core/hierarchical_bom_matcher_v2.py`、`agents/base_gemini_agent.py`、`agents/component_assembly_agent.py`、`agents/product_assembly_agent.py`、`agents/welding_agent.py`、`agents/safety_faq_agent.py`、`frontend/src/App.vue`、`frontend/src/main.ts`、`frontend/src/views/Settings.vue`、`Memory_Development/index.md`、`Memory_Development/backend/api.md`、`VERSION`
+
 ## v2.0.90 (2026-01-15)
 - **步骤导航位置调整 + 工具输入修复**：
   - 桌面端“下一步/查看步骤”位置互换，确保下一步按钮更靠近主操作区。

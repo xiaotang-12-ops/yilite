@@ -11,23 +11,52 @@ from typing import Dict, List, Optional, Union
 from openai import OpenAI
 
 
-class GeminiVisionModel:
-    """Gemini 2.5 Flash 视觉模型封装类"""
+PROVIDER_CONFIG = {
+    "openrouter": {
+        "base_url": "https://openrouter.ai/api/v1",
+        "api_key_env": "OPENROUTER_API_KEY",
+        "model_env": "OPENROUTER_MODEL",
+        "default_model": "google/gemini-2.5-flash-preview-09-2025",
+    },
+    "doubao": {
+        "base_url": "https://ark.cn-beijing.volces.com/api/v3",
+        "api_key_env": "ARK_API_KEY",
+        "model_env": "ARK_MODEL",
+        "default_model": "doubao-seed-1-8-251228",
+    }
+}
 
-    def __init__(self, api_key: Optional[str] = None, model_name: Optional[str] = None):
+
+class GeminiVisionModel:
+    """视觉模型封装类（OpenRouter / 豆包均可用）"""
+
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        model_name: Optional[str] = None,
+        provider: str = "openrouter",
+        base_url: Optional[str] = None
+    ):
         """
         初始化Gemini模型
 
         Args:
-            api_key: OpenRouter API Key
+            api_key: API Key
             model_name: 模型名称（可选，默认从config.py读取）
+            provider: 提供方（openrouter/doubao）
+            base_url: 自定义Base URL（可选）
         """
-        self.api_key = api_key or os.getenv("OPENROUTER_API_KEY")
+        self.provider = provider
+        provider_config = PROVIDER_CONFIG.get(provider, PROVIDER_CONFIG["openrouter"])
+        self._model_env = provider_config["model_env"]
+        self._default_model = provider_config["default_model"]
+
+        self.api_key = api_key or os.getenv(provider_config["api_key_env"])
         if not self.api_key:
-            raise ValueError("请设置OPENROUTER_API_KEY环境变量或传入api_key参数")
+            raise ValueError(f"请设置{provider_config['api_key_env']}环境变量或传入api_key参数")
 
         self.client = OpenAI(
-            base_url="https://openrouter.ai/api/v1",
+            base_url=base_url or provider_config["base_url"],
             api_key=self.api_key
         )
 
@@ -35,11 +64,14 @@ class GeminiVisionModel:
         if model_name:
             self.model_name = model_name
         else:
-            try:
-                from config import MODEL_CONFIG
-                self.model_name = MODEL_CONFIG["gemini"]
-            except ImportError:
-                self.model_name = os.getenv("GEMINI_MODEL", "google/gemini-2.5-flash-preview-09-2025")
+            if provider == "openrouter":
+                try:
+                    from config import MODEL_CONFIG
+                    self.model_name = MODEL_CONFIG["gemini"]
+                except ImportError:
+                    self.model_name = os.getenv("GEMINI_MODEL", self._default_model)
+            else:
+                self.model_name = os.getenv(self._model_env) or self._default_model
     
     def encode_image_to_base64(self, image_path: str) -> str:
         """
@@ -110,15 +142,18 @@ class GeminiVisionModel:
         
         try:
             # 调用API
-            completion = self.client.chat.completions.create(
-                extra_headers={
+            request_payload = {
+                "model": self.model_name,
+                "messages": messages,
+                "temperature": 0.1
+            }
+            if self.provider == "openrouter":
+                request_payload["extra_headers"] = {
                     "HTTP-Referer": "https://mecagent.com",
                     "X-Title": "MecAgent Assembly Planning"
-                },
-                model=self.model_name,
-                messages=messages,
-                temperature=0.1  # 降低温度，提高确定性
-            )
+                }
+
+            completion = self.client.chat.completions.create(**request_payload)
             
             # 获取响应
             response_content = completion.choices[0].message.content

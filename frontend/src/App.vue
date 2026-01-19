@@ -3,7 +3,7 @@
     <!-- 全局导航栏 -->
     <nav class="app-nav">
       <div class="nav-content">
-        <div class="nav-brand">
+        <div class="nav-brand" @click="handleLogoClick">
           <img class="brand-icon" src="/logo.png" alt="品牌Logo" />
           <div class="brand-text">
             <h1>易力特AI智能装配平台</h1>
@@ -106,6 +106,7 @@
 
 <script setup lang="ts">
 import { watch, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
 import { useDark, useToggle, useMediaQuery } from '@vueuse/core'
 import { Sunny, Moon, House, DocumentAdd, View, Setting, QuestionFilled, Menu } from '@element-plus/icons-vue'
@@ -114,6 +115,13 @@ const isDark = useDark()
 const toggleDark = useToggle(isDark)
 const isMobile = useMediaQuery('(max-width: 1024px)')
 const mobileMenuOpen = ref(false)
+const router = useRouter()
+const logoClickTimes = ref<number[]>([])
+
+const SETTINGS_UNLOCK_KEY = 'settings_unlock_until'
+const SETTINGS_UNLOCK_WINDOW_MS = 10000
+const SETTINGS_UNLOCK_CLICKS = 10
+const SETTINGS_UNLOCK_TTL_MS = 15000
 
 // 更新主题CSS变量
 const updateTheme = () => {
@@ -153,6 +161,19 @@ const showHelp = () => {
       type: 'info'
     }
   )
+}
+
+const handleLogoClick = () => {
+  const now = Date.now()
+  const windowStart = now - SETTINGS_UNLOCK_WINDOW_MS
+  logoClickTimes.value = logoClickTimes.value.filter((time) => time >= windowStart)
+  logoClickTimes.value.push(now)
+
+  if (logoClickTimes.value.length >= SETTINGS_UNLOCK_CLICKS) {
+    sessionStorage.setItem(SETTINGS_UNLOCK_KEY, String(now + SETTINGS_UNLOCK_TTL_MS))
+    logoClickTimes.value = []
+    router.push('/settings')
+  }
 }
 </script>
 

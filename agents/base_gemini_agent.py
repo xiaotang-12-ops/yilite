@@ -13,6 +13,27 @@ from openai import OpenAI
 import datetime
 from utils.time_utils import beijing_now, build_debug_output_dir
 
+PROVIDER_CONFIG = {
+    "openrouter": {
+        "base_url": "https://openrouter.ai/api/v1",
+        "api_key_env": "OPENROUTER_API_KEY",
+        "model_env": "OPENROUTER_MODEL",
+        "default_model": "google/gemini-2.5-flash-preview-09-2025",
+    },
+    "deepseek": {
+        "base_url": "https://api.deepseek.com",
+        "api_key_env": "DEEPSEEK_API_KEY",
+        "model_env": "DEEPSEEK_MODEL",
+        "default_model": "deepseek-chat",
+    },
+    "doubao": {
+        "base_url": "https://ark.cn-beijing.volces.com/api/v3",
+        "api_key_env": "ARK_API_KEY",
+        "model_env": "ARK_MODEL",
+        "default_model": "doubao-seed-1-8-251228",
+    },
+}
+
 
 class BaseGeminiAgent:
     """Gemini 2.5 Flash Agent"""
@@ -22,7 +43,8 @@ class BaseGeminiAgent:
         agent_name: str,
         api_key: Optional[str] = None,
         temperature: float = 0.1,
-        model_name: Optional[str] = None
+        model_name: Optional[str] = None,
+        provider: str = "openrouter"
     ):
         """
         Gemini Agent
@@ -36,12 +58,17 @@ class BaseGeminiAgent:
         self.agent_name = agent_name
         self.temperature = temperature
 
-        self.api_key = api_key or os.getenv("OPENROUTER_API_KEY")
+        self.provider = provider
+        provider_config = PROVIDER_CONFIG.get(provider, PROVIDER_CONFIG["openrouter"])
+        self._model_env = provider_config["model_env"]
+        self._default_model = provider_config["default_model"]
+
+        self.api_key = api_key or os.getenv(provider_config["api_key_env"])
         if not self.api_key:
-            raise ValueError("OPENROUTER_API_KEYapi_key")
+            raise ValueError(f"{provider_config['api_key_env']} is required")
 
         self.client = OpenAI(
-            base_url="https://openrouter.ai/api/v1",
+            base_url=provider_config["base_url"],
             api_key=self.api_key
         )
 
@@ -51,7 +78,7 @@ class BaseGeminiAgent:
     @property
     def model_name(self) -> str:
         """动态获取模型名称，优先使用传入的值，其次使用环境变量，最后使用默认值"""
-        return self._model_name_override or os.getenv("OPENROUTER_MODEL") or "google/gemini-2.5-flash-preview-09-2025"
+        return self._model_name_override or os.getenv(self._model_env) or self._default_model
     
     def encode_image_to_base64(self, image_path: str) -> str:
         """
@@ -203,15 +230,18 @@ class BaseGeminiAgent:
             print(f"   Temperature: {self.temperature}")
 
             # API
-            completion = self.client.chat.completions.create(
-                extra_headers={
+            request_payload = {
+                "model": self.model_name,
+                "messages": messages,
+                "temperature": self.temperature
+            }
+            if self.provider == "openrouter":
+                request_payload["extra_headers"] = {
                     "HTTP-Referer": "https://mecagent.com",
-                    "X-Title": "MecAgent"  # 
-                },
-                model=self.model_name,
-                messages=messages,
-                temperature=self.temperature
-            )
+                    "X-Title": "MecAgent"
+                }
+
+            completion = self.client.chat.completions.create(**request_payload)
             
             #
             response_content = completion.choices[0].message.content

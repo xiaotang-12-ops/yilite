@@ -28,8 +28,43 @@
             </template>
           </el-input>
           <div class="form-item-tip">
-            统一使用OpenRouter调用所有AI模型，
+            视觉调用点使用OpenRouter，
             <el-link type="primary" href="https://openrouter.ai/keys" target="_blank">
+              获取API Key
+            </el-link>
+          </div>
+        </el-form-item>
+        <el-form-item label="DeepSeek API Key">
+          <el-input
+            v-model="settings.deepseekApiKey"
+            type="password"
+            show-password
+            placeholder="请输入DeepSeek API Key"
+            clearable
+          >
+            <template #prepend>
+              <el-icon><Lock /></el-icon>
+            </template>
+          </el-input>
+          <div class="form-item-tip">
+            DeepSeek用于文本类调用点（匹配/安全）
+          </div>
+        </el-form-item>
+        <el-form-item label="豆包(ARK) API Key">
+          <el-input
+            v-model="settings.doubaoApiKey"
+            type="password"
+            show-password
+            placeholder="请输入豆包(ARK) API Key"
+            clearable
+          >
+            <template #prepend>
+              <el-icon><Lock /></el-icon>
+            </template>
+          </el-input>
+          <div class="form-item-tip">
+            豆包用于视觉/文本调用点，
+            <el-link type="primary" href="https://console.volcengine.com/ark" target="_blank">
               获取API Key
             </el-link>
           </div>
@@ -38,23 +73,43 @@
         <!-- 模型配置 -->
         <el-divider content-position="left">
           <el-icon><Cpu /></el-icon>
-          <span style="margin-left: 8px;">模型配置</span>
+          <span style="margin-left: 8px;">调用点模型配置</span>
         </el-divider>
 
-        <el-form-item label="默认模型">
-          <el-input
-            v-model="settings.defaultModel"
-            placeholder="google/gemini-2.0-flash-exp:free"
-            clearable
-          >
-            <template #prepend>
-              <el-icon><Cpu /></el-icon>
-            </template>
-          </el-input>
+        <el-form-item label="调用点">
+          <div class="callpoint-config">
+            <div
+              v-for="callPointId in callPointOrder"
+              :key="callPointId"
+              class="callpoint-row"
+            >
+              <div class="callpoint-label">{{ settings.callPoints[callPointId].label }}</div>
+              <el-select
+                v-model="settings.callPoints[callPointId].provider"
+                class="callpoint-provider"
+                placeholder="提供方"
+                :disabled="settings.callPoints[callPointId].allowedProviders.length === 1"
+                @change="handleProviderChange(callPointId)"
+              >
+                <el-option
+                  v-for="provider in settings.callPoints[callPointId].allowedProviders"
+                  :key="provider"
+                  :label="providerLabels[provider]"
+                  :value="provider"
+                />
+              </el-select>
+              <el-input
+                v-model="settings.callPoints[callPointId].model"
+                class="callpoint-model"
+                placeholder="模型ID"
+                clearable
+              />
+            </div>
+          </div>
           <div class="form-item-tip">
-            OpenRouter模型ID，例如: google/gemini-2.0-flash-exp:free, anthropic/claude-3.5-sonnet
+            视觉调用点支持OpenRouter/豆包；文本调用点可选OpenRouter/DeepSeek/豆包
             <el-link type="primary" href="https://openrouter.ai/models" target="_blank">
-              查看可用模型
+              OpenRouter模型列表
             </el-link>
           </div>
         </el-form-item>
@@ -111,7 +166,7 @@
           </el-button>
           <el-button @click="testModel" :loading="testingModel" type="success">
             <el-icon><Cpu /></el-icon>
-            <span>测试模型连接</span>
+            <span>一键全测</span>
           </el-button>
         </el-form-item>
 
@@ -122,7 +177,7 @@
           :type="statusType"
           :closable="false"
           show-icon
-          style="margin-top: 20px;"
+          style="margin-top: 20px; white-space: pre-line;"
         />
       </el-form>
     </el-card>
@@ -137,23 +192,21 @@
       </template>
 
       <el-steps direction="vertical" :active="3">
-        <el-step title="获取OpenRouter API Key">
+        <el-step title="获取 OpenRouter / 豆包 API Key">
           <template #description>
             <div>
               1. 访问 <el-link type="primary" href="https://openrouter.ai/keys" target="_blank">OpenRouter API Keys</el-link><br>
-              2. 登录/注册账号（支持Google登录）<br>
-              3. 创建API Key并复制<br>
-              4. 充值余额（支持信用卡）
+              2. 或访问 <el-link type="primary" href="https://console.volcengine.com/ark" target="_blank">豆包控制台</el-link><br>
+              3. 创建API Key并复制
             </div>
           </template>
         </el-step>
-        <el-step title="选择模型">
+        <el-step title="配置调用点模型">
           <template #description>
             <div>
-              1. 访问 <el-link type="primary" href="https://openrouter.ai/models" target="_blank">OpenRouter模型列表</el-link><br>
-              2. 选择合适的模型（推荐Gemini 2.0 Flash免费版）<br>
-              3. 复制模型ID（例如: google/gemini-2.0-flash-exp:free）<br>
-              4. 粘贴到"默认模型"输入框
+              1. 按调用点选择提供方（OpenRouter/DeepSeek/豆包）<br>
+              2. 选择提供方后会自动填入默认模型ID<br>
+              3. 如需自定义模型，可手动修改
             </div>
           </template>
         </el-step>
@@ -163,7 +216,7 @@
               1. 将API Key和模型ID粘贴到上方输入框<br>
               2. 点击"保存设置"按钮<br>
               3. 点击"测试后端连接"验证后端服务<br>
-              4. 点击"测试模型连接"验证模型配置是否正确
+              4. 点击"一键全测"验证所有调用点模型是否可用
             </div>
           </template>
         </el-step>
@@ -178,18 +231,87 @@ import { ElMessage } from 'element-plus'
 import { Setting, Key, Lock, Tools, Connection, Link, Select, RefreshLeft, QuestionFilled, Cpu } from '@element-plus/icons-vue'
 import axios from 'axios'
 
+const DEFAULT_OPENROUTER_MODEL = 'google/gemini-2.5-flash-preview-09-2025'
+const DEFAULT_DEEPSEEK_MODEL = 'deepseek-chat'
+const DEFAULT_DOUBAO_MODEL = 'doubao-seed-1-8-251228'
+
+type Provider = 'openrouter' | 'deepseek' | 'doubao'
+
+const DEFAULT_PROVIDER_MODELS: Record<Provider, string> = {
+  openrouter: DEFAULT_OPENROUTER_MODEL,
+  deepseek: DEFAULT_DEEPSEEK_MODEL,
+  doubao: DEFAULT_DOUBAO_MODEL
+}
+
+interface CallPointConfig {
+  label: string
+  provider: Provider
+  model: string
+  allowedProviders: Provider[]
+  requiresImages: boolean
+}
+
 interface Settings {
   openrouterApiKey: string
-  defaultModel: string
+  deepseekApiKey: string
+  doubaoApiKey: string
   websocketUrl: string
   apiBaseUrl: string
+  callPoints: Record<string, CallPointConfig>
 }
+
+const callPointOrder = ['matching', 'assembly', 'welding', 'safety', 'bom_vision'] as const
+const providerLabels: Record<Provider, string> = {
+  openrouter: 'OpenRouter',
+  deepseek: 'DeepSeek',
+  doubao: '豆包'
+}
+
+const buildDefaultCallPoints = (): Record<string, CallPointConfig> => ({
+  matching: {
+    label: '匹配',
+    provider: 'openrouter',
+    model: DEFAULT_PROVIDER_MODELS.openrouter,
+    allowedProviders: ['openrouter', 'deepseek', 'doubao'],
+    requiresImages: false
+  },
+  assembly: {
+    label: '组件/产品',
+    provider: 'openrouter',
+    model: DEFAULT_PROVIDER_MODELS.openrouter,
+    allowedProviders: ['openrouter', 'doubao'],
+    requiresImages: true
+  },
+  welding: {
+    label: '焊接',
+    provider: 'openrouter',
+    model: DEFAULT_PROVIDER_MODELS.openrouter,
+    allowedProviders: ['openrouter', 'doubao'],
+    requiresImages: true
+  },
+  safety: {
+    label: '安全',
+    provider: 'openrouter',
+    model: DEFAULT_PROVIDER_MODELS.openrouter,
+    allowedProviders: ['openrouter', 'deepseek', 'doubao'],
+    requiresImages: false
+  },
+  bom_vision: {
+    label: 'BOM视觉提取',
+    provider: 'openrouter',
+    model: DEFAULT_PROVIDER_MODELS.openrouter,
+    allowedProviders: ['openrouter', 'doubao'],
+    requiresImages: true
+  }
+})
 
 const settings = ref<Settings>({
   openrouterApiKey: '',
-  defaultModel: 'google/gemini-2.0-flash-exp:free',
+  deepseekApiKey: '',
+  doubaoApiKey: '',
   websocketUrl: 'ws://localhost:8008',
-  apiBaseUrl: '/api'
+  apiBaseUrl: '/api',
+  callPoints: buildDefaultCallPoints()
 })
 
 const saving = ref(false)
@@ -198,22 +320,119 @@ const testingModel = ref(false)
 const statusMessage = ref('')
 const statusType = ref<'success' | 'warning' | 'error' | 'info'>('info')
 
-// 加载设置
-onMounted(() => {
-  loadSettings()
-})
+const resolveProviderModel = (provider: Provider, model?: string) => {
+  const trimmed = model?.trim()
+  if (trimmed) {
+    return trimmed
+  }
+  return DEFAULT_PROVIDER_MODELS[provider] || ''
+}
 
-const loadSettings = () => {
+const normalizeLocalCallPoints = (incoming?: Record<string, any>) => {
+  const normalized = buildDefaultCallPoints()
+  if (!incoming) {
+    return normalized
+  }
+
+  callPointOrder.forEach((id) => {
+    const source = incoming[id]
+    if (!source) {
+      return
+    }
+    normalized[id] = {
+      ...normalized[id],
+      label: source.label || normalized[id].label,
+      provider: source.provider || normalized[id].provider,
+      model: resolveProviderModel(source.provider || normalized[id].provider, source.model || normalized[id].model),
+      allowedProviders: Array.isArray(source.allowedProviders) ? source.allowedProviders : normalized[id].allowedProviders,
+      requiresImages: typeof source.requiresImages === 'boolean' ? source.requiresImages : normalized[id].requiresImages
+    }
+  })
+
+  return normalized
+}
+
+const normalizeServerCallPoints = (incoming?: Record<string, any>) => {
+  const normalized = buildDefaultCallPoints()
+  if (!incoming) {
+    return normalized
+  }
+
+  callPointOrder.forEach((id) => {
+    const source = incoming[id]
+    if (!source) {
+      return
+    }
+    normalized[id] = {
+      ...normalized[id],
+      label: source.label || normalized[id].label,
+      provider: source.provider || normalized[id].provider,
+      model: resolveProviderModel(source.provider || normalized[id].provider, source.model || normalized[id].model),
+      allowedProviders: Array.isArray(source.allowed_providers) ? source.allowed_providers : normalized[id].allowedProviders,
+      requiresImages: typeof source.requires_images === 'boolean' ? source.requires_images : normalized[id].requiresImages
+    }
+  })
+
+  return normalized
+}
+
+const applyDefaultModel = (model: string) => {
+  const merged = buildDefaultCallPoints()
+  Object.keys(merged).forEach((key) => {
+    merged[key].model = model
+  })
+  return merged
+}
+
+const handleProviderChange = (callPointId: string) => {
+  const provider = settings.value.callPoints[callPointId].provider
+  settings.value.callPoints[callPointId].model = DEFAULT_PROVIDER_MODELS[provider] || ''
+}
+
+const loadSettings = async () => {
   const saved = localStorage.getItem('app_settings')
   if (saved) {
     try {
       const parsed = JSON.parse(saved)
-      settings.value = { ...settings.value, ...parsed }
+      if (typeof parsed.apiBaseUrl === 'string') {
+        settings.value.apiBaseUrl = parsed.apiBaseUrl
+      }
+      if (typeof parsed.websocketUrl === 'string') {
+        settings.value.websocketUrl = parsed.websocketUrl
+      }
+      if (typeof parsed.openrouterApiKey === 'string') {
+        settings.value.openrouterApiKey = parsed.openrouterApiKey
+      }
+      if (typeof parsed.deepseekApiKey === 'string') {
+        settings.value.deepseekApiKey = parsed.deepseekApiKey
+      }
+      if (typeof parsed.doubaoApiKey === 'string') {
+        settings.value.doubaoApiKey = parsed.doubaoApiKey
+      }
+      if (parsed.callPoints) {
+        settings.value.callPoints = normalizeLocalCallPoints(parsed.callPoints)
+      } else if (parsed.defaultModel) {
+        settings.value.callPoints = applyDefaultModel(parsed.defaultModel)
+      }
     } catch (e) {
       console.error('加载设置失败:', e)
     }
   }
+
+  try {
+    const response = await axios.get(`${settings.value.apiBaseUrl}/settings`)
+    if (response.data?.call_points) {
+      settings.value.callPoints = normalizeServerCallPoints(response.data.call_points)
+    }
+  } catch (error) {
+    console.warn('获取后端设置失败:', error)
+  }
 }
+
+// 加载设置
+onMounted(() => {
+  loadSettings()
+})
 
 const saveSettings = async () => {
   saving.value = true
@@ -223,10 +442,21 @@ const saveSettings = async () => {
     // 保存到localStorage
     localStorage.setItem('app_settings', JSON.stringify(settings.value))
 
+    const callPointsPayload: Record<string, { provider: Provider; model: string }> = {}
+    callPointOrder.forEach((id) => {
+      const point = settings.value.callPoints[id]
+      callPointsPayload[id] = {
+        provider: point.provider,
+        model: point.model
+      }
+    })
+
     // 发送到后端
     await axios.post(`${settings.value.apiBaseUrl}/settings`, {
       openrouter_api_key: settings.value.openrouterApiKey,
-      default_model: settings.value.defaultModel
+      deepseek_api_key: settings.value.deepseekApiKey,
+      doubao_api_key: settings.value.doubaoApiKey,
+      call_points: callPointsPayload
     })
 
     statusMessage.value = '设置保存成功！'
@@ -244,9 +474,11 @@ const saveSettings = async () => {
 const resetSettings = () => {
   settings.value = {
     openrouterApiKey: '',
-    defaultModel: 'google/gemini-2.0-flash-exp:free',
+    deepseekApiKey: '',
+    doubaoApiKey: '',
     websocketUrl: 'ws://localhost:8008',
-    apiBaseUrl: '/api'
+    apiBaseUrl: '/api',
+    callPoints: buildDefaultCallPoints()
   }
   localStorage.removeItem('app_settings')
   statusMessage.value = '已重置为默认设置'
@@ -281,25 +513,58 @@ const testConnection = async () => {
 const testModel = async () => {
   testingModel.value = true
   statusMessage.value = ''
+  statusType.value = 'info'
 
   try {
     // 先保存设置
     localStorage.setItem('app_settings', JSON.stringify(settings.value))
 
-    // 测试模型连接
-    const response = await axios.post(`${settings.value.apiBaseUrl}/test-model`, {
-      openrouter_api_key: settings.value.openrouterApiKey,
-      model: settings.value.defaultModel
-    })
+    const results: string[] = []
+    let hasFailure = false
 
-    if (response.data.success) {
-      statusMessage.value = `✅ 模型连接成功！\n模型: ${settings.value.defaultModel}\n响应: ${response.data.message || '测试通过'}`
-      statusType.value = 'success'
-      ElMessage.success('模型连接测试成功')
+    for (let index = 0; index < callPointOrder.length; index += 1) {
+      const callPointId = callPointOrder[index]
+      const testPoint = settings.value.callPoints[callPointId]
+      const provider = testPoint.provider
+      const model = testPoint.model
+      const providerLabel = providerLabels[provider] || provider
+
+      statusMessage.value = `🔄 正在测试 ${testPoint.label} (${index + 1}/${callPointOrder.length})...`
+      if (!model) {
+        results.push(`❌ ${testPoint.label}：模型ID为空`)
+        hasFailure = true
+        continue
+      }
+
+      try {
+        // 顺序测试避免触发限流
+        const response = await axios.post(`${settings.value.apiBaseUrl}/test-model`, {
+          provider,
+          model,
+          openrouter_api_key: settings.value.openrouterApiKey,
+          deepseek_api_key: settings.value.deepseekApiKey,
+          doubao_api_key: settings.value.doubaoApiKey
+        })
+
+        if (response.data.success) {
+          results.push(`✅ ${testPoint.label}：${providerLabel} / ${model}`)
+        } else {
+          results.push(`❌ ${testPoint.label}：${providerLabel} / ${model}，${response.data.error || '未知错误'}`)
+          hasFailure = true
+        }
+      } catch (error: any) {
+        const errorMsg = error.response?.data?.detail || error.message
+        results.push(`❌ ${testPoint.label}：${providerLabel} / ${model}，${errorMsg}`)
+        hasFailure = true
+      }
+    }
+
+    statusMessage.value = `模型连接测试结果：\n${results.join('\n')}`
+    statusType.value = hasFailure ? 'error' : 'success'
+    if (hasFailure) {
+      ElMessage.warning('部分模型连接失败')
     } else {
-      statusMessage.value = `❌ 模型连接失败: ${response.data.error || '未知错误'}`
-      statusType.value = 'error'
-      ElMessage.error('模型连接测试失败')
+      ElMessage.success('模型连接全部通过')
     }
   } catch (error: any) {
     const errorMsg = error.response?.data?.detail || error.message
@@ -335,6 +600,35 @@ const testModel = async () => {
   font-size: 12px;
   color: #909399;
   margin-top: 4px;
+}
+
+.callpoint-config {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.callpoint-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.callpoint-label {
+  width: 110px;
+  font-size: 13px;
+  color: #606266;
+  flex-shrink: 0;
+}
+
+.callpoint-provider {
+  width: 160px;
+}
+
+.callpoint-model {
+  flex: 1;
 }
 
 .help-card {

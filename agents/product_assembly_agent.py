@@ -13,11 +13,13 @@ from prompts.agent_4_product_assembly import build_product_assembly_prompt
 class ProductAssemblyAgent(BaseGeminiAgent):
     """"""
 
-    def __init__(self, api_key: str = None):
+    def __init__(self, api_key: str = None, model_name: str = None, provider: str = "openrouter"):
         super().__init__(
             agent_name="Agent4_",
             api_key=api_key,
-            temperature=0.1
+            temperature=0.1,
+            model_name=model_name,
+            provider=provider
         )
 
     @staticmethod

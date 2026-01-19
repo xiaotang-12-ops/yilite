@@ -31,7 +31,10 @@ class HierarchicalBOMMatcher:
         bom_data: List[Dict],
         component_plans: List[Dict],
         output_dir: str,
-        file_hierarchy: Dict = None
+        file_hierarchy: Dict = None,
+        ai_provider: str = "openrouter",
+        ai_model: Optional[str] = None,
+        ai_api_key: Optional[str] = None
     ) -> Dict:
         """
         分层级处理STEP文件和BOM匹配
@@ -42,6 +45,9 @@ class HierarchicalBOMMatcher:
             component_plans: 组件规划列表（来自Agent 1）
             output_dir: GLB输出目录
             file_hierarchy: 文件层级结构（包含组件图的实际序号）
+            ai_provider: AI提供方（openrouter/deepseek/doubao）
+            ai_model: AI模型名称
+            ai_api_key: AI API密钥
 
         Returns:
             {
@@ -196,7 +202,12 @@ class HierarchicalBOMMatcher:
                     unmatched_bom = [bom for bom in component_bom if bom.get('code') not in matched_bom_codes]
 
                     from core.ai_matcher import AIBOMMatcher
-                    ai_matcher = AIBOMMatcher(task_id=task_id)
+                    ai_matcher = AIBOMMatcher(
+                        task_id=task_id,
+                        provider=ai_provider,
+                        model_name=ai_model,
+                        api_key=ai_api_key
+                    )
                     ai_results = ai_matcher.match_unmatched_parts(unmatched_parts, unmatched_bom)
 
                     # ✅ 将AI匹配结果应用到cleaned_parts（更新bom_code）
@@ -462,7 +473,12 @@ class HierarchicalBOMMatcher:
 
                     if unmatched_bom:  # 只有还有未匹配的BOM才调用AI
                         from core.ai_matcher import AIBOMMatcher
-                        ai_matcher = AIBOMMatcher(task_id=task_id)
+                        ai_matcher = AIBOMMatcher(
+                            task_id=task_id,
+                            provider=ai_provider,
+                            model_name=ai_model,
+                            api_key=ai_api_key
+                        )
                         ai_results = ai_matcher.match_unmatched_parts(unmatched_parts, unmatched_bom)
 
                         # 将AI匹配结果应用到cleaned_parts（更新bom_code）

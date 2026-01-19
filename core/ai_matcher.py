@@ -11,6 +11,27 @@ import sys
 import os
 from utils.time_utils import beijing_now, build_debug_output_dir
 
+PROVIDER_BASE_URLS = {
+    "openrouter": "https://openrouter.ai/api/v1",
+    "deepseek": "https://api.deepseek.com",
+    "doubao": "https://ark.cn-beijing.volces.com/api/v3",
+}
+PROVIDER_API_KEY_ENVS = {
+    "openrouter": "OPENROUTER_API_KEY",
+    "deepseek": "DEEPSEEK_API_KEY",
+    "doubao": "ARK_API_KEY",
+}
+PROVIDER_MODEL_ENVS = {
+    "openrouter": "OPENROUTER_MODEL",
+    "deepseek": "DEEPSEEK_MODEL",
+    "doubao": "ARK_MODEL",
+}
+PROVIDER_DEFAULT_MODELS = {
+    "openrouter": "google/gemini-2.5-flash-preview-09-2025",
+    "deepseek": "deepseek-chat",
+    "doubao": "doubao-seed-1-8-251228",
+}
+
 # 添加项目根目录到路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -22,19 +43,29 @@ from prompts.agent_2_bom_3d_matching import (
 
 
 class AIBOMMatcher:
-    """AI智能BOM匹配器（使用Gemini 2.5 Flash）"""
+    """AI智能BOM匹配器"""
 
-    def __init__(self, api_key: Optional[str] = None, task_id: Optional[str] = None):
-        # 使用Gemini 2.5 Flash（通过OpenRouter）
-        self.api_key = api_key or os.getenv("OPENROUTER_API_KEY")
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        task_id: Optional[str] = None,
+        provider: str = "openrouter",
+        model_name: Optional[str] = None
+    ):
+        self.provider = provider
+        api_key_env = PROVIDER_API_KEY_ENVS.get(provider, "OPENROUTER_API_KEY")
+        model_env = PROVIDER_MODEL_ENVS.get(provider, "OPENROUTER_MODEL")
+        base_url = PROVIDER_BASE_URLS.get(provider, PROVIDER_BASE_URLS["openrouter"])
+
+        self.api_key = api_key or os.getenv(api_key_env)
         if not self.api_key:
-            raise ValueError("需要设置OPENROUTER_API_KEY环境变量或传入api_key参数")
+            raise ValueError(f"需要设置{api_key_env}环境变量或传入api_key参数")
 
         self.client = OpenAI(
             api_key=self.api_key,
-            base_url="https://openrouter.ai/api/v1"
+            base_url=base_url
         )
-        self.model = "google/gemini-2.5-flash-preview-09-2025"  # 和其他agent使用相同的模型
+        self.model = model_name or os.getenv(model_env) or PROVIDER_DEFAULT_MODELS.get(provider, PROVIDER_DEFAULT_MODELS["openrouter"])
         # 记录任务ID用于调试文件命名
         self.task_id = task_id or os.getenv("TASK_ID", "unknown_task")
         # 批处理参数（未匹配零件超过阈值时分批，以防响应截断）
@@ -155,8 +186,8 @@ class AIBOMMatcher:
         # 使用提示词文件构建prompt
         system_prompt, user_query = build_ai_matching_prompt(parts, unmatched_bom)
 
-        print(f"      🤖 他开始调用Gemini 2.5 Flash进行深度分析...")
-        print(f"      ⏱️  请稍候，Gemini速度很快...")
+        print(f"      🤖 他开始调用 {self.provider}/{self.model} 进行深度分析...")
+        print(f"      ⏱️  请稍候，模型正在分析...")
         sys.stdout.flush()
 
         # 调用AI（带重试机制）
@@ -174,17 +205,25 @@ class AIBOMMatcher:
                         print(f"      🔄 第 {attempt + 1} 次重试...")
                         time.sleep(retry_delay)
 
-                    response = self.client.chat.completions.create(
-                        model=self.model,  # 使用Gemini 2.5 Flash
-                        messages=[
+                    request_payload = {
+                        "model": self.model,  # 使用配置模型
+                        "messages": [
                             {"role": "system", "content": system_prompt},
                             {"role": "user", "content": user_query}
                         ],
-                        temperature=0.4,  # ✅ 提高到0.4，使用COT推理，追求100%匹配率
-                        # ✅ 不限制max_tokens，Gemini 2.5 Flash支持65.5K输出（COT需要更多token）
-                        stream=False,
-                        timeout=120  # ✅ 增加超时时间到120秒
-                    )
+                        "temperature": 0.4,  # ✅ 提高到0.4，使用COT推理，追求100%匹配率
+                        "stream": False,
+                        "timeout": 120  # ✅ 增加超时时间到120秒
+                    }
+                    if self.provider == "doubao":
+                        request_payload["extra_body"] = {
+                            "thinking": {"type": "enabled"},
+                            "reasoning_effort": "medium",
+                            "max_completion_tokens": 64000
+                        }
+                        request_payload["timeout"] = 1800
+
+                    response = self.client.chat.completions.create(**request_payload)
                     break  # 成功则跳出重试循环
                 except Exception as retry_error:
                     last_error = retry_error
