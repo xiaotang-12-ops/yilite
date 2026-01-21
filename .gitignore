@@ -127,3 +127,5 @@ htmlcov/
 # 3D model cache
 models_cache/
 
+
+assembly-manual_images_*.tar
