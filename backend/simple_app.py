@@ -1372,11 +1372,16 @@ DEFAULT_OPENROUTER_MODEL = "google/gemini-2.5-flash-preview-09-2025"
 DEFAULT_DEEPSEEK_MODEL = "deepseek-chat"
 DEFAULT_DOUBAO_MODEL = "doubao-seed-1-8-251228"
 DEFAULT_PROVIDER = "openrouter"
+DOUBAO_BASE_URL = (
+    os.getenv("DOUBAO_BASE_URL")
+    or os.getenv("ARK_BASE_URL")
+    or "http://111.230.37.43:3000/v1"
+)
 
 AI_PROVIDER_BASE_URLS = {
     "openrouter": "https://openrouter.ai/api/v1",
     "deepseek": "https://api.deepseek.com",
-    "doubao": "https://ark.cn-beijing.volces.com/api/v3",
+    "doubao": DOUBAO_BASE_URL,
 }
 
 AI_CALL_POINT_DEFS = {
@@ -1573,9 +1578,14 @@ async def test_model(request: TestModelRequest):
             "model": request.model,
             "messages": [
                 {"role": "user", "content": "Hello, this is a test message. Please respond with 'OK'."}
-            ],
-            "max_tokens": 10
+            ]
         }
+        if provider == "doubao":
+            request_payload["extra_body"] = {
+                "max_completion_tokens": 10
+            }
+        else:
+            request_payload["max_tokens"] = 10
         if provider == "openrouter":
             request_payload["extra_headers"] = {
                 "HTTP-Referer": "https://mecagent.com",

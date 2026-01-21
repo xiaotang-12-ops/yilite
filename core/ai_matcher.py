@@ -11,10 +11,17 @@ import sys
 import os
 from utils.time_utils import beijing_now, build_debug_output_dir
 
+DOUBAO_BASE_URL = (
+    os.getenv("DOUBAO_BASE_URL")
+    or os.getenv("ARK_BASE_URL")
+    or "http://111.230.37.43:3000/v1"
+)
+DOUBAO_MAX_TOKENS = 64000
+
 PROVIDER_BASE_URLS = {
     "openrouter": "https://openrouter.ai/api/v1",
     "deepseek": "https://api.deepseek.com",
-    "doubao": "https://ark.cn-beijing.volces.com/api/v3",
+    "doubao": DOUBAO_BASE_URL,
 }
 PROVIDER_API_KEY_ENVS = {
     "openrouter": "OPENROUTER_API_KEY",
@@ -219,7 +226,7 @@ class AIBOMMatcher:
                         request_payload["extra_body"] = {
                             "thinking": {"type": "enabled"},
                             "reasoning_effort": "medium",
-                            "max_completion_tokens": 64000
+                            "max_completion_tokens": DOUBAO_MAX_TOKENS
                         }
                         request_payload["timeout"] = 1800
 

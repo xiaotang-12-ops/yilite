@@ -13,6 +13,13 @@ from openai import OpenAI
 import datetime
 from utils.time_utils import beijing_now, build_debug_output_dir
 
+DOUBAO_BASE_URL = (
+    os.getenv("DOUBAO_BASE_URL")
+    or os.getenv("ARK_BASE_URL")
+    or "http://111.230.37.43:3000/v1"
+)
+DOUBAO_MAX_TOKENS = 64000
+
 PROVIDER_CONFIG = {
     "openrouter": {
         "base_url": "https://openrouter.ai/api/v1",
@@ -27,7 +34,7 @@ PROVIDER_CONFIG = {
         "default_model": "deepseek-chat",
     },
     "doubao": {
-        "base_url": "https://ark.cn-beijing.volces.com/api/v3",
+        "base_url": DOUBAO_BASE_URL,
         "api_key_env": "ARK_API_KEY",
         "model_env": "ARK_MODEL",
         "default_model": "doubao-seed-1-8-251228",
@@ -239,6 +246,10 @@ class BaseGeminiAgent:
                 request_payload["extra_headers"] = {
                     "HTTP-Referer": "https://mecagent.com",
                     "X-Title": "MecAgent"
+                }
+            if self.provider == "doubao":
+                request_payload["extra_body"] = {
+                    "max_completion_tokens": DOUBAO_MAX_TOKENS
                 }
 
             completion = self.client.chat.completions.create(**request_payload)

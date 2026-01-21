@@ -1,5 +1,23 @@
 # Memory Changelog
 
+## v2.0.98 (2026-01-20)
+- **焊接输出结构兼容**：
+  - Agent5 支持模型直接返回数组，避免 `.get` 导致任务失败。
+  - 输出结构异常时返回失败并保留原步骤，防止装配步骤被清空。
+- 影响文件：`agents/welding_agent.py`、`Memory_Development/index.md`、`VERSION`
+
+## v2.0.97 (2026-01-20)
+- **豆包参数冲突修复**：
+  - 全部豆包调用点改用 `max_completion_tokens`，避免与 `max_tokens` 同时出现导致 400。
+  - BOM 视觉与模型测试对豆包不再发送 `max_tokens`。
+- 影响文件：`agents/base_gemini_agent.py`、`models/gemini_model.py`、`core/ai_matcher.py`、`core/gemini_pipeline.py`、`backend/simple_app.py`、`Memory_Development/index.md`、`VERSION`
+
+## v2.0.96 (2026-01-20)
+- **NewAPI 基址切换 + 豆包 64k 输出上限**：
+  - 豆包调用点默认 Base URL 切到 NewAPI（支持 `DOUBAO_BASE_URL` / `ARK_BASE_URL` 覆盖）。
+  - 豆包调用点统一设置 `max_tokens=64000`，避免长输出被截断。
+- 影响文件：`agents/base_gemini_agent.py`、`models/gemini_model.py`、`core/ai_matcher.py`、`core/gemini_pipeline.py`、`backend/simple_app.py`、`Memory_Development/index.md`、`VERSION`
+
 ## v2.0.95 (2026-01-16)
 - **AI匹配输出长度与思考模式调整**：
   - 豆包调用点启用深度思考（`reasoning_effort=medium`），并将输出上限设置为 `max_completion_tokens=64000`。

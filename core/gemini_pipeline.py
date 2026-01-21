@@ -60,10 +60,16 @@ from utils.time_utils import beijing_now, init_debug_output_dir
 DEFAULT_OPENROUTER_MODEL = "google/gemini-2.5-flash-preview-09-2025"
 DEFAULT_DEEPSEEK_MODEL = "deepseek-chat"
 DEFAULT_DOUBAO_MODEL = "doubao-seed-1-8-251228"
+DOUBAO_BASE_URL = (
+    os.getenv("DOUBAO_BASE_URL")
+    or os.getenv("ARK_BASE_URL")
+    or "http://111.230.37.43:3000/v1"
+)
+DOUBAO_MAX_TOKENS = 64000
 PROVIDER_BASE_URLS = {
     "openrouter": "https://openrouter.ai/api/v1",
     "deepseek": "https://api.deepseek.com",
-    "doubao": "https://ark.cn-beijing.volces.com/api/v3",
+    "doubao": DOUBAO_BASE_URL,
 }
 
 
@@ -737,13 +743,18 @@ class GeminiAssemblyPipeline:
                             ]
                         }
                     ],
-                    "temperature": 0.0,
-                    "max_tokens": 4096
+                    "temperature": 0.0
                 }
+                if self.bom_vision_call_point["provider"] != "doubao":
+                    request_payload["max_tokens"] = 4096
                 if self.bom_vision_call_point["provider"] == "openrouter":
                     request_payload["extra_headers"] = {
                         "HTTP-Referer": "https://mecagent.com",
                         "X-Title": "MecAgent BOM Extraction"
+                    }
+                if self.bom_vision_call_point["provider"] == "doubao":
+                    request_payload["extra_body"] = {
+                        "max_completion_tokens": DOUBAO_MAX_TOKENS
                     }
 
                 completion = client.chat.completions.create(**request_payload)

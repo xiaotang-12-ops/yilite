@@ -58,8 +58,24 @@ class WeldingAgent(BaseGeminiAgent):
         if result["success"]:
             parsed = result["result"]
 
-            # 获取增强后的步骤
-            enhanced_steps = parsed.get("enhanced_steps", [])
+            # 获取增强后的步骤（兼容模型直接返回数组的情况）
+            enhanced_steps = None
+            if isinstance(parsed, list):
+                enhanced_steps = parsed
+            elif isinstance(parsed, dict):
+                candidate = parsed.get("enhanced_steps")
+                if isinstance(candidate, list):
+                    enhanced_steps = candidate
+            if enhanced_steps is None:
+                error = f"焊接输出结构异常，期望对象或数组，实际为: {type(parsed).__name__}"
+                print(f"\n ❌ 焊接分析失败: {error}")
+                return {
+                    "success": False,
+                    "error": error,
+                    "enhanced_steps": assembly_steps,  # 返回原始步骤
+                    "total_steps": len(assembly_steps),
+                    "welding_steps_count": 0
+                }
 
             # 统计焊接步骤数量
             welding_steps_count = sum(
