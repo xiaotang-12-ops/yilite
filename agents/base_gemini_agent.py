@@ -146,7 +146,7 @@ class BaseGeminiAgent:
             if result["success"]:
                 # 检查JSON是否有效
                 parsed = result["result"]
-                if parsed and not parsed.get("parse_error") and not parsed.get("raw_content"):
+                if parsed and (not isinstance(parsed, dict) or (not parsed.get("parse_error") and not parsed.get("raw_content"))):
                     print(f"✅ 调用成功，JSON解析正常")
                     return result
                 else:

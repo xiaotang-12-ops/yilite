@@ -1,5 +1,13 @@
 # Memory Changelog
 
+## v2.0.99 (2026-01-28)
+- **安全输出结构兼容**：
+  - Agent6 支持模型直接返回数组（顶层为 list）或对象（包含 `enhanced_steps/faq_items`），避免 `.get` 导致任务失败。
+  - 输出结构异常时返回失败并保留原步骤，避免流水线中断。
+- **重试逻辑健壮性**：
+  - 重试检查兼容非 dict 的有效 JSON 结果，避免在重试阶段再次触发 `.get` 崩溃。
+- 影响文件：`agents/safety_faq_agent.py`、`agents/base_gemini_agent.py`
+
 ## v2.0.98 (2026-01-20)
 - **焊接输出结构兼容**：
   - Agent5 支持模型直接返回数组，避免 `.get` 导致任务失败。

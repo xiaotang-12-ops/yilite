@@ -58,14 +58,32 @@ class SafetyFAQAgent(BaseGeminiAgent):
         if result["success"]:
             parsed = result["result"]
 
+            enhanced_steps = None
+            faq_items = []
+            if isinstance(parsed, list):
+                enhanced_steps = parsed
+            elif isinstance(parsed, dict):
+                enhanced_steps = parsed.get("enhanced_steps", [])
+                faq_items = parsed.get("faq_items", [])
+
+            if not isinstance(enhanced_steps, list):
+                return {
+                    "success": False,
+                    "error": "安全分析结果结构异常",
+                    "enhanced_steps": assembly_steps,
+                    "faq_items": [],
+                    "total_steps": len(assembly_steps),
+                    "safety_steps_count": 0
+                }
+
             # 获取增强后的步骤和FAQ
-            enhanced_steps = parsed.get("enhanced_steps", [])
-            faq_items = parsed.get("faq_items", [])
+            enhanced_steps = enhanced_steps or []
+            faq_items = faq_items or []
 
             # 统计有安全警告的步骤数量
             safety_steps_count = sum(
                 1 for step in enhanced_steps
-                if step.get("safety_warnings") and len(step.get("safety_warnings", [])) > 0
+                if isinstance(step, dict) and step.get("safety_warnings") and len(step.get("safety_warnings", [])) > 0
             )
 
             # ✅ 计算覆盖率
@@ -74,8 +92,11 @@ class SafetyFAQAgent(BaseGeminiAgent):
             # ✅ 统计安全警告总数
             total_warnings = 0
             for step in enhanced_steps:
+                if not isinstance(step, dict):
+                    continue
                 warnings = step.get("safety_warnings", [])
-                total_warnings += len(warnings)
+                if isinstance(warnings, list):
+                    total_warnings += len(warnings)
 
             print(f"\n ✅ 安全分析完成:")
             print(f"   - 总步骤数: {len(enhanced_steps)}")
