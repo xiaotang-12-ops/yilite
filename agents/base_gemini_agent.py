@@ -247,15 +247,36 @@ class BaseGeminiAgent:
                     "HTTP-Referer": "https://mecagent.com",
                     "X-Title": "MecAgent"
                 }
-            if self.provider == "doubao":
-                request_payload["extra_body"] = {
-                    "max_completion_tokens": DOUBAO_MAX_TOKENS
+                # ✅ 添加 provider.ignore 排除地域限制
+                request_payload["provider"] = {
+                    "ignore": ["google-ai-studio"]
                 }
+            if self.provider == "doubao":
+                request_payload["max_completion_tokens"] = DOUBAO_MAX_TOKENS
 
             completion = self.client.chat.completions.create(**request_payload)
             
-            #
+            # ✅ 防御性检查：确保响应格式正确
+            if not completion or not completion.choices or len(completion.choices) == 0:
+                error_msg = "API返回了空响应或格式错误"
+                print(f"❌ [{self.agent_name}] {error_msg}")
+                return {
+                    "success": False,
+                    "error": error_msg,
+                    "result": None
+                }
+            
             response_content = completion.choices[0].message.content
+            
+            # ✅ 检查content是否为None
+            if response_content is None:
+                error_msg = "API返回的content为空"
+                print(f"❌ [{self.agent_name}] {error_msg}")
+                return {
+                    "success": False,
+                    "error": error_msg,
+                    "result": None
+                }
 
             print(f"[{self.agent_name}] Success")
 

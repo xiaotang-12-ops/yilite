@@ -1,5 +1,303 @@
 # Memory Changelog
 
+## v2.1.18 (2026-02-05)
+- **历史版本预览禁止删除零件**：
+  - **用户提问**：查看历史版本的时候，预览某个版本，我发现还是可以删除零件，应该要禁止才行，和修改已经那些一样，这个时候只是查看，禁止删除。
+  - **问题根因**：
+    - 删除零件按钮（Line 307-314）没有 `v-if` 条件，历史版本模式下仍然显示
+    - `deletePart` 函数（Line 4990）没有只读模式检查，而其他修改函数（如修改零件状态 Line 4879、调整步骤顺序 Line 3311）都有检查
+  - **问题场景**：用户在历史版本预览页面点击零件，弹出状态弹窗，可以看到并点击"删除零件"按钮，导致历史版本被修改
+  - **修复方案**：
+    1. **隐藏删除按钮**（Line 306）：添加 `v-if="isAdmin && !isReadOnlyMode"` 条件，历史版本模式下不显示删除按钮
+    2. **添加只读检查**（Line 4990）：在 `deletePart` 函数开头添加只读模式检查，提示"历史版本为只读，无法删除零件"（防御性编程）
+  - **影响文件**：`frontend/src/views/ManualViewer.vue`
+  - **记录人**：小雅
+
+## v2.1.17 (2026-02-05)
+- **手机端图纸抽屉返回刷新问题彻底修复（二次修复）**：
+  - **用户提问**：手机端查看图纸到任意第二步以上，第一次打开图纸抽屉，点击返回，整个页面会刷新并跳到第一步。
+  - **问题根因**：
+    - **第一层问题**：抽屉打开时没有向浏览器历史栈添加记录（`pushState`），导致点击返回键时触发真实的路由返回。虽然 `onBeforeRouteLeave` 守卫会拦截并阻止跳转，但路由触发过程已经开始，可能导致状态重置或页面刷新。
+    - **第二层问题（致命漏洞）**：`popstate` 监听器中直接赋值关闭抽屉（`showDrawingsDrawer.value = false`），没有调用 `closeMobileDrawers()` 函数，导致历史回退逻辑完全没有执行。
+    - **第三层问题**：watch 监听器没有检查 `closingOverlayFromPopstate` 标记，导致 popstate 触发时 watch 重复处理，可能引发逻辑混乱。
+  - **问题场景**：
+    - 用户在步骤2打开图纸抽屉
+    - 点击返回键 → 触发路由返回
+    - 路由守卫拦截并关闭抽屉，但页面已经出现刷新或跳转到第一步
+  - **第一次修复（不彻底）**：
+    1. 添加 `watch` 监听三个抽屉的打开/关闭状态
+    2. 抽屉打开时添加历史记录（`pushState` + `overlayStack.push`）
+    3. 修改 `closeMobileDrawers()` 添加 `skipHistory` 参数
+    4. ❌ **遗漏**：`popstate` 监听器仍然直接赋值，没有调用 `closeMobileDrawers()`
+    5. ❌ **遗漏**：watch 监听器没有检查 `closingOverlayFromPopstate`
+  - **第二次修复（彻底）**：
+    1. **修复 `popstate` 监听器**（Line 5236-5239）：调用 `closeMobileDrawers(true)` 而不是直接赋值，确保关闭逻辑统一
+    2. **修复 watch 监听器**（Line 4668）：添加 `closingOverlayFromPopstate` 检查，避免在 popstate 触发时重复处理
+  - **技术细节**：
+    - 抽屉的历史记录管理逻辑与图片预览保持一致
+    - 使用 `closingOverlayFromManual` 标记避免手动关闭时重复处理 `popstate`
+    - 使用 `closingOverlayFromPopstate` 标记避免 popstate 触发时 watch 重复处理
+    - `closeMobileOverlays()` 调用时传入 `skipHistory=true`，避免重复 `back()`
+    - `popstate` 监听器调用 `closeMobileDrawers(true)`，统一关闭逻辑
+  - **反思与教训**：
+    - ⚠️ **修复不彻底的原因**：只关注了"添加历史记录"，忽略了"消费历史记录"的逻辑是否正确执行
+    - ⚠️ **应该做的**：修复后应该完整追踪整个逻辑链（打开 → 添加历史 → 返回 → 消费历史 → 关闭），而不是只看部分环节
+    - ⚠️ **标记的重要性**：多个异步事件（popstate、watch、手动关闭）需要用标记（flag）避免重复处理
+  - **验证要点**：手机端进入步骤2 → 打开图纸抽屉 → 点击返回键 → 只关闭抽屉，不刷新页面，不跳转步骤
+- **爆炸视图累积放大问题修复**：
+  - **用户提问**：查看器图纸的爆炸视图，放大到一定程度后，点击"默认"/"分散"来回切换，爆炸视图会越来越大。
+  - **问题根因**：`updateStepDisplay()` 函数每次都实时计算模型的包围盒（`Box3().setFromObject(model)`），而包围盒会包含当前爆炸状态下的零件位置，导致 `maxDim` 越来越大，形成正反馈循环（爆炸 → 包围盒变大 → 下次爆炸更大）。
+  - **问题场景**：
+    - 用户来回点击"默认"/"分散"切换爆炸模式
+    - 控制台显示 `explodeBase` 从 5.657 涨到 26.839（涨了4.7倍）
+    - 零件飞得越来越远
+  - **修复方案**：
+    1. 添加全局变量 `cachedModelMaxDim` 缓存原始包围盒的 `maxDim`
+    2. 在 `loadModel()` 和 `switchGLBModel()` 中，模型居中后立即计算并缓存原始包围盒（零件归位状态）
+    3. 修改 `updateStepDisplay()` 使用缓存的 `cachedModelMaxDim` 替代实时计算
+    4. 在 `clearModelData()` 中清理缓存
+  - **次要优化**：
+    - 添加动画取消机制：存储每个 mesh 的 `requestAnimationFrame` ID，新动画开始前取消旧动画，避免多个动画同时运行导致位置混乱
+    - 添加防抖处理：使用 `useDebounceFn` 对滑块拖动添加 100ms 防抖，优化拖动体验
+  - **验证要点**：来回点击"默认"/"分散" 10次，控制台的 `explodeBase` 值应该稳定不变
+- **手机端隐藏管理员登录按钮**：
+  - **用户提问**：手机端不要显示管理员登录按钮。
+  - **修复方案**：在 `App.vue` 的管理员登录/退出按钮外层添加 `v-if="!isMobile"` 判断，手机端完全隐藏管理员相关UI。
+  - **验证要点**：手机端导航栏不显示管理员登录按钮和管理员状态
+- 影响文件：`frontend/src/views/ManualViewer.vue`、`frontend/src/App.vue`、`Memory_Development/changelog.md`、`VERSION`
+
+## v2.1.16 (2026-02-03)
+- **新增文件上传时的2D/3D图纸匹配验证**：
+  - **问题根因**：上传接口没有验证PDF和STEP文件名是否匹配，导致用户上传错误图纸也能通过，后续生成时才发现问题。
+  - **问题场景**：
+    - 用户上传了不同项目的PDF和STEP文件
+    - 系统直接保存，没有任何提示
+    - 生成时才发现图纸不匹配，浪费时间
+  - **修复方案**：
+    1. 新增`extract_core_name_from_pdf()`函数：去掉PDF文件名的前缀编号（格式：`数字.数字.数字.数字字母-`）和扩展名，提取核心名称
+    2. 新增`extract_core_name_from_step()`函数：去掉STEP文件名的前缀字母（格式：`字母-`）、后缀版本号（格式：`-数字`）和扩展名，提取核心名称
+    3. 在`/api/upload`接口中添加验证逻辑：
+       - 检查PDF和STEP文件数量是否一致
+       - 提取每个文件的核心名称
+       - 验证每个PDF都有对应的STEP文件（核心名称完全匹配）
+       - 不匹配时返回400错误："当前2D与3D图纸不匹配，请更换后再试"
+  - **匹配规则示例**：
+    - PDF: `06.84.01.0001T-HSB1220(48IN)-NL-Z吹雪机无连接器.pdf` → 核心名称: `HSB1220(48IN)-NL-Z吹雪机无连接器`
+    - STEP: `T-HSB1220(48IN)-NL-Z吹雪机无连接器-203.STEP` → 核心名称: `HSB1220(48IN)-NL-Z吹雪机无连接器`
+    - ✅ 匹配成功
+  - **影响范围**：文件上传验证
+- 影响文件：`api.py`、`Memory_Development/changelog.md`
+
+## v2.1.15 (2026-02-03)
+- **增强任务恢复前的完整性检查**：
+  - **问题根因**：镜像重启后，中间JSON文件可能损坏（截断、格式错误），但系统只检查最终的`assembly_manual.json`，不检查中间文件，导致用户点击"继续生成"后才发现任务损坏，浪费时间。
+  - **问题场景**：
+    - Agent4成功生成58个步骤，但Agent5和Agent6的输出被截断（JSON解析失败）
+    - 镜像重启后，用户尝试恢复任务
+    - 系统认为任务可以恢复（因为`assembly_manual.json`不存在，但中间文件存在）
+    - 运行时才抛出`ResumeDataError`，提示"step4_assembly_steps.json损坏"
+  - **修复方案**：
+    1. 修改`_validate_manual_json()`函数，增加关键中间文件检查
+    2. 检查3个关键文件：`step1_bom.json`（BOM提取）、`step2_bom_matched.json`（BOM匹配）、`step4_assembly_steps.json`（装配步骤）
+    3. 如果中间文件存在但无法解析或为空，返回`{"valid": False, "error": "resume_corrupt"}`
+    4. 前端在恢复任务前提示用户："旧任务数据损坏，请删除后重试"
+  - **验证要点**：
+    - 镜像重启后，损坏任务在恢复前被检测到
+    - 提示用户"旧任务数据损坏，请删除后重试"
+    - 正常任务的恢复不受影响
+  - **影响范围**：任务恢复逻辑、任务状态检查
+- 影响文件：`backend/simple_app.py`、`Memory_Development/changelog.md`、`VERSION`
+
+## v2.1.14 (2026-02-03)
+- **彻底修复调用点独立Key丢失问题**：
+  - **问题根因**：v2.1.13的修复不完整，`_resolve_call_point`方法在返回调用点配置时，只返回了`{"provider": provider, "model": model}`，**丢弃了`custom_key`字段**，导致`_get_api_key`方法无法获取到独立Key。
+  - **问题场景**：
+    - v2.1.13修改了`_get_api_key`方法，使其能够接收并使用`custom_key`
+    - 但`_resolve_call_point`方法返回的字典中没有包含`custom_key`
+    - 导致测试成功（测试API直接使用`custom_key`），但实际运行失败（`_get_api_key`拿到的字典没有`custom_key`）
+    - 继续出现403错误："该令牌无权访问模型 google/gemini-3-flash-preview"
+  - **修复方案**：
+    1. 修改`_resolve_call_point`方法，在返回字典时保留`custom_key`字段
+    2. 增强`_get_api_key`方法的日志，打印Key来源（独立Key/全局Key）和脱敏后的Key值
+    3. 确保配置传递链路完整：`call_point_settings` → `_resolve_call_point` → `_get_api_key`
+  - **验证要点**：
+    - 查看Docker日志，确认显示"🔑 使用独立Key: sk-xxx...xxx"
+    - 不再出现403错误
+    - AI匹配、Agent4等调用点正常工作
+  - **影响范围**：所有调用点（AI匹配、组件装配、产品总装、焊接增强、安全FAQ、BOM视觉）
+- 影响文件：`core/gemini_pipeline.py`、`Memory_Development/changelog.md`、`VERSION`
+
+## v2.1.13 (2026-02-03)
+- **修复调用点独立Key未生效的严重BUG**：
+  - **问题根因**：Pipeline的`_get_api_key`方法只接收`provider`参数，完全忽略了调用点配置中的`custom_key`字段，导致测试成功但实际运行失败。
+  - **问题场景**：
+    - 用户在设置页面为"AI匹配"配置了独立Key（有Gemini权限）
+    - 测试模型时成功（因为测试API优先使用`custom_key`）
+    - 实际运行时失败（因为Pipeline只使用全局OpenRouter Key，该Key无Gemini权限）
+    - 导致403错误："该令牌无权访问模型 google/gemini-3-flash-preview"
+  - **修复方案**：
+    1. 修改`_get_api_key`方法签名：从`_get_api_key(provider: str)`改为`_get_api_key(call_point: Dict[str, str])`
+    2. 方法内部优先使用`call_point.get("custom_key")`，如果没有则根据`provider`返回全局Key
+    3. 修改所有调用`_get_api_key`的地方（6处），传入完整的`call_point`对象而不是`provider`字符串
+    4. 确保测试和实际运行使用相同的Key选择逻辑
+  - **验证要点**：
+    - 调用点配置了独立Key时，实际运行使用独立Key
+    - 调用点没有配置独立Key时，使用全局Key
+    - 测试模型和实际运行使用相同的Key
+  - **影响范围**：所有调用点（AI匹配、组件装配、产品总装、焊接增强、安全FAQ、BOM视觉）
+- **AI匹配失败时立即终止流程**：
+  - **问题根因**：AI匹配失败后，代码只记录错误但没有抛出异常，导致后续所有Agent继续执行，浪费大量费用。
+  - **问题场景**：
+    - AI匹配失败（403错误）
+    - 但Agent4、Agent5、Agent6继续执行
+    - 总计浪费$0.738（约5.3元）
+    - 最后validation检查时才发现失败
+  - **修复方案**：
+    1. AI匹配失败时，打印详细错误信息（错误原因、检查建议）
+    2. 立即抛出异常`ValueError(f"ai_matching_failed: {error_msg}")`
+    3. 终止整个流程，不再执行后续Agent
+  - **验证要点**：AI匹配失败后立即终止，不再浪费费用
+- 影响文件：`core/gemini_pipeline.py`、`Memory_Development/changelog.md`、`Memory_Development/index.md`、`VERSION`
+
+## v2.1.12 (2026-02-02)
+- **调用点独立API Key配置**：
+  - **问题根因**：用户使用NewAPI中转服务，不同模型需要不同的渠道Key，但原有设计所有调用点共用一个Key，导致403错误。
+  - **问题场景**：用户"匹配"调用点使用 `google/gemini-3-flash-preview` 模型（需要Key A），其他调用点使用 `doubao-seed-1-8-251228` 模型（需要Key B），但所有调用点都通过同一个NewAPI地址调用，只是Key不同。
+  - **修复方案**：
+    1. 前端：每个调用点增加"独立Key"输入框（可选，留空则使用默认Key）
+    2. 数据结构：`CallPointConfig` 增加 `customKey` 字段
+    3. 后端：保存和读取 `custom_key` 字段
+    4. Pipeline：`_get_api_key` 方法优先使用调用点的独立Key，没有则使用默认Key
+    5. 测试接口：支持 `custom_key` 参数
+  - **验证要点**：每个调用点可以配置不同的Key；留空则使用对应提供方的默认Key；测试模型时使用正确的Key。
+  - **UI改进**：每个调用点配置区域增加独立Key输入框，提示"如果某个调用点需要不同的Key（如NewAPI中不同渠道的Key），请填写'独立Key'"。
+- 影响文件：`frontend/src/views/Settings.vue`、`backend/simple_app.py`、`core/gemini_pipeline.py`、`Memory_Development/changelog.md`、`Memory_Development/index.md`、`VERSION`
+
+## v2.1.11 (2026-02-02)
+- **Step2 BOM文本层优先纠正机制**：
+  - **问题根因**：Vision API识别BOM代号时可能出错（如将 `01.03.5275` 误识别为 `01.03.5276`），导致重复代号和3D高亮错误。
+  - **问题场景**：PDF文本层能提取到正确的BOM代号，但原有逻辑只"补全空字段"，不"纠正错误字段"，导致Vision的错误值被保留。
+  - **修复方案**：
+    1. 修改 `_merge_vision_with_text_layer` 函数，增加"文本层优先纠正"策略：
+       - 对 `code` 字段：如果文本层有值且与Vision不同，用文本层覆盖（无论Vision是否有值）
+       - 对 `product_code`、`name` 字段：如果文本层有值且与Vision不同，用文本层覆盖
+       - 保留原有的补全逻辑（`quantity`、`weight` 等字段）
+    2. 生成 `step2_bom_correction_log.json`，记录所有纠正和补全操作（包含 seq、source_pdf、field、vision_value、text_value、decision）
+    3. 函数返回值改为 `(merged_items, correction_log)` 元组
+  - **验证要点**：文本层提取到的正确值会覆盖Vision的错误值；生成纠正日志便于追溯；解决BOM代号重复问题。
+  - **实际效果**：文本层能提取约64%的BOM项（37/58），这些项的准确性高于Vision，成功纠正Vision的识别错误。
+- 影响文件：`core/gemini_pipeline.py`、`Memory_Development/changelog.md`、`VERSION`
+
+## v2.1.10 (2026-01-30)
+- **失败即失败 + 断点校验强化**：
+  - **问题场景**：模型调用失败后仍写出空手册并标记成功；断点续跑可能复用无效结果，导致“中途有问题却可进入查看器”。
+  - **修复方案**：
+    1. Pipeline 增加步骤有效性校验：Step1~Step7 结果无效则重跑；仍无效直接失败。
+    2. 手册整合前强制校验步骤数，`steps=0` 直接判失败，不写空手册。
+    3. 后端对 `assembly_manual.json` 做内容校验（空手册视为失败），`/api/status` 自动修正 completed→failed。
+    4. 前端失败态只允许“余额不足/取消”继续，未知错误提示“文件错误”仅删除。
+  - **验证要点**：模型权限失败时不再出现空白成功；失败任务不显示查看入口；续跑仅复用有效产物。
+- 影响文件：`core/gemini_pipeline.py`、`backend/simple_app.py`、`frontend/src/views/Generator.vue`、`Memory_Development/index.md`、`VERSION`
+
+## v2.1.09 (2026-01-29)
+- **模型快捷选择**：
+  - **问题场景**：每个调用点都需要手动输入模型 ID，容易拼写错误，操作繁琐。
+  - **修复方案**：
+    1. 设置页“调用点模型配置”新增“快捷模型”下拉。
+    2. 选择 `gemini3-flash` 自动填充 `google/gemini-3-flash-preview`。
+    3. 仅在提供方为 豆包（NewAPI）时展示，避免误选到其他平台。
+  - **验证要点**：切到 豆包 后出现下拉；选择后模型输入框自动更新。
+- 影响文件：`frontend/src/views/Settings.vue`、`Memory_Development/index.md`、`VERSION`
+
+## v2.1.08 (2026-01-29)
+- **镜像体积减负（白名单COPY）**：
+  - **问题场景**：后端镜像体积过大，`COPY . .` 构建层达到 1.63GB。
+  - **修复方案**：
+    1. 后端 `Dockerfile` 将 `COPY . .` 改为白名单复制核心源码目录与必要文件（`backend/core/agents/processors/utils/models/prompts` + `config.py`/`api.py`）。
+  - **验证要点**：重新构建后 `docker history` 中 `COPY` 层显著缩小，镜像体积下降约 1.6GB。
+- 影响文件：`Dockerfile`、`Memory_Development/index.md`、`VERSION`
+
+## v2.1.07 (2026-01-29)
+- **镜像体积减负（构建上下文）**：
+  - **问题场景**：镜像体积变大，怀疑历史产物被打入构建上下文。
+  - **修复方案**：
+    1. `.dockerignore` 增加 `output_archive/`，防止历史归档产物进入后端镜像构建。
+  - **验证要点**：重新 `docker build` 后镜像体积下降；`docker save` 生成的 tar 体积同步下降。
+- 影响文件：`.dockerignore`、`Memory_Development/index.md`、`VERSION`
+
+## v2.1.06 (2026-01-29)
+- **管理员入口与生成器门禁**：
+  - **问题场景**：管理员登录只在 ManualViewer 内，生成器入口对所有人可见，容易误触或绕过。
+  - **修复方案**：
+    1. 顶部导航将“帮助”替换为管理员登录入口，显示管理员状态与退出。
+    2. 生成器入口仅管理员可见：首页/查看器内按钮同步隐藏。
+    3. 路由守卫拦截未登录访问 `/generator`。
+    4. 管理员状态统一 Pinia + `sessionStorage`，ManualViewer 登录/退出与全局同步。
+  - **验证要点**：未登录看不到生成器按钮；直输 `/generator` 跳回首页；登录后入口恢复。
+- 影响文件：`frontend/src/App.vue`、`frontend/src/views/HomeNew.vue`、`frontend/src/views/Viewer.vue`、`frontend/src/views/ManualViewer.vue`、`frontend/src/main.ts`、`frontend/src/stores/admin.ts`、`Memory_Development/index.md`、`VERSION`
+
+## v2.1.05 (2026-01-29)
+- **后端立即失败修复**：
+  - **问题场景**：删除任务后重新上传，任务一开始就失败；后端日志显示 `IndentationError`，并被二次异常掩盖。
+  - **修复方案**：
+    1. 修复 `product_assembly_agent` 覆盖率分支缩进错误，避免 `IndentationError`。
+    2. 在 `run_pipeline` 中为 `ResumeDataError` 提前占位，导入失败时不再触发 `UnboundLocalError`。
+  - **结果**：流水线可正常启动，真实失败原因不会被二次异常遮挡。
+- 影响文件：`agents/product_assembly_agent.py`、`backend/simple_app.py`、`Memory_Development/index.md`、`VERSION`
+
+## v2.1.04 (2026-01-29)
+- **上次任务信息提示补齐**：
+  - **问题场景**：上传页只知道“有上次任务”，但不知道具体任务名/状态/更新时间，删除确认也缺少上下文，容易误删。
+  - **修复方案**：
+    1. 监听 `last_task_id` 后调用 `/api/status/{task_id}` 获取 `projectName/status/updated_at`。
+    2. 上传页展示“上一次任务：名称 + 状态 + 更新时间”，提高可辨识度。
+    3. 删除确认弹窗拼接任务名，避免删错。
+  - **影响行为**：只增强信息提示与确认文案，不改变任务判断逻辑。
+- 影响文件：`frontend/src/views/Generator.vue`、`Memory_Development/index.md`、`VERSION`
+
+## v2.1.03 (2026-01-28)
+- **失败任务手动删除入口**：
+  - **问题场景**：继续失败的自动提示未必触发，用户缺少“主动清理旧任务”的入口，导致卡住无法重新生成。
+  - **修复方案**：
+    1. `last_task_id` 存在且未生成中时显示“删除上一次任务”按钮。
+    2. 点击后二次确认，调用 `DELETE /api/manual/{task_id}` 清理旧任务。
+    3. 成功后清空 `last_task_id`，回到上传页，允许重新上传。
+  - **验证要点**：失败任务出现按钮可见；删除成功后提示“已删除任务，请重新上传”。
+- 影响文件：`frontend/src/views/Generator.vue`、`Memory_Development/index.md`、`VERSION`
+
+## v2.1.02 (2026-01-28)
+- **继续失败自动删除提示强化**：
+  - **问题场景**：点击“继续上一次任务”后如果源文件缺失/损坏，会反复失败且停留在生成页，无法回到上传。
+  - **修复方案**：
+    1. 继续任务失败时（HTTP 400 或错误文本包含“缺少源文件/损坏/resume_corrupt”）触发删除确认提示。
+    2. 用户确认后调用 `DELETE /api/manual/{task_id}`，关闭 SSE 并停止轮询，重置到上传页。
+  - **结果**：避免“继续→失败→卡住”的死循环，用户可直接重新上传。
+- 影响文件：`frontend/src/views/Generator.vue`、`Memory_Development/index.md`、`VERSION`
+
+## v2.1.01 (2026-01-28)
+- **生成器继续入口**：
+  - 上传页新增“继续上一次任务”按钮，停止/失败后可直接调用 `/api/task/{task_id}/resume`。
+  - 停止/失败自动记录 `last_task_id`，成功完成会清理该记录。
+- **恢复日志页 + 覆盖率重试修复**：
+  - 生成中从查看器返回生成器时，恢复连接会自动切回日志页。
+  - 修复 Agent3/Agent4 重试提示引用未定义 `coverage_rate` 的崩溃。
+- **继续失败删除提示**：
+  - 继续任务失败（缺少源文件/数据损坏）时弹出删除提示，并调用 `/api/manual/{task_id}` 清理旧任务。
+- 影响文件：`frontend/src/views/Generator.vue`、`agents/component_assembly_agent.py`、`agents/product_assembly_agent.py`、`Memory_Development/index.md`、`VERSION`
+- 平台名字修改：AI智能装配平台改为AI智能装配指导
+
+## v2.1.00 (2026-01-28)
+- **断点续跑与失败任务识别**：
+  - 新增 `/api/task/{task_id}/resume` 与 `/api/task/{task_id}/cancel`，任务状态持久化到 `task_status.json`（安全序列化，避免 thread/circular）。
+  - 同名冲突支持失败态识别：`assembly_manual.json` 缺失/损坏视为失败，成功任务覆盖前归档，失败任务直接删除。
+  - 失败原因分类（余额不足/无权限/AI-Key 缺失）写入 `failure_hint`，供前端提示。
+- **流水线断点续跑**：
+  - `GeminiAssemblyPipeline` 支持基于 step1-7 JSON 复用继续，并上报进度文案。
+- **前端生成器进度条**：
+  - 日志黑框下方新增进度条，轮询 `/api/status` 展示 `progress_message`。
+  - 冲突弹窗支持“继续上一次任务/删除失败任务”，中断按钮改为保留结果。
+- 影响文件：`backend/simple_app.py`、`core/gemini_pipeline.py`、`frontend/src/views/Generator.vue`、`Memory_Development/index.md`、`Memory_Development/backend/api.md`、`VERSION`
+
 ## v2.0.99 (2026-01-28)
 - **安全输出结构兼容**：
   - Agent6 支持模型直接返回数组（顶层为 list）或对象（包含 `enhanced_steps/faq_items`），避免 `.get` 导致任务失败。

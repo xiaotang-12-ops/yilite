@@ -1,4 +1,4 @@
-<template>
+，<template>
   <div id="app" class="app-container">
     <!-- 全局导航栏 -->
     <nav class="app-nav">
@@ -6,8 +6,8 @@
         <div class="nav-brand" @click="handleLogoClick">
           <img class="brand-icon" src="/logo.png" alt="品牌Logo" />
           <div class="brand-text">
-            <h1>易力特AI智能装配平台</h1>
-            <span>AI Assembly Manual Generator</span>
+            <h1>装配指导</h1>
+            <span>Assembly Instructions</span>
           </div>
         </div>
         
@@ -16,7 +16,7 @@
             <el-icon><House /></el-icon>
             <span>首页</span>
           </router-link>
-          <router-link to="/generator" class="nav-item" active-class="active">
+          <router-link v-if="isAdmin" to="/generator" class="nav-item" active-class="active">
             <el-icon><DocumentAdd /></el-icon>
             <span>生成器</span>
           </router-link>
@@ -41,10 +41,24 @@
               <Sunny v-else />
             </el-icon>
           </el-button>
-          <el-button type="primary" @click="showHelp" class="help-btn">
-            <el-icon><QuestionFilled /></el-icon>
-            帮助
-          </el-button>
+          <!-- 管理员登录/退出按钮（手机端隐藏） -->
+          <template v-if="!isMobile">
+            <template v-if="!isAdmin">
+              <el-button type="primary" @click="showLoginDialog = true" class="admin-login-btn">
+                <el-icon><Lock /></el-icon>
+                管理员登录
+              </el-button>
+            </template>
+            <template v-else>
+              <span class="admin-badge">
+                <el-icon><User /></el-icon>
+                管理员
+              </span>
+              <el-button @click="handleLogout" class="admin-logout-btn">
+                退出
+              </el-button>
+            </template>
+          </template>
           <el-button
             class="mobile-menu-btn"
             circle
@@ -82,6 +96,33 @@
       </div>
     </el-drawer>
 
+    <!-- 管理员登录Dialog -->
+    <el-dialog
+      v-model="showLoginDialog"
+      title="管理员登录"
+      width="400px"
+      :close-on-click-modal="false"
+      @closed="resetLoginForm"
+    >
+      <el-form :model="loginForm" label-width="80px">
+        <el-form-item label="用户名">
+          <el-input v-model="loginForm.username" placeholder="请输入用户名" />
+        </el-form-item>
+        <el-form-item label="密码">
+          <el-input
+            v-model="loginForm.password"
+            type="password"
+            placeholder="请输入密码"
+            @keyup.enter="handleLogin"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showLoginDialog = false">取消</el-button>
+        <el-button type="primary" @click="handleLogin">登录</el-button>
+      </template>
+    </el-dialog>
+
     <!-- 主要内容区域 -->
     <main class="app-main">
       <router-view v-slot="{ Component }">
@@ -107,9 +148,11 @@
 <script setup lang="ts">
 import { watch, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
+import { storeToRefs } from 'pinia'
 import { useDark, useToggle, useMediaQuery } from '@vueuse/core'
-import { Sunny, Moon, House, DocumentAdd, View, Setting, QuestionFilled, Menu } from '@element-plus/icons-vue'
+import { Sunny, Moon, House, DocumentAdd, View, Setting, Menu, Lock, User } from '@element-plus/icons-vue'
+import { useAdminStore } from './stores/admin'
 
 const isDark = useDark()
 const toggleDark = useToggle(isDark)
@@ -117,6 +160,10 @@ const isMobile = useMediaQuery('(max-width: 1024px)')
 const mobileMenuOpen = ref(false)
 const router = useRouter()
 const logoClickTimes = ref<number[]>([])
+const adminStore = useAdminStore()
+const { isAdmin } = storeToRefs(adminStore)
+
+adminStore.ensureInit()
 
 const SETTINGS_UNLOCK_KEY = 'settings_unlock_until'
 const SETTINGS_UNLOCK_WINDOW_MS = 10000
@@ -152,15 +199,40 @@ watch(isDark, () => {
   updateTheme()
 }, { immediate: true })
 
-const showHelp = () => {
-  ElMessageBox.alert(
-    '这是一个智能装配说明书生成系统，支持PDF图纸和3D模型的自动解析，生成工人友好的装配说明书。',
-    '系统帮助',
-    {
-      confirmButtonText: '了解',
-      type: 'info'
-    }
-  )
+const showLoginDialog = ref(false)
+const loginForm = ref({
+  username: '',
+  password: ''
+})
+
+const resetLoginForm = () => {
+  loginForm.value.username = ''
+  loginForm.value.password = ''
+}
+
+const handleLogin = () => {
+  const username = loginForm.value.username.trim()
+  const password = loginForm.value.password
+  if (!username || !password) {
+    ElMessage.warning('请输入用户名和密码')
+    return
+  }
+  if (username === 'admin' && password === 'admin123') {
+    adminStore.login()
+    showLoginDialog.value = false
+    resetLoginForm()
+    ElMessage.success('登录成功！')
+    return
+  }
+  ElMessage.error('用户名或密码错误')
+}
+
+const handleLogout = () => {
+  adminStore.logout()
+  ElMessage.success('已退出管理员模式')
+  if (router.currentRoute.value.path.startsWith('/generator')) {
+    router.push('/')
+  }
 }
 
 const handleLogoClick = () => {
@@ -272,6 +344,26 @@ const handleLogoClick = () => {
       border: none;
     }
   }
+
+  .admin-login-btn {
+    font-weight: 600;
+  }
+
+  .admin-logout-btn {
+    background: var(--el-fill-color-light);
+    border: none;
+  }
+
+  .admin-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--el-fill-color-light);
+    color: var(--text-secondary);
+    font-size: 12px;
+  }
 }
 
 .app-main {
@@ -358,9 +450,6 @@ const handleLogoClick = () => {
       padding: 0 16px;
     }
     .nav-menu {
-      display: none;
-    }
-    .help-btn {
       display: none;
     }
     .nav-actions {

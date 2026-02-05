@@ -77,6 +77,8 @@ class ComponentAssemblyAgent(BaseGeminiAgent):
         """
         component_name = component_plan.get("component_name", "")
         total_bom_count = len(parts_list)
+        last_coverage_rate = None
+        last_uncovered_bom_list = ""
 
         print(f"\n{'='*80}")
         print(f" Agent 3: 组件装配步骤生成 - {component_name}")
@@ -99,15 +101,24 @@ class ComponentAssemblyAgent(BaseGeminiAgent):
 
             # 如果是重试，添加反馈信息
             if attempt > 0 and check_coverage:
-                feedback = f"""
+                if last_coverage_rate is not None:
+                    list_text = last_uncovered_bom_list or "（未生成明细）"
+                    feedback = f"""
 
-⚠️ 重要提醒：上一次生成的步骤BOM覆盖率只有{coverage_rate:.1%}，未达到{min_coverage:.0%}的要求。
+⚠️ 重要提醒：上一次生成的步骤BOM覆盖率只有{last_coverage_rate:.1%}，未达到{min_coverage:.0%}的要求。
 
 未覆盖的BOM项：
-{uncovered_bom_list}
+{list_text}
 
 请重新生成装配步骤，确保100%覆盖所有BOM项。每个BOM项都必须在某个步骤的parts_used中出现。
-                """
+                    """
+                else:
+                    feedback = """
+
+⚠️ 重要提醒：上一次生成未能计算BOM覆盖率，请确保覆盖所有BOM项。
+
+请重新生成装配步骤，确保100%覆盖所有BOM项。每个BOM项都必须在某个步骤的parts_used中出现。
+                    """
                 user_query = user_query + feedback
 
             # 调用AI生成步骤（使用重试机制）
@@ -165,6 +176,9 @@ class ComponentAssemblyAgent(BaseGeminiAgent):
                         f"  - BOM序号{seq}: {parts_list[int(seq)-1].get('name', 'N/A')}"
                         for seq in sorted(uncovered_seqs, key=int)
                     ])
+
+                    last_coverage_rate = coverage_rate
+                    last_uncovered_bom_list = uncovered_bom_list
 
                     print(f"  ⚠️ 有 {len(uncovered_seqs)} 个BOM未覆盖")
 

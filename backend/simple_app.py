@@ -146,6 +146,39 @@ def _cancel_task_thread(task_id: str) -> str:
             return "cancel_failed"
     return "no_thread"
 
+def _json_safe(obj, seen=None):
+    """将对象转换为可JSON序列化的安全结构，避免循环引用/线程对象等问题。"""
+    if seen is None:
+        seen = set()
+    obj_id = id(obj)
+    if obj_id in seen:
+        return "[circular]"
+    seen.add(obj_id)
+
+    if isinstance(obj, (str, int, float, bool)) or obj is None:
+        return obj
+    if isinstance(obj, (datetime,)):
+        return obj.isoformat()
+    if isinstance(obj, dict):
+        safe_dict = {}
+        for k, v in obj.items():
+            if k == "thread":
+                continue
+            safe_dict[k] = _json_safe(v, seen)
+        return safe_dict
+    if isinstance(obj, list):
+        return [_json_safe(item, seen) for item in obj]
+    if isinstance(obj, tuple):
+        return [_json_safe(item, seen) for item in obj]
+    return str(obj)
+
+def _sanitize_task_for_persist(task: Dict[str, Any]) -> Dict[str, Any]:
+    """去除不可序列化字段，避免 task_status.json 写入失败。"""
+    safe_task = _json_safe(task or {})
+    if isinstance(safe_task, dict):
+        safe_task.pop("thread", None)
+    return safe_task if isinstance(safe_task, dict) else {}
+
 def _persist_task_status(task_id: str) -> None:
     """将内存任务状态持久化到 task_status.json，便于刷新后恢复/列出失败任务。"""
     task = tasks.get(task_id)
@@ -155,14 +188,9 @@ def _persist_task_status(task_id: str) -> None:
     status_file = OUTPUT_DIR / task_id / "task_status.json"
     status_file.parent.mkdir(parents=True, exist_ok=True)
 
-    def _convert(obj):
-        if isinstance(obj, (datetime,)):
-            return obj.isoformat()
-        return obj
-
     try:
         with open(status_file, "w", encoding="utf-8") as f:
-            json.dump(task, f, ensure_ascii=False, default=_convert)
+            json.dump(_sanitize_task_for_persist(task), f, ensure_ascii=False)
     except Exception as e:
         print(f"⚠️ 持久化任务状态失败: {e}")
 
@@ -179,6 +207,211 @@ def _load_task_status_from_file(task_id: str) -> Optional[Dict[str, Any]]:
     except Exception as e:
         print(f"⚠️ 读取任务状态失败: {e}")
         return None
+
+def _count_manual_steps(manual: Dict[str, Any]) -> int:
+    component_steps = 0
+    for chapter in manual.get("component_assembly", []) or []:
+        steps = chapter.get("steps") or []
+        if isinstance(steps, list):
+            component_steps += len(steps)
+    product = manual.get("product_assembly") or {}
+    product_steps = len(product.get("steps") or []) if isinstance(product, dict) else 0
+    return component_steps + product_steps
+
+def _validate_manual_json(task_dir: Path) -> Dict[str, Any]:
+    """
+    校验 assembly_manual.json 和关键中间文件是否存在且可解析。
+    
+    用于检测镜像重启后任务数据是否损坏，避免用户浪费时间在无法恢复的任务上。
+    """
+    manual_path = task_dir / "assembly_manual.json"
+    if not manual_path.exists():
+        return {"exists": False, "valid": False, "error": None}
+    
+    try:
+        with open(manual_path, "r", encoding="utf-8") as f:
+            manual = json.load(f)
+        if _count_manual_steps(manual) <= 0:
+            return {"exists": True, "valid": False, "error": "manual_empty"}
+    except Exception as e:
+        return {"exists": True, "valid": False, "error": str(e)}
+    
+    # ✅ 新增：检查关键中间文件（用于恢复任务）
+    # 这些文件是断点续跑的关键依赖，损坏会导致恢复失败
+    critical_files = [
+        "step1_bom.json",           # BOM提取结果
+        "step2_bom_matched.json",   # BOM匹配结果
+        "step4_assembly_steps.json" # 装配步骤（Agent4输出）
+    ]
+    
+    for filename in critical_files:
+        file_path = task_dir / filename
+        if file_path.exists():
+            try:
+                with open(file_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    # 基本结构检查：确保不是空对象或空数组
+                    if data is None or (isinstance(data, (dict, list)) and len(data) == 0):
+                        print(f"⚠️ 中间文件为空: {filename}")
+                        return {"exists": True, "valid": False, "error": "resume_corrupt"}
+            except Exception as e:
+                # 中间文件损坏（JSON解析失败），标记为不可恢复
+                print(f"⚠️ 中间文件损坏: {filename}, 错误: {e}")
+                return {"exists": True, "valid": False, "error": "resume_corrupt"}
+    
+    return {"exists": True, "valid": True, "error": None}
+
+def _classify_failure(error_message: Optional[str]) -> Dict[str, Any]:
+    """识别失败类型（余额不足 / 权限 / Key缺失 / 其他）。"""
+    message = (error_message or "").strip()
+    lower = message.lower()
+
+    # 余额不足优先识别（可能也是403）
+    if "accountoverdue" in lower or "insufficient_quota" in lower or "余额不足" in message or "quota" in lower:
+        return {
+            "failure_type": "insufficient_balance",
+            "failure_hint": "余额不足，请充值后继续生成。"
+        }
+
+    # 权限/白名单/资源限制
+    if "accessdenied" in lower or "forbidden" in lower or "403" in lower or "无权限" in message or "白名单" in message or "权限" in message:
+        return {
+            "failure_type": "access_denied",
+            "failure_hint": "无权限/未开通服务，请联系管理员。"
+        }
+
+    # Key缺失/无效
+    if "api key" in lower or "apikey" in lower or "未设置" in message or "invalid api key" in lower:
+        return {
+            "failure_type": "missing_key",
+            "failure_hint": "未配置或无效的 AI-Key，请联系管理员添加 AI-Key。"
+        }
+
+    # 源文件缺失
+    if "缺少源文件" in message or "source file" in lower or "missing source" in lower or "no product images" in lower:
+        return {
+            "failure_type": "missing_source",
+            "failure_hint": "源文件缺失，请删除任务后重新上传。"
+        }
+
+    # 内容为空/校验失败
+    if "validation_failed" in lower or "manual_empty" in lower or "content empty" in lower or "steps empty" in lower:
+        return {
+            "failure_type": "validation_failed",
+            "failure_hint": "生成内容为空，请删除后重试。"
+        }
+
+    return {
+        "failure_type": "unknown",
+        "failure_hint": "文件错误，请删除后重试。"
+    }
+
+def _start_pipeline_thread(
+    task_id: str,
+    task_dir: Path,
+    pdf_dir: Path,
+    step_dir: Path,
+    effective_project_name: str,
+    resume: bool = False
+):
+    """启动流水线后台线程（支持断点续跑）。"""
+    import threading
+
+    def run_pipeline():
+        ResumeDataError = None
+        try:
+            # 导入并运行pipeline
+            import sys
+            import os
+            sys.path.append(str(Path(__file__).parent.parent))
+            from core.gemini_pipeline import GeminiAssemblyPipeline, ResumeDataError
+            from utils.logger import set_current_task  # ✅ 导入日志任务设置函数
+
+            # ✅ 设置当前任务ID，让logger知道日志应该路由到哪个任务
+            set_current_task(task_id)
+
+            call_points = _resolve_call_points(None, None)
+            active_providers = {cfg.get("provider") for cfg in call_points.values()}
+
+            # 从保存的设置中读取API密钥，如果没有则从环境变量读取
+            openrouter_key = app_settings.get("openrouter_api_key") or os.getenv("OPENROUTER_API_KEY")
+            deepseek_key = app_settings.get("deepseek_api_key") or os.getenv("DEEPSEEK_API_KEY")
+            doubao_key = app_settings.get("doubao_api_key") or os.getenv("ARK_API_KEY")
+
+            if "openrouter" in active_providers and not openrouter_key:
+                raise ValueError("未设置 OpenRouter API Key，请在设置页面配置")
+            if "deepseek" in active_providers and not deepseek_key:
+                raise ValueError("未设置 DeepSeek API Key，请在设置页面配置")
+            if "doubao" in active_providers and not doubao_key:
+                raise ValueError("未设置 豆包(ARK) API Key，请在设置页面配置")
+
+            def _progress_callback(step: int, progress: int, message: str = ""):
+                task = tasks.get(task_id)
+                if not task:
+                    return
+                task["progress"] = progress
+                if message:
+                    task["progress_message"] = message
+                task["updated_at"] = beijing_now()
+                _persist_task_status(task_id)
+
+            pipeline = GeminiAssemblyPipeline(
+                api_key=openrouter_key,
+                deepseek_api_key=deepseek_key,
+                doubao_api_key=doubao_key,
+                output_dir=str(task_dir),
+                product_name=effective_project_name,  # ✅ 传入产品名称
+                call_point_settings=call_points,
+                progress_callback=_progress_callback
+            )
+
+            # 运行pipeline
+            result = pipeline.run(
+                pdf_dir=str(pdf_dir),
+                step_dir=str(step_dir),
+                resume=resume
+            )
+
+            # 更新任务状态（区分成功/失败）
+            if result.get("success"):
+                tasks[task_id]["status"] = "completed"
+                tasks[task_id]["progress"] = 100
+            else:
+                tasks[task_id]["status"] = "failed"
+                failure_reason = result.get("error") or result.get("message") or ""
+                classified = _classify_failure(failure_reason)
+                tasks[task_id]["failure_type"] = classified.get("failure_type")
+                tasks[task_id]["failure_hint"] = classified.get("failure_hint")
+                tasks[task_id]["error"] = failure_reason
+            tasks[task_id]["result"] = result
+            tasks[task_id]["updated_at"] = beijing_now()
+            _persist_task_status(task_id)
+
+        except Exception as e:
+            print(f"Pipeline执行错误: {e}")
+            # 允许外部取消：SystemExit 归类为 cancelled
+            if isinstance(e, SystemExit) or tasks.get(task_id, {}).get("cancelled"):
+                tasks[task_id]["status"] = "cancelled"
+                tasks[task_id]["error"] = "cancelled"
+            else:
+                tasks[task_id]["status"] = "failed"
+                if ResumeDataError and isinstance(e, ResumeDataError):
+                    tasks[task_id]["failure_type"] = "resume_corrupt"
+                    tasks[task_id]["failure_hint"] = "旧任务数据损坏，请删除后重试。"
+                failure_reason = str(e)
+                if not tasks[task_id].get("failure_type"):
+                    classified = _classify_failure(failure_reason)
+                    tasks[task_id]["failure_type"] = classified.get("failure_type")
+                    tasks[task_id]["failure_hint"] = classified.get("failure_hint")
+                tasks[task_id]["error"] = failure_reason
+            tasks[task_id]["updated_at"] = beijing_now()
+            _persist_task_status(task_id)
+
+    # 在后台线程中运行
+    thread = threading.Thread(target=run_pipeline, name=f"pipeline-{task_id}")
+    tasks[task_id]["thread"] = thread
+    thread.start()
+    return thread
 
 def get_storage(task_id: str) -> ManualStorage:
     """获取指定任务的存储管理器"""
@@ -300,7 +533,13 @@ def _next_duplicate_task_id(base_task_id: str) -> str:
     return f"{base_task_id}_v_{max_idx + 1}"
 
 
-def _build_conflict_payload(task_id: str, task_dir: Path, status: Optional[Dict[str, Any]], manual_exists: bool, code: str) -> Dict[str, Any]:
+def _build_conflict_payload(
+    task_id: str,
+    task_dir: Path,
+    status: Optional[Dict[str, Any]],
+    manual_info: Dict[str, Any],
+    code: str
+) -> Dict[str, Any]:
     """构造冲突响应 payload，便于前端展示与决策。"""
     manual_path = task_dir / "assembly_manual.json"
     manual_mtime = None
@@ -314,13 +553,42 @@ def _build_conflict_payload(task_id: str, task_dir: Path, status: Optional[Dict[
         created_at = _normalize_time(task_status.get("created_at"))
         updated_at = _normalize_time(task_status.get("updated_at"))
 
+    manual_exists = bool(manual_info.get("exists"))
+    manual_valid = bool(manual_info.get("valid"))
+    manual_error = manual_info.get("error")
+    is_processing = bool(task_status.get("status") == "processing")
+    is_failed = (not manual_valid) and (not is_processing)
+
+    failure_type = task_status.get("failure_type") if isinstance(task_status, dict) else None
+    failure_hint = task_status.get("failure_hint") if isinstance(task_status, dict) else None
+    failure_reason = task_status.get("error") if isinstance(task_status, dict) else None
+
+    if manual_error:
+        if manual_error == "manual_empty":
+            failure_type = "validation_failed"
+            failure_hint = "生成内容为空，请删除后重试。"
+        else:
+            failure_type = "manual_corrupt"
+            failure_hint = "旧任务数据损坏，请删除后重试。"
+        failure_reason = manual_error
+    elif failure_reason and not failure_type:
+        classified = _classify_failure(failure_reason)
+        failure_type = classified.get("failure_type")
+        failure_hint = classified.get("failure_hint")
+
     return {
         "success": False,
         "code": code,
         "message": f"任务 {task_id} 已存在",
         "task_id": task_id,
-        "is_processing": bool(task_status.get("status") == "processing"),
+        "is_processing": is_processing,
         "manual_exists": manual_exists,
+        "manual_valid": manual_valid,
+        "manual_error": manual_error,
+        "is_failed": is_failed,
+        "failure_type": failure_type,
+        "failure_hint": failure_hint,
+        "failure_reason": failure_reason,
         "created_at": created_at,
         "updated_at": updated_at,
         "manual_mtime": manual_mtime,
@@ -497,51 +765,46 @@ async def generate_manual(request: GenerationRequest):
     task_id = pdf_base
     task_dir = OUTPUT_DIR / task_id
 
-    # 冲突检测：存在已发布手册/任务正在运行时，按策略处理
+    # 冲突检测：存在同名任务目录时，按策略处理
     if task_dir.exists():
-        assembly_manual_path = task_dir / "assembly_manual.json"
-        manual_exists = assembly_manual_path.exists()
+        manual_info = _validate_manual_json(task_dir)
+        manual_exists = bool(manual_info.get("exists"))
+        manual_valid = bool(manual_info.get("valid"))
         status = tasks.get(task_id) or _load_task_status_from_file(task_id)
         is_processing = bool(status and status.get("status") == "processing")
+        is_failed = (not manual_valid) and (not is_processing)
 
-        if manual_exists or status:
-            conflict_code = "TASK_RUNNING" if is_processing else "TASK_EXISTS"
-            conflict_payload = _build_conflict_payload(task_id, task_dir, status, manual_exists, conflict_code)
+        conflict_code = "TASK_RUNNING" if is_processing else ("TASK_FAILED" if is_failed else "TASK_EXISTS")
+        conflict_payload = _build_conflict_payload(task_id, task_dir, status, manual_info, conflict_code)
 
-            # prompt 模式：直接返回冲突信息，不启动任务
-            if conflict_strategy == "prompt":
-                return JSONResponse(status_code=409, content=conflict_payload)
+        # prompt 模式：直接返回冲突信息，不启动任务
+        if conflict_strategy == "prompt":
+            return JSONResponse(status_code=409, content=conflict_payload)
 
-            # 运行中禁止覆盖
-            if is_processing and conflict_strategy == "overwrite":
-                return JSONResponse(status_code=409, content=conflict_payload)
+        # 运行中禁止覆盖
+        if is_processing and conflict_strategy == "overwrite":
+            return JSONResponse(status_code=409, content=conflict_payload)
 
-            if conflict_strategy == "overwrite":
+        if conflict_strategy == "overwrite":
+            if manual_valid:
                 _archive_task_dir(task_id, task_dir, reason="overwrite")
-                if task_id in tasks:
-                    _cancel_task_thread(task_id)
-                    del tasks[task_id]
-                status = None
-                manual_exists = False
-                task_dir = OUTPUT_DIR / task_id  # 归档后路径已被移走
-
-            elif conflict_strategy == "duplicate":
-                # 生成新的 task_id/_v_n
-                new_task_id = _next_duplicate_task_id(task_id)
-                task_id = pdf_base = new_task_id
-                task_dir = OUTPUT_DIR / task_id
-
-        else:
-            # 无手册也无任务状态：视为残留，安全清理后继续
-            try:
+            else:
+                # 失败任务不备份，直接删除目录
                 import shutil
                 shutil.rmtree(task_dir)
-                if task_id in tasks:
-                    _cancel_task_thread(task_id)
-                    del tasks[task_id]
-                print(f"🧹 检测到未完成的残留任务 {task_id}，已自动清理目录后重新开始")
-            except Exception as e:
-                raise HTTPException(status_code=500, detail=f"清理残留任务 {task_id} 失败: {str(e)}")
+            if task_id in tasks:
+                _cancel_task_thread(task_id)
+                del tasks[task_id]
+            status = None
+            manual_exists = False
+            manual_valid = False
+            task_dir = OUTPUT_DIR / task_id  # 归档/删除后路径已被移走
+
+        elif conflict_strategy == "duplicate":
+            # 生成新的 task_id/_v_n
+            new_task_id = _next_duplicate_task_id(task_id)
+            task_id = pdf_base = new_task_id
+            task_dir = OUTPUT_DIR / task_id
 
     # 依据最终 task_id 重新计算目标文件名
     step_target_name = f"{pdf_base}{step_suffix or ''}"
@@ -592,80 +855,14 @@ async def generate_manual(request: GenerationRequest):
         _persist_task_status(task_id)
 
         # 直接调用gemini_pipeline（在后台线程中）
-        import threading
-
-        def run_pipeline():
-            try:
-                # 导入并运行pipeline
-                import sys
-                import os
-                sys.path.append(str(Path(__file__).parent.parent))
-                from core.gemini_pipeline import GeminiAssemblyPipeline
-                from utils.logger import set_current_task  # ✅ 导入日志任务设置函数
-
-                # ✅ 设置当前任务ID，让logger知道日志应该路由到哪个任务
-                set_current_task(task_id)
-
-                call_points = _resolve_call_points(None, None)
-                active_providers = {cfg.get("provider") for cfg in call_points.values()}
-
-                # 从保存的设置中读取API密钥，如果没有则从环境变量读取
-                openrouter_key = app_settings.get("openrouter_api_key") or os.getenv("OPENROUTER_API_KEY")
-                deepseek_key = app_settings.get("deepseek_api_key") or os.getenv("DEEPSEEK_API_KEY")
-                doubao_key = app_settings.get("doubao_api_key") or os.getenv("ARK_API_KEY")
-
-                if "openrouter" in active_providers and not openrouter_key:
-                    raise ValueError("未设置 OpenRouter API Key，请在设置页面配置")
-                if "deepseek" in active_providers and not deepseek_key:
-                    raise ValueError("未设置 DeepSeek API Key，请在设置页面配置")
-                if "doubao" in active_providers and not doubao_key:
-                    raise ValueError("未设置 豆包(ARK) API Key，请在设置页面配置")
-
-                # ✅ 获取用户输入的产品名称
-                product_name = effective_project_name
-
-                pipeline = GeminiAssemblyPipeline(
-                    api_key=openrouter_key,
-                    deepseek_api_key=deepseek_key,
-                    doubao_api_key=doubao_key,
-                    output_dir=str(task_dir),
-                    product_name=product_name,  # ✅ 传入产品名称
-                    call_point_settings=call_points
-                )
-
-                # 运行pipeline
-                result = pipeline.run(
-                    pdf_dir=str(pdf_dir),
-                    step_dir=str(step_dir)
-                )
-
-                # 更新任务状态（区分成功/失败）
-                if result.get("success"):
-                    tasks[task_id]["status"] = "completed"
-                    tasks[task_id]["progress"] = 100
-                else:
-                    tasks[task_id]["status"] = "failed"
-                    tasks[task_id]["progress"] = 0
-                tasks[task_id]["result"] = result
-                tasks[task_id]["updated_at"] = beijing_now()
-                _persist_task_status(task_id)
-
-            except Exception as e:
-                print(f"Pipeline执行错误: {e}")
-                # 允许外部取消：SystemExit 归类为 cancelled
-                if isinstance(e, SystemExit) or tasks.get(task_id, {}).get("cancelled"):
-                    tasks[task_id]["status"] = "cancelled"
-                    tasks[task_id]["error"] = "cancelled"
-                else:
-                    tasks[task_id]["status"] = "failed"
-                    tasks[task_id]["error"] = str(e)
-                tasks[task_id]["updated_at"] = beijing_now()
-                _persist_task_status(task_id)
-
-        # 在后台线程中运行
-        thread = threading.Thread(target=run_pipeline, name=f"pipeline-{task_id}")
-        tasks[task_id]["thread"] = thread
-        thread.start()
+        _start_pipeline_thread(
+            task_id=task_id,
+            task_dir=task_dir,
+            pdf_dir=pdf_dir,
+            step_dir=step_dir,
+            effective_project_name=effective_project_name,
+            resume=False
+        )
 
         return {
             "success": True,
@@ -683,10 +880,112 @@ async def get_status(task_id: str):
     if task_id not in tasks:
         persisted = _load_task_status_from_file(task_id)
         if persisted:
-            return persisted
+            status = dict(persisted)
+            task_dir = OUTPUT_DIR / task_id
+            manual_info = _validate_manual_json(task_dir)
+            if status.get("status") == "completed" and not manual_info.get("valid"):
+                status["status"] = "failed"
+                status["failure_type"] = "validation_failed"
+                status["failure_hint"] = "生成内容为空，请删除后重试。"
+                status["error"] = manual_info.get("error") or "manual_empty"
+            return _sanitize_task_for_persist(status)
         raise HTTPException(status_code=404, detail="任务不存在")
 
-    return tasks[task_id]
+    status = tasks[task_id]
+    task_dir = OUTPUT_DIR / task_id
+    manual_info = _validate_manual_json(task_dir)
+    if status.get("status") == "completed" and not manual_info.get("valid"):
+        status["status"] = "failed"
+        status["failure_type"] = "validation_failed"
+        status["failure_hint"] = "生成内容为空，请删除后重试。"
+        status["error"] = manual_info.get("error") or "manual_empty"
+        _persist_task_status(task_id)
+    return _sanitize_task_for_persist(status)
+
+@app.post("/api/task/{task_id}/cancel")
+async def cancel_task(task_id: str):
+    """停止任务但保留中间结果。"""
+    output_dir = OUTPUT_DIR / task_id
+    if not output_dir.exists():
+        raise HTTPException(status_code=404, detail=f"任务不存在: {task_id}")
+
+    cancel_status = _cancel_task_thread(task_id)
+
+    task = tasks.get(task_id) or _load_task_status_from_file(task_id) or {}
+    task["task_id"] = task.get("task_id") or task_id
+    task["status"] = "cancelled"
+    task["failure_type"] = "cancelled"
+    task["failure_hint"] = "任务已停止，可继续生成。"
+    task["error"] = "cancelled"
+    task["updated_at"] = beijing_now()
+    tasks[task_id] = task
+    _persist_task_status(task_id)
+
+    return {"success": True, "message": "任务已停止，已保留中间结果", "cancel_status": cancel_status}
+
+@app.post("/api/task/{task_id}/resume")
+async def resume_task(task_id: str):
+    """继续上一次失败/中断的任务（不重新上传）。"""
+    running_task = _find_running_task()
+    if running_task:
+        return JSONResponse(status_code=409, content=_build_busy_payload(running_task))
+
+    task_dir = OUTPUT_DIR / task_id
+    if not task_dir.exists():
+        raise HTTPException(status_code=404, detail=f"任务不存在: {task_id}")
+
+    manual_info = _validate_manual_json(task_dir)
+    if manual_info.get("valid"):
+        payload = _build_conflict_payload(task_id, task_dir, tasks.get(task_id), manual_info, "TASK_COMPLETED")
+        return JSONResponse(status_code=409, content=payload)
+
+    status = tasks.get(task_id) or _load_task_status_from_file(task_id)
+    is_processing = bool(status and status.get("status") == "processing")
+    if is_processing:
+        payload = _build_conflict_payload(task_id, task_dir, status, manual_info, "TASK_RUNNING")
+        return JSONResponse(status_code=409, content=payload)
+
+    pdf_dir = task_dir / "pdf_files"
+    step_dir = task_dir / "step_files"
+    if not pdf_dir.exists() or not step_dir.exists():
+        raise HTTPException(status_code=400, detail="缺少源文件，请删除失败任务后重新上传")
+
+    pdf_files = [p.name for p in pdf_dir.glob("*.pdf")] + [p.name for p in pdf_dir.glob("*.PDF")]
+    model_files = [p.name for p in step_dir.iterdir() if p.is_file()]
+    if not pdf_files or not model_files:
+        raise HTTPException(status_code=400, detail="缺少源文件，请删除失败任务后重新上传")
+
+    effective_project_name = (status or {}).get("config", {}).get("projectName") or task_id
+
+    # 创建/恢复任务记录
+    task = dict(status or {})
+    task.pop("thread", None)
+    task.update({
+        "task_id": task_id,
+        "status": "processing",
+        "progress": task.get("progress", 0),
+        "config": task.get("config") or {"projectName": effective_project_name},
+        "pdf_files": task.get("pdf_files") or pdf_files,
+        "model_files": task.get("model_files") or model_files,
+        "updated_at": beijing_now(),
+        "resume": True,
+        "failure_type": None,
+        "failure_hint": None,
+        "error": None
+    })
+    tasks[task_id] = task
+    _persist_task_status(task_id)
+
+    _start_pipeline_thread(
+        task_id=task_id,
+        task_dir=task_dir,
+        pdf_dir=pdf_dir,
+        step_dir=step_dir,
+        effective_project_name=effective_project_name,
+        resume=True
+    )
+
+    return {"success": True, "task_id": task_id, "status": "processing", "message": "任务已恢复"}
 
 @app.get("/api/stream/{task_id}")
 async def stream_task_logs(task_id: str):
@@ -717,16 +1016,16 @@ async def stream_task_logs(task_id: str):
                         last_log_count = len(logs)
 
                     # 发送进度更新
-                    yield f"data: {json.dumps({'type': 'progress', 'task_id': task_id, 'progress': task.get('progress', 0), 'status': current_status})}\n\n"
+                    yield f"data: {json.dumps({'type': 'progress', 'task_id': task_id, 'progress': task.get('progress', 0), 'status': current_status, 'message': task.get('progress_message', '')})}\n\n"
 
                     # 如果状态变化，发送状态更新
                     if current_status != last_status:
                         yield f"data: {json.dumps({'type': 'status_change', 'task_id': task_id, 'status': current_status})}\n\n"
                         last_status = current_status
 
-                    # 如果任务完成或失败，发送最终消息并结束
-                    if current_status in ["completed", "failed"]:
-                        yield f"data: {json.dumps({'type': 'complete', 'task_id': task_id, 'status': current_status, 'result': task.get('result'), 'error': task.get('error')})}\n\n"
+                    # 如果任务完成/失败/取消，发送最终消息并结束
+                    if current_status in ["completed", "failed", "cancelled"]:
+                        yield f"data: {json.dumps({'type': 'complete', 'task_id': task_id, 'status': current_status, 'result': task.get('result'), 'error': task.get('error'), 'failure_type': task.get('failure_type'), 'failure_hint': task.get('failure_hint')})}\n\n"
                         break
 
                 # 等待0.5秒再检查（更频繁地检查日志）
@@ -777,17 +1076,20 @@ async def websocket_endpoint(websocket: WebSocket, task_id: str):
                         "task_id": task_id,
                         "progress": task.get("progress", 0),
                         "status": task.get("status", "processing"),
+                        "message": task.get("progress_message", ""),
                         "timestamp": beijing_now().isoformat()
                     })
 
                     # 如果任务完成或失败，发送最终消息
-                    if task["status"] in ["completed", "failed"]:
+                    if task["status"] in ["completed", "failed", "cancelled"]:
                         await websocket.send_json({
                             "type": "complete",
                             "task_id": task_id,
                             "status": task["status"],
                             "result": task.get("result"),
                             "error": task.get("error"),
+                            "failure_type": task.get("failure_type"),
+                            "failure_hint": task.get("failure_hint"),
                             "timestamp": beijing_now().isoformat()
                         })
                         break
@@ -824,7 +1126,8 @@ async def list_manuals(include_failed: bool = Query(False, description="是否�
                 continue
 
             manual_path = task_dir / "assembly_manual.json"
-            if manual_path.exists():
+            manual_info = _validate_manual_json(task_dir)
+            if manual_info.get("valid"):
                 try:
                     # 读取说明书元数据
                     with open(manual_path, 'r', encoding='utf-8') as f:
@@ -997,6 +1300,12 @@ async def get_manual(task_id: str):
                 raise HTTPException(status_code=400, detail="任务正在处理中，请稍后再试")
             elif task["status"] == "failed":
                 raise HTTPException(status_code=400, detail=f"任务失败: {task.get('error', '未知错误')}")
+
+        manual_info = _validate_manual_json(OUTPUT_DIR / task_id)
+        if not manual_info.get("valid"):
+            if manual_info.get("error") == "manual_empty":
+                raise HTTPException(status_code=400, detail="生成内容为空，请删除后重试")
+            raise HTTPException(status_code=400, detail="说明书文件损坏，请删除后重试")
 
         storage = get_storage(task_id)
         storage.ensure_migration()
@@ -1455,9 +1764,13 @@ def _resolve_call_points(
         if not model:
             model = _default_model_for_provider(provider)
 
+        # 新增：保存独立Key
+        custom_key = (incoming_point.custom_key if incoming_point else None) or existing_point.get("custom_key") or ""
+
         resolved[call_point_id] = {
             "provider": provider,
-            "model": model
+            "model": model,
+            "custom_key": custom_key  # 新增
         }
 
     return resolved
@@ -1469,11 +1782,13 @@ def _build_call_point_payload() -> Dict[str, Dict[str, Any]]:
         current_point = current.get(call_point_id, {})
         provider = current_point.get("provider", DEFAULT_PROVIDER)
         model = current_point.get("model") or _default_model_for_provider(provider)
+        custom_key = current_point.get("custom_key", "")  # 新增：读取独立Key
 
         payload[call_point_id] = {
             "label": definition["label"],
             "provider": provider,
             "model": model,
+            "custom_key": custom_key,  # 新增：返回独立Key
             "allowed_providers": definition["allowed_providers"],
             "requires_images": definition["requires_images"]
         }
@@ -1482,6 +1797,7 @@ def _build_call_point_payload() -> Dict[str, Dict[str, Any]]:
 class CallPointConfig(BaseModel):
     provider: str
     model: str
+    custom_key: Optional[str] = None  # 新增：调用点独立的API Key
 
 class SettingsModel(BaseModel):
     openrouter_api_key: str = ""
@@ -1543,6 +1859,7 @@ class TestModelRequest(BaseModel):
     deepseek_api_key: Optional[str] = None
     doubao_api_key: Optional[str] = None
     api_key: Optional[str] = None
+    custom_key: Optional[str] = None  # 新增：调用点独立Key
 
 @app.post("/api/test-model")
 async def test_model(request: TestModelRequest):
@@ -1555,7 +1872,8 @@ async def test_model(request: TestModelRequest):
         if not base_url:
             raise HTTPException(status_code=400, detail=f"不支持的提供方: {provider}")
 
-        api_key = request.api_key
+        # 优先使用独立Key
+        api_key = request.custom_key or request.api_key
         if not api_key:
             if provider == "deepseek":
                 api_key = request.deepseek_api_key or app_settings.get("deepseek_api_key")
@@ -1591,10 +1909,28 @@ async def test_model(request: TestModelRequest):
                 "HTTP-Referer": "https://mecagent.com",
                 "X-Title": "MecAgent Model Test"
             }
+            # ✅ 添加 provider.ignore 排除地域限制
+            request_payload["provider"] = {
+                "ignore": ["google-ai-studio"]
+            }
 
         completion = client.chat.completions.create(**request_payload)
 
+        # ✅ 防御性检查：确保响应格式正确
+        if not completion or not completion.choices or len(completion.choices) == 0:
+            return {
+                "success": False,
+                "error": "API返回了空响应或格式错误，请检查模型配置和API Key"
+            }
+        
         response_text = completion.choices[0].message.content
+        
+        # ✅ 检查content是否为None
+        if response_text is None:
+            return {
+                "success": False,
+                "error": "API返回的内容为空，请检查模型是否支持"
+            }
 
         return {
             "success": True,

@@ -6,8 +6,10 @@
 | --- | --- | --- | --- | --- |
 | GET | `/api/health` | 健康检查 | - | `status`,`version`,`timestamp` |
 | POST | `/api/upload` | 上传 PDF/STEP 文件 | FormData：`pdf_files[]`、`model_files[]`；后端限制一次**仅 1 个 PDF + 1 个 STEP**，上传前清空 `uploads/` | 200：返回文件名/size/path；409：`code=TASK_BUSY`（全局已有任务运行，返回 `task_id/project_name/created_at/updated_at`） |
-| POST | `/api/generate` | 启动生成任务 | JSON：`config.projectName`，`pdf_files[]`(1)，`model_files[]`(1)，`conflict_strategy`（可选：`prompt` 默认/`overwrite` 覆盖且备份/`duplicate` 生成 `_v_n`）；task_id = PDF 基名，STEP 名可不同，生成时会按最终 task_id 重命名存储 | 200：启动成功返回 `task_id`；409：`code=TASK_BUSY`（已有任务运行）或 `TASK_EXISTS/TASK_RUNNING`（同名冲突）；`overwrite` 会先把旧目录归档到 `output_archive/{task_id}/<timestamp>/` |
-| GET | `/api/status/{task_id}` | 查询任务状态 | 路径参数 | 返回内存中的任务字典 |
+| POST | `/api/generate` | 启动生成任务 | JSON：`config.projectName`，`pdf_files[]`(1)，`model_files[]`(1)，`conflict_strategy`（可选：`prompt` 默认/`overwrite` 覆盖/`duplicate` 生成 `_v_n`）；task_id = PDF 基名，STEP 名可不同，生成时会按最终 task_id 重命名存储 | 200：启动成功返回 `task_id`；409：`code=TASK_BUSY`（已有任务运行）或 `TASK_EXISTS/TASK_RUNNING/TASK_FAILED`（同名冲突，含 `manual_exists/manual_valid/manual_error/failure_hint` 等）；`overwrite`：成功任务归档到 `output_archive/{task_id}/<timestamp>/`，失败/损坏任务直接删除 |
+| GET | `/api/status/{task_id}` | 查询任务状态 | 路径参数 | 优先返回内存任务；若不存在则回退读取 `output/{task_id}/task_status.json` |
+| POST | `/api/task/{task_id}/cancel` | 停止任务但保留结果 | 路径参数 | 标记任务为 `cancelled`，保留 `output/{task_id}` |
+| POST | `/api/task/{task_id}/resume` | 继续失败/中断任务 | 路径参数 | 基于 `output/{task_id}` 继续跑；若已完成/运行中会返回 409 冲突 |
 | GET | `/api/stream/{task_id}` | SSE 日志/进度流 | 路径参数 | 文本/event-stream，读取 utils.logger 日志缓冲 |
 | WS | `/ws/task/{task_id}` | WebSocket 进度流 | 路径参数 | 周期推送进度/完成/失败 |
 | GET | `/api/manuals` | 列出已生成手册 | - | 扫描 `output/*/assembly_manual.json`，返回列表 |
@@ -29,7 +31,7 @@
 
 ### 任务/输出目录结构
 - 上传：`uploads/`（每次上传会清空旧文件）
-- 生成输出：`output/{task_id}/`，包含 `assembly_manual.json`、`glb_files/`、`pdf_images/{pdf}/page_*.png` 等阶段产物。
+- 生成输出：`output/{task_id}/`，包含 `assembly_manual.json`、`task_status.json`、`glb_files/`、`pdf_images/{pdf}/page_*.png` 及各阶段 JSON。
 
 ### 运行端口
 - Docker：`uvicorn backend.simple_app:app --port 8008`（Dockerfile EXPOSE 8008，compose 映射 8008:8008）

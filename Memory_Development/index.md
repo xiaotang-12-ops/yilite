@@ -1,8 +1,8 @@
 # 📸 项目快照 - Memory Development
 
 **创建时间**: 2025-11-18
-**最后校对**: 2026-01-20
-**当前版本**: v2.0.98
+**最后校对**: 2026-02-05
+**当前版本**: v2.1.17
 **项目状态**: 核心功能完成，可用
 
 ---
@@ -40,8 +40,10 @@ output/{task_id} (JSON + GLB + 图片)
 | --- | --- | --- | --- |
 | GET | `/api/health` | 健康检查 | Docker HC 使用 |
 | POST | `/api/upload` | 上传 PDF/STEP/STL | 保存到 `uploads/`，每次上传前清空目录 |
-| POST | `/api/generate` | 启动生成任务 | JSON：`config.projectName`、`pdf_files[]`(1)、`model_files[]`(1)、`conflict_strategy`（prompt/overwrite/duplicate）；复制上传文件到 `output/{task}/`，后台线程跑 gemini_pipeline；同名返回 409 携带建议 `_v_n`，覆盖前会归档旧目录到 `output_archive/` |
-| GET | `/api/status/{task_id}` | 查询任务状态 | 内存任务表 |
+| POST | `/api/generate` | 启动生成任务 | JSON：`config.projectName`、`pdf_files[]`(1)、`model_files[]`(1)、`conflict_strategy`（prompt/overwrite/duplicate）；复制上传文件到 `output/{task}/`，后台线程跑 gemini_pipeline；同名返回 409（含 `manual_valid/manual_error/failure_hint` 等），成功任务覆盖前归档到 `output_archive/`，失败/损坏任务覆盖前直接删除 |
+| GET | `/api/status/{task_id}` | 查询任务状态 | 内存任务表优先；若内存不存在则回退 `output/{task_id}/task_status.json` |
+| POST | `/api/task/{task_id}/cancel` | 停止任务但保留结果 | 标记任务 `cancelled`，保留中间输出（可继续） |
+| POST | `/api/task/{task_id}/resume` | 继续失败/中断任务 | 基于 `output/{task_id}` 继续跑，若已完成或运行中返回 409 冲突 |
 | GET | `/api/stream/{task_id}` | SSE 日志/进度流 | 结合 utils.logger 缓冲 |
 | WS | `/ws/task/{task_id}` | WebSocket 进度流 | 周期推送进度/完成/失败 |
 | GET | `/api/manuals` | 列出已生成手册 | 扫描 `output/*/assembly_manual.json` |
@@ -89,7 +91,7 @@ output/{task_id} (JSON + GLB + 图片)
 ## 数据流与输出
 - 输入：PDF 工程图、STEP/STL 模型 → `uploads/`
 - 流水线：分类 → PDF 转图 + STEP 转 GLB → 装配规划（SimplePlanner，基准件=BOM序号1） → BOM/3D 匹配 → 组件/产品装配步骤（严格按BOM序号） → 焊接工艺 → 安全 FAQ → 手册整合
-- 输出：`output/{task_id}/assembly_manual.json`、`draft.json`、`versions/`、`glb_files/*.glb`、`pdf_images/{pdf}/page_*.png`、各阶段 JSON。
+- 输出：`output/{task_id}/assembly_manual.json`、`task_status.json`、`draft.json`、`versions/`、`glb_files/*.glb`、`pdf_images/{pdf}/page_*.png`、各阶段 JSON。
 - 核心规则：基准件=BOM序号1，装配顺序=BOM序号顺序，步骤数=BOM项数，每步装配1个零件。
 
 ---
@@ -104,9 +106,9 @@ output/{task_id} (JSON + GLB + 图片)
 ## 最近 3 个版本快照
 | 版本 | 日期 | 关键变更 |
 | --- | --- | --- |
-| v2.0.98 | 2026-01-20 | **焊接输出结构兼容**：Agent5 支持数组输出，避免 `.get` 导致任务失败。 |
-| v2.0.97 | 2026-01-20 | **豆包参数兼容修复**：统一使用 `max_completion_tokens`，避免与 `max_tokens` 冲突导致 400。 |
-| v2.0.96 | 2026-01-20 | **NewAPI 接入 & 64k 输出上限**：豆包基址切换到 NewAPI（支持 `DOUBAO_BASE_URL/ARK_BASE_URL` 覆盖）；豆包调用点统一输出上限 64k。 |
+| v2.1.10 | 2026-01-30 | **失败即失败 + 断点校验强化**：<br/>- 后端校验空手册（步骤=0）直接判失败，避免空白成功<br/>- 断点续跑校验每步输出，无效则重跑，确保“可继续=有有效产物” |
+| v2.1.09 | 2026-01-29 | **模型快捷选择**：<br/>- 设置页新增“快捷模型”下拉，选择 `gemini3-flash` 自动填充 `google/gemini-3-flash-preview`<br/>- 仅在 OpenRouter 提供方显示，避免误选 |
+| v2.1.08 | 2026-01-29 | **镜像体积减负（白名单COPY）**：<br/>- 后端 `Dockerfile` 由 `COPY . .` 改为白名单复制核心源码目录<br/>- 大幅缩小构建上下文层，降低镜像体积 |
 
 ---
 
@@ -123,7 +125,7 @@ output/{task_id} (JSON + GLB + 图片)
 
 ## 状态与注意事项
 - 正常：上传、生成、日志流、手册读取/编辑、模型与图片下载、设置管理。
-- 注意：需安装 Blender；`OPENROUTER_API_KEY`/`DEEPSEEK_API_KEY`/`ARK_API_KEY` 按调用点配置；设置页默认隐藏，Logo 10 秒内连点 10 次可进入；大文件性能与 Three.js 渲染待优化；前端路由默认走 8008 端口；一次任务仅支持上传 1 个 PDF + 1 个 STEP；运行中全局仅允许 1 个任务，上传/生成会返回 409 `TASK_BUSY` 提示等待；task_id = PDF 文件名（去后缀），STEP 文件名可不同，后端生成时会按 task_id 重命名存储；同名生成返回 409，可在前端选择覆盖（旧目录归档到 `output_archive/`）或生成第二套 `_v_n`；生成任务可被中断（删除/覆盖/残留清理时会中断后台线程并写入 `cancelled`）；模式判定：PDF 文件名前缀 01* → 组件模式；03/06/07/08* → 产品模式；未命中前缀默认组件模式；产品模式跳过 Step5，仅执行 Step6+Step7/8。
+- 注意：需安装 Blender；`OPENROUTER_API_KEY`/`DEEPSEEK_API_KEY`/`ARK_API_KEY` 按调用点配置；设置页默认隐藏，Logo 10 秒内连点 10 次可进入；大文件性能与 Three.js 渲染待优化；前端路由默认走 8008 端口；一次任务仅支持上传 1 个 PDF + 1 个 STEP；运行中全局仅允许 1 个任务，上传/生成会返回 409 `TASK_BUSY` 提示等待；task_id = PDF 文件名（去后缀），STEP 文件名可不同，后端生成时会按 task_id 重命名存储；同名生成返回 409，可在前端选择覆盖（成功任务归档到 `output_archive/`，失败/损坏任务直接删除）或生成第二套 `_v_n`；任务状态持久化到 `output/{task_id}/task_status.json`，支持 `/api/task/{task_id}/cancel` 停止保留结果与 `/api/task/{task_id}/resume` 继续生成；生成任务可被中断（删除/覆盖/残留清理时会中断后台线程并写入 `cancelled`）；模式判定：PDF 文件名前缀 01* → 组件模式；03/06/07/08* → 产品模式；未命中前缀默认组件模式；产品模式跳过 Step5，仅执行 Step6+Step7/8。
 - ManualViewer 相机：加载/切换 GLB 时基于包围盒自动框选，动态设置 near/far，并收敛模型放大上限（≤1e4）以避免深度闪烁和“需大幅放大才能看到”问题；移动端图纸/抽屉不再写入浏览器历史，切换页面不会留下触控禁用或返回键异常；移动端预览支持“返回键先关预览/抽屉”“轻点图片关闭”。
 - STEP→GLB：`trimesh` 子进程 120s 硬超时（超时强制终止），不再启用 ocp_tessellate 兜底；并新增“自动简化”兜底（仅超大 nodes 模型触发，合并刷丝/毛刷等特征层为盘级 mesh），需要时可在上传前提示大文件转 STL。
   - 现已新增 OCP(cadquery-ocp) 兜底：trimesh/cascadio 超时/失败或预检命中超长行时，会自动回退/优先走 OCP 导出可用 GLB（粒度可能更粗，以保证能生成与可渲染）。

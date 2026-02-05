@@ -63,6 +63,7 @@ test-files/
 output/
 uploads/
 pipeline_output/
+output_archive/
 
 # 规则文件
 deepseek-rules.md

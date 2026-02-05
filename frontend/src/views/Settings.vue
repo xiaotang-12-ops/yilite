@@ -81,29 +81,61 @@
             <div
               v-for="callPointId in callPointOrder"
               :key="callPointId"
-              class="callpoint-row"
+              class="callpoint-item"
             >
-              <div class="callpoint-label">{{ settings.callPoints[callPointId].label }}</div>
-              <el-select
-                v-model="settings.callPoints[callPointId].provider"
-                class="callpoint-provider"
-                placeholder="提供方"
-                :disabled="settings.callPoints[callPointId].allowedProviders.length === 1"
-                @change="handleProviderChange(callPointId)"
-              >
-                <el-option
-                  v-for="provider in settings.callPoints[callPointId].allowedProviders"
-                  :key="provider"
-                  :label="providerLabels[provider]"
-                  :value="provider"
+              <div class="callpoint-row">
+                <div class="callpoint-label">{{ settings.callPoints[callPointId].label }}</div>
+                <el-select
+                  v-model="settings.callPoints[callPointId].provider"
+                  class="callpoint-provider"
+                  placeholder="提供方"
+                  :disabled="settings.callPoints[callPointId].allowedProviders.length === 1"
+                  @change="handleProviderChange(callPointId)"
+                >
+                  <el-option
+                    v-for="provider in settings.callPoints[callPointId].allowedProviders"
+                    :key="provider"
+                    :label="providerLabels[provider]"
+                    :value="provider"
+                  />
+                </el-select>
+                <el-input
+                  v-model="settings.callPoints[callPointId].model"
+                  class="callpoint-model"
+                  placeholder="模型ID"
+                  clearable
                 />
-              </el-select>
-              <el-input
-                v-model="settings.callPoints[callPointId].model"
-                class="callpoint-model"
-                placeholder="模型ID"
-                clearable
-              />
+                <el-select
+                  v-if="settings.callPoints[callPointId].provider === 'doubao'"
+                  v-model="modelPresetSelections[callPointId]"
+                  class="callpoint-model-preset"
+                  placeholder="快捷模型"
+                  clearable
+                  @change="applyModelPreset(callPointId, $event)"
+                >
+                  <el-option
+                    v-for="preset in modelPresets"
+                    :key="preset.value"
+                    :label="preset.label"
+                    :value="preset.value"
+                  />
+                </el-select>
+              </div>
+              <!-- 新增：独立Key输入框（第二行） -->
+              <div class="callpoint-key-row">
+                <el-input
+                  v-model="settings.callPoints[callPointId].customKey"
+                  class="callpoint-custom-key"
+                  type="password"
+                  placeholder="独立Key（可选，留空则使用上方对应提供方的默认Key）"
+                  show-password
+                  clearable
+                >
+                  <template #prepend>
+                    <el-icon><Key /></el-icon>
+                  </template>
+                </el-input>
+              </div>
             </div>
           </div>
           <div class="form-item-tip">
@@ -111,6 +143,8 @@
             <el-link type="primary" href="https://openrouter.ai/models" target="_blank">
               OpenRouter模型列表
             </el-link>
+            <br />
+            💡 如果某个调用点需要不同的Key（如NewAPI中不同渠道的Key），请填写"独立Key"
           </div>
         </el-form-item>
 
@@ -237,6 +271,10 @@ const DEFAULT_DOUBAO_MODEL = 'doubao-seed-1-8-251228'
 
 type Provider = 'openrouter' | 'deepseek' | 'doubao'
 
+const modelPresets = [
+  { label: 'gemini3-flash', value: 'google/gemini-3-flash-preview' }
+]
+
 const DEFAULT_PROVIDER_MODELS: Record<Provider, string> = {
   openrouter: DEFAULT_OPENROUTER_MODEL,
   deepseek: DEFAULT_DEEPSEEK_MODEL,
@@ -249,6 +287,7 @@ interface CallPointConfig {
   model: string
   allowedProviders: Provider[]
   requiresImages: boolean
+  customKey?: string  // 新增：调用点独立的API Key
 }
 
 interface Settings {
@@ -319,6 +358,7 @@ const testing = ref(false)
 const testingModel = ref(false)
 const statusMessage = ref('')
 const statusType = ref<'success' | 'warning' | 'error' | 'info'>('info')
+const modelPresetSelections = ref<Record<string, string>>({})
 
 const resolveProviderModel = (provider: Provider, model?: string) => {
   const trimmed = model?.trim()
@@ -334,7 +374,7 @@ const normalizeLocalCallPoints = (incoming?: Record<string, any>) => {
     return normalized
   }
 
-  callPointOrder.forEach((id) => {
+  Object.keys(normalized).forEach((id) => {
     const source = incoming[id]
     if (!source) {
       return
@@ -345,7 +385,8 @@ const normalizeLocalCallPoints = (incoming?: Record<string, any>) => {
       provider: source.provider || normalized[id].provider,
       model: resolveProviderModel(source.provider || normalized[id].provider, source.model || normalized[id].model),
       allowedProviders: Array.isArray(source.allowedProviders) ? source.allowedProviders : normalized[id].allowedProviders,
-      requiresImages: typeof source.requiresImages === 'boolean' ? source.requiresImages : normalized[id].requiresImages
+      requiresImages: typeof source.requiresImages === 'boolean' ? source.requiresImages : normalized[id].requiresImages,
+      customKey: source.customKey || ''  // 新增：读取独立Key
     }
   })
 
@@ -358,7 +399,7 @@ const normalizeServerCallPoints = (incoming?: Record<string, any>) => {
     return normalized
   }
 
-  callPointOrder.forEach((id) => {
+  Object.keys(normalized).forEach((id) => {
     const source = incoming[id]
     if (!source) {
       return
@@ -369,7 +410,8 @@ const normalizeServerCallPoints = (incoming?: Record<string, any>) => {
       provider: source.provider || normalized[id].provider,
       model: resolveProviderModel(source.provider || normalized[id].provider, source.model || normalized[id].model),
       allowedProviders: Array.isArray(source.allowed_providers) ? source.allowed_providers : normalized[id].allowedProviders,
-      requiresImages: typeof source.requires_images === 'boolean' ? source.requires_images : normalized[id].requiresImages
+      requiresImages: typeof source.requires_images === 'boolean' ? source.requires_images : normalized[id].requiresImages,
+      customKey: source.custom_key || ''  // 新增：读取独立Key
     }
   })
 
@@ -387,6 +429,13 @@ const applyDefaultModel = (model: string) => {
 const handleProviderChange = (callPointId: string) => {
   const provider = settings.value.callPoints[callPointId].provider
   settings.value.callPoints[callPointId].model = DEFAULT_PROVIDER_MODELS[provider] || ''
+  modelPresetSelections.value[callPointId] = ''
+}
+
+const applyModelPreset = (callPointId: string, value?: string) => {
+  if (!value) return
+  settings.value.callPoints[callPointId].model = value
+  modelPresetSelections.value[callPointId] = value
 }
 
 const loadSettings = async () => {
@@ -442,12 +491,13 @@ const saveSettings = async () => {
     // 保存到localStorage
     localStorage.setItem('app_settings', JSON.stringify(settings.value))
 
-    const callPointsPayload: Record<string, { provider: Provider; model: string }> = {}
+    const callPointsPayload: Record<string, { provider: Provider; model: string; custom_key?: string }> = {}
     callPointOrder.forEach((id) => {
       const point = settings.value.callPoints[id]
       callPointsPayload[id] = {
         provider: point.provider,
-        model: point.model
+        model: point.model,
+        custom_key: point.customKey || undefined  // 新增：发送独立Key
       }
     })
 
@@ -543,7 +593,8 @@ const testModel = async () => {
           model,
           openrouter_api_key: settings.value.openrouterApiKey,
           deepseek_api_key: settings.value.deepseekApiKey,
-          doubao_api_key: settings.value.doubaoApiKey
+          doubao_api_key: settings.value.doubaoApiKey,
+          custom_key: testPoint.customKey || undefined  // 新增：发送独立Key
         })
 
         if (response.data.success) {
@@ -605,8 +656,19 @@ const testModel = async () => {
 .callpoint-config {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
   width: 100%;
+}
+
+.callpoint-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #e4e7ed;
+  border-radius: 4px;
+  background-color: #fafafa;
 }
 
 .callpoint-row {
@@ -616,11 +678,19 @@ const testModel = async () => {
   width: 100%;
 }
 
+.callpoint-key-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin-left: 122px;
+}
+
 .callpoint-label {
   width: 110px;
   font-size: 13px;
   color: #606266;
   flex-shrink: 0;
+  font-weight: 500;
 }
 
 .callpoint-provider {
@@ -628,6 +698,14 @@ const testModel = async () => {
 }
 
 .callpoint-model {
+  flex: 1;
+}
+
+.callpoint-model-preset {
+  width: 180px;
+}
+
+.callpoint-custom-key {
   flex: 1;
 }
 

@@ -20,7 +20,7 @@ import time
 import re
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Callable, Any
 
 # 添加项目根目录到路径
 import sys
@@ -72,6 +72,9 @@ PROVIDER_BASE_URLS = {
     "doubao": DOUBAO_BASE_URL,
 }
 
+class ResumeDataError(RuntimeError):
+    """断点续跑数据异常（文件缺失/损坏/结构不兼容）。"""
+
 
 class GeminiAssemblyPipeline:
     """基于Gemini 2.5 Flash的6-Agent装配说明书生成工作流"""
@@ -84,7 +87,8 @@ class GeminiAssemblyPipeline:
         model_name: str = None,
         call_point_settings: Optional[Dict[str, Dict[str, str]]] = None,
         deepseek_api_key: Optional[str] = None,
-        doubao_api_key: Optional[str] = None
+        doubao_api_key: Optional[str] = None,
+        progress_callback: Optional[Callable[[int, int, str], None]] = None
     ):
         """
         初始化工作流
@@ -105,6 +109,15 @@ class GeminiAssemblyPipeline:
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.product_name = product_name  # ✅ 保存产品名称
+        self.progress_callback = progress_callback
+
+        # 🔍 调试日志：打印接收到的call_point_settings
+        print("=" * 80)
+        print("🔍 Pipeline初始化 - 接收到的call_point_settings:")
+        for cp_id, cp_config in self.call_point_settings.items():
+            has_custom_key = "custom_key" in cp_config and cp_config.get("custom_key")
+            print(f"   {cp_id}: provider={cp_config.get('provider')}, model={cp_config.get('model')}, has_custom_key={has_custom_key}")
+        print("=" * 80)
 
         # 设置API密钥到环境变量（避免下游调用丢失）
         os.environ["OPENROUTER_API_KEY"] = api_key
@@ -123,8 +136,8 @@ class GeminiAssemblyPipeline:
         self.safety_call_point = self._resolve_call_point("safety", requires_images=False)
         self.bom_vision_call_point = self._resolve_call_point("bom_vision", requires_images=True)
 
-        self.matching_api_key = self._get_api_key(self.matching_call_point["provider"])
-        self.bom_vision_api_key = self._get_api_key(self.bom_vision_call_point["provider"])
+        self.matching_api_key = self._get_api_key(self.matching_call_point)
+        self.bom_vision_api_key = self._get_api_key(self.bom_vision_call_point)
 
         print("🤖 Pipeline 初始化 - 已加载调用点模型配置")
 
@@ -135,22 +148,22 @@ class GeminiAssemblyPipeline:
 
         # 初始化Agent - 按调用点配置模型
         self.component_agent = ComponentAssemblyAgent(
-            api_key=self._get_api_key(self.assembly_call_point["provider"]),
+            api_key=self._get_api_key(self.assembly_call_point),
             model_name=self.assembly_call_point["model"],
             provider=self.assembly_call_point["provider"]
         )
         self.product_agent = ProductAssemblyAgent(
-            api_key=self._get_api_key(self.assembly_call_point["provider"]),
+            api_key=self._get_api_key(self.assembly_call_point),
             model_name=self.assembly_call_point["model"],
             provider=self.assembly_call_point["provider"]
         )
         self.welding_agent = WeldingAgent(
-            api_key=self._get_api_key(self.welding_call_point["provider"]),
+            api_key=self._get_api_key(self.welding_call_point),
             model_name=self.welding_call_point["model"],
             provider=self.welding_call_point["provider"]
         )
         self.safety_agent = SafetyFAQAgent(
-            api_key=self._get_api_key(self.safety_call_point["provider"]),
+            api_key=self._get_api_key(self.safety_call_point),
             model_name=self.safety_call_point["model"],
             provider=self.safety_call_point["provider"]
         )
@@ -183,9 +196,38 @@ class GeminiAssemblyPipeline:
 
         if requires_images and provider not in {"openrouter", "doubao"}:
             raise ValueError(f"调用点 {call_point_id} 需要视觉输入，仅支持 OpenRouter/豆包")
-        return {"provider": provider, "model": model}
+        
+        # ✅ 修复：保留custom_key字段，避免独立Key丢失
+        result = {"provider": provider, "model": model}
+        if "custom_key" in config:
+            result["custom_key"] = config["custom_key"]
+        return result
 
-    def _get_api_key(self, provider: str) -> str:
+    def _get_api_key(self, call_point: Dict[str, str]) -> str:
+        """
+        获取调用点的API Key
+        
+        优先级：
+        1. 调用点独立Key（custom_key）
+        2. 根据provider返回全局Key
+        
+        Args:
+            call_point: 调用点配置，包含provider、model、custom_key
+        
+        Returns:
+            API Key字符串
+        """
+        # ✅ 优先使用调用点的独立Key
+        custom_key = call_point.get("custom_key", "")
+        if custom_key:
+            # 🔍 日志：使用独立Key（脱敏显示）
+            masked_key = custom_key[:8] + "..." + custom_key[-4:] if len(custom_key) > 12 else "***"
+            print(f"   🔑 使用独立Key: {masked_key}")
+            return custom_key
+        
+        # ✅ 如果没有独立Key，根据provider返回全局Key
+        provider = call_point.get("provider", "openrouter")
+        print(f"   🔑 使用全局Key (provider: {provider})")
         if provider == "deepseek":
             key = self.deepseek_api_key or os.getenv("DEEPSEEK_API_KEY")
             if not key:
@@ -213,14 +255,112 @@ class GeminiAssemblyPipeline:
             print_error(f"[{timestamp}] ❌ {agent_name}AI员工遇到了问题，{action}失败了", indent=1)
             import sys
             sys.stdout.flush()
-    
-    def run(self, pdf_dir: str, step_dir: str) -> Dict:
+
+    def _progress_percent(self, step: int) -> int:
+        """按权重计算进度百分比（组件/产品模式区分）。"""
+        if self.is_product_mode:
+            mapping = {1: 5, 2: 15, 3: 25, 4: 50, 6: 70, 7: 90, 8: 100}
+        else:
+            mapping = {1: 5, 2: 15, 3: 30, 4: 55, 5: 75, 7: 90, 8: 100}
+        return mapping.get(step, min(100, max(0, step * 10)))
+
+    def _report_progress(self, step: int, message: str = ""):
+        """向外部上报进度（若提供 progress_callback）。"""
+        if not self.progress_callback:
+            return
+        progress = self._progress_percent(step)
+        try:
+            self.progress_callback(step, progress, message or "")
+        except Exception:
+            # 进度上报失败不影响主流程
+            pass
+
+    def _load_json_file(self, path: Path, label: str, required: bool = True) -> Any:
+        """加载JSON文件（用于断点续跑），损坏/缺失时抛出 ResumeDataError。"""
+        if not path.exists():
+            if required:
+                raise ResumeDataError(f"{label} 缺失: {path}")
+            return None
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as e:
+            raise ResumeDataError(f"{label} 损坏: {e}")
+
+    def _is_valid_step1_result(self, file_hierarchy: Any, image_hierarchy: Any) -> bool:
+        if not isinstance(file_hierarchy, dict) or not isinstance(image_hierarchy, dict):
+            return False
+        has_components = bool(file_hierarchy.get("components"))
+        has_product = bool(file_hierarchy.get("product"))
+        has_images = bool(image_hierarchy.get("component_images")) or bool(image_hierarchy.get("product_images"))
+        return (has_components or has_product) and has_images
+
+    def _is_valid_bom_data(self, bom_data: Any) -> bool:
+        return isinstance(bom_data, list) and len(bom_data) > 0
+
+    def _is_valid_planning_result(self, planning_result: Any) -> bool:
+        if not isinstance(planning_result, dict):
+            return False
+        if not planning_result.get("success"):
+            return False
+        component_plans = planning_result.get("component_assembly_plan", [])
+        product_plan = planning_result.get("product_assembly_plan", {})
+        return bool(component_plans) or bool(product_plan)
+
+    def _is_valid_matching_result(self, matching_result: Any) -> bool:
+        if not isinstance(matching_result, dict):
+            return False
+        if not matching_result.get("success"):
+            return False
+        has_components = bool(matching_result.get("component_level_mappings"))
+        has_product = bool(matching_result.get("product_level_mapping"))
+        return has_components or has_product
+
+    def _is_valid_component_results(self, component_results: Any) -> bool:
+        if not isinstance(component_results, list) or not component_results:
+            return False
+        for result in component_results:
+            if not isinstance(result, dict):
+                return False
+            if not result.get("success"):
+                return False
+            steps = result.get("assembly_steps", [])
+            if not isinstance(steps, list) or not steps:
+                return False
+        return True
+
+    def _is_valid_product_result(self, product_result: Any) -> bool:
+        if not isinstance(product_result, dict):
+            return False
+        if not product_result.get("success"):
+            return False
+        steps = product_result.get("assembly_steps", [])
+        return isinstance(steps, list) and len(steps) > 0
+
+    def _count_manual_steps(self, manual: Dict[str, Any]) -> int:
+        component_steps = 0
+        for chapter in manual.get("component_assembly", []) or []:
+            steps = chapter.get("steps") or []
+            if isinstance(steps, list):
+                component_steps += len(steps)
+        product = manual.get("product_assembly") or {}
+        product_steps = len(product.get("steps") or []) if isinstance(product, dict) else 0
+        return component_steps + product_steps
+
+    def _ensure_manual_has_steps(self, manual: Any) -> None:
+        if not isinstance(manual, dict):
+            raise ValueError("validation_failed: manual_invalid")
+        if self._count_manual_steps(manual) <= 0:
+            raise ValueError("validation_failed: manual_empty")
+
+    def run(self, pdf_dir: str, step_dir: str, resume: bool = False) -> Dict:
         """
         运行完整的工作流
 
         Args:
             pdf_dir: PDF文件目录
             step_dir: STEP文件目录
+            resume: 是否启用断点续跑
 
         Returns:
             工作流结果字典
@@ -242,14 +382,51 @@ class GeminiAssemblyPipeline:
         print_info("")
 
         try:
+            file_hierarchy = None
+            image_hierarchy = None
+            bom_data = None
+            planning_result = None
+            matching_result = None
+            component_results: List[Dict] = []
+            product_result: Dict = {}
+            enhanced_component_results: List[Dict] = []
+            enhanced_product_result: Dict = {}
+            reuse_cache = resume
+
             # ========== 支路1: PDF处理 ==========
             # 步骤1: 文件分类 + PDF转图片
             self.current_step = 1
-            file_hierarchy, image_hierarchy = self._step1_classify_and_convert(pdf_dir, step_dir)
+            self._report_progress(1, "文件分类与图片转换")
+            step1_file = self.output_dir / "step1_file_hierarchy.json"
+            step1_image = self.output_dir / "step1_image_hierarchy.json"
+            if reuse_cache and step1_file.exists() and step1_image.exists():
+                file_hierarchy = self._load_json_file(step1_file, "step1_file_hierarchy.json")
+                image_hierarchy = self._load_json_file(step1_image, "step1_image_hierarchy.json")
+                if self._is_valid_step1_result(file_hierarchy, image_hierarchy):
+                    print_info("🔁 已加载 Step1 结果", indent=1)
+                else:
+                    print_warning("⚠️ Step1 结果无效，将重新生成", indent=1)
+                    reuse_cache = False
+                    file_hierarchy, image_hierarchy = self._step1_classify_and_convert(pdf_dir, step_dir)
+            else:
+                reuse_cache = False
+                file_hierarchy, image_hierarchy = self._step1_classify_and_convert(pdf_dir, step_dir)
 
             # 步骤2: 从PDF提取BOM数据
             self.current_step = 2
-            bom_data = self._step2_extract_bom_from_pdfs(file_hierarchy)
+            self._report_progress(2, "BOM 提取")
+            step2_file = self.output_dir / "step2_bom_data.json"
+            if reuse_cache and step2_file.exists():
+                bom_data = self._load_json_file(step2_file, "step2_bom_data.json")
+                if self._is_valid_bom_data(bom_data):
+                    print_info("🔁 已加载 Step2 结果", indent=1)
+                else:
+                    print_warning("⚠️ Step2 结果无效，将重新生成", indent=1)
+                    reuse_cache = False
+                    bom_data = self._step2_extract_bom_from_pdfs(file_hierarchy)
+            else:
+                reuse_cache = False
+                bom_data = self._step2_extract_bom_from_pdfs(file_hierarchy)
 
             # 判定模式：组件或产品（单PDF/STEP场景互斥）
             self.is_product_mode = self._determine_mode(file_hierarchy, bom_data)
@@ -259,44 +436,132 @@ class GeminiAssemblyPipeline:
 
             # 步骤3: SimplePlanner - 按BOM序号规划
             self.current_step = 3
-            planning_result = self._step3_vision_planning(image_hierarchy, bom_data, file_hierarchy)
+            self._report_progress(3, "装配规划")
+            step3_file = self.output_dir / "step3_planning_result.json"
+            if reuse_cache and step3_file.exists():
+                planning_result = self._load_json_file(step3_file, "step3_planning_result.json")
+                if self._is_valid_planning_result(planning_result):
+                    print_info("🔁 已加载 Step3 结果", indent=1)
+                else:
+                    print_warning("⚠️ Step3 结果无效，将重新生成", indent=1)
+                    reuse_cache = False
+                    planning_result = self._step3_vision_planning(image_hierarchy, bom_data, file_hierarchy)
+            else:
+                reuse_cache = False
+                planning_result = self._step3_vision_planning(image_hierarchy, bom_data, file_hierarchy)
             
             # ========== 支路2: 3D处理 ==========
             # 步骤4: Agent 2 - BOM-3D匹配
             self.current_step = 4
-            matching_result = self._step4_bom_3d_matching(
-                step_dir, bom_data, planning_result, file_hierarchy
-            )
+            self._report_progress(4, "BOM-3D 匹配")
+            step4_file = self.output_dir / "step4_matching_result.json"
+            if reuse_cache and step4_file.exists():
+                matching_result = self._load_json_file(step4_file, "step4_matching_result.json")
+                if self._is_valid_matching_result(matching_result):
+                    print_info("🔁 已加载 Step4 结果", indent=1)
+                else:
+                    print_warning("⚠️ Step4 结果无效，将重新生成", indent=1)
+                    reuse_cache = False
+                    matching_result = self._step4_bom_3d_matching(
+                        step_dir, bom_data, planning_result, file_hierarchy
+                    )
+            else:
+                reuse_cache = False
+                matching_result = self._step4_bom_3d_matching(
+                    step_dir, bom_data, planning_result, file_hierarchy
+                )
+            if not self._is_valid_matching_result(matching_result):
+                raise ValueError("validation_failed: matching_result_invalid")
             
             # ========== 主线路: Agent 3-6 ==========
             # 步骤5: Agent 3 - 组件装配（可复用，产品模式下跳过）
-            component_results = []
             if self.is_product_mode:
                 print_info("⏭️ 产品模式下跳过组件装配（Step5）", indent=1)
                 import sys; sys.stdout.flush()
             else:
                 self.current_step = 5
-                component_results = self._step5_component_assembly(
-                    file_hierarchy, image_hierarchy, planning_result, matching_result
-                )
+                self._report_progress(5, "组件装配")
+                step5_file = self.output_dir / "step5_component_results.json"
+                if reuse_cache and step5_file.exists():
+                    component_results = self._load_json_file(step5_file, "step5_component_results.json")
+                    if self._is_valid_component_results(component_results):
+                        print_info("🔁 已加载 Step5 结果", indent=1)
+                    else:
+                        print_warning("⚠️ Step5 结果无效，将重新生成", indent=1)
+                        reuse_cache = False
+                        component_results = self._step5_component_assembly(
+                            file_hierarchy, image_hierarchy, planning_result, matching_result
+                        )
+                else:
+                    reuse_cache = False
+                    component_results = self._step5_component_assembly(
+                        file_hierarchy, image_hierarchy, planning_result, matching_result
+                    )
+                if not self._is_valid_component_results(component_results):
+                    raise ValueError("validation_failed: component_steps_empty")
             
             # 步骤6: Agent 4 - 产品总装（仅产品模式）
             if self.is_product_mode:
                 self.current_step = 6
-                product_result = self._step6_product_assembly(
-                    file_hierarchy, image_hierarchy, planning_result, matching_result
-                )
+                self._report_progress(6, "产品总装")
+                step6_file = self.output_dir / "step6_product_result.json"
+                if reuse_cache and step6_file.exists():
+                    product_result = self._load_json_file(step6_file, "step6_product_result.json")
+                    if self._is_valid_product_result(product_result):
+                        print_info("🔁 已加载 Step6 结果", indent=1)
+                    else:
+                        print_warning("⚠️ Step6 结果无效，将重新生成", indent=1)
+                        reuse_cache = False
+                        product_result = self._step6_product_assembly(
+                            file_hierarchy, image_hierarchy, planning_result, matching_result
+                        )
+                else:
+                    reuse_cache = False
+                    product_result = self._step6_product_assembly(
+                        file_hierarchy, image_hierarchy, planning_result, matching_result
+                    )
+                if not self._is_valid_product_result(product_result):
+                    raise ValueError("validation_failed: product_steps_empty")
             else:
                 product_result = {}
 
             # 步骤7: Agent 5 & 6 - 焊接和安全（增强装配步骤）
             self.current_step = 7
-            enhanced_component_results, enhanced_product_result = self._step7_welding_and_safety(
-                file_hierarchy, image_hierarchy, component_results, product_result
-            )
+            self._report_progress(7, "焊接与安全增强")
+            step7_file = self.output_dir / "step7_enhanced_result.json"
+            if reuse_cache and step7_file.exists():
+                enhanced_result = self._load_json_file(step7_file, "step7_enhanced_result.json")
+                if not isinstance(enhanced_result, dict):
+                    raise ResumeDataError("step7_enhanced_result.json 结构异常")
+                enhanced_component_results = enhanced_result.get("component_results", [])
+                enhanced_product_result = enhanced_result.get("product_result", {})
+                if not isinstance(enhanced_component_results, list) or not isinstance(enhanced_product_result, dict):
+                    raise ResumeDataError("step7_enhanced_result.json 结构异常")
+                if (self.is_product_mode and not self._is_valid_product_result(enhanced_product_result)) or (
+                    (not self.is_product_mode) and not self._is_valid_component_results(enhanced_component_results)
+                ):
+                    print_warning("⚠️ Step7 结果无效，将重新生成", indent=1)
+                    reuse_cache = False
+                    enhanced_component_results, enhanced_product_result = self._step7_welding_and_safety(
+                        file_hierarchy, image_hierarchy, component_results, product_result
+                    )
+                else:
+                    print_info("🔁 已加载 Step7 结果", indent=1)
+            else:
+                reuse_cache = False
+                enhanced_component_results, enhanced_product_result = self._step7_welding_and_safety(
+                    file_hierarchy, image_hierarchy, component_results, product_result
+                )
+            if self.is_product_mode:
+                if not self._is_valid_product_result(enhanced_product_result):
+                    raise ValueError("validation_failed: product_steps_empty")
+            else:
+                if not self._is_valid_component_results(enhanced_component_results):
+                    raise ValueError("validation_failed: component_steps_empty")
 
             # 步骤8: 整合最终手册
             self.current_step = 8
+            self._report_progress(8, "手册整合")
             final_manual = self._step8_integrate_manual(
                 planning_result, enhanced_component_results, enhanced_product_result,
                 matching_result, image_hierarchy  # ✅ 传入图片层级结构
@@ -451,6 +716,7 @@ class GeminiAssemblyPipeline:
         self.log_agent_call("BOM分析", "从图纸中读取零件清单", "running")
 
         all_bom_items = []
+        all_correction_log = []  # 收集所有的纠正日志
 
         # 收集所有PDF文件
         all_pdfs = []
@@ -466,14 +732,23 @@ class GeminiAssemblyPipeline:
         # 统计每个PDF的BOM数量
         pdf_bom_counts = {}
 
-        def _merge_vision_with_text_layer(vision_items: List[Dict], text_items: List[Dict]) -> List[Dict]:
+        def _merge_vision_with_text_layer(vision_items: List[Dict], text_items: List[Dict]) -> tuple:
             """
-            用文本层结果补全 vision 抽取的缺失字段，并补齐 vision 漏掉的行。
+            用文本层结果纠正和补全 vision 抽取的字段，并补齐 vision 漏掉的行。
+            
+            策略：
+            1. 纠正：如果文本层有值且与Vision不同，用文本层覆盖（code, product_code, name）
+            2. 补全：如果Vision为空，用文本层填充（quantity, weight等）
+            
+            Returns:
+                (merged_items, correction_log)
             """
+            correction_log = []
+            
             if not vision_items:
-                return text_items or []
+                return text_items or [], correction_log
             if not text_items:
-                return vision_items
+                return vision_items, correction_log
 
             def _norm(x) -> str:
                 return str(x or "").strip()
@@ -483,6 +758,7 @@ class GeminiAssemblyPipeline:
 
             merged: List[Dict] = []
             seen_seqs = set()
+            
             for item in vision_items:
                 seq = _norm(item.get("seq"))
                 code = _norm(item.get("code"))
@@ -490,15 +766,43 @@ class GeminiAssemblyPipeline:
 
                 sup = text_by_seq.get(seq) or text_by_code.get(code)
                 if sup:
-                    # 补齐关键字段
+                    source_pdf = item.get("source_pdf", "unknown")
+                    
+                    # ✅ 纠正 code 字段（文本层优先）
+                    code_text = _norm(sup.get("code"))
+                    code_vision = _norm(item.get("code"))
+                    if code_text and code_text != code_vision:
+                        correction_log.append({
+                            "seq": seq,
+                            "source_pdf": source_pdf,
+                            "field": "code",
+                            "vision_value": code_vision or "(empty)",
+                            "text_value": code_text,
+                            "decision": "correct_to_text" if code_vision else "supplement_from_text"
+                        })
+                        item["code"] = code_text
+                    
+                    # ✅ 纠正/补全 product_code 和 name 字段
                     for field in ("product_code", "name"):
-                        if not _norm(item.get(field)) and _norm(sup.get(field)):
-                            item[field] = sup.get(field)
+                        text_val = _norm(sup.get(field))
+                        vision_val = _norm(item.get(field))
+                        
+                        if text_val and text_val != vision_val:
+                            correction_log.append({
+                                "seq": seq,
+                                "source_pdf": source_pdf,
+                                "field": field,
+                                "vision_value": vision_val or "(empty)",
+                                "text_value": text_val,
+                                "decision": "correct_to_text" if vision_val else "supplement_from_text"
+                            })
+                            item[field] = text_val
 
+                    # ✅ 补全 quantity（保持原有逻辑）
                     if item.get("quantity") in (None, "", 0) and sup.get("quantity") not in (None, "", 0):
                         item["quantity"] = sup.get("quantity")
 
-                    # 新增/补齐重量字段（不会破坏旧链路，旧字段 weight 仍保留）
+                    # ✅ 补全重量字段（保持原有逻辑）
                     if item.get("unit_weight") is None and sup.get("unit_weight") is not None:
                         item["unit_weight"] = sup.get("unit_weight")
                     if item.get("total_weight") is None and sup.get("total_weight") is not None:
@@ -526,7 +830,7 @@ class GeminiAssemblyPipeline:
                     return 999999
 
             merged.sort(key=_seq_int)
-            return merged
+            return merged, correction_log
 
         def _missing_seqs(items: List[Dict]) -> List[int]:
             seqs = set()
@@ -591,7 +895,8 @@ class GeminiAssemblyPipeline:
                     print_warning(f"      Vision提取失败，将仅使用文本层结果: {e}", indent=1)
 
                 bom_items = vision_items
-                bom_items = _merge_vision_with_text_layer(bom_items, text_items)
+                bom_items, correction_log = _merge_vision_with_text_layer(bom_items, text_items)
+                all_correction_log.extend(correction_log)  # 收集纠正日志
 
                 if bom_items:
                     all_bom_items.extend(bom_items)
@@ -623,6 +928,12 @@ class GeminiAssemblyPipeline:
         # 保存结果
         with open(self.output_dir / "step2_bom_data.json", "w", encoding="utf-8") as f:
             json.dump(all_bom_items, f, ensure_ascii=False, indent=2)
+        
+        # 保存纠正日志
+        if all_correction_log:
+            with open(self.output_dir / "step2_bom_correction_log.json", "w", encoding="utf-8") as f:
+                json.dump(all_correction_log, f, ensure_ascii=False, indent=2)
+            print_info(f"   📝 记录了 {len(all_correction_log)} 条BOM纠正/补全操作", indent=1)
 
         return all_bom_items
 
@@ -874,9 +1185,9 @@ class GeminiAssemblyPipeline:
         }
         }
 
-        # ❌ 删除step3文件保存逻辑（不再需要，因为基准件=BOM序号1）
-        # with open(self.output_dir / "step3_planning_result.json", "w", encoding="utf-8") as f:
-        #     json.dump(planning_result, f, ensure_ascii=False, indent=2)
+        # ✅ 保存 Step3 规划结果（用于断点续跑）
+        with open(self.output_dir / "step3_planning_result.json", "w", encoding="utf-8") as f:
+            json.dump(planning_result, f, ensure_ascii=False, indent=2)
 
         self.log_agent_call("装配规划", "完成了装配规划方案", "success")
         sys.stdout.flush()
@@ -918,7 +1229,19 @@ class GeminiAssemblyPipeline:
             sys.stdout.flush()
             self.log_agent_call("3D模型", "生成了所有3D模型和零件的对应关系", "success")
         else:
-            self.log_agent_call("3D模型", "3D模型处理", "error")
+            # ❌ AI匹配失败，立即终止流程，避免浪费费用
+            error_msg = matching_result.get("error", "AI匹配失败")
+            self.log_agent_call("3D模型", f"3D模型处理失败: {error_msg}", "error")
+            print_error(f"\n❌ AI匹配失败，终止流程以避免浪费费用", indent=1)
+            print_error(f"   错误原因: {error_msg}", indent=1)
+            print_error(f"   请检查API Key配置和模型权限", indent=1)
+            
+            # 保存失败结果
+            with open(self.output_dir / "step4_matching_result.json", "w", encoding="utf-8") as f:
+                json.dump(matching_result, f, ensure_ascii=False, indent=2)
+            
+            # 抛出异常，终止流程
+            raise ValueError(f"ai_matching_failed: {error_msg}")
 
         # 保存结果
         with open(self.output_dir / "step4_matching_result.json", "w", encoding="utf-8") as f:
@@ -1327,6 +1650,9 @@ class GeminiAssemblyPipeline:
             image_hierarchy=image_hierarchy,  # ✅ 传入图片层级结构
             task_id=task_id  # ✅ 使用输出目录名作为task_id
         )
+
+        # 确保手册内容不为空
+        self._ensure_manual_has_steps(final_manual)
 
         print_success("📖 装配说明书编辑完成", indent=1)
         sys.stdout.flush()

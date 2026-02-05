@@ -303,7 +303,7 @@
               已装<span v-if="disableInstalledStatusOption" class="disabled-label">（禁用）</span>
             </el-button>
           </div>
-          <div class="popup-footer">
+          <div class="popup-footer" v-if="isAdmin && !isReadOnlyMode">
             <el-button
               type="danger"
               size="small"
@@ -1381,6 +1381,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, nextTick, reactive, type CSSProperties } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useRouter, useRoute, onBeforeRouteLeave } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
@@ -1395,6 +1396,7 @@ import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { ElImageViewer } from 'element-plus'
+import { useAdminStore } from '../stores/admin'
 
 // ============ 辅助函数 ============
 
@@ -1728,7 +1730,9 @@ const nextVersionPreview = computed(() => {
 })
 
 // 管理员相关
-const isAdmin = ref(false)
+const adminStore = useAdminStore()
+const { isAdmin } = storeToRefs(adminStore)
+adminStore.ensureInit()
 const isDraftMode = ref(false)  // 是否处于草稿模式
 const discardingDraft = ref(false)  // 正在丢弃草稿
 const showLoginDialog = ref(false)
@@ -1810,6 +1814,8 @@ let meshWorldExplodeDirections: Map<string, THREE.Vector3> = new Map()
 let meshWorldExplodeDirectionsGeo: Map<string, THREE.Vector3> = new Map()
 let meshWorldExplodeDistances: Map<string, number> = new Map()
 let meshWorldExplodeMaxDistance = 0
+let cachedModelMaxDim = 0  // ✅ 缓存原始包围盒的 maxDim，避免累积放大
+const meshAnimationIds = new Map<string, number>()  // ✅ 存储每个mesh的动画ID，用于取消旧动画
 
 
 const isExploded = ref(true) // 初始爆炸，未装配件分散
@@ -2431,14 +2437,28 @@ const closeMobileImagePreview = (skipHistory = false) => {
   }
 }
 
-const closeMobileDrawers = () => {
+const closeMobileDrawers = (skipHistory = false) => {
+  // ✅ 关闭抽屉时处理历史回退
+  if (overlayStack.length > 0 && overlayStack[overlayStack.length - 1] === 'drawer') {
+    overlayStack.pop()
+    if (!skipHistory && typeof window !== 'undefined') {
+      try {
+        closingOverlayFromManual = true
+        window.history.back()
+      } catch (err) {
+        console.warn('⚠️ 关闭抽屉回退历史失败:', err)
+      }
+      setTimeout(() => { closingOverlayFromManual = false }, 0)
+    }
+  }
+  
   showDrawingsDrawer.value = false
   showDetailsDrawer.value = false
   showStepJumpDrawer.value = false
 }
 
 const closeMobileOverlays = () => {
-  closeMobileDrawers()
+  closeMobileDrawers(true)  // ✅ 跳过历史回退，避免重复 back
   if (mobileImagePreviewVisible.value) {
     closeMobileImagePreview(true)
   }
@@ -2579,8 +2599,7 @@ const handleLogin = () => {
 
   // 硬编码验证
   if (username === 'admin' && password === 'admin123') {
-    isAdmin.value = true
-    sessionStorage.setItem('isAdmin', 'true')
+    adminStore.login()
     showLoginDialog.value = false
     ElMessage.success('登录成功！')
     loginForm.value = { username: '', password: '' }
@@ -2591,8 +2610,7 @@ const handleLogin = () => {
 
 // 退出登录
 const logout = () => {
-  isAdmin.value = false
-  sessionStorage.removeItem('isAdmin')
+  adminStore.logout()
   ElMessage.success('已退出管理员模式')
 }
 
@@ -3879,6 +3897,7 @@ const cleanup3DViewer = () => {
   meshWorldExplodeDirectionsGeo = new Map()
   meshWorldExplodeDistances = new Map()
   meshWorldExplodeMaxDistance = 0
+  cachedModelMaxDim = 0  // ✅ 清理缓存
 }
 
 // 历史预览版本的暂存（用于返回当前页面时创建草稿）
@@ -4163,6 +4182,13 @@ const load3DModel = async () => {
     meshWorldExplodeDistances.clear()
     meshWorldExplodeMaxDistance = 0
 
+    // ✅ 计算并缓存原始包围盒的 maxDim（在零件归位状态下，避免累积放大）
+    const boxForCache = new THREE.Box3().setFromObject(model)
+    const sizeForCache = new THREE.Vector3()
+    boxForCache.getSize(sizeForCache)
+    cachedModelMaxDim = Math.max(sizeForCache.x, sizeForCache.y, sizeForCache.z)
+    console.log('✅ 已缓存原始包围盒 maxDim:', cachedModelMaxDim.toFixed(2))
+
     // ✅ 模型居中后，保存每个mesh的世界坐标位置和爆炸方向（世界坐标系）
     const worldCenter = new THREE.Vector3(0, 0, 0) // 已经居中到(0,0,0)
     let nearCenterCount = 0
@@ -4345,6 +4371,13 @@ const switchGLBModel = async (glbFile: string) => {
     model.position.set(-center.x, -center.y, -center.z)
     model.updateMatrixWorld(true)
 
+    // ✅ 计算并缓存原始包围盒的 maxDim（在零件归位状态下，避免累积放大）
+    const boxForCache = new THREE.Box3().setFromObject(model)
+    const sizeForCache = new THREE.Vector3()
+    boxForCache.getSize(sizeForCache)
+    cachedModelMaxDim = Math.max(sizeForCache.x, sizeForCache.y, sizeForCache.z)
+    console.log('✅ 已缓存原始包围盒 maxDim:', cachedModelMaxDim.toFixed(2))
+
     // ✅ 6. 模型居中后，保存每个mesh的世界坐标位置和爆炸方向（世界坐标系）
     const worldCenter = new THREE.Vector3(0, 0, 0) // 已经居中到(0,0,0)
     let nearCenterCount = 0
@@ -4429,6 +4462,12 @@ const switchGLBModel = async (glbFile: string) => {
 
 // 动画过渡到目标位置
 const animateMeshPosition = (mesh: THREE.Mesh, targetLocal: THREE.Vector3, duration = 400) => {
+  // ✅ 取消旧动画，避免动画冲突
+  const oldAnimationId = meshAnimationIds.get(mesh.uuid)
+  if (oldAnimationId) {
+    cancelAnimationFrame(oldAnimationId)
+  }
+
   const startPos = mesh.position.clone()
   const start = performance.now()
 
@@ -4436,12 +4475,17 @@ const animateMeshPosition = (mesh: THREE.Mesh, targetLocal: THREE.Vector3, durat
     const t = Math.min(1, (now - start) / duration)
     const eased = 1 - Math.pow(1 - t, 3) // easeOutCubic
     mesh.position.lerpVectors(startPos, targetLocal, eased)
+    
     if (t < 1) {
-      requestAnimationFrame(step)
+      const animationId = requestAnimationFrame(step)
+      meshAnimationIds.set(mesh.uuid, animationId)  // ✅ 存储动画ID
+    } else {
+      meshAnimationIds.delete(mesh.uuid)  // ✅ 动画完成，清理ID
     }
   }
 
-  requestAnimationFrame(step)
+  const animationId = requestAnimationFrame(step)
+  meshAnimationIds.set(mesh.uuid, animationId)
 }
 
 const getExplodeDirection = (mesh: THREE.Mesh) => {
@@ -4484,11 +4528,8 @@ const updateStepDisplay = (animate = true) => {
     roughness: 0.6
   })
 
-  // 基准爆炸距离
-  const box = new THREE.Box3().setFromObject(model)
-  const size = new THREE.Vector3()
-  box.getSize(size)
-  const maxDim = Math.max(size.x, size.y, size.z)
+  // 基准爆炸距离（使用缓存的原始包围盒，避免累积放大）
+  const maxDim = cachedModelMaxDim || 100  // 使用缓存值，兜底100
   const explodeDistanceBase = isExploded.value ? maxDim * (explodeScale.value / 100 || 0.25) : 0
 
   let processed = 0
@@ -4608,13 +4649,46 @@ const toggleExplode = () => {
   updateStepDisplay(true)
 }
 
-// 监听爆炸比例变化
-watch(explodeScale, () => {
+// 监听爆炸比例变化（添加防抖，优化拖动体验）
+const debouncedUpdateStepDisplay = useDebounceFn(() => {
   updateStepDisplay(true)
+}, 100)
+
+watch(explodeScale, () => {
+  debouncedUpdateStepDisplay()
 })
 
 watch(explodeMode, () => {
-  updateStepDisplay(true)
+  updateStepDisplay(true)  // 模式切换不防抖，立即响应
+})
+
+// ✅ 监听抽屉打开/关闭，添加/移除历史记录（手机端）
+watch([showDrawingsDrawer, showDetailsDrawer, showStepJumpDrawer], ([drawings, details, stepJump], [oldDrawings, oldDetails, oldStepJump]) => {
+  if (!isMobile.value) return
+  
+  // ✅ 如果是 popstate 触发的关闭，不要重复处理
+  if (closingOverlayFromPopstate) return
+  
+  const isAnyDrawerOpen = drawings || details || stepJump
+  const wasAnyDrawerOpen = oldDrawings || oldDetails || oldStepJump
+  
+  // 从关闭到打开：添加历史记录
+  if (isAnyDrawerOpen && !wasAnyDrawerOpen) {
+    if (typeof window !== 'undefined') {
+      try {
+        window.history.pushState({ overlay: 'drawer' }, '', window.location.href)
+        overlayStack.push('drawer')
+        console.log('📱 抽屉打开，已添加历史记录')
+      } catch (err) {
+        console.warn('⚠️ pushState 失败，抽屉返回行为可能无法拦截:', err)
+      }
+    }
+  }
+  
+  // 从打开到关闭：处理历史回退（由 closeMobileDrawers 处理）
+  if (!isAnyDrawerOpen && wasAnyDrawerOpen) {
+    console.log('📱 抽屉关闭')
+  }
 })
 
 // ============ 零件交互选中功能（管理员专用） ============
@@ -4913,15 +4987,22 @@ const restoreAllPartsVisibility = () => {
 }
 
 // 删除零件（全局隐藏）
+// 删除零件(全局隐藏)
 const deletePart = async () => {
   if (!selectedMesh.value) return
+
+  // 只读模式下禁止删除
+  if (isReadOnlyMode.value) {
+    ElMessage.warning('历史版本为只读,无法删除零件')
+    return
+  }
 
   const meshKey = selectedMesh.value.name || selectedMesh.value.uuid
   const displayName = getPartDisplayName(selectedMesh.value)
 
   try {
     await ElMessageBox.confirm(
-      `确定要删除零件 "${displayName}" 吗？删除后该零件在所有步骤都不会显示。`,
+      `确定要删除零件 "${displayName}" 吗?删除后该零件在所有步骤都不会显示。`,
       '删除零件',
       {
         confirmButtonText: '确定删除',
@@ -5146,11 +5227,7 @@ watch(currentStepIndex, async (newIndex, oldIndex) => {
 })
 
 onMounted(() => {
-  // 检查sessionStorage中的登录状态
-  const adminStatus = sessionStorage.getItem('isAdmin')
-  if (adminStatus === 'true') {
-    isAdmin.value = true
-  }
+  adminStore.ensureInit()
 
   // ✅ 只需要加载数据，3D初始化会在数据加载完成后自动执行
   loadLocalJSON()
@@ -5167,9 +5244,8 @@ onMounted(() => {
           mobileImagePreviewVisible.value = false
           resetMobileImageTransform()
         } else if (type === 'drawer') {
-          showDrawingsDrawer.value = false
-          showDetailsDrawer.value = false
-          showStepJumpDrawer.value = false
+          // ✅ 调用 closeMobileDrawers 而不是直接赋值
+          closeMobileDrawers(true)  // skipHistory=true，因为已经在 popstate 中了
         }
         closingOverlayFromPopstate = false
       }

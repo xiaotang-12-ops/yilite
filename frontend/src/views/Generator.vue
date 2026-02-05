@@ -139,6 +139,33 @@
                 <el-icon><Right /></el-icon>
                 开始生成
               </el-button>
+              <el-button
+                v-if="canResumeLast"
+                type="default"
+                size="large"
+                @click="resumeLastTask"
+                :disabled="isGenerating"
+              >
+                <el-icon><RefreshRight /></el-icon>
+                继续上一次任务
+              </el-button>
+              <el-button
+                v-if="canDeleteLast"
+                type="danger"
+                size="large"
+                @click="deleteLastTask"
+                :disabled="isGenerating"
+              >
+                <el-icon><Delete /></el-icon>
+                删除上一次任务
+              </el-button>
+              <div v-if="lastTaskMeta" class="last-task-hint">
+                上一次任务：{{ lastTaskMeta.projectName || lastTaskMeta.id }}
+                <span v-if="lastTaskMeta.status"> · 状态：{{ formatTaskStatus(lastTaskMeta.status) }}</span>
+                <span v-if="lastTaskMeta.updatedAt || lastTaskMeta.createdAt">
+                  · 更新时间：{{ formatConflictTime(lastTaskMeta.updatedAt || lastTaskMeta.createdAt) }}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -160,7 +187,7 @@
                   :disabled="isAborting || !taskId"
                   @click="abortProcessing"
                 >
-                  强制中断/清理
+                  停止任务（保留结果）
                 </el-button>
                 <el-button text @click="clearLogs" :icon="Delete">清空日志</el-button>
               </div>
@@ -180,6 +207,20 @@
               <div v-if="processingLogs.length === 0" class="empty-logs-large">
                 <el-icon size="48"><Document /></el-icon>
                 <p>等待任务开始...</p>
+              </div>
+            </div>
+
+            <!-- ✅ 进度条（日志黑框下方） -->
+            <div v-if="taskId" class="logs-progress-bar">
+              <div class="progress-track">
+                <div
+                  class="progress-fill"
+                  :style="{ width: `${Math.min(100, Math.max(0, processingProgress))}%` }"
+                ></div>
+              </div>
+              <div class="progress-meta">
+                <span>生成进度 {{ Math.round(processingProgress) }}%</span>
+                <span v-if="processingText"> · {{ processingText }}</span>
               </div>
             </div>
 
@@ -275,45 +316,57 @@
     <p style="margin-bottom: 12px;">{{ conflictDialogMessage }}</p>
     <ul class="conflict-list">
         <li v-if="conflictDialog.projectName">任务名称：{{ conflictDialog.projectName }}</li>
-        <li v-if="conflictDialog.isProcessing">当前状态：生成中（建议等待或生成第二套）</li>
+        <li v-if="conflictDialog.isProcessing">当前状态：生成中（可连接现有任务查看进度）</li>
+        <li v-else-if="conflictDialog.isFailed">当前状态：失败（未生成说明书）</li>
         <li v-else-if="conflictDialog.manualExists">当前状态：已生成手册</li>
+        <li v-if="conflictDialog.failureHint">失败原因：{{ conflictDialog.failureHint }}</li>
+        <li v-if="conflictDialog.manualError">文件校验：{{ conflictDialog.manualError }}</li>
         <li v-if="conflictDialog.createdAt">创建时间：{{ formatConflictTime(conflictDialog.createdAt) }}</li>
         <li v-if="conflictDialog.updatedAt">最后更新：{{ formatConflictTime(conflictDialog.updatedAt) }}</li>
         <li v-if="conflictDialog.manualMtime">手册更新时间：{{ formatConflictTime(conflictDialog.manualMtime) }}</li>
         <li v-if="conflictDialog.suggested">建议下一套名称：{{ conflictDialog.suggested }}</li>
     </ul>
     <template #footer>
-      <div v-if="!isBusyConflict" class="conflict-footer">
-        <el-button @click="handleConflictChoice('cancel')">取消</el-button>
-          <el-button
-            type="default"
-            @click="handleConflictChoice('duplicate')"
-          >
-            生成下一套
-          </el-button>
-        <el-button
-          type="primary"
-          @click="handleConflictChoice('overwrite')"
-        >
-          覆盖并备份
-        </el-button>
+      <div v-if="isBusyConflict" class="conflict-footer">
+        <el-button type="primary" @click="handleConflictChoice('cancel')">知道了</el-button>
       </div>
       <div v-else class="conflict-footer">
-        <el-button type="primary" @click="handleConflictChoice('cancel')">知道了</el-button>
+        <el-button @click="handleConflictChoice('cancel')">取消</el-button>
+        <el-button
+          v-if="isProcessingConflict"
+          type="primary"
+          @click="handleConflictChoice('connect')"
+        >
+          连接现有任务
+        </el-button>
+        <template v-else-if="isFailedConflict">
+          <el-button type="danger" @click="handleConflictChoice('purge')">删除失败任务并重新上传</el-button>
+          <el-button
+            v-if="canResumeFailedConflict"
+            type="primary"
+            @click="handleConflictChoice('resume')"
+          >
+            继续上一次任务
+          </el-button>
+        </template>
+        <template v-else>
+          <el-button type="default" @click="handleConflictChoice('duplicate')">生成下一套</el-button>
+          <el-button type="primary" @click="handleConflictChoice('overwrite')">覆盖并备份</el-button>
+        </template>
       </div>
     </template>
   </el-dialog>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onUnmounted, nextTick, onMounted } from 'vue'
+import { ref, reactive, computed, onUnmounted, nextTick, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import type { UploadFile, UploadFiles } from 'element-plus'
 import {
   Document, UploadFilled, Right, CircleCheck,
   Download, View, Delete, Share, Box, Warning,
-  CircleClose, Folder, Hide
+  CircleClose, Folder, Hide, RefreshRight
 } from '@element-plus/icons-vue'
 import ProcessingSteps from '../components/ProcessingSteps.vue'
 import axios from 'axios'
@@ -657,6 +710,7 @@ const resetGenerator = () => {
     eventSource.close()
     eventSource = null
   }
+  stopStatusPolling()
   currentStep.value = 0
   pdfFiles.value = []
   modelFiles.value = []
@@ -690,9 +744,9 @@ const abortProcessing = async () => {
   }
 
   const confirmed = await ElMessageBox.confirm(
-    '确认要强制中断当前生成任务吗？可能已有的中间结果会被清理，需要重新上传后再生成。',
-    '确认中断',
-    { type: 'warning', confirmButtonText: '立即中断', cancelButtonText: '取消' }
+    '确认要停止当前生成任务吗？将保留中间结果，稍后可继续生成。',
+    '确认停止',
+    { type: 'warning', confirmButtonText: '停止任务', cancelButtonText: '取消' }
   ).catch(() => false)
   if (!confirmed) return
 
@@ -702,19 +756,20 @@ const abortProcessing = async () => {
       eventSource.close()
       eventSource = null
     }
-    // 请求后端删除任务目录/内存记录，后端若仍在处理会返回非 200；仍然继续清理前端状态
+    // 请求后端停止任务（保留中间结果）
     try {
-      await axios.delete(`/api/manual/${encodeURIComponent(taskId.value)}`)
-      addLog('⏹ 已请求后端清理当前任务', 'warning')
+      await axios.post(`/api/task/${encodeURIComponent(taskId.value)}/cancel`)
+      addLog('⏹ 已请求后端停止任务（保留中间结果）', 'warning')
     } catch (error: any) {
       const detail = error?.response?.data?.detail || error?.message || '未知原因'
-      addLog(`⏹ 中断请求未完全成功：${detail}`, 'warning')
+      addLog(`⏹ 停止请求未完全成功：${detail}`, 'warning')
     }
+    setLastTaskId(taskId.value)
     localStorage.removeItem(RECOVERY_TASK_KEY)
     resetGenerator()
     processingStatus.value = 'exception'
-    processingText.value = '已手动中断'
-    ElMessage.info('已手动中断，您可以重新上传文件重新生成')
+    processingText.value = '已停止任务'
+    ElMessage.info('已停止任务，已保留中间结果，可稍后继续生成')
   } finally {
     isAborting.value = false
   }
@@ -727,6 +782,7 @@ const dialogContainer = ref(null)
 const processingProgress = ref(0)
 const processingStatus = ref<'success' | 'exception' | undefined>()
 const processingText = ref('')
+const lastFailureHint = ref('')
 
 // 新增：可视化处理相关数据
 const currentProcessingStage = ref('pdf_bom') // pdf_bom, parallel, matching, generate
@@ -743,6 +799,12 @@ const conflictDialog = reactive<{
   projectName?: string
   isProcessing: boolean
   manualExists: boolean
+  isFailed: boolean
+  manualValid?: boolean
+  manualError?: string
+  failureType?: string
+  failureHint?: string
+  failureReason?: string
   createdAt?: string
   updatedAt?: string
   manualMtime?: string
@@ -754,6 +816,12 @@ const conflictDialog = reactive<{
   projectName: '',
   isProcessing: false,
   manualExists: false,
+  isFailed: false,
+  manualValid: false,
+  manualError: '',
+  failureType: '',
+  failureHint: '',
+  failureReason: '',
   createdAt: '',
   updatedAt: '',
   manualMtime: '',
@@ -762,13 +830,141 @@ const conflictDialog = reactive<{
 })
 
 const isBusyConflict = computed(() => conflictDialog.code === 'TASK_BUSY')
-const conflictDialogTitle = computed(() => (isBusyConflict.value ? '当前任务运行中' : '任务已存在'))
+const isProcessingConflict = computed(() => conflictDialog.isProcessing)
+const isFailedConflict = computed(() => conflictDialog.isFailed)
+const canResumeFailedConflict = computed(() => {
+  if (!isFailedConflict.value) return false
+  return isResumeAllowedFailure(
+    conflictDialog.failureType,
+    conflictDialog.failureHint,
+    conflictDialog.failureReason,
+    conflictDialog.isProcessing ? 'processing' : undefined
+  )
+})
+const conflictDialogTitle = computed(() => {
+  if (isBusyConflict.value) return '当前任务运行中'
+  if (isFailedConflict.value) return '检测到失败任务'
+  if (isProcessingConflict.value) return '任务正在生成'
+  return '任务已存在'
+})
 const conflictDialogMessage = computed(() => {
   if (conflictDialog.message) {
     return conflictDialog.message
   }
-  return isBusyConflict.value ? '当前有任务正在运行，请等待完成后再试。' : '检测到同名任务，请选择操作：'
+  if (isBusyConflict.value) {
+    return '当前有任务正在运行，请等待完成后再试。'
+  }
+  if (isFailedConflict.value) {
+    if (canResumeFailedConflict.value) {
+      return '检测到上一次任务失败（未生成说明书），可选择继续或删除后重试。'
+    }
+    return '检测到上一次任务失败（未生成说明书），请删除后重试。'
+  }
+  if (isProcessingConflict.value) {
+    return '任务正在生成中，可连接现有任务查看进度。'
+  }
+  return '检测到同名任务，请选择操作：'
 })
+
+const setLastTaskId = (id: string) => {
+  if (!id) return
+  lastTaskId.value = id
+  localStorage.setItem(LAST_TASK_KEY, id)
+}
+
+const clearLastTaskId = (id?: string) => {
+  if (!id || lastTaskId.value === id) {
+    lastTaskId.value = ''
+    localStorage.removeItem(LAST_TASK_KEY)
+  }
+}
+
+const fetchLastTaskMeta = async (id: string) => {
+  try {
+    const resp = await axios.get(`/api/status/${encodeURIComponent(id)}`)
+    const data = resp.data || {}
+    lastTaskMeta.value = {
+      id,
+      projectName: data?.config?.projectName || data?.project_name || data?.task_id || id,
+      status: data?.status,
+      failureType: data?.failure_type,
+      failureHint: data?.failure_hint,
+      error: data?.error,
+      updatedAt: data?.updated_at,
+      createdAt: data?.created_at
+    }
+  } catch (error) {
+    lastTaskMeta.value = { id, projectName: id }
+  }
+}
+
+const RECOVERY_TASK_KEY = 'generator_current_task'
+const LAST_TASK_KEY = 'generator_last_task'
+const lastTaskId = ref(localStorage.getItem(LAST_TASK_KEY) || '')
+const lastTaskMeta = ref<{
+  id: string
+  projectName?: string
+  status?: string
+  failureType?: string
+  failureHint?: string
+  error?: string
+  updatedAt?: string
+  createdAt?: string
+} | null>(null)
+
+watch(lastTaskId, (id) => {
+  if (id) {
+    fetchLastTaskMeta(id)
+  } else {
+    lastTaskMeta.value = null
+  }
+}, { immediate: true })
+
+let resumeAttemptTaskId: string | null = null
+let resumeDeletePrompted = false
+
+const shouldPromptDeleteForResume = (failureType?: string, failureText?: string) => {
+  const text = (failureText || '').toLowerCase()
+  if (failureType && ['resume_corrupt', 'manual_corrupt', 'validation_failed', 'unknown', 'missing_source', 'access_denied', 'missing_key'].includes(failureType)) {
+    return true
+  }
+  return /缺少源文件|损坏|resume_corrupt|corrupt|missing|内容为空|文件错误/i.test(failureText || '') || /corrupt|missing|empty/i.test(text)
+}
+
+const maybePromptDeleteAfterResume = async (id: string, failureType?: string, failureText?: string) => {
+  if (!resumeAttemptTaskId || resumeAttemptTaskId !== id) return
+  if (resumeDeletePrompted) return
+  if (!shouldPromptDeleteForResume(failureType, failureText)) return
+  resumeDeletePrompted = true
+  await confirmDeleteTask(id, failureText || '任务无法继续')
+}
+
+const confirmDeleteTask = async (id: string, reason: string) => {
+  const message = `该任务无法继续：${reason || '未知原因'}\n是否删除历史任务以便重新生成？`
+  const confirmed = await ElMessageBox.confirm(
+    message,
+    '无法继续',
+    { type: 'warning', confirmButtonText: '删除并重新生成', cancelButtonText: '取消' }
+  ).catch(() => false)
+  if (!confirmed) return false
+  try {
+    await axios.delete(`/api/manual/${encodeURIComponent(id)}`)
+    if (eventSource) {
+      eventSource.close()
+      eventSource = null
+    }
+    clearLastTaskId(id)
+    resumeAttemptTaskId = null
+    resumeDeletePrompted = false
+    resetToUploadStep(false)
+    ElMessage.success('已删除历史任务，请重新上传')
+    return true
+  } catch (error: any) {
+    const detail = error.response?.data?.detail || error.message || '删除失败'
+    ElMessage.error(detail)
+    return false
+  }
+}
 
 const resetToUploadStep = (keepFiles: boolean = true) => {
   currentStep.value = 0
@@ -778,6 +974,7 @@ const resetToUploadStep = (keepFiles: boolean = true) => {
   isGenerating.value = false
   processingLogs.value = []
   taskId.value = ''
+  stopStatusPolling()
   agents.value.forEach(agent => {
     agent.status = 'idle'
     agent.currentTask = '等待启动...'
@@ -830,6 +1027,43 @@ const canStartGeneration = computed(() => {
          modelFiles.value.length === 1 &&
          (!validationResult.value || validationResult.value.isValid)
 })
+
+const isResumeAllowedFailure = (failureType?: string, failureHint?: string, error?: string, status?: string) => {
+  if (status === 'cancelled') {
+    return true
+  }
+  if (failureType === 'insufficient_balance' || failureType === 'cancelled') {
+    return true
+  }
+  if ((failureHint || '').includes('余额不足')) {
+    return true
+  }
+  if ((error || '').includes('cancelled')) {
+    return true
+  }
+  return false
+}
+
+const canResumeLast = computed(() => {
+  if (!lastTaskId.value || isGenerating.value) return false
+  const meta = lastTaskMeta.value
+  if (!meta) return false
+  return isResumeAllowedFailure(meta.failureType, meta.failureHint, meta.error, meta.status)
+})
+
+const canDeleteLast = computed(() => {
+  return Boolean(lastTaskId.value) && !isGenerating.value
+})
+
+const formatTaskStatus = (status?: string) => {
+  const map: Record<string, string> = {
+    completed: '已完成',
+    failed: '失败',
+    cancelled: '已停止',
+    processing: '处理中'
+  }
+  return status ? (map[status] || '未知') : ''
+}
 
 // 将项目名称与 PDF 文件名保持一致
 const syncProjectNameFromPdf = () => {
@@ -1029,7 +1263,8 @@ const uploadFiles = async () => {
 
 // EventSource 连接（SSE）
 let eventSource: EventSource | null = null
-const RECOVERY_TASK_KEY = 'generator_current_task'
+let statusPollingTimer: number | null = null
+let statusPollingTaskId: string | null = null
 
 // 开始生成任务 - 使用 SSE 实时更新
 const formatConflictTime = (value?: string) => {
@@ -1044,6 +1279,12 @@ const openConflictDialog = (conflict: any) => {
   conflictDialog.projectName = conflict.project_name || ''
   conflictDialog.isProcessing = Boolean(conflict.is_processing)
   conflictDialog.manualExists = Boolean(conflict.manual_exists)
+  conflictDialog.isFailed = Boolean(conflict.is_failed)
+  conflictDialog.manualValid = Boolean(conflict.manual_valid)
+  conflictDialog.manualError = conflict.manual_error || ''
+  conflictDialog.failureType = conflict.failure_type || ''
+  conflictDialog.failureHint = conflict.failure_hint || ''
+  conflictDialog.failureReason = conflict.failure_reason || ''
   conflictDialog.createdAt = conflict.created_at
   conflictDialog.updatedAt = conflict.updated_at
   conflictDialog.manualMtime = conflict.manual_mtime
@@ -1052,17 +1293,155 @@ const openConflictDialog = (conflict: any) => {
   conflictDialogVisible.value = true
 }
 
-const handleConflictChoice = async (action: 'overwrite' | 'duplicate' | 'cancel') => {
+const handleConflictChoice = async (action: 'overwrite' | 'duplicate' | 'cancel' | 'resume' | 'purge' | 'connect') => {
   conflictDialogVisible.value = false
   if (action === 'cancel') {
     resetToUploadStep(true)
     return
   }
+
+  if (action === 'connect') {
+    const id = conflictDialog.taskId
+    if (!id) return
+    taskId.value = id
+    isGenerating.value = true
+    currentStep.value = 1
+    processingStatus.value = undefined
+    processingText.value = '正在处理中...'
+    localStorage.setItem(RECOVERY_TASK_KEY, id)
+    connectEventSource(id)
+    startStatusPolling(id)
+    return
+  }
+
+  if (action === 'resume') {
+    const id = conflictDialog.taskId
+    if (!id) return
+    if (!isResumeAllowedFailure(conflictDialog.failureType, conflictDialog.failureHint, conflictDialog.failureReason)) {
+      ElMessage.warning('该任务无法继续，请删除后重试')
+      return
+    }
+    try {
+      isGenerating.value = true
+      const resp = await axios.post(`/api/task/${encodeURIComponent(id)}/resume`)
+      if (!resp.data?.success) {
+        throw new Error(resp.data?.detail || '继续任务失败')
+      }
+      resumeAttemptTaskId = id
+      resumeDeletePrompted = false
+      taskId.value = id
+      currentStep.value = 1
+      processingStatus.value = undefined
+      processingText.value = '正在继续生成...'
+      localStorage.setItem(RECOVERY_TASK_KEY, id)
+      connectEventSource(id)
+      startStatusPolling(id)
+    } catch (error: any) {
+      const status = error.response?.status
+      const detail = error.response?.data?.detail || error.message || '继续任务失败'
+      const shouldPromptDelete = status === 400 || /缺少源文件|损坏|resume_corrupt/i.test(detail)
+      if (shouldPromptDelete) {
+        const deleted = await confirmDeleteTask(id, detail)
+        if (deleted) {
+          isGenerating.value = false
+          return
+        }
+      }
+      ElMessage.error(detail)
+      isGenerating.value = false
+    }
+    return
+  }
+
+  if (action === 'purge') {
+    const id = conflictDialog.taskId
+    if (!id) return
+    try {
+      await axios.delete(`/api/manual/${encodeURIComponent(id)}`)
+      ElMessage.success('已删除失败任务，请重新上传')
+    } catch (error: any) {
+      const detail = error.response?.data?.detail || error.message || '删除失败任务失败'
+      ElMessage.error(detail)
+      return
+    }
+    clearLastTaskId(id)
+    resetToUploadStep(false)
+    return
+  }
+
   try {
     isGenerating.value = true
     await startGenerationTask(action)
   } catch (e) {
     // startGeneration 已有错误处理，这里不重复提示
+  }
+}
+
+const resumeLastTask = async () => {
+  const id = lastTaskId.value
+  if (!id) return
+  if (!canResumeLast.value) {
+    ElMessage.warning('该任务无法继续，请删除后重试')
+    return
+  }
+  try {
+    isGenerating.value = true
+    const resp = await axios.post(`/api/task/${encodeURIComponent(id)}/resume`)
+    if (!resp.data?.success) {
+      throw new Error(resp.data?.detail || '继续任务失败')
+    }
+    resumeAttemptTaskId = id
+    resumeDeletePrompted = false
+    taskId.value = id
+    currentStep.value = 1
+    processingStatus.value = undefined
+    processingText.value = '正在继续生成...'
+    localStorage.setItem(RECOVERY_TASK_KEY, id)
+    connectEventSource(id)
+    startStatusPolling(id)
+  } catch (error: any) {
+    isGenerating.value = false
+    const status = error.response?.status
+    const data = error.response?.data
+    if (status === 409 && data?.code) {
+      openConflictDialog(data)
+      return
+    }
+    if (status === 404) {
+      clearLastTaskId(id)
+      ElMessage.warning('上次任务已不存在，可能已被清理')
+      return
+    }
+    const detail = data?.detail || error.message || '继续任务失败'
+    const shouldPromptDelete = status === 400 || /缺少源文件|损坏|resume_corrupt/i.test(detail)
+    if (shouldPromptDelete) {
+      const deleted = await confirmDeleteTask(id, detail)
+      if (deleted) {
+        return
+      }
+    }
+    ElMessage.error(detail)
+  }
+}
+
+const deleteLastTask = async () => {
+  const id = lastTaskId.value
+  if (!id) return
+  const label = lastTaskMeta.value?.projectName || id
+  const confirmed = await ElMessageBox.confirm(
+    `确认删除上一次任务「${label}」吗？删除后可重新上传生成。`,
+    '删除确认',
+    { type: 'warning', confirmButtonText: '删除任务', cancelButtonText: '取消' }
+  ).catch(() => false)
+  if (!confirmed) return
+  try {
+    await axios.delete(`/api/manual/${encodeURIComponent(id)}`)
+    clearLastTaskId(id)
+    resetToUploadStep(false)
+    ElMessage.success('已删除任务，请重新上传')
+  } catch (error: any) {
+    const detail = error.response?.data?.detail || error.message || '删除失败'
+    ElMessage.error(detail)
   }
 }
 
@@ -1091,6 +1470,7 @@ const startGenerationTask = async (conflictStrategy: 'prompt' | 'overwrite' | 'd
 
     // 建立 SSE 连接
     connectEventSource(newTaskId)
+    startStatusPolling(newTaskId)
 
     return newTaskId
   } catch (error: any) {
@@ -1142,8 +1522,74 @@ const connectEventSource = (taskId: string) => {
   }
 }
 
+const stopStatusPolling = () => {
+  if (statusPollingTimer !== null) {
+    clearInterval(statusPollingTimer)
+    statusPollingTimer = null
+  }
+  statusPollingTaskId = null
+}
+
+const startStatusPolling = (id: string) => {
+  if (statusPollingTimer !== null) {
+    if (statusPollingTaskId === id) return
+    stopStatusPolling()
+  }
+  statusPollingTaskId = id
+  statusPollingTimer = window.setInterval(async () => {
+    try {
+      const resp = await axios.get(`/api/status/${encodeURIComponent(id)}`)
+      const data = resp.data || {}
+      if (typeof data.progress === 'number') {
+        processingProgress.value = data.progress
+      }
+      if (data.progress_message) {
+        processingText.value = data.progress_message
+      } else if (data.status === 'processing' && !processingText.value) {
+        processingText.value = '正在处理中...'
+      }
+
+      if (data.status === 'completed') {
+        processingProgress.value = 100
+        processingStatus.value = 'success'
+        processingText.value = '生成完成！'
+        isGenerating.value = false
+        stopStatusPolling()
+        clearLastTaskId(id)
+        if (resumeAttemptTaskId === id) {
+          resumeAttemptTaskId = null
+          resumeDeletePrompted = false
+        }
+        localStorage.removeItem(RECOVERY_TASK_KEY)
+      } else if (data.status === 'failed') {
+        processingStatus.value = 'exception'
+        processingText.value = data.failure_hint || data.error || '生成失败'
+        isGenerating.value = false
+        stopStatusPolling()
+        setLastTaskId(id)
+        await maybePromptDeleteAfterResume(id, data.failure_type, data.failure_hint || data.error)
+        localStorage.removeItem(RECOVERY_TASK_KEY)
+        if (data.failure_hint && lastFailureHint.value !== data.failure_hint) {
+          lastFailureHint.value = data.failure_hint
+          ElMessage.error(data.failure_hint)
+        }
+      } else if (data.status === 'cancelled') {
+        processingStatus.value = 'exception'
+        processingText.value = '任务已停止'
+        isGenerating.value = false
+        stopStatusPolling()
+        setLastTaskId(id)
+        await maybePromptDeleteAfterResume(id, data.failure_type, data.failure_hint || data.error)
+        localStorage.removeItem(RECOVERY_TASK_KEY)
+      }
+    } catch (error) {
+      // 轮询失败不打断流程
+    }
+  }, 1500)
+}
+
 // 处理 SSE 消息
-const handleSSEMessage = (data: any) => {
+const handleSSEMessage = async (data: any) => {
   console.log('收到 SSE 消息:', data)
 
   switch (data.type) {
@@ -1162,7 +1608,7 @@ const handleSSEMessage = (data: any) => {
       processingProgress.value = data.progress
       if (data.status === 'processing') {
         processingStatus.value = undefined
-        processingText.value = '正在处理中...'
+        processingText.value = data.message || '正在处理中...'
       }
       break
 
@@ -1174,6 +1620,8 @@ const handleSSEMessage = (data: any) => {
         addLog('✅ 任务处理完成', 'success')
       } else if (data.status === 'failed') {
         addLog('❌ 任务处理失败', 'error')
+      } else if (data.status === 'cancelled') {
+        addLog('⏹ 任务已停止', 'warning')
       }
       break
 
@@ -1181,6 +1629,7 @@ const handleSSEMessage = (data: any) => {
       // 任务完成
       eventSource?.close()
       eventSource = null
+      stopStatusPolling()
 
       if (data.status === 'completed') {
         processingProgress.value = 100
@@ -1195,11 +1644,26 @@ const handleSSEMessage = (data: any) => {
           message: '装配说明书生成完成！',
           duration: 3000
         })
+        clearLastTaskId(taskId.value)
+        localStorage.removeItem(RECOVERY_TASK_KEY)
+      } else if (data.status === 'cancelled') {
+        processingStatus.value = 'exception'
+        processingText.value = '任务已停止'
+        addLog('⏹ 任务已停止', 'warning')
+        setLastTaskId(taskId.value)
+        await maybePromptDeleteAfterResume(taskId.value, data.failure_type, data.failure_hint || data.error)
         localStorage.removeItem(RECOVERY_TASK_KEY)
       } else {
         processingStatus.value = 'exception'
-        processingText.value = data.error || '生成失败'
-        addLog(`❌ ${data.error}`, 'error')
+        const failureHint = data.failure_hint || data.error || '生成失败'
+        processingText.value = failureHint
+        addLog(`❌ ${failureHint}`, 'error')
+        setLastTaskId(taskId.value)
+        await maybePromptDeleteAfterResume(taskId.value, data.failure_type, failureHint)
+        if (data.failure_hint && lastFailureHint.value !== data.failure_hint) {
+          lastFailureHint.value = data.failure_hint
+          ElMessage.error(data.failure_hint)
+        }
         localStorage.removeItem(RECOVERY_TASK_KEY)
       }
 
@@ -1213,6 +1677,7 @@ const handleSSEMessage = (data: any) => {
       addLog(`❌ ${data.message}`, 'error')
       eventSource?.close()
       eventSource = null
+      stopStatusPolling()
       isGenerating.value = false
       localStorage.removeItem(RECOVERY_TASK_KEY)
       break
@@ -1523,6 +1988,7 @@ onUnmounted(() => {
     eventSource.close()
     eventSource = null
   }
+  stopStatusPolling()
 })
 
 // 刷新恢复：若存在未完成任务ID，则查询状态并重连
@@ -1537,15 +2003,23 @@ const restoreTaskFromCache = async () => {
 
     if (status === 'processing') {
       ElMessage.info('检测到未完成的生成任务，已自动恢复连接')
+      currentStep.value = 1
       connectEventSource(cachedId)
+      startStatusPolling(cachedId)
       isGenerating.value = true
       processingStatus.value = undefined
       processingText.value = '正在处理中...'
     } else if (status === 'completed') {
       ElMessage.success('上次任务已完成，可以到查看器查看')
+      clearLastTaskId(cachedId)
       localStorage.removeItem(RECOVERY_TASK_KEY)
     } else if (status === 'failed') {
-      ElMessage.warning('上次任务已失败，可重新上传生成')
+      ElMessage.warning(resp.data?.failure_hint || '上次任务已失败，可重新上传生成')
+      setLastTaskId(cachedId)
+      localStorage.removeItem(RECOVERY_TASK_KEY)
+    } else if (status === 'cancelled') {
+      ElMessage.info('上次任务已停止，可重新上传或继续生成')
+      setLastTaskId(cachedId)
       localStorage.removeItem(RECOVERY_TASK_KEY)
     }
   } catch (e) {
@@ -1696,6 +2170,12 @@ onMounted(() => {
   
   .step-actions {
     text-align: center;
+  }
+
+  .last-task-hint {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #6b7280;
   }
 }
 
@@ -2130,6 +2610,32 @@ onMounted(() => {
     }
   }
 
+  .logs-progress-bar {
+    padding: 12px 32px 16px;
+    background: #151515;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+
+    .progress-track {
+      height: 8px;
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #22c55e, #16a34a);
+      border-radius: 999px;
+      transition: width 0.3s ease;
+    }
+
+    .progress-meta {
+      margin-top: 6px;
+      font-size: 12px;
+      color: #9ca3af;
+    }
+  }
+
   .completion-actions-large {
     display: flex;
     justify-content: center;
@@ -2279,6 +2785,32 @@ onMounted(() => {
 @media (max-width: 1024px) {
   .generator-page {
     padding: 24px 0;
+  }
+
+  .logs-progress-bar {
+    padding: 12px 32px 16px;
+    background: var(--el-bg-color);
+    border-top: 1px solid var(--el-border-color-light);
+
+    .progress-track {
+      height: 6px;
+      background: rgba(0, 0, 0, 0.08);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #22c55e, #16a34a);
+      border-radius: 999px;
+      transition: width 0.3s ease;
+    }
+
+    .progress-meta {
+      margin-top: 6px;
+      font-size: 12px;
+      color: #6b7280;
+    }
   }
 
   .container {

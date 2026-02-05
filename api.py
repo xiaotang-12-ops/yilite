@@ -155,16 +155,88 @@ async def startup():
         # 创建一个模拟的pipeline用于开发测试
         pipeline = MockPipeline()
 
+def extract_core_name_from_pdf(filename: str) -> str:
+    """
+    从PDF文件名提取核心名称
+    示例: 06.84.01.0001T-HSB1220(48IN)-NL-Z吹雪机无连接器.pdf
+         -> HSB1220(48IN)-NL-Z吹雪机无连接器
+    """
+    import re
+    # 去掉扩展名
+    name = filename.rsplit('.', 1)[0] if '.' in filename else filename
+    # 去掉前缀编号格式：数字.数字.数字.数字字母-
+    name = re.sub(r'^\d+\.\d+\.\d+\.\d+[A-Z]-', '', name)
+    return name.strip()
+
+def extract_core_name_from_step(filename: str) -> str:
+    """
+    从STEP文件名提取核心名称
+    示例: T-HSB1220(48IN)-NL-Z吹雪机无连接器-203.STEP
+         -> HSB1220(48IN)-NL-Z吹雪机无连接器
+    """
+    import re
+    # 去掉扩展名
+    name = filename.rsplit('.', 1)[0] if '.' in filename else filename
+    # 去掉前缀字母-
+    name = re.sub(r'^[A-Z]-', '', name)
+    # 去掉后缀版本号 -数字
+    name = re.sub(r'-\d+$', '', name)
+    return name.strip()
+
 @app.post("/api/upload")
 async def upload_files(files: List[UploadFile] = File(...)):
     """文件上传"""
-    if not files:
-        raise HTTPException(status_code=400, detail="没有上传文件")
+    if not fileraise HTTPException(status_code=400, detail="没有上传文件")
     
     uploaded_files = []
     upload_dir = Path("uploads")
     upload_dir.mkdir(exist_ok=True)
     
+    # 分类文件
+    pdf_files = []
+    step_files = []
+    
+    for file in files:
+        if not file.filename:
+            continue
+        
+        filename_lower = file.filename.lower()
+        if filename_lower.endswith('.pdf'):
+            pdf_files.append(file)
+        elif filename_lower.endswith('.step') or filename_lower.endswith('.stp'):
+            step_files.append(file)
+        else:
+            # 其他文件类型也允许上传
+            pass
+    
+    # 验证PDF和STEP文件名匹配（如果两者都存在）
+    if pdf_files and step_files:
+        if len(pdf_files) != len(step_files):
+            raise HTTPException(
+                status_code=400, 
+                detail=f"PDF文件数量({len(pdf_files)})与STEP文件数量({len(step_files)})不匹配"
+            )
+        
+        # 提取核心名称并验证
+        for pdf_file in pdf_files:
+            pdf_core = extract_core_name_from_pdf(pdf_file.filename)
+            
+            # 查找匹配的STEP文件
+            matched = False
+            for step_file in step_files:
+                step_core = extract_core_name_from_step(step_file.filename)
+                
+                if pdf_core == step_core:
+                    matched = True
+                    break
+            
+            if not matched:
+                raise HTTPException(
+                    status_code=400,
+                    detail="当前2D与3D图纸不匹配，请更换后再试"
+                )
+    
+    # 保存所有文件
     for file in files:
         if not file.filename:
             continue

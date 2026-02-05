@@ -34,7 +34,7 @@
         <!-- 项目列表 -->
         <div class="projects-section">
           <el-table
-            :data="filteredProjects"
+            :data="paginatedProjects"
             @row-click="selectProject"
             highlight-current-row
             class="projects-table"
@@ -134,7 +134,7 @@
         <!-- 空状态 -->
         <div v-if="filteredProjects.length === 0 && !loading" class="empty-state">
           <el-empty description="暂无项目数据">
-            <el-button type="primary" @click="$router.push('/generator')">
+            <el-button v-if="isAdmin" type="primary" @click="$router.push('/generator')">
               创建新项目
             </el-button>
           </el-empty>
@@ -144,7 +144,7 @@
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="handleClose">取消</el-button>
-          <el-button type="primary" @click="$router.push('/generator')">
+          <el-button v-if="isAdmin" type="primary" @click="$router.push('/generator')">
             <el-icon><Plus /></el-icon>
             新建项目
           </el-button>
@@ -207,17 +207,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { storeToRefs } from 'pinia'
 import { useMediaQuery } from '@vueuse/core'
 import {
   Search, Document, View, Plus, FolderOpened, Delete
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import axios from 'axios'
+import { useAdminStore } from '../stores/admin'
 
 const router = useRouter()
 const isMobile = useMediaQuery('(max-width: 768px)')
+const adminStore = useAdminStore()
+const { isAdmin } = storeToRefs(adminStore)
+
+adminStore.ensureInit()
 
 // 响应式数据
 const showProjectDialog = ref(true)
@@ -319,7 +325,7 @@ const filteredProjects = computed(() => {
     const query = searchQuery.value.toLowerCase()
     filtered = filtered.filter(p => 
       p.projectName.toLowerCase().includes(query) ||
-      p.description.toLowerCase().includes(query)
+      p.projectNumber.toLowerCase().includes(query)
     )
   }
   
@@ -328,7 +334,7 @@ const filteredProjects = computed(() => {
     filtered = filtered.filter(p => p.status === statusFilter.value)
   }
   
-  // 日期过滤
+  // 日期范围过滤
   if (dateRange.value && dateRange.value.length === 2) {
     const [start, end] = dateRange.value
     filtered = filtered.filter(p => {
@@ -341,6 +347,13 @@ const filteredProjects = computed(() => {
 })
 
 const totalProjects = computed(() => filteredProjects.value.length)
+
+// 分页后的项目（用于表格显示）
+const paginatedProjects = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return filteredProjects.value.slice(start, end)
+})
 
 // 方法
 const formatDate = (dateString: string) => {
@@ -432,12 +445,17 @@ const handleClose = () => {
 
 const handleSizeChange = (size: number) => {
   pageSize.value = size
-  currentPage.value = 1
+  currentPage.value = 1  // 切换每页数量时重置到第一页
 }
 
 const handleCurrentChange = (page: number) => {
   currentPage.value = page
 }
+
+// 监听过滤条件变化，重置到第一页
+watch([searchQuery, statusFilter, dateRange], () => {
+  currentPage.value = 1
+})
 
 // 生命周期
 onMounted(() => {

@@ -40,8 +40,16 @@ const router = createRouter({
 })
 
 const SETTINGS_UNLOCK_KEY = 'settings_unlock_until'
+const ADMIN_STATUS_KEY = 'isAdmin'
 
 router.beforeEach((to, _from, next) => {
+  if (to.path === '/generator') {
+    const adminStatus = sessionStorage.getItem(ADMIN_STATUS_KEY)
+    if (adminStatus !== 'true') {
+      next({ path: '/' })
+      return
+    }
+  }
   if (to.path === '/settings') {
     const unlockUntil = Number(sessionStorage.getItem(SETTINGS_UNLOCK_KEY) || 0)
     if (unlockUntil && unlockUntil >= Date.now()) {

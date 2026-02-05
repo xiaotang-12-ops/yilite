@@ -78,6 +78,8 @@ class ProductAssemblyAgent(BaseGeminiAgent):
         """
         product_name = product_plan.get("product_name", "")
         total_bom_count = len(product_bom) if product_bom else 0
+        last_coverage_rate = None
+        last_uncovered_bom_list = ""
 
         print(f"\n{'='*80}")
         print(f" Agent 4: 产品总装步骤生成 - {product_name}")
@@ -103,15 +105,24 @@ class ProductAssemblyAgent(BaseGeminiAgent):
 
             # 如果是重试，添加反馈信息
             if attempt > 0 and check_coverage and product_bom:
-                feedback = f"""
+                if last_coverage_rate is not None:
+                    list_text = last_uncovered_bom_list or "（未生成明细）"
+                    feedback = f"""
 
-⚠️ 重要提醒：上一次生成的步骤产品级BOM覆盖率只有{coverage_rate:.1%}，未达到{min_coverage:.0%}的要求。
+⚠️ 重要提醒：上一次生成的步骤产品级BOM覆盖率只有{last_coverage_rate:.1%}，未达到{min_coverage:.0%}的要求。
 
 未覆盖的产品级BOM项（前20个）：
-{uncovered_bom_list}
+{list_text}
 
 请重新生成装配步骤，尽量提高BOM覆盖率。重点关注组件连接时需要的紧固件（螺栓、螺母、垫圈等）。
-                """
+                    """
+                else:
+                    feedback = """
+
+⚠️ 重要提醒：上一次生成未能计算产品级BOM覆盖率，请尽量覆盖所有BOM项。
+
+请重新生成装配步骤，尽量提高BOM覆盖率。重点关注组件连接时需要的紧固件（螺栓、螺母、垫圈等）。
+                    """
                 user_query = user_query + feedback
 
             # 调用AI生成步骤（使用重试机制）
@@ -176,6 +187,9 @@ class ProductAssemblyAgent(BaseGeminiAgent):
                         f"  - BOM序号{seq}: {product_bom[int(seq)-1].get('name', 'N/A')}"
                         for seq in uncovered_list
                     ])
+
+                    last_coverage_rate = coverage_rate
+                    last_uncovered_bom_list = uncovered_bom_list
 
                     print(f"  ⚠️ 有 {len(uncovered_seqs)} 个产品级BOM未覆盖")
 

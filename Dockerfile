@@ -58,8 +58,16 @@ RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/ && \
     pip config set install.trusted-host mirrors.aliyun.com && \
     pip install --no-cache-dir -r requirements.txt
 
-# 复制项目文件
-COPY . .
+# 复制核心源码（白名单）
+COPY backend ./backend
+COPY core ./core
+COPY agents ./agents
+COPY processors ./processors
+COPY utils ./utils
+COPY models ./models
+COPY prompts ./prompts
+COPY config.py ./config.py
+COPY api.py ./api.py
 
 # 创建必要的目录
 RUN mkdir -p uploads output static pipeline_output temp logs debug_output

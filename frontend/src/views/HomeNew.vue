@@ -11,8 +11,8 @@
       <!-- 左侧主标题区域 -->
       <div class="main-title-section">
         <h1 class="main-title">
-          <div class="title-line">易力特</div>
-          <div class="title-line">AI智能装配平台</div>
+          <!-- <div class="title-line">易力特</div> -->
+          <div class="title-line">装配指导</div>
         </h1>
         
         <div class="feature-list">
@@ -30,8 +30,9 @@
           </div>
         </div>
         
-        <div class="action-buttons">
+      <div class="action-buttons">
           <el-button
+            v-if="isAdmin"
             type="primary"
             size="large"
             @click="router.push('/generator')"
@@ -85,15 +86,21 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { storeToRefs } from 'pinia'
 import { useDark } from '@vueuse/core'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { useAdminStore } from '../stores/admin'
 
 // 响应式数据
 const router = useRouter()
 const gridBackground = ref<HTMLElement>()
 const threeBackground = ref<HTMLElement>()
 const isDarkMode = useDark() // 使用全局主题状态
+const adminStore = useAdminStore()
+const { isAdmin } = storeToRefs(adminStore)
+
+adminStore.ensureInit()
 
 // 3D模型数组
 const models: any[] = []
