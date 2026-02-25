@@ -4,7 +4,7 @@
     <el-dialog
       v-model="showProjectDialog"
       title="选择项目"
-      width="80%"
+      :width="projectDialogWidth"
       :before-close="handleClose"
       class="project-dialog"
     >
@@ -18,6 +18,14 @@
             clearable
             class="search-input"
           />
+          <el-button
+            class="scan-button"
+            :loading="scanStarting"
+            @click="openScannerDialog"
+          >
+            <el-icon><Camera /></el-icon>
+            扫一扫
+          </el-button>
           <!-- 状态筛选已隐藏 -->
           <!-- 移动端隐藏日期筛选 -->
           <el-date-picker
@@ -33,18 +41,24 @@
         
         <!-- 项目列表 -->
         <div class="projects-section">
+          <!-- 桌面端：表格布局 -->
           <el-table
+            v-if="!isMobile"
             :data="paginatedProjects"
             @row-click="selectProject"
             highlight-current-row
             class="projects-table"
             v-loading="loading"
           >
-            <el-table-column prop="projectName" label="项目名称" min-width="200">
+            <el-table-column
+              prop="projectName"
+              label="项目名称"
+              :min-width="200"
+            >
               <template #default="{ row }">
                 <div class="project-name">
                   <el-icon class="project-icon"><Document /></el-icon>
-                  <span>{{ row.projectName }}</span>
+                  <span class="project-name-text">{{ row.projectName }}</span>
                 </div>
               </template>
             </el-table-column>
@@ -116,6 +130,65 @@
               </template>
             </el-table-column>
           </el-table>
+
+          <!-- 移动端：卡片布局 -->
+          <div v-if="isMobile" class="project-cards" v-loading="loading">
+            <div
+              v-for="project in paginatedProjects"
+              :key="project.id"
+              class="project-card"
+              @click="selectProject(project)"
+            >
+              <!-- 项目名称 -->
+              <div class="card-header">
+                <el-icon class="card-icon"><Document /></el-icon>
+                <span class="card-title">{{ project.projectName }}</span>
+              </div>
+
+              <!-- 状态和时间 -->
+              <div class="card-meta">
+                <el-tag :type="getStatusType(project.status)" size="small">
+                  {{ getStatusText(project.status) }}
+                </el-tag>
+                <span class="card-time">{{ formatDate(project.createdAt) }}</span>
+              </div>
+
+              <!-- 操作按钮 -->
+              <div class="card-actions">
+                <template v-if="project.status === 'completed'">
+                  <el-button
+                    type="primary"
+                    size="small"
+                    @click.stop="viewProject(project)"
+                  >
+                    <el-icon><View /></el-icon>
+                    查看说明书
+                  </el-button>
+                </template>
+                <template v-else-if="project.status === 'failed'">
+                  <el-button
+                    type="danger"
+                    size="small"
+                    @click.stop="deleteProject(project)"
+                  >
+                    <el-icon><Delete /></el-icon>
+                    删除任务
+                  </el-button>
+                </template>
+                <template v-else-if="project.status === 'processing'">
+                  <el-button
+                    type="danger"
+                    size="small"
+                    plain
+                    @click.stop="deleteProject(project)"
+                  >
+                    <el-icon><Delete /></el-icon>
+                    中断/删除
+                  </el-button>
+                </template>
+              </div>
+            </div>
+          </div>
           
           <!-- 分页 -->
           <div class="pagination-section">
@@ -124,7 +197,10 @@
               v-model:page-size="pageSize"
               :page-sizes="[10, 20, 50, 100]"
               :total="totalProjects"
-              layout="total, sizes, prev, pager, next, jumper"
+              :layout="paginationLayout"
+              :small="isMobile"
+              :pager-count="isMobile ? 5 : 7"
+              :background="isMobile"
               @size-change="handleSizeChange"
               @current-change="handleCurrentChange"
             />
@@ -148,6 +224,56 @@
             <el-icon><Plus /></el-icon>
             新建项目
           </el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+    <el-dialog
+      v-model="showScannerDialog"
+      title="扫一扫填充搜索"
+      :width="scannerDialogWidth"
+      class="scanner-dialog"
+      :close-on-click-modal="false"
+      @closed="handleScannerDialogClosed"
+    >
+      <div class="scanner-dialog-body">
+        <el-alert
+          v-if="scanError"
+          type="warning"
+          :title="scanError"
+          :closable="false"
+          show-icon
+        />
+
+        <div class="scanner-video-wrapper">
+          <video
+            v-show="!scanError"
+            ref="scannerVideoRef"
+            class="scanner-video"
+            autoplay
+            muted
+            playsinline
+          />
+          <div v-if="scanError" class="scanner-video-placeholder">
+            当前环境无法启用摄像头扫码
+          </div>
+        </div>
+
+        <div class="scanner-tip">
+          将物料二维码/条码放在取景框中央，识别后会自动填入搜索框。
+        </div>
+
+        <el-input
+          v-model="manualScanInput"
+          placeholder="扫码不可用时，可手动输入物料代码（如 01.09.0436）"
+          clearable
+          @keyup.enter="confirmManualScan"
+        />
+      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="showScannerDialog = false">关闭</el-button>
+          <el-button type="primary" @click="confirmManualScan">填入搜索</el-button>
         </div>
       </template>
     </el-dialog>
@@ -207,15 +333,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted, watch, nextTick, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useMediaQuery } from '@vueuse/core'
 import {
-  Search, Document, View, Plus, FolderOpened, Delete
+  Search, Document, View, Plus, FolderOpened, Delete, Camera
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import axios from 'axios'
+import { BrowserMultiFormatReader, type IScannerControls } from '@zxing/browser'
 import { useAdminStore } from '../stores/admin'
 
 const router = useRouter()
@@ -233,9 +360,21 @@ const statusFilter = ref('')
 const dateRange = ref([])
 const currentPage = ref(1)
 const pageSize = ref(20)
+const showScannerDialog = ref(false)
+const scanStarting = ref(false)
+const scanError = ref('')
+const manualScanInput = ref('')
+const scannerVideoRef = ref<HTMLVideoElement | null>(null)
+const projectDialogWidth = computed(() => (isMobile.value ? '96%' : '80%'))
+const scannerDialogWidth = computed(() => (isMobile.value ? '96%' : '420px'))
+const paginationLayout = computed(() =>
+  isMobile.value ? 'prev, pager, next' : 'total, sizes, prev, pager, next, jumper'
+)
 
 // ✅ 从 localStorage 加载项目数据
 const projects = ref<any[]>([])
+let scannerControls: IScannerControls | null = null
+let scannerReader: BrowserMultiFormatReader | null = null
 
 // 加载历史记录
 const loadHistory = async () => {
@@ -311,7 +450,7 @@ const projectStats = computed(() => {
 
 // 最近项目
 const recentProjects = computed(() => {
-  return projects.value
+  return [...projects.value]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 5)
 })
@@ -322,10 +461,12 @@ const filteredProjects = computed(() => {
   
   // 搜索过滤
   if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
+    const query = searchQuery.value.trim().toLowerCase()
     filtered = filtered.filter(p => 
-      p.projectName.toLowerCase().includes(query) ||
-      p.projectNumber.toLowerCase().includes(query)
+      String(p.projectName || '').toLowerCase().includes(query) ||
+      String(p.projectNumber || '').toLowerCase().includes(query) ||
+      String(p.description || '').toLowerCase().includes(query) ||
+      String(p.id || '').toLowerCase().includes(query)
     )
   }
   
@@ -345,6 +486,149 @@ const filteredProjects = computed(() => {
   
   return filtered
 })
+
+const isCameraApiSupported = () => {
+  return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)
+}
+
+const isSecureCameraContext = () => {
+  const host = window.location.hostname
+  const localHosts = ['localhost', '127.0.0.1', '::1']
+  return window.isSecureContext || localHosts.includes(host)
+}
+
+const normalizeScannedText = (rawText: string) => {
+  const value = rawText.trim()
+  if (!value) return ''
+
+  try {
+    const url = new URL(value)
+    const queryCandidate =
+      url.searchParams.get('code') ||
+      url.searchParams.get('materialCode') ||
+      url.searchParams.get('material')
+
+    if (queryCandidate && queryCandidate.trim()) {
+      return queryCandidate.trim()
+    }
+
+    const lastPathPart = decodeURIComponent(
+      url.pathname
+        .split('/')
+        .filter(Boolean)
+        .pop() || ''
+    ).trim()
+
+    if (lastPathPart) {
+      return lastPathPart
+    }
+  } catch {
+    // 不是 URL，直接使用原值
+  }
+
+  return value
+}
+
+const stopScanner = () => {
+  if (scannerControls) {
+    try {
+      scannerControls.stop()
+    } catch (error) {
+      console.warn('停止扫码失败:', error)
+    }
+    scannerControls = null
+  }
+
+  if (scannerReader) {
+    try {
+      scannerReader.reset()
+    } catch (error) {
+      console.warn('重置扫码器失败:', error)
+    }
+  }
+}
+
+const applyScannedValue = (rawText: string) => {
+  const normalized = normalizeScannedText(rawText)
+  if (!normalized) {
+    ElMessage.warning('扫码结果为空，请重试')
+    return
+  }
+
+  searchQuery.value = normalized
+  manualScanInput.value = normalized
+  ElMessage.success(`已填入物料代码：${normalized}`)
+  showScannerDialog.value = false
+  stopScanner()
+}
+
+const startScanner = async () => {
+  if (!scannerVideoRef.value) return
+
+  if (!scannerReader) {
+    scannerReader = new BrowserMultiFormatReader()
+  }
+
+  scanStarting.value = true
+  scanError.value = ''
+
+  try {
+    scannerControls = await scannerReader.decodeFromVideoDevice(
+      undefined,
+      scannerVideoRef.value,
+      (result, error) => {
+        if (result) {
+          applyScannedValue(result.getText())
+          return
+        }
+
+        if (error && error.name !== 'NotFoundException') {
+          console.warn('扫码识别异常:', error)
+        }
+      }
+    )
+  } catch (error: any) {
+    console.error('启动扫码失败:', error)
+    scanError.value = `启动扫码失败：${error?.message || '请检查摄像头权限'}`
+  } finally {
+    scanStarting.value = false
+  }
+}
+
+const openScannerDialog = async () => {
+  showScannerDialog.value = true
+  manualScanInput.value = ''
+  scanError.value = ''
+
+  if (!isCameraApiSupported()) {
+    scanError.value = '当前浏览器不支持摄像头访问，请手动输入物料代码。'
+    return
+  }
+
+  if (!isSecureCameraContext()) {
+    scanError.value = '当前页面为 HTTP 非安全上下文，浏览器通常会禁用摄像头，请切换 HTTPS。'
+    ElMessage.warning('HTTP 环境可能无法调起摄像头，请优先切换到 HTTPS。')
+    return
+  }
+
+  await nextTick()
+  await startScanner()
+}
+
+const confirmManualScan = () => {
+  const manualValue = manualScanInput.value.trim()
+  if (!manualValue) {
+    ElMessage.warning('请输入物料代码')
+    return
+  }
+  applyScannedValue(manualValue)
+}
+
+const handleScannerDialogClosed = () => {
+  stopScanner()
+  scanError.value = ''
+  scanStarting.value = false
+}
 
 const totalProjects = computed(() => filteredProjects.value.length)
 
@@ -468,6 +752,10 @@ onMounted(() => {
     loading.value = false
   }, 500)
 })
+
+onBeforeUnmount(() => {
+  stopScanner()
+})
 </script>
 
 <style lang="scss" scoped>
@@ -521,6 +809,10 @@ onMounted(() => {
     max-width: 300px;
   }
 
+  .scan-button {
+    flex-shrink: 0;
+  }
+
   .status-filter {
     width: 120px;
   }
@@ -528,6 +820,44 @@ onMounted(() => {
   .date-picker {
     width: 240px;
   }
+}
+
+.scanner-dialog-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.scanner-video-wrapper {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--el-border-color);
+  background: #111;
+}
+
+.scanner-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.scanner-video-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  padding: 16px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.scanner-tip {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
 }
 
 // 项目表格
@@ -539,17 +869,96 @@ onMounted(() => {
 
     .project-name {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       gap: 8px;
 
       .project-icon {
         color: var(--el-color-primary);
+        margin-top: 2px;
+      }
+
+      .project-name-text {
+        display: block;
+        line-height: 1.5;
+        word-break: break-word;
+        overflow-wrap: anywhere;
       }
     }
 
     .file-count {
       font-size: 12px;
       color: var(--el-text-color-secondary);
+    }
+  }
+
+  // 移动端卡片布局
+  .project-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    .project-card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        transform: translateY(-2px);
+      }
+
+      &:active {
+        transform: translateY(0);
+      }
+
+      .card-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 12px;
+
+        .card-icon {
+          color: var(--el-color-primary);
+          font-size: 20px;
+          flex-shrink: 0;
+          margin-top: 2px;
+        }
+
+        .card-title {
+          font-size: 16px;
+          font-weight: 600;
+          line-height: 1.5;
+          color: var(--el-text-color-primary);
+          word-break: break-word;
+          overflow-wrap: anywhere;
+          flex: 1;
+        }
+      }
+
+      .card-meta {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+
+        .card-time {
+          font-size: 12px;
+          color: var(--el-text-color-secondary);
+        }
+      }
+
+      .card-actions {
+        display: flex;
+        justify-content: flex-end;
+
+        .el-button {
+          min-width: auto;
+        }
+      }
     }
   }
 
@@ -671,28 +1080,83 @@ onMounted(() => {
 
 // 响应式设计
 @media (max-width: 768px) {
-  .search-section {
-    flex-direction: column;
-    align-items: stretch;
+  .viewer-page {
+    padding: 12px;
+  }
 
-    .search-input,
+  .project-dialog {
+    :deep(.el-dialog) {
+      width: calc(100vw - 16px) !important;
+      max-width: none;
+      margin: 8px auto !important;
+      border-radius: 16px;
+    }
+
+    :deep(.el-dialog__header) {
+      padding: 18px 16px 14px;
+    }
+
+    :deep(.el-dialog__body) {
+      padding: 0 16px 16px;
+    }
+
+    :deep(.el-dialog__footer) {
+      padding: 14px 16px;
+    }
+  }
+
+  .dialog-content {
+    padding: 0;
+  }
+
+  .search-section {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+
+    .search-input {
+      flex: 1;
+      max-width: none;
+    }
+
+    .scan-button {
+      flex-shrink: 0;
+      width: auto;
+    }
+
     .status-filter,
     .date-picker {
-      width: 100%;
-      max-width: none;
+      display: none;
     }
   }
 
   .projects-section {
-    overflow-x: auto;
+    overflow-x: visible;
 
-    :deep(.el-table__body-wrapper) {
-      overflow-x: auto;
+    .project-cards {
+      gap: 12px;
     }
   }
 
   .projects-table {
-    min-width: 720px;
+    min-width: 100%;
+    box-shadow: none;
+  }
+
+  .projects-table :deep(.el-table__cell) {
+    padding: 14px 8px;
+  }
+
+  .projects-table :deep(.cell) {
+    padding: 0;
+  }
+
+  .pagination-section :deep(.el-pagination) {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
   }
 
   .preview-header {

@@ -1,6 +1,6 @@
 # 智能装配说明书生成系统
 
-[![Version](https://img.shields.io/badge/version-v2.0.90-blue.svg)](https://github.com/xiaotang-12-ops/yilite/releases)
+[![Version](https://img.shields.io/badge/version-v2.1.28-blue.svg)](https://github.com/xiaotang-12-ops/yilite/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Docker](https://img.shields.io/badge/docker-ready-brightgreen.svg)](DOCKER_DEPLOYMENT.md)
 
@@ -8,13 +8,13 @@
 
 一个基于AI的智能装配说明书生成系统，能够自动解析PDF工程图纸和3D模型，生成工人友好的交互式HTML装配说明书。
 
-**当前版本**: v2.0.90 | [查看版本历史](https://github.com/xiaotang-12-ops/yilite/releases) | [部署指南](DOCKER_DEPLOYMENT.md)
+**当前版本**: v2.1.28 | [查看版本历史](https://github.com/xiaotang-12-ops/yilite/releases) | [部署指南](DOCKER_DEPLOYMENT.md)
 
-## 🆕 最新更新 (v2.0.90)
+## 🆕 最新更新 (v2.1.28)
 
-- **🧭 步骤导航顺序调整**：桌面端“下一步/查看步骤”位置互换，操作更顺手。
-- **🧰 工具输入体验修复**：所需工具回车添加后不再残留文字，并新增“回车添加”提示。
-- **📱 移动端返回稳定性**：抽屉返回不再触发页面刷新，避免步骤重置。
+- **📝 草稿弹窗新手化**：弹窗动作收敛为“继续编辑草稿 / 丢弃草稿回线上”，并新增二次确认。
+- **🔄 管理员登录自动刷新**：登录切换到管理员后自动拉取最新手册，若版本被他人更新会即时提醒。
+- **📱 移动端稳定性持续增强**：返回链路、抽屉交互、步骤定位与状态显示一致性进一步修复。
 
 ### 🌟 v2.0.x 系列演进亮点
 

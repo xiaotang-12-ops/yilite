@@ -7,8 +7,8 @@
 | --- | --- | --- | --- |
 | `/` | HomeNew.vue | 首页/入口展示 | - |
 | `/generator` | Generator.vue | 上传 PDF/模型，触发生成 | `/api/upload`, `/api/generate`, `/api/status`, `/api/stream`, WebSocket `/ws/task/{id}` |
-| `/viewer/:id?` | Viewer.vue | 3D 预览、结果查看 | 读取输出目录或任务数据 |
-| `/manual/:taskId` | ManualViewer.vue | 装配手册查看与编辑、版本自增 | `/api/manual*`, `/api/manual/{task}/glb/*`, `/api/manual/{task}/pdf_images/*` |
+| `/viewer/:id?` | Viewer.vue | 3D 预览、结果查看（支持搜索栏扫一扫回填） | 读取输出目录或任务数据；扫码后自动写入 `searchQuery`；移动端采用卡片布局（白色背景、圆角阴影、信息层级清晰），桌面端保持表格布局 |
+| `/manual/:taskId` | ManualViewer.vue | 装配手册查看与编辑、版本自增 | `/api/manual*`, `/api/manual/{task}/glb/*`, `/api/manual/{task}/pdf_images/*`；移动端返回链路收口（手动关闭弹层不再 `history.back`）+ 按 `taskId` 持久化恢复步骤索引；抽屉历史层改为“点击打开时同步 `pushState`”以规避首次返回竞态；修复手机步骤抽屉按钮错位与恢复零件后的即时状态显示；草稿弹窗改为“继续编辑 / 丢弃回线上”两动作并带二次确认；管理员状态切换时自动刷新手册并在版本变化时提醒 |
 | `/engineer` | Engineer.vue | 工程师视图：质检/分发 | 复用任务与手册数据 |
 | `/settings` | Settings.vue | 配置 AI Key / 模型（隐藏入口） | `/api/settings`, `/api/test-model` |
 | `/glb-test` | GLBTest.vue | GLB 场景调试 | 本地 mock 资源 |
@@ -16,6 +16,7 @@
 | `/icon-test` | IconTest.vue | 图标样例 | - |
 
 默认 API 基础地址：`VITE_API_BASE_URL`（未配置时 `http://localhost:8008/api`）；WebSocket：`ws://localhost:8008/ws/task/{id}`（`TaskWebSocket`）。
+移动端扫码注意：浏览器摄像头通常要求安全上下文（`https://` 或 `localhost`），`http://` 内网访问下前端会提示并可手动输入物料代码兜底。
 
 ## 主要组件
 - `ProcessingSteps.vue` / `ProcessingVisualization*.vue`：展示任务进度与阶段。
@@ -23,4 +24,3 @@
 - `ThreeViewer.vue`、`WorkerThreeViewer.vue`：Three.js 模型展示。
 - 工程师面板：`components/engineer/*`（上传、AI 处理、人工审核、质检、分发）。
 - 工人面板：`components/worker/*`（求助、问题上报、三维视图）。
-\n🙂

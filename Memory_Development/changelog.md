@@ -1,5 +1,202 @@
 # Memory Changelog
 
+## v2.1.28 (2026-02-25)
+- **ManualViewer 管理员登录后自动刷新 + 版本变更提醒**：
+  - **用户提问**：
+    - “管理员登录上去后，如果这个版本的图纸已经被别人修改了，那我这个时候点击管理员登录，会发现没有弹窗提醒。”
+  - **问题根因**：
+    1. `ManualViewer` 的 `handleLogin()` 只切换 `isAdmin`，未触发 `refreshManualFromServer()`，页面会停留在登录前缓存数据。
+    2. 页面仅在 `onMounted` 和 `historyVersion` 变化时加载，没有监听 `isAdmin` 状态变化。
+  - **问题场景**：
+    - 非管理员先打开手册页面后，其他人已更新版本；当前用户在同页点击管理员登录，界面未自动刷新到最新数据。
+  - **修复方案**：
+    1. 新增 `watch(isAdmin, ...)`：管理员状态切换时主动执行 `refreshManualFromServer()`。
+    2. 在“切换为管理员”场景下比较刷新前后 `version/lastUpdated`，检测到变化时提示“数据已更新，已自动刷新”。
+  - **影响文件**：`frontend/src/views/ManualViewer.vue`、`VERSION`、`Memory_Development/changelog.md`、`Memory_Development/index.md`、`Memory_Development/frontend/routes.md`
+  - **记录人**：小雅
+- **GitHub 发版交付补齐（v2.1.28）**：
+  - **用户提问**：
+    - “把我们项目上传到github上，然后记录tag为v2.1.28，release你也要大概写一下。”
+  - **问题根因**：
+    1. 发布配套文档版本口径仍停留在 `v2.0.90`，与当前版本不一致。
+    2. `docker-compose.yml` 镜像/容器命名版本仍为 `v2.0.0`，与发布版本不匹配。
+  - **修复方案**：
+    1. 更新 `README.md`、`DEPLOYMENT.md` 版本信息与最新更新摘要到 `v2.1.28`。
+    2. 更新 `docker-compose.yml` 镜像与容器命名到 `v2.1.28`，确保部署版本可识别。
+  - **影响文件**：`README.md`、`DEPLOYMENT.md`、`docker-compose.yml`、`Memory_Development/changelog.md`
+  - **记录人**：小雅
+
+## v2.1.27 (2026-02-25)
+- **ManualViewer 草稿弹窗重构（新手可理解）+ 丢弃草稿统一确认链路**：
+  - **用户提问**：
+    - “这个图片的内容，绿色的按钮好像没什么作用？”
+    - “这个功能有点失败了。”
+    - “你没遵守规则，改代码要记录呀”
+  - **问题根因**：
+    1. 原草稿弹窗把“切到预览版本继续改”和“丢弃草稿回线上”混在一个按钮语义里，新手难以理解。
+    2. 弹窗内使用 `hasPreview/previewVersion` 条件分支，常见路径下按钮长期表现为不可用或意义不清。
+    3. 丢弃草稿逻辑在多个入口分散实现，确认文案与执行链路存在一致性风险。
+  - **问题场景**：
+    - 管理员进入 `ManualViewer` 时检测到草稿，弹窗出现后无法快速判断按钮含义，误认为功能失效。
+  - **修复方案**：
+    1. 将弹窗改为两动作：`继续编辑草稿`、`丢弃草稿并回到线上版本`，移除弹窗内“预览版切换”语义。
+    2. 新增时间口径展示：`草稿创建时间` + `最近保存时间`；旧草稿无 `draftCreatedAt` 时显示兜底说明。
+    3. 新增统一函数 `confirmDiscardDraft()` + `discardDraftAndRestorePublished()`，顶部入口与弹窗入口共用同一丢弃流程与二次确认文案。
+  - **影响文件**：`frontend/src/views/ManualViewer.vue`、`VERSION`、`Memory_Development/changelog.md`、`Memory_Development/index.md`、`Memory_Development/frontend/routes.md`
+  - **记录人**：小雅
+
+## v2.1.26 (2026-02-25)
+- **ManualViewer 两处问题真实落地修复 + 记录纠偏**：
+  - **用户提问**：
+    - “去修复代码吧。”
+  - **问题根因**：
+    1. `v2.1.25` 当时只更新了 memory 记录，`ManualViewer.vue` 未实际落地对应代码，导致用户误以为已修复。
+    2. 手机步骤抽屉竖排按钮仍受 Element Plus 默认 `.el-button + .el-button { margin-left: 12px }` 影响。
+    3. `restorePart()` 恢复零件后未立即触发重算，存在瞬时错误外观（看起来像“已装”）。
+  - **修复方案**：
+    1. 在 `restorePart()` 恢复可见后立即调用 `updateStepDisplay(false)`，统一重算材质与位置，再自动保存。
+    2. 在 `.step-jump-list` 作用域内新增 `.el-button + .el-button` 左间距清零（`margin-left` / `margin-inline-start`）。
+    3. 前端镜像重建并验证新构建指纹：`index-C8yiElBS.js`、`index-9uqghfCd.css`（本地 3008）。
+  - **影响文件**：`frontend/src/views/ManualViewer.vue`、`VERSION`、`Memory_Development/changelog.md`、`Memory_Development/index.md`
+  - **记录人**：小雅
+
+## v2.1.25 (2026-02-13，记录误差：当时未完成代码落地，已在 v2.1.26 补齐)
+- **ManualViewer 两个新发现问题修复（手机步骤抽屉错位 + 恢复零件状态显示异常）**：
+  - **用户提问**：
+    - “手机端步骤列表里步骤1位置和其他步骤有偏差。”
+    - “删除零件后浏览器刷新，再恢复零件会先显示已装，重新进入又正常。”
+  - **问题根因**：
+    1. 步骤抽屉使用竖向按钮列表，但未覆盖 Element Plus 默认兄弟按钮间距规则（`.el-button + .el-button`），导致从第2项起出现水平偏移。
+    2. `restorePart()` 恢复零件时只做 `visible=true` 和保存草稿，未立即触发 `updateStepDisplay()`，导致材质/位置沿用旧渲染状态，出现“先显示已装、重进才正常”。
+  - **问题场景**：
+    - 手机端打开“选择步骤”抽屉时，第1项与后续项左边界不一致。
+    - 删除零件并刷新后，从“已删除零件”恢复时，零件即时外观错误为“已装”。
+  - **修复方案**：
+    1. 在步骤抽屉样式中新增对 `.el-button + .el-button` 的间距清零（`margin-left`/`margin-inline-start`），确保竖排列表统一左对齐。
+    2. 在 `restorePart()` 中恢复可见后立即执行 `updateStepDisplay(false)`，即时重算零件材质与位置，再执行自动保存。
+  - **影响文件**：`frontend/src/views/ManualViewer.vue`、`Memory_Development/changelog.md`、`Memory_Development/index.md`、`Memory_Development/frontend/routes.md`、`VERSION`
+  - **记录人**：小雅
+
+## v2.1.24 (2026-02-13)
+- **Viewer 手机端布局重新设计（表格改卡片，信息层级优化）**：
+  - **用户提问**：
+    - "当前手机页面的查看器，看起来很不好看，不是配色问题，是布局问题，你去分析并且看看怎么重新设计一下。"
+  - **问题根因**：
+    1. 移动端使用 `el-table` 表格组件，在单列内垂直堆叠项目名称、状态、时间、操作按钮，表格组件本质为桌面数据展示设计，移动端强行使用导致视觉笨重。
+    2. 信息层级混乱：项目名、状态标签、时间、按钮挤在一起，没有明确的视觉层级区分。
+    3. 操作按钮设置 `width: 100%` 全宽，视觉上过于突出且笨重。
+    4. 表格行之间只有分隔线，缺少卡片间距和呼吸空间，整体显得拥挤。
+    5. 搜索区域垂直堆叠（搜索框和扫一扫按钮各占一行），占用过多垂直空间。
+  - **问题场景**：
+    - 手机端项目列表页面视觉笨重，表格边框和单元格padding显得拥挤，信息层级不清晰，用户体验差。
+  - **修复方案**：
+    1. **布局策略分离**：桌面端保持表格布局（`v-if="!isMobile"`），移动端改用卡片列表（`v-if="isMobile"`），两者完全独立。
+    2. **卡片设计**：每个项目卡片包含三层结构：
+       - 顶部 `card-header`：图标（20px）+ 项目名称（16px，加粗，深色）
+       - 中部 `card-meta`：状态标签 + 时间（12px，灰色，横向排列）
+       - 底部 `card-actions`：操作按钮（右对齐，自适应宽度，不全宽）
+    3. **卡片样式**：白色背景，12px圆角，16px内边距，12px卡片间距，轻微阴影（`0 2px 8px rgba(0,0,0,0.08)`），hover时阴影加深并上浮2px。
+    4. **搜索区域优化**：改为横向布局，搜索框 `flex: 1` 占主要空间，扫一扫按钮固定宽度，节省垂直空间。
+    5. **页面间距优化**：页面padding从8px增加到12px，对话框边距和圆角优化，整体更舒适。
+    6. **桌面端保证**：表格代码完全不动，只添加 `v-if="!isMobile"` 条件判断，所有功能和样式完全一致。
+  - **影响文件**：`frontend/src/views/Viewer.vue`、`Memory_Development/changelog.md`、`Memory_Development/index.md`、`VERSION`
+  - **记录人**：小雅
+
+## v2.1.23 (2026-02-13)
+- **ManualViewer 手机端返回首击竞态修复（抽屉 pushState 改同步触发）**：
+  - **用户提问**：
+    - “我从来没点过丢弃草稿，手机端很多功能都隐藏了，但返回还是会刷新并变成第一页。”
+  - **问题根因**：
+    1. 先前抽屉历史层是在 `watch(showDrawers...)` 中追加，属于状态变更后的异步回调，存在“抽屉刚打开但历史层尚未入栈”的时序窗口。
+    2. 在该窗口内触发物理返回，浏览器可能优先走页面级回退而非弹层级回退，表现为页面重进后步骤回到第一页。
+    3. `ManualViewer.vue:3501` 的 `currentStepIndex = 0` 属于“丢弃草稿”分支，仅管理员可触发，不是手机只读场景主因。
+  - **问题场景**：
+    - 手机端进入后续步骤，打开图纸/步骤抽屉后第一次按返回，出现“像刷新”并回到第一页。
+  - **修复方案**：
+    1. 新增 `pushOverlayHistory()`，将抽屉的 `pushState` 从 `watch` 挪到点击打开函数中同步执行（`openMobileDrawingsDrawer/openMobileDetailsDrawer/openMobileStepJumpDrawer`）。
+    2. 模板按钮改为调用上述打开函数，确保“打开抽屉”与“历史入栈”同一时机完成。
+    3. 抽屉 `watch` 仅保留关闭时的本地栈清理，移除打开分支的历史入栈逻辑，避免重复和竞态。
+    4. 历史版本相关 `query.version/source` 读取逻辑保持不变，避免影响既有历史版本能力。
+  - **影响文件**：`frontend/src/views/ManualViewer.vue`、`Memory_Development/changelog.md`、`Memory_Development/index.md`、`Memory_Development/frontend/routes.md`、`VERSION`
+  - **记录人**：小雅
+
+## v2.1.22 (2026-02-13)
+- **ManualViewer 手机端返回链路收口（不触碰历史版本 query）**：
+  - **用户提问**：
+    - “22步骤打开图纸抽屉后返回会像刷新一样回第一页，项目已给客户，不能再出差错。”
+  - **问题根因**：
+    1. 手机端弹层关闭链路同时存在 `pushState + history.back + popstate + overlayStack`，首次返回时容易触发竞态，表现为页面状态被重置。
+    2. `currentStepIndex` 仅保存在内存，若移动端发生被动重进，步骤会回到默认 `0`（第一页）。
+  - **问题场景**：
+    - 手机端在后续步骤（如步骤22）打开图纸/步骤抽屉，按返回后出现“像刷新”并回到第一页。
+  - **修复方案**：
+    1. 仅改 `ManualViewer` 的移动端链路，移除手动关闭弹层时的 `history.back()`，避免与 `popstate` 竞争。
+    2. 保留 `popstate` 关闭弹层能力，并延后重入标记复位，减少 watch 与 popstate 同 tick 竞争。
+    3. 新增移动端步骤索引持久化：`sessionStorage` 按 `taskId` 保存/恢复 `currentStepIndex`，被动重进后恢复到上次步骤。
+    4. `onBeforeRouteLeave` / `onUnmounted` 增加移动端步骤持久化兜底。
+    5. 明确未改动 `historyVersion/source` 及历史版本 query 逻辑，避免影响既有历史版本功能。
+  - **影响文件**：`frontend/src/views/ManualViewer.vue`、`Memory_Development/changelog.md`、`Memory_Development/index.md`、`Memory_Development/frontend/routes.md`、`VERSION`
+  - **记录人**：小雅
+
+## v2.1.21 (2026-02-12)
+- **ManualViewer 手机端返回键回归修复（抽屉/图纸首次返回刷新）**：
+  - **用户提问**：
+    - “手机端点开图纸抽屉后返回会刷新到第一页，点开步骤后第一次按返回也会刷新，这个问题之前明明修过又出现了。”
+  - **问题根因**：
+    1. `popstate` 监听器在 `onMounted` 注册后未在 `onUnmounted` 移除，页面多次进出后存在历史回退处理串台风险。
+    2. 抽屉状态监听仅防抖 `closingOverlayFromPopstate`，未覆盖 `closingOverlayFromManual`，导致手动回退场景下存在重复处理窗口。
+    3. 卸载阶段残留无定义变量赋值（`overlayHistoryDepth = 0`），存在运行时异常风险。
+  - **问题场景**：
+    - 手机端首次进入手册后，打开图纸抽屉按返回，出现页面刷新并回到第一页。
+    - 进入较后步骤后第一次按返回，出现异常刷新或状态重置。
+  - **修复方案**：
+    1. 为 `popstate` 回调增加持久引用 `popstateHandler`，并在 `onUnmounted` 中执行 `removeEventListener`。
+    2. 抽屉 `watch` 增加 `closingOverlayFromManual` 保护，与 `closingOverlayFromPopstate` 一并避免重复处理。
+    3. 删除无定义变量写入，改为显式清空 `overlayStack`（`overlayStack.length = 0`）。
+    4. 保持 `popstate` 中统一走 `closeMobileDrawers(true)` 的关闭链路，不直接赋值抽屉状态。
+  - **影响文件**：`frontend/src/views/ManualViewer.vue`、`Memory_Development/changelog.md`、`Memory_Development/index.md`、`Memory_Development/frontend/routes.md`、`VERSION`
+  - **记录人**：小雅
+
+## v2.1.20 (2026-02-12)
+- **Viewer 手机端布局去拥挤优化（对话框加宽 + 单列信息）**：
+  - **用户提问**：
+    - “手机端的ui会不会太丑了……空白处这么多，然后字都被挤在中间了。”
+  - **问题根因**：
+    1. 项目选择弹窗固定 `width="80%"`，在手机端左右留白过大，可视内容区过窄。
+    2. 移动端仍保留桌面表格列结构（状态/时间/操作独立列）与 `min-width: 720px`，导致横向挤压与文字换行过碎。
+    3. 分页布局在手机端信息密度过高，可读性差。
+  - **问题场景**：
+    - 手机端“选择项目”页出现大面积空白，搜索框和项目名称被压在中间狭窄区域。
+    - 长项目名（含型号+中文）在列表中频繁断行，观感拥挤。
+  - **修复方案**：
+    1. 弹窗宽度改为响应式计算：手机端 `96%`、桌面端 `80%`；扫码弹窗同样响应式。
+    2. 移动端列表改为单列信息呈现：状态标签、时间和操作按钮并入项目名称列，隐藏桌面专用列。
+    3. 移除移动端 `min-width: 720px` 与横向滚动依赖，改为全宽布局；压缩页面/弹窗 padding，减少无效留白。
+    4. 优化项目名文本排版（`word-break` + `overflow-wrap`）并把移动端操作按钮改为整行按钮，提升点击与阅读体验。
+    5. 分页在移动端切换为简化布局（`prev, pager, next`），降低视觉噪音。
+  - **影响文件**：`frontend/src/views/Viewer.vue`、`Memory_Development/changelog.md`、`Memory_Development/index.md`、`Memory_Development/frontend/routes.md`、`VERSION`
+  - **记录人**：小雅
+
+## v2.1.19 (2026-02-12)
+- **Viewer 搜索崩溃修复 + 手机扫一扫回填搜索**：
+  - **用户提问**：
+    - “还真的有这个bug，我输入上去后直接页面都看不到了。为什么会有这个问题……你这个要修复一下。”
+    - “手机目前……内网访问，我估计就是http的。扫一扫的按钮弹窗你可以加一下看看。码扫出来的就是可以搜索的物料代码，01.09.0436这样的。”
+  - **问题根因**：
+    1. `Viewer` 搜索过滤逻辑直接调用 `p.projectNumber.toLowerCase()`，但项目数据映射未保证 `projectNumber` 存在，输入搜索词时触发 `undefined` 访问异常导致页面空白。
+    2. 搜索区域缺少扫码入口，移动端无法直接把物料码（如 `01.09.0436`）快速写入搜索框。
+  - **问题场景**：
+    - 在“选择项目”弹窗输入搜索词时页面异常空白。
+    - 手机端希望点击搜索栏旁按钮扫码，把识别结果自动用于筛选项目。
+  - **修复方案**：
+    1. 将搜索过滤改为防御式空值处理：`projectName/projectNumber/description/id` 全部使用 `String(... || '')` 后再 `toLowerCase()`，避免空指针崩溃。
+    2. 在 `Viewer` 搜索栏新增“扫一扫”按钮与扫码弹窗，接入 `@zxing/browser`，识别结果自动回填 `searchQuery` 并即时筛选。
+    3. 新增扫码文本标准化逻辑：支持直接文本与 URL 形式（优先提取 `code/materialCode/material` 参数或路径末段）。
+    4. 增加摄像头启动前检测：若浏览器不支持或处于 `http` 非安全上下文，给出明确提示，并提供手动输入物料代码兜底。
+    5. 修复 `recentProjects` 计算中对原数组的原地 `sort`，改为拷贝后排序，避免潜在状态副作用。
+  - **影响文件**：`frontend/src/views/Viewer.vue`、`frontend/package.json`、`Memory_Development/changelog.md`、`Memory_Development/index.md`、`Memory_Development/frontend/routes.md`、`VERSION`
+  - **记录人**：小雅
+
 ## v2.1.18 (2026-02-05)
 - **历史版本预览禁止删除零件**：
   - **用户提问**：查看历史版本的时候，预览某个版本，我发现还是可以删除零件，应该要禁止才行，和修改已经那些一样，这个时候只是查看，禁止删除。

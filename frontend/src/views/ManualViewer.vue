@@ -84,7 +84,7 @@
             v-if="isMobile"
             class="step-jump-button"
             :disabled="totalSteps <= 1"
-            @click="showStepJumpDrawer = true"
+            @click="openMobileStepJumpDrawer"
           >
             <el-icon><Document /></el-icon>
             步骤
@@ -170,11 +170,11 @@
 
     <template v-if="manualData">
     <div class="mobile-action-bar" v-if="isMobile">
-      <el-button type="primary" plain @click="showDrawingsDrawer = true">
+      <el-button type="primary" plain @click="openMobileDrawingsDrawer">
         <el-icon><Picture /></el-icon>
         图纸
       </el-button>
-      <el-button type="primary" plain @click="showDetailsDrawer = true">
+      <el-button type="primary" plain @click="openMobileDetailsDrawer">
         <el-icon><Document /></el-icon>
         步骤/参考
       </el-button>
@@ -1303,33 +1303,37 @@
     <!-- 草稿来源提示 Dialog -->
     <el-dialog
       v-model="draftPromptVisible"
-      title="发现草稿"
+      title="发现未发布草稿"
       width="520px"
       :close-on-click-modal="false"
       :close-on-press-escape="false"
       :show-close="false"
     >
-      <p style="margin-bottom: 12px">当前存在一个草稿，基于版本：<strong>{{ draftPromptContext.draftBaseVersion }}</strong></p>
       <p style="margin-bottom: 12px">
-        草稿创建时间：<strong>{{ formatDateTime(draftPromptContext.draftCreatedAt) }}</strong>
-        <span v-if="draftPromptContext.createdAtFallback">（使用最后保存时间）</span>
+        当前有一份未发布草稿（基于版本 <strong>{{ draftPromptContext.draftBaseVersion }}</strong>）。
       </p>
-      <p v-if="draftPromptContext.hasPreview" style="margin-bottom: 12px">
-        你刚刚预览了 <strong>{{ draftPromptContext.previewVersion }}</strong>，可选择用该版本创建新草稿。
+      <p style="margin-bottom: 12px">
+        草稿创建时间：<strong>{{ formatDateTime(draftPromptContext.draftCreatedAt || draftPromptContext.draftLastUpdated) }}</strong>
+        <span v-if="!draftPromptContext.draftCreatedAt && draftPromptContext.draftLastUpdated">（旧草稿无创建字段，使用最近保存时间）</span>
       </p>
-      <p v-else style="margin-bottom: 12px">
-        没有历史预览版本，继续当前草稿或丢弃草稿回到最新线上。
+      <p style="margin-bottom: 12px">
+        最近保存时间：<strong>{{ formatDateTime(draftPromptContext.draftLastUpdated) }}</strong>
+      </p>
+      <p style="margin-bottom: 8px">
+        你可以继续编辑，或丢弃草稿回到线上已发布版本。
+      </p>
+      <p style="margin-bottom: 0; color: #f56c6c">
+        丢弃后不可恢复。
       </p>
       <template #footer>
         <div class="draft-dialog-actions">
-          <el-button @click="handleContinueDraft">继续修改上一个未发布版本 {{ draftPromptContext.draftBaseVersion }}</el-button>
+          <el-button @click="handleContinueDraft">继续编辑草稿</el-button>
           <el-button
-            type="primary"
-            :disabled="!draftPromptContext.hasPreview"
+            type="danger"
             :loading="draftPromptLoading"
-            @click="handleDiscardAndUsePreview"
+            @click="handleDiscardDraftFromPrompt"
           >
-            丢弃上一个版本 {{ draftPromptContext.draftBaseVersion }}，改当前预览 {{ draftPromptContext.previewVersion || '（无预览）' }}
+            丢弃草稿并回到线上版本
           </el-button>
         </div>
       </template>
@@ -1576,8 +1580,8 @@ const mobileImageNaturalSize = reactive({ w: 0, h: 0 })
 const mobileImageWrapper = ref<HTMLElement | null>(null)
 const tapStart = reactive({ x: 0, y: 0, t: 0 })
 const overlayStack: Array<'image' | 'drawer'> = []
-let closingOverlayFromManual = false
 let closingOverlayFromPopstate = false
+let popstateHandler: ((event: PopStateEvent) => void) | null = null
 const mobileDragState = reactive({
   isDragging: false,
   startX: 0,
@@ -1679,6 +1683,35 @@ const restorePartAssemblyStates = (data: any) => {
   }
 }
 const currentStepIndex = ref(0)
+const mobileStepCacheKey = computed(() => `mobile_manual_step_${props.taskId}`)
+
+const getPersistedMobileStepIndex = (): number | null => {
+  if (typeof window === 'undefined' || !isMobile.value) return null
+  const raw = sessionStorage.getItem(mobileStepCacheKey.value)
+  if (raw === null || raw === '') return null
+  const parsed = Number(raw)
+  if (!Number.isFinite(parsed)) return null
+  return Math.trunc(parsed)
+}
+
+const persistMobileStepIndex = () => {
+  if (typeof window === 'undefined' || !isMobile.value) return
+  sessionStorage.setItem(mobileStepCacheKey.value, String(currentStepIndex.value))
+}
+
+const restoreMobileStepIndex = (fallbackIndex = 0) => {
+  const stepCount = allSteps.value.length
+  if (stepCount <= 0) {
+    currentStepIndex.value = 0
+    return
+  }
+  const maxIndex = stepCount - 1
+  const persisted = getPersistedMobileStepIndex()
+  const preferredIndex = persisted ?? fallbackIndex
+  const normalized = Math.min(maxIndex, Math.max(0, preferredIndex))
+  currentStepIndex.value = normalized
+}
+
 const activeTab = ref('welding')
 
 // 自动播放相关
@@ -1689,10 +1722,8 @@ const draftPromptVisible = ref(false)
 const draftPromptLoading = ref(false)
 const draftPromptContext = reactive({
   draftBaseVersion: '',
-  previewVersion: '',
-  hasPreview: false,
   draftCreatedAt: '',
-  createdAtFallback: false
+  draftLastUpdated: ''
 })
 
 const currentOnlineVersion = computed(() => {
@@ -2296,6 +2327,40 @@ const handleMobileImageLoad = (event: Event) => {
   mobileImageOffset.y = (wrapper.clientHeight - imgH) / 2
 }
 
+const pushOverlayHistory = (overlay: 'image' | 'drawer') => {
+  if (typeof window === 'undefined') return
+  try {
+    window.history.pushState({ overlay }, '', window.location.href)
+    overlayStack.push(overlay)
+  } catch (err) {
+    console.warn(`⚠️ pushState 失败，${overlay} 返回行为可能无法拦截:`, err)
+  }
+}
+
+const openMobileDrawingsDrawer = () => {
+  const wasAnyDrawerOpen = showDrawingsDrawer.value || showDetailsDrawer.value || showStepJumpDrawer.value
+  showDrawingsDrawer.value = true
+  if (isMobile.value && !wasAnyDrawerOpen) {
+    pushOverlayHistory('drawer')
+  }
+}
+
+const openMobileDetailsDrawer = () => {
+  const wasAnyDrawerOpen = showDrawingsDrawer.value || showDetailsDrawer.value || showStepJumpDrawer.value
+  showDetailsDrawer.value = true
+  if (isMobile.value && !wasAnyDrawerOpen) {
+    pushOverlayHistory('drawer')
+  }
+}
+
+const openMobileStepJumpDrawer = () => {
+  const wasAnyDrawerOpen = showDrawingsDrawer.value || showDetailsDrawer.value || showStepJumpDrawer.value
+  showStepJumpDrawer.value = true
+  if (isMobile.value && !wasAnyDrawerOpen) {
+    pushOverlayHistory('drawer')
+  }
+}
+
 const openImageViewer = (index: number) => {
   const targetUrl = drawingImages.value[index]
   if (!targetUrl) return
@@ -2305,14 +2370,7 @@ const openImageViewer = (index: number) => {
     mobileImagePreviewVisible.value = true
     resetMobileImageTransform()
     // 为移动预览插入一层历史，用于拦截物理返回先关闭预览
-    if (typeof window !== 'undefined') {
-      try {
-        window.history.pushState({ overlay: 'mobileImage' }, '', window.location.href)
-        overlayStack.push('image')
-      } catch (err) {
-        console.warn('⚠️ pushState 失败，移动预览返回行为可能无法拦截:', err)
-      }
-    }
+    pushOverlayHistory('image')
     return
   }
 
@@ -2423,32 +2481,18 @@ const closeMobileImagePreview = (skipHistory = false) => {
   mobileImageNaturalSize.h = 0
   if (overlayStack.length > 0 && overlayStack[overlayStack.length - 1] === 'image') {
     overlayStack.pop()
-    if (!skipHistory && typeof window !== 'undefined') {
-      // 手动关闭时只消费自身的历史层
-      try {
-        closingOverlayFromManual = true
-        window.history.back()
-      } catch (err) {
-        console.warn('⚠️ 关闭预览回退历史失败:', err)
-      }
-      // 异步重置标记，避免 popstate 将抽屉一起关闭
-      setTimeout(() => { closingOverlayFromManual = false }, 0)
+    if (!skipHistory) {
+      // 手动关闭时不主动触发 history.back，避免与 popstate 竞争导致页面被动重载
     }
   }
 }
 
 const closeMobileDrawers = (skipHistory = false) => {
-  // ✅ 关闭抽屉时处理历史回退
+  // 手动关闭抽屉时仅维护UI状态与本地栈，不主动 history.back
   if (overlayStack.length > 0 && overlayStack[overlayStack.length - 1] === 'drawer') {
     overlayStack.pop()
-    if (!skipHistory && typeof window !== 'undefined') {
-      try {
-        closingOverlayFromManual = true
-        window.history.back()
-      } catch (err) {
-        console.warn('⚠️ 关闭抽屉回退历史失败:', err)
-      }
-      setTimeout(() => { closingOverlayFromManual = false }, 0)
+    if (!skipHistory) {
+      // 仅用于显式消费参数，行为见上方注释
     }
   }
   
@@ -2465,6 +2509,9 @@ const closeMobileOverlays = () => {
 }
 
 onBeforeRouteLeave((_to, _from, next) => {
+  if (isMobile.value) {
+    persistMobileStepIndex()
+  }
   if (
     isMobile.value &&
     (mobileImagePreviewVisible.value || showDrawingsDrawer.value || showDetailsDrawer.value || showStepJumpDrawer.value)
@@ -2990,6 +3037,7 @@ const openPublishDialog = () => {
 
 const refreshManualFromServer = async () => {
   try {
+    const stepBeforeRefresh = currentStepIndex.value
     let data
     // 管理员模式下优先获取草稿，确保编辑操作后能看到最新数据
     if (isAdmin.value) {
@@ -3001,16 +3049,12 @@ const refreshManualFromServer = async () => {
         console.log('✅ 管理员模式：从草稿加载数据')
         await fetchLatestVersion()
 
-        const createdAt = data?.draftCreatedAt
-        draftPromptContext.draftCreatedAt = createdAt || data?.lastUpdated || ''
-        draftPromptContext.createdAtFallback = !createdAt && !!data?.lastUpdated
+        draftPromptContext.draftCreatedAt = data?.draftCreatedAt || ''
+        draftPromptContext.draftLastUpdated = data?.lastUpdated || ''
         applyDraftPromptSuppressOnce()
         if (!suppressDraftPromptOnce) {
-          // 弹出草稿提示，提醒当前草稿基线，并提供选择
-          const previewVer = historyVersion.value || getLastPreviewVersion()
+          // 弹出草稿提示，引导用户选择继续编辑或丢弃
           draftPromptContext.draftBaseVersion = data?.version || '未知版本'
-          draftPromptContext.previewVersion = previewVer
-          draftPromptContext.hasPreview = !!previewVer
           draftPromptVisible.value = true
         } else {
           suppressDraftPromptOnce = false
@@ -3033,7 +3077,11 @@ const refreshManualFromServer = async () => {
     const cacheKey = `current_manual_${props.taskId}`
     localStorage.setItem(cacheKey, JSON.stringify(data))
     setManualDataValue(data)
-    currentStepIndex.value = 0
+    if (isMobile.value) {
+      restoreMobileStepIndex(stepBeforeRefresh)
+    } else {
+      currentStepIndex.value = 0
+    }
   } catch (error: any) {
     console.error('❌ 刷新数据失败:', error)
     ElMessage.error('刷新失败: ' + (error.response?.data?.detail || error.message))
@@ -3458,32 +3506,50 @@ const confirmStepOrder = async () => {
 
 // ============ 丢弃草稿功能 ============
 
-const handleDiscardDraft = async () => {
-  try {
-    await ElMessageBox.confirm(
-      '确定丢弃所有未发布的修改吗？此操作不可撤销。',
-      '丢弃草稿确认',
-      { type: 'warning', confirmButtonText: '确定丢弃', cancelButtonText: '取消' }
-    )
+const isConfirmCancelled = (error: any) => error === 'cancel' || error === 'close'
 
-    discardingDraft.value = true
+const discardDraftAndRestorePublished = async () => {
+  discardingDraft.value = true
+  try {
     await axios.delete(`/api/manual/${props.taskId}/draft`)
-    ElMessage.success('草稿已丢弃')
     isDraftMode.value = false
 
     // 重新加载已发布版本
     const resp = await axios.get(`/api/manual/${props.taskId}`)
     setManualDataValue(resp.data)
+    updateLatestVersion(resp.data?.version)
     localStorage.setItem(`current_manual_${props.taskId}`, JSON.stringify(resp.data))
+    localStorage.removeItem(`current_manual_draft_${props.taskId}`)
     currentStepIndex.value = 0
+    draftPromptVisible.value = false
+    suppressDraftPromptOnce = true
+    clearLastPreviewVersion()
 
     // ✅ 丢弃草稿后强制恢复零件可见性
     restoreAllPartsVisibility()
 
     // ✅ 刷新3D显示，让零件颜色恢复到已发布状态
     updateStepDisplay(false)
+  } finally {
+    discardingDraft.value = false
+  }
+}
+
+const confirmDiscardDraft = () => {
+  return ElMessageBox.confirm(
+    '丢弃后无法恢复，确定继续吗？',
+    '确认丢弃草稿？',
+    { type: 'warning', confirmButtonText: '确认丢弃', cancelButtonText: '取消' }
+  )
+}
+
+const handleDiscardDraft = async () => {
+  try {
+    await confirmDiscardDraft()
+    await discardDraftAndRestorePublished()
+    ElMessage.success('草稿已丢弃，已回到最新线上版本')
   } catch (error: any) {
-    if (error !== 'cancel') {
+    if (!isConfirmCancelled(error)) {
       console.error('❌ 丢弃草稿失败:', error)
       ElMessage.error('丢弃失败: ' + (error.response?.data?.detail || error.message))
     }
@@ -3515,6 +3581,7 @@ const loadLocalJSON = async () => {
     return
   }
   try {
+    const stepBeforeLoad = currentStepIndex.value
     // ✅ 先加载 step3_glb_inventory.json（3D零件名称映射）
     await loadGlbInventory()
     // 历史版本模式：从 ?version=v2 参数加载指定版本（只读）
@@ -3522,6 +3589,7 @@ const loadLocalJSON = async () => {
       try {
         const resp = await axios.get(`/api/manual/${props.taskId}/version/${historyVersion.value}`)
         setManualDataValue(resp.data)
+        restoreMobileStepIndex(stepBeforeLoad)
         console.log(`✅ 历史版本模式：加载 ${historyVersion.value} 成功`)
         ElMessage.success(`正在查看历史版本 ${historyVersion.value}`)
         rememberHistoryPreview()
@@ -3540,19 +3608,16 @@ const loadLocalJSON = async () => {
       try {
         const draftResp = await axios.get(`/api/manual/${props.taskId}/draft`)
         setManualDataValue(draftResp.data)
+        restoreMobileStepIndex(stepBeforeLoad)
         isDraftMode.value = true  // 标记为草稿模式
         console.log('✅ 管理员模式：从草稿加载说明书成功')
         ElMessage.success('装配说明书加载成功（草稿模式）！')
         await fetchLatestVersion()
-        const createdAt = draftResp.data?.draftCreatedAt
-        draftPromptContext.draftCreatedAt = createdAt || draftResp.data?.lastUpdated || ''
-        draftPromptContext.createdAtFallback = !createdAt && !!draftResp.data?.lastUpdated
+        draftPromptContext.draftCreatedAt = draftResp.data?.draftCreatedAt || ''
+        draftPromptContext.draftLastUpdated = draftResp.data?.lastUpdated || ''
         applyDraftPromptSuppressOnce()
         if (!suppressDraftPromptOnce) {
-          const previewVer = historyVersion.value || getLastPreviewVersion()
           draftPromptContext.draftBaseVersion = draftResp.data?.version || '未知版本'
-          draftPromptContext.previewVersion = previewVer
-          draftPromptContext.hasPreview = !!previewVer
           draftPromptVisible.value = true
         } else {
           suppressDraftPromptOnce = false
@@ -3589,6 +3654,7 @@ const loadLocalJSON = async () => {
         if (versionMatch && lastUpdatedMatch) {
           // 版本和更新时间都一致，使用缓存
           setManualDataValue(cached)
+          restoreMobileStepIndex(stepBeforeLoad)
           console.log('✅ 从缓存加载说明书成功 (版本和时间戳一致):', manualData.value)
           console.log('📋 manualData的所有字段:', Object.keys(manualData.value))
 
@@ -3603,6 +3669,7 @@ const loadLocalJSON = async () => {
       } catch (error) {
         console.warn('版本检查失败,使用缓存数据', error)
         setManualDataValue(cached)
+        restoreMobileStepIndex(stepBeforeLoad)
         updateLatestVersion(cached.version)
         console.log('✅ 从缓存加载说明书成功 (版本检查失败):', manualData.value)
         ElMessage.success('装配说明书加载成功！')
@@ -3614,6 +3681,7 @@ const loadLocalJSON = async () => {
     // 版本不一致或无缓存，从后端 API 获取已发布版本
     const response = await axios.get(`/api/manual/${props.taskId}`)
     setManualDataValue(response.data)
+    restoreMobileStepIndex(stepBeforeLoad)
     updateLatestVersion(response.data?.version)
 
     // 保存到 localStorage（按任务隔离）
@@ -3640,6 +3708,27 @@ watch(historyVersion, (newVal, oldVal) => {
   }
 })
 
+// 管理员状态切换时主动刷新，避免停留在旧缓存数据
+watch(isAdmin, async (newVal, oldVal) => {
+  if (newVal === oldVal) return
+  if (!props.taskId || isReadOnlyMode.value) return
+
+  const beforeVersion = manualData.value?.version || ''
+  const beforeLastUpdated = manualData.value?.lastUpdated || ''
+
+  await refreshManualFromServer()
+
+  // 仅在“切换为管理员”时提示版本变更，避免普通浏览提示过多
+  if (newVal) {
+    const afterVersion = manualData.value?.version || ''
+    const afterLastUpdated = manualData.value?.lastUpdated || ''
+    const changed = beforeVersion !== afterVersion || beforeLastUpdated !== afterLastUpdated
+    if (changed) {
+      ElMessage.warning(`检测到数据已更新（${beforeVersion || '未知版本'} → ${afterVersion || '未发布'}），已自动刷新`)
+    }
+  }
+})
+
 // ============ 草稿提示与操作 ============
 
 const handleContinueDraft = () => {
@@ -3647,35 +3736,17 @@ const handleContinueDraft = () => {
   suppressDraftPromptOnce = true
 }
 
-const handleDiscardAndUsePreview = async () => {
-  if (!draftPromptContext.hasPreview || !draftPromptContext.previewVersion) {
-    ElMessage.warning('当前无预览版本可用，无法切换')
-    return
-  }
+const handleDiscardDraftFromPrompt = async () => {
   try {
     draftPromptLoading.value = true
-    editingFromHistory.value = true
-    // 丢弃当前未发布修改
-    await axios.delete(`/api/manual/${props.taskId}/draft`)
-    // 拉取预览版本数据
-    const resp = await axios.get(`/api/manual/${props.taskId}/version/${draftPromptContext.previewVersion}`)
-    const versionData = resp.data
-    // 保存为新的未发布修改
-    await axios.post(`/api/manual/${props.taskId}/save-draft`, {
-      manual_data: {
-        ...versionData,
-        _edit_version: versionData?._edit_version ?? 0
-      }
-    })
-    ElMessage.success(`已切换为预览版本 ${draftPromptContext.previewVersion} 的修改`)
-    draftPromptVisible.value = false
-    isDraftMode.value = true
-    suppressDraftPromptOnce = true
-    clearLastPreviewVersion()
-    await refreshManualFromServer()
+    await confirmDiscardDraft()
+    await discardDraftAndRestorePublished()
+    ElMessage.success('草稿已丢弃，已回到最新线上版本')
   } catch (error: any) {
-    console.error('❌ 切换到预览版本失败:', error)
-    ElMessage.error('切换失败: ' + (error.response?.data?.detail || error.message))
+    if (!isConfirmCancelled(error)) {
+      console.error('❌ 丢弃草稿失败:', error)
+      ElMessage.error('丢弃失败: ' + (error.response?.data?.detail || error.message))
+    }
   } finally {
     draftPromptLoading.value = false
   }
@@ -4662,7 +4733,7 @@ watch(explodeMode, () => {
   updateStepDisplay(true)  // 模式切换不防抖，立即响应
 })
 
-// ✅ 监听抽屉打开/关闭，添加/移除历史记录（手机端）
+// ✅ 监听抽屉打开/关闭（手机端）：仅在关闭时清理本地栈
 watch([showDrawingsDrawer, showDetailsDrawer, showStepJumpDrawer], ([drawings, details, stepJump], [oldDrawings, oldDetails, oldStepJump]) => {
   if (!isMobile.value) return
   
@@ -4672,21 +4743,11 @@ watch([showDrawingsDrawer, showDetailsDrawer, showStepJumpDrawer], ([drawings, d
   const isAnyDrawerOpen = drawings || details || stepJump
   const wasAnyDrawerOpen = oldDrawings || oldDetails || oldStepJump
   
-  // 从关闭到打开：添加历史记录
-  if (isAnyDrawerOpen && !wasAnyDrawerOpen) {
-    if (typeof window !== 'undefined') {
-      try {
-        window.history.pushState({ overlay: 'drawer' }, '', window.location.href)
-        overlayStack.push('drawer')
-        console.log('📱 抽屉打开，已添加历史记录')
-      } catch (err) {
-        console.warn('⚠️ pushState 失败，抽屉返回行为可能无法拦截:', err)
-      }
-    }
-  }
-  
-  // 从打开到关闭：处理历史回退（由 closeMobileDrawers 处理）
+  // 从打开到关闭：只清理本地栈，避免残留状态干扰下一次返回
   if (!isAnyDrawerOpen && wasAnyDrawerOpen) {
+    if (overlayStack.length > 0 && overlayStack[overlayStack.length - 1] === 'drawer') {
+      overlayStack.pop()
+    }
     console.log('📱 抽屉关闭')
   }
 })
@@ -5047,6 +5108,9 @@ const restorePart = (meshKey: string) => {
     })
   }
 
+  // 立即重算材质与位置，避免恢复后短暂显示成错误状态
+  updateStepDisplay(false)
+
   // 自动保存
   autoSavePartStates()
 
@@ -5202,6 +5266,10 @@ const resetCamera = () => {
 
 // 监听步骤变化，更新高亮和GLB模型
 watch(currentStepIndex, async (newIndex, oldIndex) => {
+  if (isMobile.value) {
+    persistMobileStepIndex()
+  }
+
   const newStep = allSteps.value[newIndex]
   const oldStep = allSteps.value[oldIndex]
 
@@ -5234,9 +5302,7 @@ onMounted(() => {
 
   // 移动端导航守卫：优先关闭图片预览/抽屉，防止物理返回直接离开
   if (typeof window !== 'undefined' && router) {
-    const handlePopState = () => {
-      // 如果是手动关闭时触发的 back，则不再重复处理
-      if (closingOverlayFromManual) return
+    popstateHandler = () => {
       if (overlayStack.length > 0) {
         closingOverlayFromPopstate = true
         const type = overlayStack.pop()
@@ -5247,15 +5313,24 @@ onMounted(() => {
           // ✅ 调用 closeMobileDrawers 而不是直接赋值
           closeMobileDrawers(true)  // skipHistory=true，因为已经在 popstate 中了
         }
-        closingOverlayFromPopstate = false
+        setTimeout(() => {
+          closingOverlayFromPopstate = false
+        }, 0)
       }
     }
-    window.addEventListener('popstate', handlePopState)
+    window.addEventListener('popstate', popstateHandler)
 
   }
 })
 
 onUnmounted(() => {
+  if (isMobile.value) {
+    persistMobileStepIndex()
+  }
+  if (typeof window !== 'undefined' && popstateHandler) {
+    window.removeEventListener('popstate', popstateHandler)
+    popstateHandler = null
+  }
   cleanup3DViewer()
   sidebarDragCleanup?.()
   if (sidebarResizeRaf !== null) {
@@ -5272,7 +5347,7 @@ onUnmounted(() => {
     clearInterval(autoPlayTimer)
     autoPlayTimer = null
   }
-  overlayHistoryDepth = 0
+  overlayStack.length = 0
   imageViewerVisible.value = false
   mobileImagePreviewVisible.value = false
   restoreTouchAction()
@@ -6345,6 +6420,11 @@ onUnmounted(() => {
   justify-content: flex-start;
   text-align: left;
   white-space: normal;
+}
+
+.step-jump-list :deep(.el-button + .el-button) {
+  margin-left: 0;
+  margin-inline-start: 0;
 }
 
 /* 全屏查看图纸时，隐藏全局导航栏并去掉顶部间距 */
