@@ -370,6 +370,8 @@ const scannerDialogWidth = computed(() => (isMobile.value ? '96%' : '420px'))
 const paginationLayout = computed(() =>
   isMobile.value ? 'prev, pager, next' : 'total, sizes, prev, pager, next, jumper'
 )
+const GENERATOR_LAST_TASK_KEY = 'generator_last_task'
+const GENERATOR_RECOVERY_TASK_KEY = 'generator_current_task'
 
 // ✅ 从 localStorage 加载项目数据
 const projects = ref<any[]>([])
@@ -714,6 +716,12 @@ const deleteProject = async (project: any) => {
     )
 
     await axios.delete(`/api/manual/${project.id}`)
+    if (localStorage.getItem(GENERATOR_LAST_TASK_KEY) === project.id) {
+      localStorage.removeItem(GENERATOR_LAST_TASK_KEY)
+    }
+    if (localStorage.getItem(GENERATOR_RECOVERY_TASK_KEY) === project.id) {
+      localStorage.removeItem(GENERATOR_RECOVERY_TASK_KEY)
+    }
     ElMessage.success('删除成功')
     loadHistory()
   } catch (error: any) {

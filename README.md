@@ -1,6 +1,6 @@
 # 智能装配说明书生成系统
 
-[![Version](https://img.shields.io/badge/version-v2.1.28-blue.svg)](https://github.com/xiaotang-12-ops/yilite/releases)
+[![Version](https://img.shields.io/badge/version-v2.1.36-blue.svg)](https://github.com/xiaotang-12-ops/yilite/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Docker](https://img.shields.io/badge/docker-ready-brightgreen.svg)](DOCKER_DEPLOYMENT.md)
 
@@ -8,13 +8,14 @@
 
 一个基于AI的智能装配说明书生成系统，能够自动解析PDF工程图纸和3D模型，生成工人友好的交互式HTML装配说明书。
 
-**当前版本**: v2.1.28 | [查看版本历史](https://github.com/xiaotang-12-ops/yilite/releases) | [部署指南](DOCKER_DEPLOYMENT.md)
+**当前版本**: v2.1.36 | [查看版本历史](https://github.com/xiaotang-12-ops/yilite/releases) | [部署指南](DOCKER_DEPLOYMENT.md)
 
-## 🆕 最新更新 (v2.1.28)
+## 🆕 最新更新 (v2.1.36)
 
-- **📝 草稿弹窗新手化**：弹窗动作收敛为“继续编辑草稿 / 丢弃草稿回线上”，并新增二次确认。
-- **🔄 管理员登录自动刷新**：登录切换到管理员后自动拉取最新手册，若版本被他人更新会即时提醒。
-- **📱 移动端稳定性持续增强**：返回链路、抽屉交互、步骤定位与状态显示一致性进一步修复。
+- **🧠 NewAPI 多模型能力增强**：统一 `newapi` 提供方命名，支持主模型+兜底模型链路，设置页支持一键全测与能力警告。
+- **🧱 任务恢复与状态口径修复**：修复已删除任务残留、管理员刷新感知缺失、`[circular]` 标题污染等稳定性问题。
+- **⚙️ 长任务成本与超时控制优化**：焊接智能体超时与重试策略收敛，减少复杂图纸下的重复请求与额外消耗。
+- **🎨 查看器与设置页体验提升**：顶部工具栏高度抖动修复、测试超时提示补齐、调用点配置可视化增强。
 
 ### 🌟 v2.0.x 系列演进亮点
 

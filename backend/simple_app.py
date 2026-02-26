@@ -39,6 +39,16 @@ load_dotenv()
 # 存储管理
 from core.storage import ManualStorage
 from utils.time_utils import beijing_now, BEIJING_TZ
+from utils.newapi_compat import (
+    NEWAPI_BASE_URL,
+    DEFAULT_NEWAPI_MODEL as DEFAULT_NEWAPI_MODEL_ID,
+    DEFAULT_NEWAPI_MAX_COMPLETION_TOKENS,
+    build_newapi_extra_body,
+    extract_completion_tokens_cap,
+    is_newapi_provider,
+    is_unsupported_reasoning_args_error,
+    normalize_provider,
+)
 
 # 创建FastAPI应用
 app = FastAPI(
@@ -121,6 +131,30 @@ tasks = {}
 upload_dir = Path("uploads")
 upload_dir.mkdir(exist_ok=True)
 
+CIRCULAR_SENTINEL = "[circular]"
+
+
+def _is_circular_sentinel(value: Any) -> bool:
+    return isinstance(value, str) and value.strip().lower() == CIRCULAR_SENTINEL
+
+
+def _normalize_project_name(value: Any, fallback: str) -> str:
+    if isinstance(value, str):
+        candidate = value.strip()
+        if candidate and not _is_circular_sentinel(candidate):
+            return candidate
+    return fallback
+
+
+def _normalize_status_placeholders(status: Dict[str, Any]) -> Dict[str, Any]:
+    normalized = dict(status or {})
+    for key in ("failure_type", "failure_hint", "error"):
+        if _is_circular_sentinel(normalized.get(key)):
+            normalized[key] = None
+    if _is_circular_sentinel(normalized.get("resume")):
+        normalized["resume"] = False
+    return normalized
+
 
 def _cancel_task_thread(task_id: str) -> str:
     """尝试中断后台线程，标记任务为已取消。"""
@@ -148,28 +182,46 @@ def _cancel_task_thread(task_id: str) -> str:
 
 def _json_safe(obj, seen=None):
     """将对象转换为可JSON序列化的安全结构，避免循环引用/线程对象等问题。"""
-    if seen is None:
-        seen = set()
-    obj_id = id(obj)
-    if obj_id in seen:
-        return "[circular]"
-    seen.add(obj_id)
-
+    # 基础类型直接返回，避免同值对象被误判为循环引用
     if isinstance(obj, (str, int, float, bool)) or obj is None:
         return obj
     if isinstance(obj, (datetime,)):
         return obj.isoformat()
+
+    if seen is None:
+        seen = set()
     if isinstance(obj, dict):
-        safe_dict = {}
-        for k, v in obj.items():
-            if k == "thread":
-                continue
-            safe_dict[k] = _json_safe(v, seen)
-        return safe_dict
+        obj_id = id(obj)
+        if obj_id in seen:
+            return CIRCULAR_SENTINEL
+        seen.add(obj_id)
+        try:
+            safe_dict = {}
+            for k, v in obj.items():
+                if k == "thread":
+                    continue
+                safe_dict[k] = _json_safe(v, seen)
+            return safe_dict
+        finally:
+            seen.discard(obj_id)
     if isinstance(obj, list):
-        return [_json_safe(item, seen) for item in obj]
+        obj_id = id(obj)
+        if obj_id in seen:
+            return CIRCULAR_SENTINEL
+        seen.add(obj_id)
+        try:
+            return [_json_safe(item, seen) for item in obj]
+        finally:
+            seen.discard(obj_id)
     if isinstance(obj, tuple):
-        return [_json_safe(item, seen) for item in obj]
+        obj_id = id(obj)
+        if obj_id in seen:
+            return CIRCULAR_SENTINEL
+        seen.add(obj_id)
+        try:
+            return [_json_safe(item, seen) for item in obj]
+        finally:
+            seen.discard(obj_id)
     return str(obj)
 
 def _sanitize_task_for_persist(task: Dict[str, Any]) -> Dict[str, Any]:
@@ -336,14 +388,19 @@ def _start_pipeline_thread(
             # 从保存的设置中读取API密钥，如果没有则从环境变量读取
             openrouter_key = app_settings.get("openrouter_api_key") or os.getenv("OPENROUTER_API_KEY")
             deepseek_key = app_settings.get("deepseek_api_key") or os.getenv("DEEPSEEK_API_KEY")
-            doubao_key = app_settings.get("doubao_api_key") or os.getenv("ARK_API_KEY")
+            newapi_key = (
+                app_settings.get("newapi_api_key")
+                or app_settings.get("doubao_api_key")
+                or os.getenv("NEWAPI_API_KEY")
+                or os.getenv("ARK_API_KEY")
+            )
 
             if "openrouter" in active_providers and not openrouter_key:
                 raise ValueError("未设置 OpenRouter API Key，请在设置页面配置")
             if "deepseek" in active_providers and not deepseek_key:
                 raise ValueError("未设置 DeepSeek API Key，请在设置页面配置")
-            if "doubao" in active_providers and not doubao_key:
-                raise ValueError("未设置 豆包(ARK) API Key，请在设置页面配置")
+            if ("newapi" in active_providers or "doubao" in active_providers) and not newapi_key:
+                raise ValueError("未设置 NewAPI API Key，请在设置页面配置")
 
             def _progress_callback(step: int, progress: int, message: str = ""):
                 task = tasks.get(task_id)
@@ -358,7 +415,7 @@ def _start_pipeline_thread(
             pipeline = GeminiAssemblyPipeline(
                 api_key=openrouter_key,
                 deepseek_api_key=deepseek_key,
-                doubao_api_key=doubao_key,
+                doubao_api_key=newapi_key,
                 output_dir=str(task_dir),
                 product_name=effective_project_name,  # ✅ 传入产品名称
                 call_point_settings=call_points,
@@ -548,7 +605,7 @@ def _build_conflict_payload(
 
     created_at = None
     updated_at = None
-    task_status = status or {}
+    task_status = _normalize_status_placeholders(status or {})
     if task_status:
         created_at = _normalize_time(task_status.get("created_at"))
         updated_at = _normalize_time(task_status.get("updated_at"))
@@ -622,7 +679,10 @@ def _build_busy_payload(task: Dict[str, Any]) -> Dict[str, Any]:
     """构造全局忙碌提示 payload。"""
     task_id = task.get("task_id") or task.get("taskId") or ""
     config = task.get("config") or {}
-    project_name = config.get("projectName") or task.get("project_name") or ""
+    project_name = _normalize_project_name(
+        config.get("projectName") or task.get("project_name"),
+        task_id,
+    )
     created_at = _normalize_time(task.get("created_at"))
     updated_at = _normalize_time(task.get("updated_at"))
 
@@ -880,7 +940,7 @@ async def get_status(task_id: str):
     if task_id not in tasks:
         persisted = _load_task_status_from_file(task_id)
         if persisted:
-            status = dict(persisted)
+            status = _normalize_status_placeholders(persisted)
             task_dir = OUTPUT_DIR / task_id
             manual_info = _validate_manual_json(task_dir)
             if status.get("status") == "completed" and not manual_info.get("valid"):
@@ -888,10 +948,16 @@ async def get_status(task_id: str):
                 status["failure_type"] = "validation_failed"
                 status["failure_hint"] = "生成内容为空，请删除后重试。"
                 status["error"] = manual_info.get("error") or "manual_empty"
+            config = status.get("config") if isinstance(status.get("config"), dict) else {}
+            status["config"] = {
+                **config,
+                "projectName": _normalize_project_name(config.get("projectName"), task_id),
+            }
             return _sanitize_task_for_persist(status)
         raise HTTPException(status_code=404, detail="任务不存在")
 
     status = tasks[task_id]
+    status.update(_normalize_status_placeholders(status))
     task_dir = OUTPUT_DIR / task_id
     manual_info = _validate_manual_json(task_dir)
     if status.get("status") == "completed" and not manual_info.get("valid"):
@@ -900,6 +966,11 @@ async def get_status(task_id: str):
         status["failure_hint"] = "生成内容为空，请删除后重试。"
         status["error"] = manual_info.get("error") or "manual_empty"
         _persist_task_status(task_id)
+    config = status.get("config") if isinstance(status.get("config"), dict) else {}
+    status["config"] = {
+        **config,
+        "projectName": _normalize_project_name(config.get("projectName"), task_id),
+    }
     return _sanitize_task_for_persist(status)
 
 @app.post("/api/task/{task_id}/cancel")
@@ -955,16 +1026,21 @@ async def resume_task(task_id: str):
     if not pdf_files or not model_files:
         raise HTTPException(status_code=400, detail="缺少源文件，请删除失败任务后重新上传")
 
-    effective_project_name = (status or {}).get("config", {}).get("projectName") or task_id
+    raw_project_name = ((status or {}).get("config") or {}).get("projectName")
+    effective_project_name = _normalize_project_name(raw_project_name, task_id)
 
     # 创建/恢复任务记录
     task = dict(status or {})
     task.pop("thread", None)
+    existing_config = task.get("config") if isinstance(task.get("config"), dict) else {}
     task.update({
         "task_id": task_id,
         "status": "processing",
         "progress": task.get("progress", 0),
-        "config": task.get("config") or {"projectName": effective_project_name},
+        "config": {
+            **existing_config,
+            "projectName": _normalize_project_name(existing_config.get("projectName"), effective_project_name),
+        },
         "pdf_files": task.get("pdf_files") or pdf_files,
         "model_files": task.get("model_files") or model_files,
         "updated_at": beijing_now(),
@@ -1139,7 +1215,7 @@ async def list_manuals(include_failed: bool = Query(False, description="是否�
 
                     # 提取关键信息
                     metadata = manual_data.get('metadata', {})
-                    product_name = metadata.get('product_name', '未命名产品')
+                    product_name = _normalize_project_name(metadata.get('product_name'), task_dir.name)
 
                     # 统计信息
                     assembly_steps = manual_data.get('assembly_steps', [])
@@ -1159,10 +1235,9 @@ async def list_manuals(include_failed: bool = Query(False, description="是否�
                 # 失败/未完成的任务，尝试读取持久化状态
                 persisted = _load_task_status_from_file(task_dir.name) or {}
                 status = persisted.get("status", "failed")
-                product_name = (
-                    (persisted.get("config") or {}).get("projectName")
-                    or persisted.get("task_id")
-                    or task_dir.name
+                product_name = _normalize_project_name(
+                    (persisted.get("config") or {}).get("projectName"),
+                    persisted.get("task_id") or task_dir.name,
                 )
                 timestamp = persisted.get("updated_at") or datetime.fromtimestamp(
                     task_dir.stat().st_mtime, tz=BEIJING_TZ
@@ -1310,6 +1385,9 @@ async def get_manual(task_id: str):
         storage = get_storage(task_id)
         storage.ensure_migration()
         manual_data = storage.load_published()
+        metadata = manual_data.get("metadata")
+        if isinstance(metadata, dict):
+            metadata["product_name"] = _normalize_project_name(metadata.get("product_name"), task_id)
 
         # ✅ 替换所有的{task_id}占位符为实际的task_id
         manual_json_str = json.dumps(manual_data, ensure_ascii=False)
@@ -1679,60 +1757,73 @@ async def move_step(task_id: str, request: MoveStepRequest):
 # ============ 设置管理端点 ============
 DEFAULT_OPENROUTER_MODEL = "google/gemini-2.5-flash-preview-09-2025"
 DEFAULT_DEEPSEEK_MODEL = "deepseek-chat"
-DEFAULT_DOUBAO_MODEL = "doubao-seed-1-8-251228"
+DEFAULT_NEWAPI_MODEL = DEFAULT_NEWAPI_MODEL_ID
 DEFAULT_PROVIDER = "openrouter"
-DOUBAO_BASE_URL = (
-    os.getenv("DOUBAO_BASE_URL")
-    or os.getenv("ARK_BASE_URL")
-    or "http://111.230.37.43:3000/v1"
-)
+UNSUPPORTED_NEWAPI_IMAGE_MODELS = {"glm-5"}
+TEST_MODEL_TIMEOUT_SECONDS = 30
+TEST_MODEL_PROBE_TIMEOUT_SECONDS = 20
 
 AI_PROVIDER_BASE_URLS = {
     "openrouter": "https://openrouter.ai/api/v1",
     "deepseek": "https://api.deepseek.com",
-    "doubao": DOUBAO_BASE_URL,
+    "newapi": NEWAPI_BASE_URL,
+    "doubao": NEWAPI_BASE_URL,  # legacy alias
 }
 
 AI_CALL_POINT_DEFS = {
     "matching": {
         "label": "匹配",
         "requires_images": False,
-        "allowed_providers": ["openrouter", "deepseek", "doubao"]
+        "allowed_providers": ["openrouter", "deepseek", "newapi"]
     },
     "assembly": {
         "label": "组件/产品",
         "requires_images": True,
-        "allowed_providers": ["openrouter", "doubao"]
+        "allowed_providers": ["openrouter", "newapi"]
     },
     "welding": {
         "label": "焊接",
         "requires_images": True,
-        "allowed_providers": ["openrouter", "doubao"]
+        "allowed_providers": ["openrouter", "newapi"]
     },
     "safety": {
         "label": "安全",
         "requires_images": False,
-        "allowed_providers": ["openrouter", "deepseek", "doubao"]
+        "allowed_providers": ["openrouter", "deepseek", "newapi"]
     },
     "bom_vision": {
         "label": "BOM视觉提取",
         "requires_images": True,
-        "allowed_providers": ["openrouter", "doubao"]
+        "allowed_providers": ["openrouter", "newapi"]
     }
 }
 
 def _default_model_for_provider(provider: str) -> str:
-    if provider == "deepseek":
+    normalized = normalize_provider(provider)
+    if normalized == "deepseek":
         return DEFAULT_DEEPSEEK_MODEL
-    if provider == "doubao":
-        return DEFAULT_DOUBAO_MODEL
+    if normalized == "newapi":
+        return DEFAULT_NEWAPI_MODEL
     return DEFAULT_OPENROUTER_MODEL
+
+
+def _validate_call_point_model(call_point_id: str, provider: str, model: str) -> None:
+    definition = AI_CALL_POINT_DEFS.get(call_point_id, {})
+    requires_images = bool(definition.get("requires_images"))
+    normalized_provider = normalize_provider(provider)
+    normalized_model = (model or "").strip().lower()
+    if requires_images and normalized_provider == "newapi" and normalized_model in UNSUPPORTED_NEWAPI_IMAGE_MODELS:
+        raise ValueError(
+            f"调用点 {call_point_id} 需要多模态输入，模型 {model} 不支持图片输入，请更换为支持多模态的 NewAPI 模型"
+        )
 
 def _build_default_call_points() -> Dict[str, Dict[str, str]]:
     return {
         call_point_id: {
             "provider": DEFAULT_PROVIDER,
-            "model": DEFAULT_OPENROUTER_MODEL
+            "model": DEFAULT_OPENROUTER_MODEL,
+            "fallback_model": "",
+            "custom_key": ""
         }
         for call_point_id in AI_CALL_POINT_DEFS.keys()
     }
@@ -1744,25 +1835,35 @@ def _mask_key(value: str) -> str:
 
 def _resolve_call_points(
     incoming: Optional[Dict[str, "CallPointConfig"]],
-    fallback_model: Optional[str] = None
+    default_model: Optional[str] = None
 ) -> Dict[str, Dict[str, str]]:
     resolved: Dict[str, Dict[str, str]] = {}
-    apply_fallback_model = bool(fallback_model) and not incoming
+    apply_default_model = bool(default_model) and not incoming
     existing = app_settings.get("call_points", {})
 
     for call_point_id, definition in AI_CALL_POINT_DEFS.items():
         incoming_point = incoming.get(call_point_id) if incoming else None
         existing_point = existing.get(call_point_id, {})
 
-        provider = (incoming_point.provider if incoming_point else None) or existing_point.get("provider") or DEFAULT_PROVIDER
+        provider_raw = (incoming_point.provider if incoming_point else None) or existing_point.get("provider") or DEFAULT_PROVIDER
+        provider = normalize_provider(provider_raw)
         if provider not in definition["allowed_providers"]:
             raise ValueError(f"调用点 {call_point_id} 不支持提供方 {provider}")
 
         model = (incoming_point.model if incoming_point else None) or existing_point.get("model") or ""
-        if apply_fallback_model and provider == "openrouter":
-            model = fallback_model or model
+        if apply_default_model and provider == "openrouter":
+            model = default_model or model
         if not model:
             model = _default_model_for_provider(provider)
+        _validate_call_point_model(call_point_id, provider, model)
+
+        fallback_model_name = (
+            (incoming_point.fallback_model if incoming_point else None)
+            or existing_point.get("fallback_model")
+            or ""
+        ).strip()
+        if fallback_model_name:
+            _validate_call_point_model(call_point_id, provider, fallback_model_name)
 
         # 新增：保存独立Key
         custom_key = (incoming_point.custom_key if incoming_point else None) or existing_point.get("custom_key") or ""
@@ -1770,6 +1871,7 @@ def _resolve_call_points(
         resolved[call_point_id] = {
             "provider": provider,
             "model": model,
+            "fallback_model": fallback_model_name,
             "custom_key": custom_key  # 新增
         }
 
@@ -1782,12 +1884,14 @@ def _build_call_point_payload() -> Dict[str, Dict[str, Any]]:
         current_point = current.get(call_point_id, {})
         provider = current_point.get("provider", DEFAULT_PROVIDER)
         model = current_point.get("model") or _default_model_for_provider(provider)
+        fallback_model = (current_point.get("fallback_model") or "").strip()
         custom_key = current_point.get("custom_key", "")  # 新增：读取独立Key
 
         payload[call_point_id] = {
             "label": definition["label"],
             "provider": provider,
             "model": model,
+            "fallback_model": fallback_model,
             "custom_key": custom_key,  # 新增：返回独立Key
             "allowed_providers": definition["allowed_providers"],
             "requires_images": definition["requires_images"]
@@ -1797,12 +1901,14 @@ def _build_call_point_payload() -> Dict[str, Dict[str, Any]]:
 class CallPointConfig(BaseModel):
     provider: str
     model: str
+    fallback_model: Optional[str] = None
     custom_key: Optional[str] = None  # 新增：调用点独立的API Key
 
 class SettingsModel(BaseModel):
     openrouter_api_key: str = ""
     deepseek_api_key: str = ""
-    doubao_api_key: str = ""
+    newapi_api_key: str = ""
+    doubao_api_key: str = ""  # legacy alias
     call_points: Dict[str, CallPointConfig] = Field(default_factory=dict)
     default_model: Optional[str] = None  # 兼容旧字段
 
@@ -1810,7 +1916,8 @@ class SettingsModel(BaseModel):
 app_settings = {
     "openrouter_api_key": os.getenv("OPENROUTER_API_KEY", ""),
     "deepseek_api_key": os.getenv("DEEPSEEK_API_KEY", ""),
-    "doubao_api_key": os.getenv("ARK_API_KEY", ""),
+    "newapi_api_key": os.getenv("NEWAPI_API_KEY", "") or os.getenv("ARK_API_KEY", ""),
+    "doubao_api_key": os.getenv("NEWAPI_API_KEY", "") or os.getenv("ARK_API_KEY", ""),  # legacy alias
     "call_points": _build_default_call_points()
 }
 
@@ -1820,12 +1927,15 @@ async def save_settings(settings: SettingsModel):
     try:
         app_settings["openrouter_api_key"] = settings.openrouter_api_key
         app_settings["deepseek_api_key"] = settings.deepseek_api_key
-        app_settings["doubao_api_key"] = settings.doubao_api_key
+        resolved_newapi_key = settings.newapi_api_key or settings.doubao_api_key
+        app_settings["newapi_api_key"] = resolved_newapi_key
+        app_settings["doubao_api_key"] = resolved_newapi_key  # legacy mirror
 
         # 更新环境变量
         os.environ["OPENROUTER_API_KEY"] = settings.openrouter_api_key
         os.environ["DEEPSEEK_API_KEY"] = settings.deepseek_api_key
-        os.environ["ARK_API_KEY"] = settings.doubao_api_key
+        os.environ["NEWAPI_API_KEY"] = resolved_newapi_key
+        os.environ["ARK_API_KEY"] = resolved_newapi_key
 
         resolved_call_points = _resolve_call_points(settings.call_points, settings.default_model)
         app_settings["call_points"] = resolved_call_points
@@ -1845,21 +1955,26 @@ async def get_settings():
     return {
         "openrouter_api_key": _mask_key(app_settings["openrouter_api_key"]),
         "deepseek_api_key": _mask_key(app_settings["deepseek_api_key"]),
-        "doubao_api_key": _mask_key(app_settings["doubao_api_key"]),
+        "newapi_api_key": _mask_key(app_settings.get("newapi_api_key", "")),
+        "doubao_api_key": _mask_key(app_settings.get("newapi_api_key", "")),  # legacy alias
         "has_openrouter_key": bool(app_settings["openrouter_api_key"]),
         "has_deepseek_key": bool(app_settings["deepseek_api_key"]),
-        "has_doubao_key": bool(app_settings["doubao_api_key"]),
+        "has_newapi_key": bool(app_settings.get("newapi_api_key", "")),
+        "has_doubao_key": bool(app_settings.get("newapi_api_key", "")),  # legacy alias
         "call_points": _build_call_point_payload()
     }
 
 class TestModelRequest(BaseModel):
     provider: str = DEFAULT_PROVIDER
     model: str
+    fallback_model: Optional[str] = None
     openrouter_api_key: Optional[str] = None
     deepseek_api_key: Optional[str] = None
+    newapi_api_key: Optional[str] = None
     doubao_api_key: Optional[str] = None
     api_key: Optional[str] = None
     custom_key: Optional[str] = None  # 新增：调用点独立Key
+    probe_capabilities: Optional[bool] = True
 
 @app.post("/api/test-model")
 async def test_model(request: TestModelRequest):
@@ -1867,7 +1982,7 @@ async def test_model(request: TestModelRequest):
     try:
         from openai import OpenAI
 
-        provider = request.provider or DEFAULT_PROVIDER
+        provider = normalize_provider(request.provider or DEFAULT_PROVIDER)
         base_url = AI_PROVIDER_BASE_URLS.get(provider)
         if not base_url:
             raise HTTPException(status_code=400, detail=f"不支持的提供方: {provider}")
@@ -1877,8 +1992,13 @@ async def test_model(request: TestModelRequest):
         if not api_key:
             if provider == "deepseek":
                 api_key = request.deepseek_api_key or app_settings.get("deepseek_api_key")
-            elif provider == "doubao":
-                api_key = request.doubao_api_key or app_settings.get("doubao_api_key")
+            elif is_newapi_provider(provider):
+                api_key = (
+                    request.newapi_api_key
+                    or request.doubao_api_key
+                    or app_settings.get("newapi_api_key")
+                    or app_settings.get("doubao_api_key")
+                )
             else:
                 api_key = request.openrouter_api_key or app_settings.get("openrouter_api_key")
 
@@ -1888,33 +2008,109 @@ async def test_model(request: TestModelRequest):
         # 创建OpenAI客户端
         client = OpenAI(
             base_url=base_url,
-            api_key=api_key
+            api_key=api_key,
+            timeout=TEST_MODEL_TIMEOUT_SECONDS
         )
 
-        # 发送测试请求
-        request_payload = {
-            "model": request.model,
-            "messages": [
-                {"role": "user", "content": "Hello, this is a test message. Please respond with 'OK'."}
-            ]
-        }
-        if provider == "doubao":
-            request_payload["extra_body"] = {
-                "max_completion_tokens": 10
-            }
-        else:
-            request_payload["max_tokens"] = 10
-        if provider == "openrouter":
-            request_payload["extra_headers"] = {
-                "HTTP-Referer": "https://mecagent.com",
-                "X-Title": "MecAgent Model Test"
-            }
-            # ✅ 添加 provider.ignore 排除地域限制
-            request_payload["provider"] = {
-                "ignore": ["google-ai-studio"]
-            }
+        warnings: List[str] = []
+        capability: Dict[str, Any] = {}
+        primary_model = (request.model or "").strip()
+        fallback_model = (request.fallback_model or "").strip()
+        candidate_models: List[str] = [primary_model]
+        if fallback_model and fallback_model != primary_model:
+            candidate_models.append(fallback_model)
 
-        completion = client.chat.completions.create(**request_payload)
+        completion = None
+        used_model = primary_model
+        used_fallback = False
+        active_request_payload: Dict[str, Any] = {}
+        last_error: Optional[Exception] = None
+
+        for candidate_index, candidate_model in enumerate(candidate_models):
+            # 发送测试请求（优先主模型，失败时尝试兜底模型）
+            request_payload = {
+                "model": candidate_model,
+                "messages": [
+                    {"role": "user", "content": "Hello, this is a test message. Please respond with 'OK'."}
+                ],
+                "timeout": TEST_MODEL_TIMEOUT_SECONDS
+            }
+            if is_newapi_provider(provider):
+                request_payload["extra_body"] = build_newapi_extra_body(
+                    max_completion_tokens=10,
+                    enable_reasoning=False
+                )
+            else:
+                request_payload["max_tokens"] = 10
+            if provider == "openrouter":
+                request_payload["extra_headers"] = {
+                    "HTTP-Referer": "https://mecagent.com",
+                    "X-Title": "MecAgent Model Test"
+                }
+                # ✅ 添加 provider.ignore 排除地域限制
+                request_payload["provider"] = {
+                    "ignore": ["google-ai-studio"]
+                }
+
+            try:
+                completion = client.chat.completions.create(**request_payload)
+                active_request_payload = request_payload
+                used_model = candidate_model
+                used_fallback = candidate_index > 0
+                if used_fallback:
+                    warnings.append(f"主模型 {primary_model} 调用失败，已自动切换到兜底模型 {candidate_model}。")
+                break
+            except Exception as model_error:
+                last_error = model_error
+                if candidate_index < len(candidate_models) - 1:
+                    continue
+                raise model_error
+
+        if completion is None and last_error:
+            raise last_error
+
+        if is_newapi_provider(provider) and request.probe_capabilities:
+            # Probe 1: reasoning 参数支持检测（失败仅警告，不阻断）
+            reasoning_payload = {
+                **active_request_payload,
+                "extra_body": build_newapi_extra_body(
+                    max_completion_tokens=16,
+                    enable_reasoning=True
+                ),
+                "timeout": TEST_MODEL_PROBE_TIMEOUT_SECONDS
+            }
+            try:
+                client.chat.completions.create(**reasoning_payload)
+                capability["supports_reasoning_args"] = True
+            except Exception as reasoning_error:
+                capability["supports_reasoning_args"] = False
+                if is_unsupported_reasoning_args_error(reasoning_error):
+                    warnings.append("该模型不支持 thinking/reasoning_effort，系统将自动关闭思考参数。")
+                else:
+                    warnings.append(f"思考参数探测失败：{reasoning_error}")
+
+            # Probe 2: 64000 completion 上限探测（失败仅警告，不阻断）
+            cap_payload = {
+                **active_request_payload,
+                "extra_body": build_newapi_extra_body(
+                    max_completion_tokens=DEFAULT_NEWAPI_MAX_COMPLETION_TOKENS,
+                    enable_reasoning=False
+                ),
+                "timeout": TEST_MODEL_PROBE_TIMEOUT_SECONDS
+            }
+            try:
+                client.chat.completions.create(**cap_payload)
+                capability["max_completion_tokens_cap"] = DEFAULT_NEWAPI_MAX_COMPLETION_TOKENS
+            except Exception as cap_error:
+                cap = extract_completion_tokens_cap(cap_error)
+                if cap:
+                    capability["max_completion_tokens_cap"] = cap
+                    if cap < DEFAULT_NEWAPI_MAX_COMPLETION_TOKENS:
+                        warnings.append(
+                            f"该模型 completion 上限约为 {cap}，低于目标 {DEFAULT_NEWAPI_MAX_COMPLETION_TOKENS}。"
+                        )
+                else:
+                    warnings.append(f"completion 上限探测失败：{cap_error}")
 
         # ✅ 防御性检查：确保响应格式正确
         if not completion or not completion.choices or len(completion.choices) == 0:
@@ -1935,7 +2131,12 @@ async def test_model(request: TestModelRequest):
         return {
             "success": True,
             "message": response_text,
-            "model": request.model
+            "model": request.model,
+            "used_model": used_model,
+            "used_fallback": used_fallback,
+            "provider": provider,
+            "warnings": warnings,
+            "capability": capability
         }
     except Exception as e:
         return {

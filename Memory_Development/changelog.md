@@ -1,5 +1,170 @@
 # Memory Changelog
 
+## v2.1.36 (2026-02-26)
+- **`[circular]` 标题污染修复（失败后继续生成场景）**：
+  - **用户提问**：
+    - “我现在重新生成后，发现标题有bug，这个项目是我紧接着刚才失败继续生成的，结果发现标题有问题。”
+  - **问题根因**：
+    1. 任务状态持久化函数 `_json_safe` 先把对象 `id` 放入 `seen`，再判断基础类型，导致重复出现的普通值也会被误判成循环引用并写成 `"[circular]"`。
+    2. `/api/task/{task_id}/resume` 恢复任务时直接读取 `config.projectName`，若持久化状态里该字段已是 `"[circular]"`，会继续传入流水线，最终污染手册标题。
+    3. 列表与手册读取接口未对历史脏数据做回退处理，前端直接显示 `"[circular]"`。
+  - **问题场景**：
+    - 任务失败后点击继续生成，生成完成后在查看器列表中项目标题显示 `"[circular]"`。
+  - **修复方案**：
+    1. 重写 `_json_safe` 循环检测顺序：基础类型直接返回；仅对 `dict/list/tuple` 做循环检测，并在递归返回后移除当前 `id`，避免误判。
+    2. 新增项目名归一化函数，对 `"[circular]"` 自动回退为 `task_id`。
+    3. 在 `resume`、`/api/status`、`/api/manuals`、`/api/manual/{task_id}` 接入归一化逻辑，兼容历史脏数据并立即恢复展示。
+  - **影响文件**：`backend/simple_app.py`、`VERSION`、`Memory_Development/changelog.md`、`Memory_Development/index.md`
+  - **记录人**：小雅
+
+## v2.1.35 (2026-02-26)
+- **焊接智能体超长任务重复扣费止损（长超时 + 禁用SDK自动重试）**：
+  - **用户提问**：
+    - “那这种问题要怎么解决，因为复杂的图纸就是可能要这么久的时间。”
+    - “那就关掉超时拉长。然后重试机制改成max_retries=1。”
+    - “可以，就按照你说的办。”
+  - **问题根因**：
+    1. 焊接调用是重负载多模态请求，复杂图纸下单次执行时间可超过默认读超时窗口。
+    2. SDK 默认自动重试会在超时/网络抖动时重复发起同模型请求，导致计费放大。
+    3. 现有链路虽支持兜底模型，但在主模型自动重试阶段已产生额外成本。
+  - **问题场景**：
+    - Step7 焊接阶段长时间卡住，NewAPI 账单出现同模型多条高耗时调用，用户中断任务后仍感知到费用继续增长。
+  - **修复方案**：
+    1. `BaseGeminiAgent` 增加可配置 `request_timeout_seconds`、`sdk_max_retries` 参数，支持按调用点精细化控制。
+    2. `WeldingAgent` 固定使用 `timeout=1800s`，给复杂图纸更长完成窗口，减少“超时即重发”。
+    3. `WeldingAgent` 固定使用 `max_retries=0`，禁用 SDK 自动重试，避免同模型隐式重复请求。
+    4. 保留主模型失败后的兜底模型切换逻辑，不影响既有容灾路径。
+  - **影响文件**：`agents/base_gemini_agent.py`、`agents/welding_agent.py`、`VERSION`、`Memory_Development/changelog.md`、`Memory_Development/index.md`
+  - **记录人**：小雅
+
+## v2.1.34 (2026-02-26)
+- **设置页“一键全测”补齐兜底模型独立测试**：
+  - **用户提问**：
+    - “如果我设置了兜底模型，那么也要去测试兜底模型呀，就是那个一键全测。”
+    - “我看好像只测试了非兜底模型。”
+  - **问题根因**：
+    1. 现有一键全测只发一条请求（`model=主模型` + `fallback_model=兜底模型`），当主模型成功时，兜底模型不会被单独探测。
+    2. 导致用户无法确认“兜底模型本身是否可用”，只知道主模型可用。
+  - **问题场景**：
+    - 已配置兜底模型，但一键全测结果没有“兜底模型”的单独成功/失败项。
+  - **修复方案**：
+    1. 保留原主模型测试逻辑（仍支持主失败自动切兜底）。
+    2. 若配置了且不同于主模型，追加一次“兜底模型独立测试”（`model=兜底模型`，不带 `fallback_model`）。
+    3. 结果区新增 `（兜底）` 前缀，分别展示兜底模型的成功/失败与警告信息。
+  - **影响文件**：`frontend/src/views/Settings.vue`、`VERSION`、`Memory_Development/changelog.md`、`Memory_Development/index.md`、`Memory_Development/frontend/routes.md`
+  - **记录人**：小雅
+
+## v2.1.33 (2026-02-26)
+- **ManualViewer 顶部工具栏高度抖动修复（步骤切换后尺寸不一致）**：
+  - **用户提问**：
+    - “很明显可以看到截图中红色框位置大小不一样，有的步骤前端大小不太一样，你分析看看什么原因。”
+  - **问题根因**：
+    1. 顶部左侧进度区标题较长时，会挤压右侧工具栏区域（`progress-section` 缺少 `min-width: 0` 与标题截断策略）。
+    2. 右侧操作区中的管理员徽标在被压缩后会换行，出现“管/理/员”竖排，直接拉高工具栏容器。
+    3. 步骤下拉选择框仅设置 `min-width`，在不同内容长度下可用空间波动明显。
+  - **问题场景**：
+    - 同一图纸不同步骤切换时，顶部白色操作条高度变化；长标题步骤（如步骤68）比短标题步骤（如步骤27）更容易复现。
+  - **修复方案**：
+    1. 顶栏进度区增加 `min-width: 0`，并给标题增加 `ellipsis` 截断（`overflow + text-overflow + white-space`）。
+    2. 固定右侧操作区收缩策略（`top-actions`/`nav-group` 不换行，`step-indicator` 不换行）。
+    3. 固定步骤下拉宽度为一致值（320px），并对选中项文本做省略。
+    4. 管理员徽标增加 `white-space: nowrap` 与 `writing-mode: horizontal-tb`，避免竖排换行撑高。
+  - **影响文件**：`frontend/src/views/ManualViewer.vue`、`VERSION`、`Memory_Development/changelog.md`、`Memory_Development/index.md`、`Memory_Development/frontend/routes.md`
+  - **记录人**：小雅
+
+## v2.1.32 (2026-02-26)
+- **测试超时控制 + `gpt-5-mini` 预设 + 兜底模型自动切换**：
+  - **用户提问**：
+    - “测试的时候确实有必要设置超时问题。”
+    - “`gpt-5-mini` 版本我试过了也可以用，你也可以加上这个选项了。”
+    - “多加一个选项，模型不行的时候自动切换另外一个模型来处理，兜底模型我自己填写。”
+  - **问题根因**：
+    1. 设置页“测试后端连接/一键全测”缺少明确超时控制，网络或后端阻塞时前端会长期转圈，用户无法判断是慢还是卡死。
+    2. NewAPI 预设缺少 `gpt-5-mini`，需要手填，容易产生配置不一致。
+    3. 调用点只有主模型，没有统一“失败后自动切换”的链路，实战中主模型瞬时失败会直接中断流程。
+    4. `_resolve_call_points` 内部变量名复用存在污染风险（函数入参与循环内局部同名），可能导致默认模型兼容逻辑异常。
+  - **问题场景**：
+    - 点击测试按钮后长时间无反馈；
+    - 主模型偶发失败时任务直接失败，无法自动转移到备用模型。
+  - **修复方案**：
+    1. 前端设置页新增超时常量：后端连接测试 `10s`、模型全测 `75s`；超时返回明确提示文案。
+    2. NewAPI 快捷模型新增 `gpt-5-mini`。
+    3. 每个调用点新增“兜底模型”输入（可选），保存到后端 `fallback_model`。
+    4. `/api/test-model` 支持主模型失败后自动切换兜底模型，并返回 `used_model/used_fallback/warnings`。
+    5. 运行时链路接入兜底模型：`ai_matcher`、`gemini_pipeline`、`BaseGeminiAgent`、`GeminiVisionModel` 在主模型失败时自动尝试兜底模型。
+    6. 修复 `_resolve_call_points` 变量污染：入参恢复为 `default_model`，调用点兜底模型局部变量改为 `fallback_model_name`，避免串值。
+  - **影响文件**：`frontend/src/views/Settings.vue`、`backend/simple_app.py`、`core/ai_matcher.py`、`core/gemini_pipeline.py`、`core/hierarchical_bom_matcher_v2.py`、`agents/base_gemini_agent.py`、`agents/component_assembly_agent.py`、`agents/product_assembly_agent.py`、`agents/welding_agent.py`、`agents/safety_faq_agent.py`、`models/gemini_model.py`、`VERSION`、`Memory_Development/changelog.md`、`Memory_Development/index.md`、`Memory_Development/backend/api.md`、`Memory_Development/frontend/routes.md`
+  - **记录人**：小雅
+
+## v2.1.31 (2026-02-25)
+- **NewAPI 统一命名 + 多模型兼容适配（警告允许）**：
+  - **用户提问**：
+    - “把 `doubao` 改名为 `newapi`，模型切换很频繁，未来还会继续加。”
+    - “模型：`doubao-seed-2-0-lite-260215`、`doubao-seed-2-0-pro-260215`、`glm-5`，思考参数需要默认关闭。”
+    - “希望连通测试能给警告，但允许继续使用。”
+  - **问题根因**：
+    1. 对外 provider 口径仍是 `doubao`，与实际 NewAPI 使用场景不一致，配置认知成本高。
+    2. 多处调用链路写死 `max_completion_tokens=64000`，模型上限不一致时容易在实战阶段报 400。
+    3. 参数兼容降级仅覆盖部分报错文案，`Unknown parameter: 'thinking'` 未被识别。
+    4. `/api/test-model` 只做基础连通，不返回能力警告，无法提前暴露“思考参数/上限”风险。
+  - **问题场景**：
+    - 设置页测试通过，但实战阶段因参数差异或模型上限差异失败。
+    - NewAPI 下新增模型后，需要手动排查是否支持 thinking 与 token 上限。
+  - **修复方案**：
+    1. 后端设置与调用点 provider 对外统一为 `newapi`，并兼容旧 `doubao` 作为别名。
+    2. 设置页统一显示 `NewAPI`，新增预设模型：`doubao-seed-2-0-lite-260215`、`doubao-seed-2-0-pro-260215`、`glm-5`。
+    3. NewAPI 默认关闭思考参数（`NEWAPI_ENABLE_THINKING=false`），并补强 `Unknown parameter` 降级识别。
+    4. 在 `ai_matcher`、`gemini_pipeline`、`base_gemini_agent`、`gemini_model` 增加 completion 上限自动降级（从错误文案提取 `at most N` 后重试）。
+    5. `/api/test-model` 增加能力探测与警告返回：thinking 参数支持情况、completion 上限探测结果（警告但允许）。
+  - **影响文件**：`backend/simple_app.py`、`core/ai_matcher.py`、`core/gemini_pipeline.py`、`agents/base_gemini_agent.py`、`models/gemini_model.py`、`frontend/src/views/Settings.vue`、`utils/newapi_compat.py`、`VERSION`、`Memory_Development/changelog.md`、`Memory_Development/index.md`、`Memory_Development/frontend/routes.md`、`Memory_Development/backend/api.md`
+  - **记录人**：小雅
+- **补充修复：`glm-5` 多模态调用点禁用（前端过滤 + 后端兜底）**：
+  - **用户提问**：
+    - “我看了一下智普5确实不支持多模态，所以我们项目用到多模态能力的你就不要给出智普5的选项了，这样能解决问题了吗还是？”
+    - “上传简单图纸后第一个成功、后面连续失败，后台提示 `status_code=400, API 调用参数有误`。”
+  - **问题根因**：
+    1. 设置页预设模型未按调用点能力过滤，`assembly/welding/bom_vision` 仍可选 `glm-5`。
+    2. 后端在保存设置时缺少“模型能力与调用点需求”校验，手填 `glm-5` 也可能进入运行链路，直到实战阶段才报错。
+  - **问题场景**：
+    - NewAPI 使用 `glm-5` 跑多模态调用点时，任务在 AI 匹配/装配阶段长时间无进展，随后出现连续 400 错误。
+  - **修复方案**：
+    1. 前端新增 `UNSUPPORTED_NEWAPI_IMAGE_MODELS`，当调用点 `requiresImages=true` 且 provider=`newapi` 时，从预设列表中隐藏 `glm-5`。
+    2. 前端保存设置时执行 `sanitizeCallPointModel`，若手动输入 `glm-5`，自动替换为默认 NewAPI 模型并给出 warning。
+    3. 后端 `_resolve_call_points` 增加 `_validate_call_point_model`，拦截 `newapi + glm-5 + requires_images` 组合并返回 400。
+  - **影响文件**：`frontend/src/views/Settings.vue`、`backend/simple_app.py`、`Memory_Development/changelog.md`、`Memory_Development/index.md`、`Memory_Development/frontend/routes.md`、`Memory_Development/backend/api.md`
+  - **记录人**：小雅
+
+## v2.1.30 (2026-02-25)
+- **NewAPI 模型参数兼容修复（测试通过但实战失败）**：
+  - **用户提问**：
+    - “请求 gpt-4.1-mini 报错 `Unrecognized request arguments supplied: reasoning_effort, thinking`。”
+    - “为什么测试通过，实战生成却一直报错？”
+  - **问题根因**：
+    1. 实战匹配链路（`core/ai_matcher.py`）在 `provider == doubao` 时强制注入 `thinking/reasoning_effort`，部分 NewAPI 代理模型不支持该参数。
+    2. 测试接口（`/api/test-model`）仅发送 `max_completion_tokens`，不发送 `thinking/reasoning_effort`，导致“测试通过但实战失败”口径不一致。
+  - **问题场景**：
+    - 设置页测试模型成功；实际生成到 AI 匹配阶段返回 400 参数错误。
+  - **修复方案**：
+    1. `ai_matcher` 保留原有豆包推理参数默认行为。
+    2. 若捕获到 “Unrecognized request arguments supplied: reasoning_effort, thinking” 错误，自动降级重试为仅 `max_completion_tokens`，保证不支持该参数的模型可继续运行。
+  - **影响文件**：`core/ai_matcher.py`、`VERSION`、`Memory_Development/changelog.md`、`Memory_Development/index.md`
+  - **记录人**：小雅
+
+## v2.1.29 (2026-02-25)
+- **Generator “上一次任务”残留提示修复（任务已删仍提示可继续）**：
+  - **用户提问**：
+    - “上传失败后我去查看器删了任务，回到生成器还提示有上一次任务，逻辑是不是有问题？”
+  - **问题根因**：
+    1. `Generator.fetchLastTaskMeta()` 在 `/api/status/{task_id}` 失败时统一走兜底展示（`lastTaskMeta={id}`），未区分 404（任务已不存在）。
+    2. `Viewer.deleteProject()` 删除任务后未同步清理 `generator_last_task` / `generator_current_task` 本地缓存键。
+  - **问题场景**：
+    - 失败任务在查看器被删除后，返回生成器仍显示“继续上一次任务/删除上一次任务”按钮和历史提示。
+  - **修复方案**：
+    1. `Generator` 中对 `fetchLastTaskMeta()` 新增 404 分支：清理 `LAST_TASK_KEY` 与命中的 `RECOVERY_TASK_KEY`，并清空 `lastTaskMeta`。
+    2. `Viewer` 删除任务成功后，同步清理与该 `taskId` 匹配的 `generator_last_task`、`generator_current_task` 缓存。
+  - **影响文件**：`frontend/src/views/Generator.vue`、`frontend/src/views/Viewer.vue`、`VERSION`、`Memory_Development/changelog.md`、`Memory_Development/index.md`、`Memory_Development/frontend/routes.md`
+  - **记录人**：小雅
+
 ## v2.1.28 (2026-02-25)
 - **ManualViewer 管理员登录后自动刷新 + 版本变更提醒**：
   - **用户提问**：

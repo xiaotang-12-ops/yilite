@@ -8,17 +8,29 @@ from typing import Dict, List
 from agents.base_gemini_agent import BaseGeminiAgent
 from prompts.agent_5_welding import build_welding_prompt
 
+WELDING_REQUEST_TIMEOUT_SECONDS = 1800
+WELDING_SDK_MAX_RETRIES = 0
+
 
 class WeldingAgent(BaseGeminiAgent):
     """"""
     
-    def __init__(self, api_key: str = None, model_name: str = None, provider: str = "openrouter"):
+    def __init__(
+        self,
+        api_key: str = None,
+        model_name: str = None,
+        fallback_model_name: str = None,
+        provider: str = "openrouter"
+    ):
         super().__init__(
             agent_name="Agent5_",
             api_key=api_key,
             temperature=0.1,
             model_name=model_name,
-            provider=provider
+            fallback_model_name=fallback_model_name,
+            provider=provider,
+            request_timeout_seconds=WELDING_REQUEST_TIMEOUT_SECONDS,
+            sdk_max_retries=WELDING_SDK_MAX_RETRIES,
         )
     
     def process(

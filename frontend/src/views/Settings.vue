@@ -50,12 +50,12 @@
             DeepSeek用于文本类调用点（匹配/安全）
           </div>
         </el-form-item>
-        <el-form-item label="豆包(ARK) API Key">
+        <el-form-item label="NewAPI API Key">
           <el-input
-            v-model="settings.doubaoApiKey"
+            v-model="settings.newapiApiKey"
             type="password"
             show-password
-            placeholder="请输入豆包(ARK) API Key"
+            placeholder="请输入NewAPI API Key"
             clearable
           >
             <template #prepend>
@@ -63,10 +63,7 @@
             </template>
           </el-input>
           <div class="form-item-tip">
-            豆包用于视觉/文本调用点，
-            <el-link type="primary" href="https://console.volcengine.com/ark" target="_blank">
-              获取API Key
-            </el-link>
+            NewAPI用于视觉/文本调用点（兼容 OpenAI 协议）
           </div>
         </el-form-item>
 
@@ -106,7 +103,7 @@
                   clearable
                 />
                 <el-select
-                  v-if="settings.callPoints[callPointId].provider === 'doubao'"
+                  v-if="isNewApiProvider(settings.callPoints[callPointId].provider)"
                   v-model="modelPresetSelections[callPointId]"
                   class="callpoint-model-preset"
                   placeholder="快捷模型"
@@ -114,7 +111,7 @@
                   @change="applyModelPreset(callPointId, $event)"
                 >
                   <el-option
-                    v-for="preset in modelPresets"
+                    v-for="preset in getModelPresetsForCallPoint(callPointId)"
                     :key="preset.value"
                     :label="preset.label"
                     :value="preset.value"
@@ -136,10 +133,22 @@
                   </template>
                 </el-input>
               </div>
+              <div class="callpoint-fallback-row">
+                <el-input
+                  v-model="settings.callPoints[callPointId].fallbackModel"
+                  class="callpoint-fallback-model"
+                  placeholder="兜底模型（可选，主模型失败时自动切换）"
+                  clearable
+                >
+                  <template #prepend>
+                    <el-icon><RefreshLeft /></el-icon>
+                  </template>
+                </el-input>
+              </div>
             </div>
           </div>
           <div class="form-item-tip">
-            视觉调用点支持OpenRouter/豆包；文本调用点可选OpenRouter/DeepSeek/豆包
+            视觉调用点支持OpenRouter/NewAPI；文本调用点可选OpenRouter/DeepSeek/NewAPI
             <el-link type="primary" href="https://openrouter.ai/models" target="_blank">
               OpenRouter模型列表
             </el-link>
@@ -226,11 +235,11 @@
       </template>
 
       <el-steps direction="vertical" :active="3">
-        <el-step title="获取 OpenRouter / 豆包 API Key">
+        <el-step title="获取 OpenRouter / NewAPI API Key">
           <template #description>
             <div>
               1. 访问 <el-link type="primary" href="https://openrouter.ai/keys" target="_blank">OpenRouter API Keys</el-link><br>
-              2. 或访问 <el-link type="primary" href="https://console.volcengine.com/ark" target="_blank">豆包控制台</el-link><br>
+              2. 或在你的 NewAPI 平台创建 API Key<br>
               3. 创建API Key并复制
             </div>
           </template>
@@ -238,7 +247,7 @@
         <el-step title="配置调用点模型">
           <template #description>
             <div>
-              1. 按调用点选择提供方（OpenRouter/DeepSeek/豆包）<br>
+              1. 按调用点选择提供方（OpenRouter/DeepSeek/NewAPI）<br>
               2. 选择提供方后会自动填入默认模型ID<br>
               3. 如需自定义模型，可手动修改
             </div>
@@ -267,24 +276,32 @@ import axios from 'axios'
 
 const DEFAULT_OPENROUTER_MODEL = 'google/gemini-2.5-flash-preview-09-2025'
 const DEFAULT_DEEPSEEK_MODEL = 'deepseek-chat'
-const DEFAULT_DOUBAO_MODEL = 'doubao-seed-1-8-251228'
+const DEFAULT_NEWAPI_MODEL = 'doubao-seed-2-0-lite-260215'
+const UNSUPPORTED_NEWAPI_IMAGE_MODELS = new Set(['glm-5'])
+const TEST_BACKEND_TIMEOUT_MS = 10000
+const TEST_MODEL_TIMEOUT_MS = 75000
 
-type Provider = 'openrouter' | 'deepseek' | 'doubao'
+type Provider = 'openrouter' | 'deepseek' | 'newapi' | 'doubao'
 
 const modelPresets = [
-  { label: 'gemini3-flash', value: 'google/gemini-3-flash-preview' }
+  { label: 'doubao-seed-2-0-lite-260215', value: 'doubao-seed-2-0-lite-260215' },
+  { label: 'doubao-seed-2-0-pro-260215', value: 'doubao-seed-2-0-pro-260215' },
+  { label: 'gpt-5-mini', value: 'gpt-5-mini' },
+  { label: 'glm-5', value: 'glm-5' }
 ]
 
 const DEFAULT_PROVIDER_MODELS: Record<Provider, string> = {
   openrouter: DEFAULT_OPENROUTER_MODEL,
   deepseek: DEFAULT_DEEPSEEK_MODEL,
-  doubao: DEFAULT_DOUBAO_MODEL
+  newapi: DEFAULT_NEWAPI_MODEL,
+  doubao: DEFAULT_NEWAPI_MODEL
 }
 
 interface CallPointConfig {
   label: string
   provider: Provider
   model: string
+  fallbackModel: string
   allowedProviders: Provider[]
   requiresImages: boolean
   customKey?: string  // 新增：调用点独立的API Key
@@ -293,7 +310,7 @@ interface CallPointConfig {
 interface Settings {
   openrouterApiKey: string
   deepseekApiKey: string
-  doubaoApiKey: string
+  newapiApiKey: string
   websocketUrl: string
   apiBaseUrl: string
   callPoints: Record<string, CallPointConfig>
@@ -303,43 +320,68 @@ const callPointOrder = ['matching', 'assembly', 'welding', 'safety', 'bom_vision
 const providerLabels: Record<Provider, string> = {
   openrouter: 'OpenRouter',
   deepseek: 'DeepSeek',
-  doubao: '豆包'
+  newapi: 'NewAPI',
+  doubao: 'NewAPI(兼容)'
 }
+
+const normalizeProvider = (provider?: string): Provider => {
+  const value = (provider || '').trim().toLowerCase()
+  if (value === 'doubao') return 'newapi'
+  if (value === 'newapi' || value === 'openrouter' || value === 'deepseek') {
+    return value as Provider
+  }
+  return 'openrouter'
+}
+
+const normalizeAllowedProviders = (providers: any, fallback: Provider[]) => {
+  if (!Array.isArray(providers) || providers.length === 0) {
+    return fallback
+  }
+  const mapped = providers.map((item) => normalizeProvider(String(item)))
+  return Array.from(new Set(mapped))
+}
+
+const isNewApiProvider = (provider?: string) => normalizeProvider(provider) === 'newapi'
 
 const buildDefaultCallPoints = (): Record<string, CallPointConfig> => ({
   matching: {
     label: '匹配',
     provider: 'openrouter',
     model: DEFAULT_PROVIDER_MODELS.openrouter,
-    allowedProviders: ['openrouter', 'deepseek', 'doubao'],
+    fallbackModel: '',
+    allowedProviders: ['openrouter', 'deepseek', 'newapi'],
     requiresImages: false
   },
   assembly: {
     label: '组件/产品',
     provider: 'openrouter',
     model: DEFAULT_PROVIDER_MODELS.openrouter,
-    allowedProviders: ['openrouter', 'doubao'],
+    fallbackModel: '',
+    allowedProviders: ['openrouter', 'newapi'],
     requiresImages: true
   },
   welding: {
     label: '焊接',
     provider: 'openrouter',
     model: DEFAULT_PROVIDER_MODELS.openrouter,
-    allowedProviders: ['openrouter', 'doubao'],
+    fallbackModel: '',
+    allowedProviders: ['openrouter', 'newapi'],
     requiresImages: true
   },
   safety: {
     label: '安全',
     provider: 'openrouter',
     model: DEFAULT_PROVIDER_MODELS.openrouter,
-    allowedProviders: ['openrouter', 'deepseek', 'doubao'],
+    fallbackModel: '',
+    allowedProviders: ['openrouter', 'deepseek', 'newapi'],
     requiresImages: false
   },
   bom_vision: {
     label: 'BOM视觉提取',
     provider: 'openrouter',
     model: DEFAULT_PROVIDER_MODELS.openrouter,
-    allowedProviders: ['openrouter', 'doubao'],
+    fallbackModel: '',
+    allowedProviders: ['openrouter', 'newapi'],
     requiresImages: true
   }
 })
@@ -347,7 +389,7 @@ const buildDefaultCallPoints = (): Record<string, CallPointConfig> => ({
 const settings = ref<Settings>({
   openrouterApiKey: '',
   deepseekApiKey: '',
-  doubaoApiKey: '',
+  newapiApiKey: '',
   websocketUrl: 'ws://localhost:8008',
   apiBaseUrl: '/api',
   callPoints: buildDefaultCallPoints()
@@ -361,11 +403,57 @@ const statusType = ref<'success' | 'warning' | 'error' | 'info'>('info')
 const modelPresetSelections = ref<Record<string, string>>({})
 
 const resolveProviderModel = (provider: Provider, model?: string) => {
+  const normalizedProvider = normalizeProvider(provider)
   const trimmed = model?.trim()
   if (trimmed) {
     return trimmed
   }
-  return DEFAULT_PROVIDER_MODELS[provider] || ''
+  return DEFAULT_PROVIDER_MODELS[normalizedProvider] || ''
+}
+
+const isUnsupportedNewApiImageModel = (model?: string) => {
+  const normalized = (model || '').trim().toLowerCase()
+  return normalized.length > 0 && UNSUPPORTED_NEWAPI_IMAGE_MODELS.has(normalized)
+}
+
+const sanitizeCallPointModel = (
+  callPointId: string,
+  provider: Provider,
+  model?: string,
+  requiresImages?: boolean
+) => {
+  const resolved = resolveProviderModel(provider, model)
+  const needImages = typeof requiresImages === 'boolean'
+    ? requiresImages
+    : Boolean(settings.value.callPoints[callPointId]?.requiresImages)
+  if (needImages && isNewApiProvider(provider) && isUnsupportedNewApiImageModel(resolved)) {
+    return DEFAULT_NEWAPI_MODEL
+  }
+  return resolved
+}
+
+const sanitizeFallbackModel = (
+  callPointId: string,
+  provider: Provider,
+  fallbackModel?: string,
+  requiresImages?: boolean
+) => {
+  const trimmed = (fallbackModel || '').trim()
+  if (!trimmed) {
+    return ''
+  }
+  return sanitizeCallPointModel(callPointId, provider, trimmed, requiresImages)
+}
+
+const getModelPresetsForCallPoint = (callPointId: string) => {
+  const point = settings.value.callPoints[callPointId]
+  if (!point) {
+    return modelPresets
+  }
+  if (point.requiresImages && isNewApiProvider(point.provider)) {
+    return modelPresets.filter((preset) => !isUnsupportedNewApiImageModel(preset.value))
+  }
+  return modelPresets
 }
 
 const normalizeLocalCallPoints = (incoming?: Record<string, any>) => {
@@ -379,13 +467,23 @@ const normalizeLocalCallPoints = (incoming?: Record<string, any>) => {
     if (!source) {
       return
     }
+    const provider = normalizeProvider(source.provider || normalized[id].provider)
+    const requiresImages = typeof source.requiresImages === 'boolean'
+      ? source.requiresImages
+      : normalized[id].requiresImages
     normalized[id] = {
       ...normalized[id],
       label: source.label || normalized[id].label,
-      provider: source.provider || normalized[id].provider,
-      model: resolveProviderModel(source.provider || normalized[id].provider, source.model || normalized[id].model),
-      allowedProviders: Array.isArray(source.allowedProviders) ? source.allowedProviders : normalized[id].allowedProviders,
-      requiresImages: typeof source.requiresImages === 'boolean' ? source.requiresImages : normalized[id].requiresImages,
+      provider,
+      model: sanitizeCallPointModel(id, provider, source.model || normalized[id].model, requiresImages),
+      fallbackModel: sanitizeFallbackModel(
+        id,
+        provider,
+        source.fallbackModel || source.fallback_model || normalized[id].fallbackModel,
+        requiresImages
+      ),
+      allowedProviders: normalizeAllowedProviders(source.allowedProviders, normalized[id].allowedProviders),
+      requiresImages,
       customKey: source.customKey || ''  // 新增：读取独立Key
     }
   })
@@ -404,13 +502,23 @@ const normalizeServerCallPoints = (incoming?: Record<string, any>) => {
     if (!source) {
       return
     }
+    const provider = normalizeProvider(source.provider || normalized[id].provider)
+    const requiresImages = typeof source.requires_images === 'boolean'
+      ? source.requires_images
+      : normalized[id].requiresImages
     normalized[id] = {
       ...normalized[id],
       label: source.label || normalized[id].label,
-      provider: source.provider || normalized[id].provider,
-      model: resolveProviderModel(source.provider || normalized[id].provider, source.model || normalized[id].model),
-      allowedProviders: Array.isArray(source.allowed_providers) ? source.allowed_providers : normalized[id].allowedProviders,
-      requiresImages: typeof source.requires_images === 'boolean' ? source.requires_images : normalized[id].requiresImages,
+      provider,
+      model: sanitizeCallPointModel(id, provider, source.model || normalized[id].model, requiresImages),
+      fallbackModel: sanitizeFallbackModel(
+        id,
+        provider,
+        source.fallback_model || source.fallbackModel || normalized[id].fallbackModel,
+        requiresImages
+      ),
+      allowedProviders: normalizeAllowedProviders(source.allowed_providers, normalized[id].allowedProviders),
+      requiresImages,
       customKey: source.custom_key || ''  // 新增：读取独立Key
     }
   })
@@ -427,14 +535,32 @@ const applyDefaultModel = (model: string) => {
 }
 
 const handleProviderChange = (callPointId: string) => {
-  const provider = settings.value.callPoints[callPointId].provider
-  settings.value.callPoints[callPointId].model = DEFAULT_PROVIDER_MODELS[provider] || ''
+  const provider = normalizeProvider(settings.value.callPoints[callPointId].provider)
+  settings.value.callPoints[callPointId].provider = provider
+  settings.value.callPoints[callPointId].model = sanitizeCallPointModel(
+    callPointId,
+    provider,
+    DEFAULT_PROVIDER_MODELS[provider] || '',
+    settings.value.callPoints[callPointId].requiresImages
+  )
+  settings.value.callPoints[callPointId].fallbackModel = sanitizeFallbackModel(
+    callPointId,
+    provider,
+    settings.value.callPoints[callPointId].fallbackModel,
+    settings.value.callPoints[callPointId].requiresImages
+  )
   modelPresetSelections.value[callPointId] = ''
 }
 
 const applyModelPreset = (callPointId: string, value?: string) => {
   if (!value) return
-  settings.value.callPoints[callPointId].model = value
+  const point = settings.value.callPoints[callPointId]
+  settings.value.callPoints[callPointId].model = sanitizeCallPointModel(
+    callPointId,
+    normalizeProvider(point.provider),
+    value,
+    point.requiresImages
+  )
   modelPresetSelections.value[callPointId] = value
 }
 
@@ -455,8 +581,10 @@ const loadSettings = async () => {
       if (typeof parsed.deepseekApiKey === 'string') {
         settings.value.deepseekApiKey = parsed.deepseekApiKey
       }
-      if (typeof parsed.doubaoApiKey === 'string') {
-        settings.value.doubaoApiKey = parsed.doubaoApiKey
+      if (typeof parsed.newapiApiKey === 'string') {
+        settings.value.newapiApiKey = parsed.newapiApiKey
+      } else if (typeof parsed.doubaoApiKey === 'string') {
+        settings.value.newapiApiKey = parsed.doubaoApiKey
       }
       if (parsed.callPoints) {
         settings.value.callPoints = normalizeLocalCallPoints(parsed.callPoints)
@@ -491,12 +619,26 @@ const saveSettings = async () => {
     // 保存到localStorage
     localStorage.setItem('app_settings', JSON.stringify(settings.value))
 
-    const callPointsPayload: Record<string, { provider: Provider; model: string; custom_key?: string }> = {}
+    const callPointsPayload: Record<string, { provider: Provider; model: string; fallback_model?: string; custom_key?: string }> = {}
+    const adjustedMainPoints: string[] = []
+    const adjustedFallbackPoints: string[] = []
     callPointOrder.forEach((id) => {
       const point = settings.value.callPoints[id]
+      const provider = normalizeProvider(point.provider)
+      const sanitizedModel = sanitizeCallPointModel(id, provider, point.model, point.requiresImages)
+      const sanitizedFallbackModel = sanitizeFallbackModel(id, provider, point.fallbackModel, point.requiresImages)
+      if (sanitizedModel !== point.model) {
+        point.model = sanitizedModel
+        adjustedMainPoints.push(point.label)
+      }
+      if (sanitizedFallbackModel !== (point.fallbackModel || '')) {
+        point.fallbackModel = sanitizedFallbackModel
+        adjustedFallbackPoints.push(point.label)
+      }
       callPointsPayload[id] = {
-        provider: point.provider,
-        model: point.model,
+        provider,
+        model: sanitizedModel,
+        fallback_model: sanitizedFallbackModel || undefined,
         custom_key: point.customKey || undefined  // 新增：发送独立Key
       }
     })
@@ -505,13 +647,24 @@ const saveSettings = async () => {
     await axios.post(`${settings.value.apiBaseUrl}/settings`, {
       openrouter_api_key: settings.value.openrouterApiKey,
       deepseek_api_key: settings.value.deepseekApiKey,
-      doubao_api_key: settings.value.doubaoApiKey,
+      newapi_api_key: settings.value.newapiApiKey,
+      doubao_api_key: settings.value.newapiApiKey, // legacy payload for backward compatibility
       call_points: callPointsPayload
     })
 
     statusMessage.value = '设置保存成功！'
     statusType.value = 'success'
     ElMessage.success('设置已保存')
+    if (adjustedMainPoints.length > 0 || adjustedFallbackPoints.length > 0) {
+      const warningParts: string[] = []
+      if (adjustedMainPoints.length > 0) {
+        warningParts.push(`主模型：${adjustedMainPoints.join('、')}`)
+      }
+      if (adjustedFallbackPoints.length > 0) {
+        warningParts.push(`兜底模型：${adjustedFallbackPoints.join('、')}`)
+      }
+      ElMessage.warning(`已自动替换不支持多模态的模型（${warningParts.join('；')}）`)
+    }
   } catch (error: any) {
     statusMessage.value = `保存失败: ${error.message}`
     statusType.value = 'error'
@@ -525,7 +678,7 @@ const resetSettings = () => {
   settings.value = {
     openrouterApiKey: '',
     deepseekApiKey: '',
-    doubaoApiKey: '',
+    newapiApiKey: '',
     websocketUrl: 'ws://localhost:8008',
     apiBaseUrl: '/api',
     callPoints: buildDefaultCallPoints()
@@ -541,7 +694,9 @@ const testConnection = async () => {
   statusMessage.value = ''
 
   try {
-    const response = await axios.get(`${settings.value.apiBaseUrl}/health`)
+    const response = await axios.get(`${settings.value.apiBaseUrl}/health`, {
+      timeout: TEST_BACKEND_TIMEOUT_MS
+    })
 
     if (response.data.status === 'healthy') {
       statusMessage.value = '✅ 后端连接成功！服务运行正常'
@@ -552,7 +707,8 @@ const testConnection = async () => {
       statusType.value = 'warning'
     }
   } catch (error: any) {
-    statusMessage.value = `❌ 后端连接失败: ${error.message}`
+    const timeoutHint = error.code === 'ECONNABORTED' ? `请求超时（>${TEST_BACKEND_TIMEOUT_MS / 1000}s）` : ''
+    statusMessage.value = `❌ 后端连接失败: ${timeoutHint || error.message}`
     statusType.value = 'error'
     ElMessage.error('后端连接测试失败')
   } finally {
@@ -575,8 +731,9 @@ const testModel = async () => {
     for (let index = 0; index < callPointOrder.length; index += 1) {
       const callPointId = callPointOrder[index]
       const testPoint = settings.value.callPoints[callPointId]
-      const provider = testPoint.provider
+      const provider = normalizeProvider(testPoint.provider)
       const model = testPoint.model
+      const configuredFallbackModel = (testPoint.fallbackModel || '').trim()
       const providerLabel = providerLabels[provider] || provider
 
       statusMessage.value = `🔄 正在测试 ${testPoint.label} (${index + 1}/${callPointOrder.length})...`
@@ -586,27 +743,71 @@ const testModel = async () => {
         continue
       }
 
-      try {
-        // 顺序测试避免触发限流
-        const response = await axios.post(`${settings.value.apiBaseUrl}/test-model`, {
+      const runTestRequest = async (targetModel: string, fallbackModel?: string) => {
+        return axios.post(`${settings.value.apiBaseUrl}/test-model`, {
           provider,
-          model,
+          model: targetModel,
+          fallback_model: fallbackModel || undefined,
           openrouter_api_key: settings.value.openrouterApiKey,
           deepseek_api_key: settings.value.deepseekApiKey,
-          doubao_api_key: settings.value.doubaoApiKey,
-          custom_key: testPoint.customKey || undefined  // 新增：发送独立Key
+          newapi_api_key: settings.value.newapiApiKey,
+          doubao_api_key: settings.value.newapiApiKey, // legacy payload
+          probe_capabilities: true,
+          custom_key: testPoint.customKey || undefined // 新增：发送独立Key
+        }, {
+          timeout: TEST_MODEL_TIMEOUT_MS
         })
+      }
+
+      try {
+        // 顺序测试避免触发限流
+        const response = await runTestRequest(model, configuredFallbackModel || undefined)
 
         if (response.data.success) {
+          const warnings = Array.isArray(response.data.warnings) ? response.data.warnings : []
           results.push(`✅ ${testPoint.label}：${providerLabel} / ${model}`)
+          if (response.data.used_fallback) {
+            const fallbackModel = response.data.used_model || configuredFallbackModel
+            results.push(`⚠️ ${testPoint.label}：主模型失败，已自动切换兜底模型 ${fallbackModel}`)
+          }
+          if (warnings.length > 0) {
+            warnings.forEach((msg: string) => {
+              results.push(`⚠️ ${testPoint.label}：${msg}`)
+            })
+          }
         } else {
           results.push(`❌ ${testPoint.label}：${providerLabel} / ${model}，${response.data.error || '未知错误'}`)
           hasFailure = true
         }
       } catch (error: any) {
-        const errorMsg = error.response?.data?.detail || error.message
+        const timeoutHint = error.code === 'ECONNABORTED' ? `请求超时（>${TEST_MODEL_TIMEOUT_MS / 1000}s）` : ''
+        const errorMsg = timeoutHint || error.response?.data?.detail || error.message
         results.push(`❌ ${testPoint.label}：${providerLabel} / ${model}，${errorMsg}`)
         hasFailure = true
+      }
+
+      if (configuredFallbackModel && configuredFallbackModel !== model) {
+        statusMessage.value = `🔄 正在测试 ${testPoint.label} 兜底模型 (${index + 1}/${callPointOrder.length})...`
+        try {
+          const fallbackResponse = await runTestRequest(configuredFallbackModel)
+          if (fallbackResponse.data.success) {
+            const fallbackWarnings = Array.isArray(fallbackResponse.data.warnings) ? fallbackResponse.data.warnings : []
+            results.push(`✅ ${testPoint.label}（兜底）: ${providerLabel} / ${configuredFallbackModel}`)
+            if (fallbackWarnings.length > 0) {
+              fallbackWarnings.forEach((msg: string) => {
+                results.push(`⚠️ ${testPoint.label}（兜底）: ${msg}`)
+              })
+            }
+          } else {
+            results.push(`❌ ${testPoint.label}（兜底）: ${providerLabel} / ${configuredFallbackModel}，${fallbackResponse.data.error || '未知错误'}`)
+            hasFailure = true
+          }
+        } catch (fallbackError: any) {
+          const timeoutHint = fallbackError.code === 'ECONNABORTED' ? `请求超时（>${TEST_MODEL_TIMEOUT_MS / 1000}s）` : ''
+          const fallbackErrorMsg = timeoutHint || fallbackError.response?.data?.detail || fallbackError.message
+          results.push(`❌ ${testPoint.label}（兜底）: ${providerLabel} / ${configuredFallbackModel}，${fallbackErrorMsg}`)
+          hasFailure = true
+        }
       }
     }
 
@@ -685,6 +886,13 @@ const testModel = async () => {
   margin-left: 122px;
 }
 
+.callpoint-fallback-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin-left: 122px;
+}
+
 .callpoint-label {
   width: 110px;
   font-size: 13px;
@@ -709,6 +917,10 @@ const testModel = async () => {
   flex: 1;
 }
 
+.callpoint-fallback-model {
+  flex: 1;
+}
+
 .help-card {
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
 }
@@ -718,4 +930,3 @@ const testModel = async () => {
   line-height: 1.8;
 }
 </style>
-

@@ -12,13 +12,14 @@ from typing import Dict, List, Optional, Union
 from openai import OpenAI
 import datetime
 from utils.time_utils import beijing_now, build_debug_output_dir
-
-DOUBAO_BASE_URL = (
-    os.getenv("DOUBAO_BASE_URL")
-    or os.getenv("ARK_BASE_URL")
-    or "http://111.230.37.43:3000/v1"
+from utils.newapi_compat import (
+    NEWAPI_BASE_URL,
+    DEFAULT_NEWAPI_MODEL,
+    DEFAULT_NEWAPI_MAX_COMPLETION_TOKENS,
+    extract_completion_tokens_cap,
+    is_newapi_provider,
+    normalize_provider,
 )
-DOUBAO_MAX_TOKENS = 64000
 
 PROVIDER_CONFIG = {
     "openrouter": {
@@ -33,12 +34,18 @@ PROVIDER_CONFIG = {
         "model_env": "DEEPSEEK_MODEL",
         "default_model": "deepseek-chat",
     },
-    "doubao": {
-        "base_url": DOUBAO_BASE_URL,
+    "newapi": {
+        "base_url": NEWAPI_BASE_URL,
         "api_key_env": "ARK_API_KEY",
         "model_env": "ARK_MODEL",
-        "default_model": "doubao-seed-1-8-251228",
+        "default_model": DEFAULT_NEWAPI_MODEL,
     },
+    "doubao": {  # legacy alias
+        "base_url": NEWAPI_BASE_URL,
+        "api_key_env": "ARK_API_KEY",
+        "model_env": "ARK_MODEL",
+        "default_model": DEFAULT_NEWAPI_MODEL,
+    }
 }
 
 
@@ -51,7 +58,10 @@ class BaseGeminiAgent:
         api_key: Optional[str] = None,
         temperature: float = 0.1,
         model_name: Optional[str] = None,
-        provider: str = "openrouter"
+        fallback_model_name: Optional[str] = None,
+        provider: str = "openrouter",
+        request_timeout_seconds: Optional[float] = None,
+        sdk_max_retries: Optional[int] = None,
     ):
         """
         Gemini Agent
@@ -61,12 +71,14 @@ class BaseGeminiAgent:
             api_key: OpenRouter API Key
             temperature: 0-1
             model_name: 模型名称（可选，默认从环境变量OPENROUTER_MODEL读取）
+            request_timeout_seconds: 单次请求超时时间（秒），不传则使用SDK默认
+            sdk_max_retries: SDK自动重试次数，不传则使用SDK默认
         """
         self.agent_name = agent_name
         self.temperature = temperature
 
-        self.provider = provider
-        provider_config = PROVIDER_CONFIG.get(provider, PROVIDER_CONFIG["openrouter"])
+        self.provider = normalize_provider(provider)
+        provider_config = PROVIDER_CONFIG.get(self.provider, PROVIDER_CONFIG["openrouter"])
         self._model_env = provider_config["model_env"]
         self._default_model = provider_config["default_model"]
 
@@ -74,18 +86,28 @@ class BaseGeminiAgent:
         if not self.api_key:
             raise ValueError(f"{provider_config['api_key_env']} is required")
 
-        self.client = OpenAI(
-            base_url=provider_config["base_url"],
-            api_key=self.api_key
-        )
+        client_kwargs = {
+            "base_url": provider_config["base_url"],
+            "api_key": self.api_key,
+        }
+        if request_timeout_seconds is not None and request_timeout_seconds > 0:
+            client_kwargs["timeout"] = request_timeout_seconds
+        if sdk_max_retries is not None and sdk_max_retries >= 0:
+            client_kwargs["max_retries"] = sdk_max_retries
+        self.client = OpenAI(**client_kwargs)
 
         # 保存传入的model_name（如果有的话），否则每次调用时从环境变量读取
         self._model_name_override = model_name
+        self._fallback_model_name_override = (fallback_model_name or "").strip() or None
 
     @property
     def model_name(self) -> str:
         """动态获取模型名称，优先使用传入的值，其次使用环境变量，最后使用默认值"""
         return self._model_name_override or os.getenv(self._model_env) or self._default_model
+
+    @property
+    def fallback_model_name(self) -> Optional[str]:
+        return self._fallback_model_name_override
     
     def encode_image_to_base64(self, image_path: str) -> str:
         """
@@ -236,25 +258,58 @@ class BaseGeminiAgent:
             print(f"   Images: {len(image_paths)}")
             print(f"   Temperature: {self.temperature}")
 
-            # API
-            request_payload = {
-                "model": self.model_name,
-                "messages": messages,
-                "temperature": self.temperature
-            }
-            if self.provider == "openrouter":
-                request_payload["extra_headers"] = {
-                    "HTTP-Referer": "https://mecagent.com",
-                    "X-Title": "MecAgent"
-                }
-                # ✅ 添加 provider.ignore 排除地域限制
-                request_payload["provider"] = {
-                    "ignore": ["google-ai-studio"]
-                }
-            if self.provider == "doubao":
-                request_payload["max_completion_tokens"] = DOUBAO_MAX_TOKENS
+            candidate_models = [self.model_name]
+            if self.fallback_model_name and self.fallback_model_name != self.model_name:
+                candidate_models.append(self.fallback_model_name)
 
-            completion = self.client.chat.completions.create(**request_payload)
+            completion = None
+            last_error = None
+            for model_index, current_model in enumerate(candidate_models):
+                if model_index > 0:
+                    print(f"⚠️ [{self.agent_name}] 主模型失败，自动切换兜底模型: {current_model}")
+
+                request_payload = {
+                    "model": current_model,
+                    "messages": messages,
+                    "temperature": self.temperature
+                }
+                if self.provider == "openrouter":
+                    request_payload["extra_headers"] = {
+                        "HTTP-Referer": "https://mecagent.com",
+                        "X-Title": "MecAgent"
+                    }
+                    # ✅ 添加 provider.ignore 排除地域限制
+                    request_payload["provider"] = {
+                        "ignore": ["google-ai-studio"]
+                    }
+                newapi_max_completion_tokens = DEFAULT_NEWAPI_MAX_COMPLETION_TOKENS
+                if is_newapi_provider(self.provider):
+                    request_payload["max_completion_tokens"] = newapi_max_completion_tokens
+
+                try:
+                    completion = self.client.chat.completions.create(**request_payload)
+                    break
+                except Exception as request_error:
+                    last_error = request_error
+                    if not is_newapi_provider(self.provider):
+                        continue
+
+                    cap = extract_completion_tokens_cap(request_error)
+                    if cap and cap > 0 and newapi_max_completion_tokens > cap:
+                        request_payload["max_completion_tokens"] = cap
+                        try:
+                            completion = self.client.chat.completions.create(**request_payload)
+                            break
+                        except Exception as second_error:
+                            last_error = second_error
+                            continue
+                    else:
+                        continue
+
+            if completion is None and last_error is not None:
+                raise last_error
+            if completion is None:
+                raise RuntimeError("模型请求失败：未获得有效响应")
             
             # ✅ 防御性检查：确保响应格式正确
             if not completion or not completion.choices or len(completion.choices) == 0:

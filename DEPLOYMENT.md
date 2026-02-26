@@ -2,7 +2,7 @@
 
 本文档说明如何从 GitHub 克隆项目并使用 Docker 部署智能装配说明书生成系统。
 
-**当前版本**: v2.1.28 | [查看所有版本](https://github.com/xiaotang-12-ops/yilite/releases)
+**当前版本**: v2.1.36 | [查看所有版本](https://github.com/xiaotang-12-ops/yilite/releases)
 
 ---
 
@@ -48,7 +48,7 @@ cd yilite
 
 #### 部署特定版本
 
-如果你想部署特定版本（例如 v2.1.28），可以使用以下命令：
+如果你想部署特定版本（例如 v2.1.36），可以使用以下命令：
 
 ```bash
 # 克隆项目
@@ -59,7 +59,7 @@ cd yilite
 git tag
 
 # 切换到特定版本
-git checkout v2.1.28
+git checkout v2.1.36
 
 # 进入项目目录
 cd yilite
@@ -123,8 +123,8 @@ docker-compose logs -f
 
 | 服务名称 | 容器名称 | 端口 | 说明 |
 |---------|---------|------|------|
-| backend | assembly-backend-v2.1.28 | 8008 | FastAPI 后端服务 |
-| frontend | assembly-frontend-v2.1.28 | 3008 (映射到容器的80端口) | Vue 3 前端服务 |
+| backend | assembly-backend-v2.1.36 | 8008 | FastAPI 后端服务 |
+| frontend | assembly-frontend-v2.1.36 | 3008 (映射到容器的80端口) | Vue 3 前端服务 |
 
 ### 数据持久化
 
@@ -208,13 +208,13 @@ docker-compose build backend
 ### 进入容器
 ```bash
 # 进入后端容器
-docker exec -it assembly-backend-v2.1.28 bash
+docker exec -it assembly-backend-v2.1.36 bash
 
 # 进入前端容器
-docker exec -it assembly-frontend-v2.1.28 sh
+docker exec -it assembly-frontend-v2.1.36 sh
 
 # 在后端容器中执行Python命令
-docker exec -it assembly-backend-v2.1.28 python -c "print('Hello')"
+docker exec -it assembly-backend-v2.1.36 python -c "print('Hello')"
 ```
 
 ---
@@ -262,8 +262,8 @@ Error: bind: address already in use
 
 3. 检查健康状态：
    ```bash
-   docker inspect assembly-backend-v2.1.28 | grep -A 10 Health
-   docker inspect assembly-frontend-v2.1.28 | grep -A 10 Health
+   docker inspect assembly-backend-v2.1.36 | grep -A 10 Health
+   docker inspect assembly-frontend-v2.1.36 | grep -A 10 Health
    ```
 
 ### 问题3: API密钥错误

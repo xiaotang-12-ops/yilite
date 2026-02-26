@@ -893,7 +893,18 @@ const fetchLastTaskMeta = async (id: string) => {
       updatedAt: data?.updated_at,
       createdAt: data?.created_at
     }
-  } catch (error) {
+  } catch (error: any) {
+    const status = error?.response?.status
+    if (status === 404) {
+      // 任务已被外部删除时，清理本地“上一次任务”缓存，避免误提示
+      clearLastTaskId(id)
+      if (localStorage.getItem(RECOVERY_TASK_KEY) === id) {
+        localStorage.removeItem(RECOVERY_TASK_KEY)
+      }
+      lastTaskMeta.value = null
+      return
+    }
+    // 网络抖动等临时异常下保留兜底信息，避免误清理可恢复任务
     lastTaskMeta.value = { id, projectName: id }
   }
 }

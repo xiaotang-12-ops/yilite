@@ -9,13 +9,14 @@ import json
 import base64
 from typing import Dict, List, Optional, Union
 from openai import OpenAI
-
-DOUBAO_BASE_URL = (
-    os.getenv("DOUBAO_BASE_URL")
-    or os.getenv("ARK_BASE_URL")
-    or "http://111.230.37.43:3000/v1"
+from utils.newapi_compat import (
+    NEWAPI_BASE_URL,
+    DEFAULT_NEWAPI_MODEL,
+    DEFAULT_NEWAPI_MAX_COMPLETION_TOKENS,
+    extract_completion_tokens_cap,
+    is_newapi_provider,
+    normalize_provider,
 )
-DOUBAO_MAX_TOKENS = 64000
 
 PROVIDER_CONFIG = {
     "openrouter": {
@@ -24,22 +25,29 @@ PROVIDER_CONFIG = {
         "model_env": "OPENROUTER_MODEL",
         "default_model": "google/gemini-2.5-flash-preview-09-2025",
     },
-    "doubao": {
-        "base_url": DOUBAO_BASE_URL,
+    "newapi": {
+        "base_url": NEWAPI_BASE_URL,
         "api_key_env": "ARK_API_KEY",
         "model_env": "ARK_MODEL",
-        "default_model": "doubao-seed-1-8-251228",
+        "default_model": DEFAULT_NEWAPI_MODEL,
+    },
+    "doubao": {  # legacy alias
+        "base_url": NEWAPI_BASE_URL,
+        "api_key_env": "ARK_API_KEY",
+        "model_env": "ARK_MODEL",
+        "default_model": DEFAULT_NEWAPI_MODEL,
     }
 }
 
 
 class GeminiVisionModel:
-    """视觉模型封装类（OpenRouter / 豆包均可用）"""
+    """视觉模型封装类（OpenRouter / NewAPI均可用）"""
 
     def __init__(
         self,
         api_key: Optional[str] = None,
         model_name: Optional[str] = None,
+        fallback_model_name: Optional[str] = None,
         provider: str = "openrouter",
         base_url: Optional[str] = None
     ):
@@ -49,11 +57,11 @@ class GeminiVisionModel:
         Args:
             api_key: API Key
             model_name: 模型名称（可选，默认从config.py读取）
-            provider: 提供方（openrouter/doubao）
+            provider: 提供方（openrouter/newapi）
             base_url: 自定义Base URL（可选）
         """
-        self.provider = provider
-        provider_config = PROVIDER_CONFIG.get(provider, PROVIDER_CONFIG["openrouter"])
+        self.provider = normalize_provider(provider)
+        provider_config = PROVIDER_CONFIG.get(self.provider, PROVIDER_CONFIG["openrouter"])
         self._model_env = provider_config["model_env"]
         self._default_model = provider_config["default_model"]
 
@@ -78,6 +86,7 @@ class GeminiVisionModel:
                     self.model_name = os.getenv("GEMINI_MODEL", self._default_model)
             else:
                 self.model_name = os.getenv(self._model_env) or self._default_model
+        self.fallback_model_name = (fallback_model_name or "").strip() or None
     
     def encode_image_to_base64(self, image_path: str) -> str:
         """
@@ -148,22 +157,54 @@ class GeminiVisionModel:
         
         try:
             # 调用API
-            request_payload = {
-                "model": self.model_name,
-                "messages": messages,
-                "temperature": 0.1
-            }
-            if self.provider == "openrouter":
-                request_payload["extra_headers"] = {
-                    "HTTP-Referer": "https://mecagent.com",
-                    "X-Title": "MecAgent Assembly Planning"
-                }
-            if self.provider == "doubao":
-                request_payload["extra_body"] = {
-                    "max_completion_tokens": DOUBAO_MAX_TOKENS
-                }
+            candidate_models = [self.model_name]
+            if self.fallback_model_name and self.fallback_model_name != self.model_name:
+                candidate_models.append(self.fallback_model_name)
 
-            completion = self.client.chat.completions.create(**request_payload)
+            completion = None
+            last_error = None
+            for model_index, current_model in enumerate(candidate_models):
+                request_payload = {
+                    "model": current_model,
+                    "messages": messages,
+                    "temperature": 0.1
+                }
+                if self.provider == "openrouter":
+                    request_payload["extra_headers"] = {
+                        "HTTP-Referer": "https://mecagent.com",
+                        "X-Title": "MecAgent Assembly Planning"
+                    }
+                newapi_max_completion_tokens = DEFAULT_NEWAPI_MAX_COMPLETION_TOKENS
+                if is_newapi_provider(self.provider):
+                    request_payload["extra_body"] = {
+                        "max_completion_tokens": newapi_max_completion_tokens
+                    }
+                try:
+                    completion = self.client.chat.completions.create(**request_payload)
+                    if model_index > 0:
+                        print(f"⚠️ 主模型 {self.model_name} 失败，已切换兜底模型 {current_model}")
+                    break
+                except Exception as request_error:
+                    last_error = request_error
+                    if not is_newapi_provider(self.provider):
+                        continue
+
+                    cap = extract_completion_tokens_cap(request_error)
+                    if cap and cap > 0 and newapi_max_completion_tokens > cap:
+                        request_payload["extra_body"] = {
+                            "max_completion_tokens": cap
+                        }
+                        try:
+                            completion = self.client.chat.completions.create(**request_payload)
+                            if model_index > 0:
+                                print(f"⚠️ 主模型 {self.model_name} 失败，已切换兜底模型 {current_model}")
+                            break
+                        except Exception as second_error:
+                            last_error = second_error
+                    continue
+
+            if completion is None:
+                raise last_error or RuntimeError("视觉模型调用失败：所有候选模型均不可用")
             
             # 获取响应
             response_content = completion.choices[0].message.content

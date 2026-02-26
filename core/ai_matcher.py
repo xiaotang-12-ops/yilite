@@ -10,33 +10,41 @@ from openai import OpenAI
 import sys
 import os
 from utils.time_utils import beijing_now, build_debug_output_dir
-
-DOUBAO_BASE_URL = (
-    os.getenv("DOUBAO_BASE_URL")
-    or os.getenv("ARK_BASE_URL")
-    or "http://111.230.37.43:3000/v1"
+from utils.newapi_compat import (
+    NEWAPI_BASE_URL,
+    DEFAULT_NEWAPI_MODEL,
+    DEFAULT_NEWAPI_MAX_COMPLETION_TOKENS,
+    DEFAULT_NEWAPI_ENABLE_THINKING,
+    build_newapi_extra_body,
+    extract_completion_tokens_cap,
+    is_newapi_provider,
+    is_unsupported_reasoning_args_error,
+    normalize_provider,
 )
-DOUBAO_MAX_TOKENS = 64000
 
 PROVIDER_BASE_URLS = {
     "openrouter": "https://openrouter.ai/api/v1",
     "deepseek": "https://api.deepseek.com",
-    "doubao": DOUBAO_BASE_URL,
+    "newapi": NEWAPI_BASE_URL,
+    "doubao": NEWAPI_BASE_URL,  # legacy alias
 }
 PROVIDER_API_KEY_ENVS = {
     "openrouter": "OPENROUTER_API_KEY",
     "deepseek": "DEEPSEEK_API_KEY",
-    "doubao": "ARK_API_KEY",
+    "newapi": "ARK_API_KEY",
+    "doubao": "ARK_API_KEY",  # legacy alias
 }
 PROVIDER_MODEL_ENVS = {
     "openrouter": "OPENROUTER_MODEL",
     "deepseek": "DEEPSEEK_MODEL",
-    "doubao": "ARK_MODEL",
+    "newapi": "ARK_MODEL",
+    "doubao": "ARK_MODEL",  # legacy alias
 }
 PROVIDER_DEFAULT_MODELS = {
     "openrouter": "google/gemini-2.5-flash-preview-09-2025",
     "deepseek": "deepseek-chat",
-    "doubao": "doubao-seed-1-8-251228",
+    "newapi": DEFAULT_NEWAPI_MODEL,
+    "doubao": DEFAULT_NEWAPI_MODEL,  # legacy alias
 }
 
 # 添加项目根目录到路径
@@ -57,12 +65,13 @@ class AIBOMMatcher:
         api_key: Optional[str] = None,
         task_id: Optional[str] = None,
         provider: str = "openrouter",
-        model_name: Optional[str] = None
+        model_name: Optional[str] = None,
+        fallback_model_name: Optional[str] = None
     ):
-        self.provider = provider
-        api_key_env = PROVIDER_API_KEY_ENVS.get(provider, "OPENROUTER_API_KEY")
-        model_env = PROVIDER_MODEL_ENVS.get(provider, "OPENROUTER_MODEL")
-        base_url = PROVIDER_BASE_URLS.get(provider, PROVIDER_BASE_URLS["openrouter"])
+        self.provider = normalize_provider(provider)
+        api_key_env = PROVIDER_API_KEY_ENVS.get(self.provider, "OPENROUTER_API_KEY")
+        model_env = PROVIDER_MODEL_ENVS.get(self.provider, "OPENROUTER_MODEL")
+        base_url = PROVIDER_BASE_URLS.get(self.provider, PROVIDER_BASE_URLS["openrouter"])
 
         self.api_key = api_key or os.getenv(api_key_env)
         if not self.api_key:
@@ -72,13 +81,24 @@ class AIBOMMatcher:
             api_key=self.api_key,
             base_url=base_url
         )
-        self.model = model_name or os.getenv(model_env) or PROVIDER_DEFAULT_MODELS.get(provider, PROVIDER_DEFAULT_MODELS["openrouter"])
+        self.model = model_name or os.getenv(model_env) or PROVIDER_DEFAULT_MODELS.get(self.provider, PROVIDER_DEFAULT_MODELS["openrouter"])
+        self.fallback_model = (fallback_model_name or "").strip() or None
         # 记录任务ID用于调试文件命名
         self.task_id = task_id or os.getenv("TASK_ID", "unknown_task")
         # 批处理参数（未匹配零件超过阈值时分批，以防响应截断）
         self.batch_threshold = 200  # 超过这个数量的未匹配3D零件就分批
         self.batch_size = 100       # 单批上限
         self.min_batch_size = 20    # 截断重试时的最小批大小（避免无限拆分）
+
+    @staticmethod
+    def _is_unsupported_reasoning_args_error(error: Exception) -> bool:
+        """
+        判断是否是模型不支持 thinking/reasoning_effort 参数的错误。
+        典型报错：
+        - Unrecognized request arguments supplied: reasoning_effort, thinking
+        - Unknown parameter: 'thinking'
+        """
+        return is_unsupported_reasoning_args_error(error)
     
     def match_unmatched_parts(
         self,
@@ -194,6 +214,8 @@ class AIBOMMatcher:
         system_prompt, user_query = build_ai_matching_prompt(parts, unmatched_bom)
 
         print(f"      🤖 他开始调用 {self.provider}/{self.model} 进行深度分析...")
+        if self.fallback_model:
+            print(f"      🔁 兜底模型已配置: {self.fallback_model}")
         print(f"      ⏱️  请稍候，模型正在分析...")
         sys.stdout.flush()
 
@@ -206,37 +228,82 @@ class AIBOMMatcher:
             start_time = time.time()
 
             last_error = None
-            for attempt in range(max_retries):
-                try:
-                    if attempt > 0:
-                        print(f"      🔄 第 {attempt + 1} 次重试...")
-                        time.sleep(retry_delay)
+            response = None
+            model_candidates = [self.model]
+            if self.fallback_model and self.fallback_model != self.model:
+                model_candidates.append(self.fallback_model)
 
-                    request_payload = {
-                        "model": self.model,  # 使用配置模型
-                        "messages": [
-                            {"role": "system", "content": system_prompt},
-                            {"role": "user", "content": user_query}
-                        ],
-                        "temperature": 0.4,  # ✅ 提高到0.4，使用COT推理，追求100%匹配率
-                        "stream": False,
-                        "timeout": 120  # ✅ 增加超时时间到120秒
-                    }
-                    if self.provider == "doubao":
-                        request_payload["extra_body"] = {
-                            "thinking": {"type": "enabled"},
-                            "reasoning_effort": "medium",
-                            "max_completion_tokens": DOUBAO_MAX_TOKENS
+            for model_index, current_model in enumerate(model_candidates):
+                if model_index > 0:
+                    print(f"      ⚠️  主模型失败，自动切换兜底模型: {current_model}")
+                    sys.stdout.flush()
+
+                newapi_reasoning_enabled = is_newapi_provider(self.provider) and DEFAULT_NEWAPI_ENABLE_THINKING
+                newapi_max_completion_tokens = DEFAULT_NEWAPI_MAX_COMPLETION_TOKENS
+                for attempt in range(max_retries):
+                    try:
+                        if attempt > 0:
+                            print(f"      🔄 第 {attempt + 1} 次重试...")
+                            time.sleep(retry_delay)
+
+                        request_payload = {
+                            "model": current_model,  # 使用当前候选模型
+                            "messages": [
+                                {"role": "system", "content": system_prompt},
+                                {"role": "user", "content": user_query}
+                            ],
+                            "temperature": 0.4,  # ✅ 提高到0.4，使用COT推理，追求100%匹配率
+                            "stream": False,
+                            "timeout": 120  # ✅ 增加超时时间到120秒
                         }
-                        request_payload["timeout"] = 1800
+                        if is_newapi_provider(self.provider):
+                            request_payload["extra_body"] = build_newapi_extra_body(
+                                max_completion_tokens=newapi_max_completion_tokens,
+                                enable_reasoning=newapi_reasoning_enabled
+                            )
+                            request_payload["timeout"] = 1800
 
-                    response = self.client.chat.completions.create(**request_payload)
-                    break  # 成功则跳出重试循环
-                except Exception as retry_error:
-                    last_error = retry_error
-                    print(f"      ⚠️  请求失败 (尝试 {attempt + 1}/{max_retries}): {retry_error}")
-                    if attempt == max_retries - 1:
-                        raise last_error  # 最后一次重试也失败，抛出异常
+                        try:
+                            response = self.client.chat.completions.create(**request_payload)
+                        except Exception as request_error:
+                            if not is_newapi_provider(self.provider):
+                                raise request_error
+
+                            should_retry = False
+                            if newapi_reasoning_enabled and self._is_unsupported_reasoning_args_error(request_error):
+                                print("      ⚠️  当前模型不支持 thinking/reasoning_effort，自动关闭后重试...")
+                                sys.stdout.flush()
+                                newapi_reasoning_enabled = False
+                                should_retry = True
+
+                            cap = extract_completion_tokens_cap(request_error)
+                            if cap and cap > 0 and newapi_max_completion_tokens > cap:
+                                print(f"      ⚠️  模型 completion 上限为 {cap}，自动从 {newapi_max_completion_tokens} 降级重试...")
+                                sys.stdout.flush()
+                                newapi_max_completion_tokens = cap
+                                should_retry = True
+
+                            if should_retry:
+                                fallback_payload = dict(request_payload)
+                                fallback_payload["extra_body"] = build_newapi_extra_body(
+                                    max_completion_tokens=newapi_max_completion_tokens,
+                                    enable_reasoning=newapi_reasoning_enabled
+                                )
+                                response = self.client.chat.completions.create(**fallback_payload)
+                            else:
+                                raise request_error
+                        break  # 当前模型成功则跳出重试循环
+                    except Exception as retry_error:
+                        last_error = retry_error
+                        print(f"      ⚠️  请求失败 (尝试 {attempt + 1}/{max_retries}): {retry_error}")
+                        if attempt == max_retries - 1:
+                            response = None
+
+                if response is not None:
+                    break
+
+            if response is None:
+                raise last_error or RuntimeError("AI匹配失败：所有模型均调用失败")
 
             elapsed = time.time() - start_time
             choice = response.choices[0]

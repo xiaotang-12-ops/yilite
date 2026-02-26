@@ -56,20 +56,23 @@ from utils.logger import (
     print_success, print_error, print_warning
 )
 from utils.time_utils import beijing_now, init_debug_output_dir
+from utils.newapi_compat import (
+    NEWAPI_BASE_URL,
+    DEFAULT_NEWAPI_MODEL,
+    DEFAULT_NEWAPI_MAX_COMPLETION_TOKENS,
+    extract_completion_tokens_cap,
+    is_newapi_provider,
+    normalize_provider,
+)
 
 DEFAULT_OPENROUTER_MODEL = "google/gemini-2.5-flash-preview-09-2025"
 DEFAULT_DEEPSEEK_MODEL = "deepseek-chat"
-DEFAULT_DOUBAO_MODEL = "doubao-seed-1-8-251228"
-DOUBAO_BASE_URL = (
-    os.getenv("DOUBAO_BASE_URL")
-    or os.getenv("ARK_BASE_URL")
-    or "http://111.230.37.43:3000/v1"
-)
-DOUBAO_MAX_TOKENS = 64000
+DEFAULT_NEWAPI_MODEL_NAME = DEFAULT_NEWAPI_MODEL
 PROVIDER_BASE_URLS = {
     "openrouter": "https://openrouter.ai/api/v1",
     "deepseek": "https://api.deepseek.com",
-    "doubao": DOUBAO_BASE_URL,
+    "newapi": NEWAPI_BASE_URL,
+    "doubao": NEWAPI_BASE_URL,  # legacy alias
 }
 
 class ResumeDataError(RuntimeError):
@@ -100,7 +103,7 @@ class GeminiAssemblyPipeline:
             model_name: AI模型名称（兼容旧参数）
             call_point_settings: 按调用点配置的provider/model映射
             deepseek_api_key: DeepSeek API密钥（可选）
-            doubao_api_key: 豆包(ARK) API密钥（可选）
+            doubao_api_key: NewAPI(ARK兼容) API密钥（可选）
         """
         self.api_key = api_key
         self.deepseek_api_key = deepseek_api_key
@@ -116,7 +119,11 @@ class GeminiAssemblyPipeline:
         print("🔍 Pipeline初始化 - 接收到的call_point_settings:")
         for cp_id, cp_config in self.call_point_settings.items():
             has_custom_key = "custom_key" in cp_config and cp_config.get("custom_key")
-            print(f"   {cp_id}: provider={cp_config.get('provider')}, model={cp_config.get('model')}, has_custom_key={has_custom_key}")
+            fallback_model = (cp_config.get("fallback_model") or "").strip()
+            print(
+                f"   {cp_id}: provider={cp_config.get('provider')}, model={cp_config.get('model')}, "
+                f"fallback_model={fallback_model or 'none'}, has_custom_key={has_custom_key}"
+            )
         print("=" * 80)
 
         # 设置API密钥到环境变量（避免下游调用丢失）
@@ -125,6 +132,7 @@ class GeminiAssemblyPipeline:
             os.environ["DEEPSEEK_API_KEY"] = deepseek_api_key
         if doubao_api_key:
             os.environ["ARK_API_KEY"] = doubao_api_key
+            os.environ["NEWAPI_API_KEY"] = doubao_api_key
 
         if model_name:
             for call_point_id in ["matching", "assembly", "welding", "safety", "bom_vision"]:
@@ -150,21 +158,25 @@ class GeminiAssemblyPipeline:
         self.component_agent = ComponentAssemblyAgent(
             api_key=self._get_api_key(self.assembly_call_point),
             model_name=self.assembly_call_point["model"],
+            fallback_model_name=self.assembly_call_point.get("fallback_model"),
             provider=self.assembly_call_point["provider"]
         )
         self.product_agent = ProductAssemblyAgent(
             api_key=self._get_api_key(self.assembly_call_point),
             model_name=self.assembly_call_point["model"],
+            fallback_model_name=self.assembly_call_point.get("fallback_model"),
             provider=self.assembly_call_point["provider"]
         )
         self.welding_agent = WeldingAgent(
             api_key=self._get_api_key(self.welding_call_point),
             model_name=self.welding_call_point["model"],
+            fallback_model_name=self.welding_call_point.get("fallback_model"),
             provider=self.welding_call_point["provider"]
         )
         self.safety_agent = SafetyFAQAgent(
             api_key=self._get_api_key(self.safety_call_point),
             model_name=self.safety_call_point["model"],
+            fallback_model_name=self.safety_call_point.get("fallback_model"),
             provider=self.safety_call_point["provider"]
         )
         self.simple_planner = SimplePlanner()
@@ -173,9 +185,11 @@ class GeminiAssemblyPipeline:
         # 初始化Gemini视觉模型（用于BOM提取）
         from models.gemini_model import GeminiVisionModel
         self.bom_vision_model = self.bom_vision_call_point["model"]
+        self.bom_vision_fallback_model = (self.bom_vision_call_point.get("fallback_model") or "").strip()
         self.gemini_model = GeminiVisionModel(
             api_key=self.bom_vision_api_key,
             model_name=self.bom_vision_model,
+            fallback_model_name=self.bom_vision_fallback_model,
             provider=self.bom_vision_call_point["provider"]
         )
 
@@ -186,19 +200,22 @@ class GeminiAssemblyPipeline:
         
     def _resolve_call_point(self, call_point_id: str, requires_images: bool) -> Dict[str, str]:
         config = self.call_point_settings.get(call_point_id, {})
-        provider = config.get("provider", "openrouter")
+        provider = normalize_provider(config.get("provider", "openrouter"))
         if provider == "deepseek":
             model = config.get("model") or DEFAULT_DEEPSEEK_MODEL
-        elif provider == "doubao":
-            model = config.get("model") or DEFAULT_DOUBAO_MODEL
+        elif provider == "newapi":
+            model = config.get("model") or DEFAULT_NEWAPI_MODEL_NAME
         else:
             model = config.get("model") or DEFAULT_OPENROUTER_MODEL
 
-        if requires_images and provider not in {"openrouter", "doubao"}:
-            raise ValueError(f"调用点 {call_point_id} 需要视觉输入，仅支持 OpenRouter/豆包")
+        if requires_images and provider not in {"openrouter", "newapi"}:
+            raise ValueError(f"调用点 {call_point_id} 需要视觉输入，仅支持 OpenRouter/NewAPI")
         
         # ✅ 修复：保留custom_key字段，避免独立Key丢失
         result = {"provider": provider, "model": model}
+        fallback_model = (config.get("fallback_model") or "").strip()
+        if fallback_model:
+            result["fallback_model"] = fallback_model
         if "custom_key" in config:
             result["custom_key"] = config["custom_key"]
         return result
@@ -233,10 +250,10 @@ class GeminiAssemblyPipeline:
             if not key:
                 raise ValueError("未设置 DeepSeek API Key，请在设置页面配置")
             return key
-        if provider == "doubao":
-            key = self.doubao_api_key or os.getenv("ARK_API_KEY")
+        if is_newapi_provider(provider):
+            key = self.doubao_api_key or os.getenv("NEWAPI_API_KEY") or os.getenv("ARK_API_KEY")
             if not key:
-                raise ValueError("未设置 豆包(ARK) API Key，请在设置页面配置")
+                raise ValueError("未设置 NewAPI API Key，请在设置页面配置")
             return key
         return self.api_key
     def log_agent_call(self, agent_name: str, action: str, status: str = "running"):
@@ -1054,21 +1071,61 @@ class GeminiAssemblyPipeline:
                             ]
                         }
                     ],
-                    "temperature": 0.0
+                    "temperature": 0.0,
+                    "timeout": 120
                 }
-                if self.bom_vision_call_point["provider"] != "doubao":
+                if not is_newapi_provider(self.bom_vision_call_point["provider"]):
                     request_payload["max_tokens"] = 4096
                 if self.bom_vision_call_point["provider"] == "openrouter":
                     request_payload["extra_headers"] = {
                         "HTTP-Referer": "https://mecagent.com",
                         "X-Title": "MecAgent BOM Extraction"
                     }
-                if self.bom_vision_call_point["provider"] == "doubao":
+                newapi_max_completion_tokens = DEFAULT_NEWAPI_MAX_COMPLETION_TOKENS
+                if is_newapi_provider(self.bom_vision_call_point["provider"]):
                     request_payload["extra_body"] = {
-                        "max_completion_tokens": DOUBAO_MAX_TOKENS
+                        "max_completion_tokens": newapi_max_completion_tokens
                     }
 
-                completion = client.chat.completions.create(**request_payload)
+                model_candidates = [self.bom_vision_model]
+                if self.bom_vision_fallback_model and self.bom_vision_fallback_model != self.bom_vision_model:
+                    model_candidates.append(self.bom_vision_fallback_model)
+
+                completion = None
+                last_request_error = None
+                for model_index, current_model in enumerate(model_candidates):
+                    attempt_payload = dict(request_payload)
+                    attempt_payload["model"] = current_model
+                    try:
+                        completion = client.chat.completions.create(**attempt_payload)
+                        if model_index > 0:
+                            print_warning(
+                                f"      主模型 {self.bom_vision_model} 不可用，已切换兜底模型 {current_model}",
+                                indent=1
+                            )
+                        break
+                    except Exception as request_error:
+                        last_request_error = request_error
+                        if is_newapi_provider(self.bom_vision_call_point["provider"]):
+                            cap = extract_completion_tokens_cap(request_error)
+                            if cap and cap > 0 and newapi_max_completion_tokens > cap:
+                                attempt_payload["extra_body"] = {
+                                    "max_completion_tokens": cap
+                                }
+                                try:
+                                    completion = client.chat.completions.create(**attempt_payload)
+                                    if model_index > 0:
+                                        print_warning(
+                                            f"      主模型 {self.bom_vision_model} 不可用，已切换兜底模型 {current_model}",
+                                            indent=1
+                                        )
+                                    break
+                                except Exception as second_error:
+                                    last_request_error = second_error
+                        continue
+
+                if completion is None:
+                    raise last_request_error or RuntimeError("BOM视觉提取失败：未获得有效响应")
 
                 response = {"content": completion.choices[0].message.content}
 
@@ -1216,6 +1273,7 @@ class GeminiAssemblyPipeline:
             file_hierarchy=file_hierarchy,  # ✅ 传入文件层级结构
             ai_provider=self.matching_call_point["provider"],
             ai_model=self.matching_call_point["model"],
+            ai_fallback_model=self.matching_call_point.get("fallback_model"),
             ai_api_key=self.matching_api_key
         )
 

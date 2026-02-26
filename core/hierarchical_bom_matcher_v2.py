@@ -34,6 +34,7 @@ class HierarchicalBOMMatcher:
         file_hierarchy: Dict = None,
         ai_provider: str = "openrouter",
         ai_model: Optional[str] = None,
+        ai_fallback_model: Optional[str] = None,
         ai_api_key: Optional[str] = None
     ) -> Dict:
         """
@@ -47,6 +48,7 @@ class HierarchicalBOMMatcher:
             file_hierarchy: 文件层级结构（包含组件图的实际序号）
             ai_provider: AI提供方（openrouter/deepseek/doubao）
             ai_model: AI模型名称
+            ai_fallback_model: AI兜底模型名称（可选）
             ai_api_key: AI API密钥
 
         Returns:
@@ -206,6 +208,7 @@ class HierarchicalBOMMatcher:
                         task_id=task_id,
                         provider=ai_provider,
                         model_name=ai_model,
+                        fallback_model_name=ai_fallback_model,
                         api_key=ai_api_key
                     )
                     ai_results = ai_matcher.match_unmatched_parts(unmatched_parts, unmatched_bom)
@@ -477,6 +480,7 @@ class HierarchicalBOMMatcher:
                             task_id=task_id,
                             provider=ai_provider,
                             model_name=ai_model,
+                            fallback_model_name=ai_fallback_model,
                             api_key=ai_api_key
                         )
                         ai_results = ai_matcher.match_unmatched_parts(unmatched_parts, unmatched_bom)

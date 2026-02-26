@@ -1,8 +1,8 @@
 # 📸 项目快照 - Memory Development
 
 **创建时间**: 2025-11-18
-**最后校对**: 2026-02-25
-**当前版本**: v2.1.28
+**最后校对**: 2026-02-26
+**当前版本**: v2.1.36
 **项目状态**: 核心功能完成，可用
 
 ---
@@ -18,7 +18,7 @@
   ↕ HTTP API + WebSocket
 后端 (FastAPI + Uvicorn)
   ↕
-6 个 AI Agent（OpenRouter/DeepSeek/豆包 可配置）
+6 个 AI Agent（OpenRouter/DeepSeek/NewAPI 可配置）
   ↕
 3 个核心处理器 (文件分类 + BOM匹配 + 手册集成)
   ↕
@@ -64,9 +64,9 @@ output/{task_id} (JSON + GLB + 图片)
 | HEAD | `/api/manual/{task_id}/version` | 获取手册版本 | Header `X-Manual-Version` |
 | GET | `/api/manual/{task_id}/glb/{glb}` | 下载 GLB | 支持 `glb_files/` 或根目录 |
 | GET | `/api/manual/{task_id}/pdf_images/{path}` | 下载 PDF 图片 | 统一 `pdf_images/{pdf_name}/page_xxx.png` |
-| POST | `/api/settings` | 保存 AI 设置 | OpenRouter/DeepSeek/豆包 Key + 调用点模型配置，内存存储并写入 env |
+| POST | `/api/settings` | 保存 AI 设置 | OpenRouter/DeepSeek/NewAPI Key + 调用点模型配置（含可选 `fallback_model/custom_key`），内存存储并写入 env；多模态调用点若配置 `newapi + glm-5`（主模型或兜底模型）会返回 400 |
 | GET | `/api/settings` | 获取 AI 设置 | 返回脱敏 key、调用点配置（含可选提供方） |
-| POST | `/api/test-model` | 连通性测试 | 支持 OpenRouter/DeepSeek/豆包 |
+| POST | `/api/test-model` | 连通性测试 | 支持 OpenRouter/DeepSeek/NewAPI；可传 `fallback_model` 自动切换并返回 `used_fallback`；返回能力警告 |
 
 ---
 
@@ -76,10 +76,10 @@ output/{task_id} (JSON + GLB + 图片)
 | `/` | HomeNew.vue | 首页展示 | |
 | `/generator` | Generator.vue | 上传与任务发起 | 调 /api/upload, /api/generate |
 | `/viewer/:id?` | Viewer.vue | 3D 预览与结果查看 | 搜索栏支持“扫一扫”回填；手机端优化为更宽对话框和单列信息布局 |
-| `/manual/:taskId` | ManualViewer.vue | 装配手册查看/编辑 | 管理员支持草稿保存/发布 |
+| `/manual/:taskId` | ManualViewer.vue | 装配手册查看/编辑 | 管理员支持草稿保存/发布；修复顶部工具栏在长标题步骤下的高度抖动 |
 | `/version-history/:taskId` | VersionHistory.vue | 历史版本与回滚 | 调 /api/manual/* history/version/rollback |
 | `/engineer` | Engineer.vue | 工程师视图（质检/分发） | |
-| `/settings` | Settings.vue | AI 设置（隐藏入口） | Logo 10 秒内连点 10 次解锁；调 /api/settings |
+| `/settings` | Settings.vue | AI 设置（隐藏入口） | Logo 10 秒内连点 10 次解锁；调 /api/settings；支持每调用点 `兜底模型`；一键全测会分别测试主模型与兜底模型；测试后端/全测具备超时提示；`newapi` 下多模态调用点不展示 `glm-5`，手填会自动替换并提示 |
 | `/glb-test` | GLBTest.vue | GLB 场景调试 | |
 | `/simple-glb-test` | SimpleGLBTest.vue | 轻量 GLB 测试 | |
 | `/icon-test` | IconTest.vue | 图标展示 | |
@@ -99,16 +99,16 @@ output/{task_id} (JSON + GLB + 图片)
 ## 运行与环境
 - Docker：`docker-compose up --build`（映射 8008:8008 后端，3008:80 前端）；镜像名附版本 `assembly-manual-*-v2.0.0`。
 - 本地调试：后端 `uvicorn backend.simple_app:app --host 0.0.0.0 --port 8008`；前端 `npm install && npm run dev`（默认 3000）。
-- 必需环境变量：按调用点配置需要 `OPENROUTER_API_KEY` / `DEEPSEEK_API_KEY` / `ARK_API_KEY`；可选 `BLENDER_EXE` 指向 Blender 可执行文件。
+- 必需环境变量：按调用点配置需要 `OPENROUTER_API_KEY` / `DEEPSEEK_API_KEY` / `NEWAPI_API_KEY`（兼容 `ARK_API_KEY`）；可选 `BLENDER_EXE` 指向 Blender 可执行文件。
 
 ---
 
 ## 最近 3 个版本快照
 | 版本 | 日期 | 关键变更 |
 | --- | --- | --- |
-| v2.1.28 | 2026-02-25 | **ManualViewer 管理员登录后自动刷新 + 发版口径统一**：<br/>- 监听 `isAdmin` 切换并触发 `refreshManualFromServer()`<br/>- 登录切为管理员时若数据被他人更新，弹“已自动刷新”提醒<br/>- README/DEPLOYMENT/compose 版本口径统一到 `v2.1.28` |
-| v2.1.27 | 2026-02-25 | **ManualViewer 草稿弹窗新手化重构**：<br/>- 弹窗仅保留“继续编辑草稿 / 丢弃草稿回线上”两动作<br/>- 丢弃增加二次确认并统一执行链路<br/>- 弹窗展示“创建时间 + 最近保存时间”口径 |
-| v2.1.26 | 2026-02-25 | **ManualViewer 两处问题真实落地修复 + 记录纠偏**：<br/>- `restorePart()` 恢复后立即 `updateStepDisplay(false)`，避免瞬时显示“已装”<br/>- 手机“选择步骤”抽屉覆盖 `.el-button + .el-button` 左间距，列表左对齐一致 |
+| v2.1.36 | 2026-02-26 | **`[circular]` 污染修复（标题异常）**：<br/>- 修复任务状态序列化误判循环引用，避免普通字符串/数字被写成 `"[circular]"`<br/>- 恢复任务时对 `config.projectName` 做兜底归一化，避免脏值继续传入流水线<br/>- 手册列表与手册读取接口对历史脏数据做标题回退（显示 `task_id`） |
+| v2.1.35 | 2026-02-26 | **焊接智能体长耗时止损**：<br/>- 焊接调用单独延长请求超时到 1800 秒<br/>- 禁用焊接 SDK 自动重试（`max_retries=0`），避免同模型超时重复扣费<br/>- 保留主模型失败后兜底模型切换 |
+| v2.1.34 | 2026-02-26 | **一键全测补齐兜底模型独立测试**：<br/>- 配置了兜底模型时，会追加一次“兜底模型直连测试”<br/>- 结果区增加 `（兜底）` 成功/失败/警告明细，避免只测到主模型 |
 
 ---
 
@@ -125,13 +125,20 @@ output/{task_id} (JSON + GLB + 图片)
 
 ## 状态与注意事项
 - 正常：上传、生成、日志流、手册读取/编辑、模型与图片下载、设置管理。
-- 注意：需安装 Blender；`OPENROUTER_API_KEY`/`DEEPSEEK_API_KEY`/`ARK_API_KEY` 按调用点配置；设置页默认隐藏，Logo 10 秒内连点 10 次可进入；大文件性能与 Three.js 渲染待优化；前端路由默认走 8008 端口；一次任务仅支持上传 1 个 PDF + 1 个 STEP；运行中全局仅允许 1 个任务，上传/生成会返回 409 `TASK_BUSY` 提示等待；task_id = PDF 文件名（去后缀），STEP 文件名可不同，后端生成时会按 task_id 重命名存储；同名生成返回 409，可在前端选择覆盖（成功任务归档到 `output_archive/`，失败/损坏任务直接删除）或生成第二套 `_v_n`；任务状态持久化到 `output/{task_id}/task_status.json`，支持 `/api/task/{task_id}/cancel` 停止保留结果与 `/api/task/{task_id}/resume` 继续生成；生成任务可被中断（删除/覆盖/残留清理时会中断后台线程并写入 `cancelled`）；模式判定：PDF 文件名前缀 01* → 组件模式；03/06/07/08* → 产品模式；未命中前缀默认组件模式；产品模式跳过 Step5，仅执行 Step6+Step7/8。
+- 注意：需安装 Blender；`OPENROUTER_API_KEY`/`DEEPSEEK_API_KEY`/`NEWAPI_API_KEY`（兼容 `ARK_API_KEY`）按调用点配置；设置页默认隐藏，Logo 10 秒内连点 10 次可进入；大文件性能与 Three.js 渲染待优化；前端路由默认走 8008 端口；一次任务仅支持上传 1 个 PDF + 1 个 STEP；运行中全局仅允许 1 个任务，上传/生成会返回 409 `TASK_BUSY` 提示等待；task_id = PDF 文件名（去后缀），STEP 文件名可不同，后端生成时会按 task_id 重命名存储；同名生成返回 409，可在前端选择覆盖（成功任务归档到 `output_archive/`，失败/损坏任务直接删除）或生成第二套 `_v_n`；任务状态持久化到 `output/{task_id}/task_status.json`，支持 `/api/task/{task_id}/cancel` 停止保留结果与 `/api/task/{task_id}/resume` 继续生成；生成任务可被中断（删除/覆盖/残留清理时会中断后台线程并写入 `cancelled`）；模式判定：PDF 文件名前缀 01* → 组件模式；03/06/07/08* → 产品模式；未命中前缀默认组件模式；产品模式跳过 Step5，仅执行 Step6+Step7/8。
 - Viewer 扫码：`/viewer` 搜索栏支持扫码填充物料代码；若移动端以 `http://` 非安全上下文访问，浏览器通常会禁用摄像头，前端会提示并允许手动输入物料代码作为兜底。
 - Viewer 移动端布局：项目选择弹窗改为近全宽显示，列表采用单列信息与整行操作按钮，减少文字挤压和无效留白。
+- Generator/Viewer 任务缓存一致性：查看器删除任务后会同步清理 `generator_last_task` 与 `generator_current_task`；生成器读取上一次任务时若状态接口返回 404，会自动清理残留提示。
+- NewAPI 兼容：provider 对外统一 `newapi`（兼容旧 `doubao`）；默认关闭 `thinking/reasoning_effort`，若模型返回 `Unknown parameter` 或参数不识别会自动降级；若返回 completion 上限（`at most N`）会自动降级到 `N` 后重试；多模态调用点（`assembly/welding/bom_vision`）不允许 `glm-5`，设置页会自动替换并警告，后端也会拒绝非法组合。
+- 模型兜底与测试超时：设置页每个调用点可配置 `fallback_model`（主模型失败自动切换）；`/api/test-model` 返回 `used_model/used_fallback` 便于确认是否触发兜底；测试后端连接与一键全测加入超时提示，避免无限转圈。
+- 一键全测兜底覆盖：配置 `fallback_model` 后，前端会追加“兜底模型独立连通测试”，结果中以 `（兜底）` 前缀展示，避免主模型成功时遗漏兜底验证。
+- 焊接智能体请求策略：`WeldingAgent` 单独使用 `timeout=1800s` + `max_retries=0`，降低超长任务下同模型自动重试导致的重复计费风险；主模型失败后仍可切换兜底模型。
+- 任务状态序列化：`_json_safe` 仅对容器做循环检测，避免普通值误写为 `"[circular]"`；恢复任务与手册读取/列表会对历史脏标题自动回退到 `task_id`。
 - ManualViewer 返回键：移动端弹层手动关闭不再触发 `history.back`，并新增 `currentStepIndex`（按 `taskId`）持久化恢复；抽屉历史层改为“点击打开时同步入栈”，降低首次返回竞态导致的“像刷新并回第一页”风险；历史版本 `query.version/source` 逻辑保持不变。
 - ManualViewer 细节修复：手机“选择步骤”抽屉按钮列表统一左对齐；恢复已删除零件时立即重算材质/位置，避免瞬时显示为“已装”。
 - ManualViewer 草稿弹窗：改为两动作（继续编辑 / 丢弃回线上）+ 丢弃二次确认；弹窗显示 `draftCreatedAt` 与 `lastUpdated`，旧草稿无创建字段时给出兜底说明。
 - ManualViewer 管理员登录态：监听 `isAdmin` 切换并自动刷新；若登录切管理员后发现版本/更新时间变化，会提示“数据已更新，已自动刷新”。
+- ManualViewer 顶部工具栏：长步骤标题会在进度区内截断，右侧操作区与管理员徽标保持单行，步骤切换不再出现高度忽高忽低。
 - ManualViewer 相机：加载/切换 GLB 时基于包围盒自动框选，动态设置 near/far，并收敛模型放大上限（≤1e4）以避免深度闪烁和“需大幅放大才能看到”问题；移动端图纸/抽屉会写入一层同页历史用于“返回键先关弹层”，并通过弹层关闭链路收口减少返回竞态；移动端预览支持“返回键先关预览/抽屉”“轻点图片关闭”。
 - STEP→GLB：`trimesh` 子进程 120s 硬超时（超时强制终止），不再启用 ocp_tessellate 兜底；并新增“自动简化”兜底（仅超大 nodes 模型触发，合并刷丝/毛刷等特征层为盘级 mesh），需要时可在上传前提示大文件转 STL。
   - 现已新增 OCP(cadquery-ocp) 兜底：trimesh/cascadio 超时/失败或预检命中超长行时，会自动回退/优先走 OCP 导出可用 GLB（粒度可能更粗，以保证能生成与可渲染）。

@@ -5603,6 +5603,7 @@ onUnmounted(() => {
 
   .progress-section {
     flex: 1;
+    min-width: 0; // 允许被压缩，避免把右侧操作区挤到换行
 
     .progress-info {
       display: flex;
@@ -5621,9 +5622,14 @@ onUnmounted(() => {
       }
 
       .step-title {
+        flex: 1;
+        min-width: 0;
         font-size: 16px;
         margin-left: 16px;
         opacity: 0.9;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap; // 长标题统一截断，不再撑高顶栏
       }
     }
   }
@@ -5632,6 +5638,8 @@ onUnmounted(() => {
     display: flex;
     gap: 8px;
     align-items: center;
+    flex: 0 0 auto;
+    min-width: 0;
     background: rgba(255, 255, 255, 0.95);
     padding: 8px 16px;
     border-radius: 12px;
@@ -5678,6 +5686,9 @@ onUnmounted(() => {
   }
 
   .nav-group {
+    flex-wrap: nowrap;
+    min-width: 0;
+
     .step-indicator {
       font-size: 14px;
       font-weight: 600;
@@ -5685,6 +5696,7 @@ onUnmounted(() => {
       padding: 0 8px;
       min-width: 60px;
       text-align: center;
+      white-space: nowrap;
     }
 
     .step-jump-button {
@@ -5692,11 +5704,22 @@ onUnmounted(() => {
     }
 
     .step-jump-select {
-      min-width: 240px;
+      width: 320px;
+      min-width: 320px;
+      max-width: 320px;
     }
 
     :deep(.step-jump-select .el-input__inner) {
       height: 40px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    :deep(.step-jump-select .el-select__selected-item) {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
   }
 
@@ -5718,6 +5741,8 @@ onUnmounted(() => {
       border-radius: 6px;
       font-size: 13px;
       font-weight: 500;
+      white-space: nowrap;
+      writing-mode: horizontal-tb; // 防止被压缩后出现竖排“管/理/员”
 
       .el-icon {
         font-size: 14px;
