@@ -52,23 +52,29 @@ class ManualIntegratorV2:
         print(f"  V2.0 - ")
         print(f"{'='*80}")
         
-        #
+        component_assembly = self._build_component_assembly(
+            component_assembly_results,
+            component_to_glb_mapping,
+            image_hierarchy,
+            task_id,
+            component_level_mappings  # ✅ 传递组件级别映射用于注入node_name
+        )
+        product_assembly = self._build_product_assembly(
+            product_assembly_result,
+            image_hierarchy,
+            task_id,
+            bom_to_mesh_mapping  # ✅ 传递bom_to_mesh用于注入node_name
+        )
+
+        # ✅ 通过“实际构建后的章节内容”判定模式，避免上游字段名差异导致误判
+        product_steps = product_assembly.get("steps") if isinstance(product_assembly, dict) else []
+        mode = "product" if product_steps else "component"
+
         manual = {
-            "mode": "product" if product_assembly_result.get("steps") else "component",
+            "mode": mode,
             "metadata": self._build_metadata(planning_result),
-            "component_assembly": self._build_component_assembly(
-                component_assembly_results,
-                component_to_glb_mapping,
-                image_hierarchy,
-                task_id,
-                component_level_mappings  # ✅ 传递组件级别映射用于注入node_name
-            ),
-            "product_assembly": self._build_product_assembly(
-                product_assembly_result,
-                image_hierarchy,
-                task_id,
-                bom_to_mesh_mapping  # ✅ 传递bom_to_mesh用于注入node_name
-            ),
+            "component_assembly": component_assembly,
+            "product_assembly": product_assembly,
             "safety_and_faq": self._build_safety_faq(safety_faq_result),
             "3d_resources": self._build_3d_resources(
                 bom_to_mesh_mapping,

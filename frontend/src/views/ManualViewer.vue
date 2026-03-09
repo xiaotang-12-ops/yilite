@@ -2092,40 +2092,64 @@ const assembledNodeNames = computed(() => {
 })
 
 // ✅ node_name 到零件名称的映射（用于显示实际零件名称而非NAUO序号）
-// 优先使用 step3_glb_inventory.json 的 geometry 字段（3D零件实际名称）
+// 优先显示 BOM 中文名，其次回退到 step3_glb_inventory 的 geometry 名称
 const nodeNameToPartName = computed(() => {
   const mapping = new Map<string, string>()
 
-  // ✅ 优先使用 glbNodeToGeometry（来自 step3_glb_inventory.json）
-  // 这是最准确的3D零件名称，如 "GB╱T 5782-2016[六角头螺栓M20×90]_M20×90"
-  for (const item of glbNodeToGeometry.value) {
-    if (item.node && item.geometry) {
-      mapping.set(item.node, item.geometry)
+  const addMapping = (nodeName: any, partName: any) => {
+    const node = String(nodeName || '').trim()
+    const name = String(partName || '').trim()
+    if (!node || !name) return
+    if (!mapping.has(node)) {
+      mapping.set(node, name)
     }
   }
 
-  // 如果 glbNodeToGeometry 没有数据，回退到 BOM 映射表
-  if (mapping.size === 0) {
-    const resources3d = (manualData.value as any)?.['3d_resources']
-    const componentMappings = resources3d?.component_level_mappings
+  // 1) 优先从步骤里的 parts/components/fasteners 取中文名
+  const collectStepParts = (parts: any) => {
+    if (!Array.isArray(parts)) return
+    for (const item of parts) {
+      if (!item) continue
+      const partName = item.bom_name || item.name || item.part_name || ''
+      const nodeName = item.node_name
+      if (Array.isArray(nodeName)) {
+        for (const node of nodeName) {
+          addMapping(node, partName)
+        }
+      } else {
+        addMapping(nodeName, partName)
+      }
+    }
+  }
+  for (const step of allSteps.value) {
+    collectStepParts((step as any)?.parts_used)
+    collectStepParts((step as any)?.components)
+    collectStepParts((step as any)?.fasteners)
+  }
 
-    if (componentMappings) {
-      for (const [, componentData] of Object.entries(componentMappings)) {
-        const bomMappingTable = (componentData as any)?.bom_mapping_table
-        if (Array.isArray(bomMappingTable)) {
-          for (const item of bomMappingTable) {
-            const name = item.name || item.bom_name || ''
-            const nodeNames = item.node_names || []
-            if (name && Array.isArray(nodeNames)) {
-              for (const nodeName of nodeNames) {
-                if (nodeName && !mapping.has(nodeName)) {
-                  mapping.set(nodeName, name)
-                }
-              }
-            }
-          }
+  // 2) 从 3d_resources.bom_mapping_table 补齐中文名
+  const resources3d = (manualData.value as any)?.['3d_resources']
+  const componentMappings = resources3d?.component_level_mappings
+  if (componentMappings) {
+    for (const [, componentData] of Object.entries(componentMappings)) {
+      const bomMappingTable = (componentData as any)?.bom_mapping_table
+      if (!Array.isArray(bomMappingTable)) continue
+      for (const item of bomMappingTable) {
+        const name = item.name || item.bom_name || ''
+        const nodeNames = item.node_names || []
+        if (!Array.isArray(nodeNames)) continue
+        for (const nodeName of nodeNames) {
+          addMapping(nodeName, name)
         }
       }
+    }
+  }
+
+  // 3) 最后用 step3_glb_inventory 的 geometry 名称兜底（覆盖不到的 node）
+  for (const item of glbNodeToGeometry.value) {
+    if (!item?.node || !item?.geometry) continue
+    if (!mapping.has(item.node)) {
+      mapping.set(item.node, item.geometry)
     }
   }
 
@@ -3558,15 +3582,53 @@ const handleDiscardDraft = async () => {
   }
 }
 
+// 兼容 product/component 两种结构：聚合 glb_files 下所有 node_to_geometry
+const extractNodeToGeometryFromInventory = (inventory: any): { node: string; geometry: string }[] => {
+  const merged = new Map<string, string>()
+
+  const glbFiles = inventory?.glb_files
+  if (glbFiles && typeof glbFiles === 'object') {
+    for (const entry of Object.values(glbFiles as Record<string, any>)) {
+      const nodeToGeometry = (entry as any)?.node_to_geometry
+      if (!Array.isArray(nodeToGeometry)) continue
+      for (const item of nodeToGeometry) {
+        const node = String(item?.node || '').trim()
+        const geometry = String(item?.geometry || '').trim()
+        if (!node || !geometry) continue
+        if (!merged.has(node)) {
+          merged.set(node, geometry)
+        }
+      }
+    }
+  }
+
+  // 兼容极少数历史结构（顶层直接有 node_to_geometry）
+  if (merged.size === 0 && Array.isArray(inventory?.node_to_geometry)) {
+    for (const item of inventory.node_to_geometry) {
+      const node = String(item?.node || '').trim()
+      const geometry = String(item?.geometry || '').trim()
+      if (!node || !geometry) continue
+      if (!merged.has(node)) {
+        merged.set(node, geometry)
+      }
+    }
+  }
+
+  return Array.from(merged.entries()).map(([node, geometry]) => ({ node, geometry }))
+}
+
 // ✅ 加载 step3_glb_inventory.json 获取3D零件实际名称
 const loadGlbInventory = async () => {
   if (!props.taskId) return
   try {
     const resp = await axios.get(`/api/manual/${props.taskId}/glb-inventory`)
-    const nodeToGeometry = resp.data?.glb_files?.product_total?.node_to_geometry
-    if (Array.isArray(nodeToGeometry)) {
+    const nodeToGeometry = extractNodeToGeometryFromInventory(resp.data)
+    if (nodeToGeometry.length > 0) {
       glbNodeToGeometry.value = nodeToGeometry
       console.log(`✅ 加载 glb-inventory 成功，共 ${nodeToGeometry.length} 个零件名称映射`)
+    } else {
+      glbNodeToGeometry.value = []
+      console.log('📝 glb-inventory 已加载，但未发现 node_to_geometry 映射')
     }
   } catch (e) {
     // 文件不存在不影响主流程，只是显示 NAUO 序号
@@ -5121,11 +5183,7 @@ const restorePart = (meshKey: string) => {
 
 // 获取已删除零件的显示名称
 const getDeletedPartDisplayName = (meshKey: string): string => {
-  // 优先从 glbNodeToGeometry 获取名称
-  if (glbNodeToGeometry.value && glbNodeToGeometry.value[meshKey]) {
-    return glbNodeToGeometry.value[meshKey]
-  }
-  return meshKey
+  return nodeNameToPartName.value.get(meshKey) || meshKey
 }
 
 // 应用状态对应的材质（使用原来的配色）

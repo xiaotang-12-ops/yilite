@@ -275,27 +275,47 @@ SAFETY_FAQ_USER_QUERY = """请为以下装配步骤添加安全警告（如果�
 """
 
 
+SAFETY_COMPACT_SYSTEM_PROMPT = """你是装配安全工程师。
+
+任务：基于每个步骤的标题/描述，补充简短且可执行的安全警告。
+
+只输出 JSON（不要 Markdown）：
+{
+  "safety_annotations": [
+    {
+      "step_id": "product_step_1",
+      "step_number": 1,
+      "safety_warnings": ["戴防割手套", "零件未固定前不要松手"]
+    },
+    {
+      "step_id": "product_step_2",
+      "step_number": 2,
+      "safety_warnings": []
+    }
+  ],
+  "faq_items": [
+    {"question": "常见问题", "answer": "简短回答"}
+  ]
+}
+规则：
+1) 每步最多给 2 条警告；无明显风险时返回空数组。
+2) step_id 必须来自输入，不要新增/改写。
+3) faq_items 可为空；有值时控制在 6 条以内，简短直接。
+"""
+
+SAFETY_COMPACT_USER_QUERY = """请基于以下步骤给出安全警告（精简版）。
+
+步骤数据（精简）：
+{steps_json}
+"""
+
+
 def build_safety_faq_prompt(
     assembly_steps: list
 ) -> tuple:
-    """
-    构建安全FAQ提示词
-
-    Args:
-        assembly_steps: 装配步骤列表（已经包含welding字段）
-
-    Returns:
-        (system_prompt, user_query) 元组
-    """
+    """构建安全提示词（精简输入，减少 token 消耗）。"""
     import json
 
-    # ✅ 将装配步骤转换为JSON字符串
-    steps_json = json.dumps(assembly_steps, ensure_ascii=False, indent=2)
-
-    system_prompt = SAFETY_FAQ_SYSTEM_PROMPT
-    user_query = SAFETY_FAQ_USER_QUERY.format(
-        assembly_steps_json=steps_json
-    )
-
-    return system_prompt, user_query
+    steps_json = json.dumps(assembly_steps, ensure_ascii=False, separators=(",", ":"))
+    return SAFETY_COMPACT_SYSTEM_PROMPT, SAFETY_COMPACT_USER_QUERY.format(steps_json=steps_json)
 

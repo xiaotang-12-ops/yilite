@@ -475,7 +475,7 @@ PRODUCT_ASSEMBLY_USER_QUERY = """请生成产品总装配步骤（将预装配�
 1. **⚠️ 必须100%覆盖所有产品级零件**：装配步骤必须包含上述产品级零件清单中的**每一个**零件，一个都不能少
 2. **充分利用视觉信息**：根据图纸上的组件编号和位置关系确定装配顺序
 3. 从基准组件开始装配
-4. **步骤数量不限制**：根据实际装配需要生成足够的步骤，确保所有组件和零件都被覆盖（通常需要5-15个步骤，甚至更多）
+4. 严禁一个步骤包含多个不同 bom_seq。
 5. **每个步骤必须包含组件的图纸序号（drawing_number）和位置描述（position_description）**
 6. **⚠️ 关键：每个步骤必须同时包含`components`和`fasteners`两个字段**：
    - **`components`字段**：列出该步骤安装的主要组件（BOM代号、名称、数量）
@@ -548,7 +548,11 @@ def build_product_assembly_prompt(product_plan, components_list, product_bom=Non
             code = item.get('code', '')
             name = item.get('name', '')
             product_code = item.get('product_code', '')
-            product_bom_text += f"物料代码{code}（序号{seq}）：{name} ({product_code})\n"
+            quantity = item.get('quantity', '')
+            product_bom_text += (
+                f"物料代码{code}（序号{seq}，数量{quantity}）："
+                f"{name} ({product_code})\n"
+            )
     else:
         product_bom_text = "（无产品级零件）"
 

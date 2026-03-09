@@ -1,8 +1,8 @@
 # 📸 项目快照 - Memory Development
 
 **创建时间**: 2025-11-18
-**最后校对**: 2026-02-26
-**当前版本**: v2.1.36
+**最后校对**: 2026-03-02
+**当前版本**: v2.1.42
 **项目状态**: 核心功能完成，可用
 
 ---
@@ -48,6 +48,7 @@ output/{task_id} (JSON + GLB + 图片)
 | WS | `/ws/task/{task_id}` | WebSocket 进度流 | 周期推送进度/完成/失败 |
 | GET | `/api/manuals` | 列出已生成手册 | 扫描 `output/*/assembly_manual.json` |
 | GET | `/api/manual/{task_id}` | 读取手册 JSON | 直接读文件，替换 `{task_id}` 占位 |
+| PUT | `/api/manual/{task_id}/rename` | 重命名项目显示名 | 同步更新 `assembly_manual.json`/`draft.json`/`task_status.json`/内存任务 |
 | GET | `/api/manual/{task_id}/draft` | 读取草稿 | 无草稿返回 404 |
 | DELETE | `/api/manual/{task_id}/draft` | 丢弃草稿 | 删除 `draft.json`，恢复到已发布版本 |
 | POST | `/api/manual/{task_id}/save-draft` | 保存草稿 | 写入 `draft.json`，不影响已发布，支持 `_edit_version` 乐观锁 |
@@ -75,7 +76,7 @@ output/{task_id} (JSON + GLB + 图片)
 | --- | --- | --- | --- |
 | `/` | HomeNew.vue | 首页展示 | |
 | `/generator` | Generator.vue | 上传与任务发起 | 调 /api/upload, /api/generate |
-| `/viewer/:id?` | Viewer.vue | 3D 预览与结果查看 | 搜索栏支持“扫一扫”回填；手机端优化为更宽对话框和单列信息布局 |
+| `/viewer/:id?` | Viewer.vue | 3D 预览与结果查看 | 搜索栏支持“扫一扫”回填；手机端优化为更宽对话框和单列信息布局；管理员可在列表中改名 |
 | `/manual/:taskId` | ManualViewer.vue | 装配手册查看/编辑 | 管理员支持草稿保存/发布；修复顶部工具栏在长标题步骤下的高度抖动 |
 | `/version-history/:taskId` | VersionHistory.vue | 历史版本与回滚 | 调 /api/manual/* history/version/rollback |
 | `/engineer` | Engineer.vue | 工程师视图（质检/分发） | |
@@ -90,7 +91,7 @@ output/{task_id} (JSON + GLB + 图片)
 
 ## 数据流与输出
 - 输入：PDF 工程图、STEP/STL 模型 → `uploads/`
-- 流水线：分类 → PDF 转图 + STEP 转 GLB → 装配规划（SimplePlanner，基准件=BOM序号1） → BOM/3D 匹配 → 组件/产品装配步骤（严格按BOM序号） → 焊接工艺 → 安全 FAQ → 手册整合
+- 流水线：分类 → PDF 转图 + STEP 转 GLB → 装配规划（SimplePlanner，基准件=BOM序号1） → BOM/3D 匹配 → 组件/产品装配步骤（严格按BOM序号） → 组件模式执行焊接+安全 / 产品模式默认跳过焊接仅执行安全 → 手册整合
 - 输出：`output/{task_id}/assembly_manual.json`、`task_status.json`、`draft.json`、`versions/`、`glb_files/*.glb`、`pdf_images/{pdf}/page_*.png`、各阶段 JSON。
 - 核心规则：基准件=BOM序号1，装配顺序=BOM序号顺序，步骤数=BOM项数，每步装配1个零件。
 
@@ -106,9 +107,9 @@ output/{task_id} (JSON + GLB + 图片)
 ## 最近 3 个版本快照
 | 版本 | 日期 | 关键变更 |
 | --- | --- | --- |
-| v2.1.36 | 2026-02-26 | **`[circular]` 污染修复（标题异常）**：<br/>- 修复任务状态序列化误判循环引用，避免普通字符串/数字被写成 `"[circular]"`<br/>- 恢复任务时对 `config.projectName` 做兜底归一化，避免脏值继续传入流水线<br/>- 手册列表与手册读取接口对历史脏数据做标题回退（显示 `task_id`） |
-| v2.1.35 | 2026-02-26 | **焊接智能体长耗时止损**：<br/>- 焊接调用单独延长请求超时到 1800 秒<br/>- 禁用焊接 SDK 自动重试（`max_retries=0`），避免同模型超时重复扣费<br/>- 保留主模型失败后兜底模型切换 |
-| v2.1.34 | 2026-02-26 | **一键全测补齐兜底模型独立测试**：<br/>- 配置了兜底模型时，会追加一次“兜底模型直连测试”<br/>- 结果区增加 `（兜底）` 成功/失败/警告明细，避免只测到主模型 |
+| v2.1.42 | 2026-03-02 | **查看器管理员改名功能**：<br/>- `Viewer` 列表（桌面/移动）新增管理员“改名”按钮与输入弹窗<br/>- 新增后端接口 `PUT /api/manual/{task_id}/rename`，统一更新 `assembly_manual.json`/`draft.json`/`task_status.json`<br/>- 同步内存任务 `config.projectName`，避免刷新或处理中任务把旧名覆盖回来 |
+| v2.1.41 | 2026-03-02 | **查看器零件名显示修复（组件模式误显示 NAUO 序号）**：<br/>- `ManualViewer` 改为聚合 `glb_files` 下全部 `node_to_geometry`，不再写死 `product_total`<br/>- 名称映射优先显示步骤/BOM中文名，缺失时再回退 geometry 名称<br/>- 修复已删除零件名称函数错误索引数组导致的兜底不稳定 |
+| v2.1.40 | 2026-02-27 | **BOM匹配防幻觉 + 覆盖率口径修正（<70%才阻断）**：<br/>- Agent2 增加 `allowed_bom_codes` 白名单约束，禁止输出不在输入候选中的 `bom_code`<br/>- Step4 过滤改为“紧固件严格、非紧固件锚点放行”，降低非紧固件误杀率<br/>- Agent4 覆盖率改为“双口径取低值”（`bom_seq` 覆盖 + `node_name` 覆盖）<br/>- 覆盖率阈值调整为 `<70%` 阻断、`>=70%` 继续生成并告警；Step6 数量改为 BOM 优先 |
 
 ---
 
@@ -125,7 +126,7 @@ output/{task_id} (JSON + GLB + 图片)
 
 ## 状态与注意事项
 - 正常：上传、生成、日志流、手册读取/编辑、模型与图片下载、设置管理。
-- 注意：需安装 Blender；`OPENROUTER_API_KEY`/`DEEPSEEK_API_KEY`/`NEWAPI_API_KEY`（兼容 `ARK_API_KEY`）按调用点配置；设置页默认隐藏，Logo 10 秒内连点 10 次可进入；大文件性能与 Three.js 渲染待优化；前端路由默认走 8008 端口；一次任务仅支持上传 1 个 PDF + 1 个 STEP；运行中全局仅允许 1 个任务，上传/生成会返回 409 `TASK_BUSY` 提示等待；task_id = PDF 文件名（去后缀），STEP 文件名可不同，后端生成时会按 task_id 重命名存储；同名生成返回 409，可在前端选择覆盖（成功任务归档到 `output_archive/`，失败/损坏任务直接删除）或生成第二套 `_v_n`；任务状态持久化到 `output/{task_id}/task_status.json`，支持 `/api/task/{task_id}/cancel` 停止保留结果与 `/api/task/{task_id}/resume` 继续生成；生成任务可被中断（删除/覆盖/残留清理时会中断后台线程并写入 `cancelled`）；模式判定：PDF 文件名前缀 01* → 组件模式；03/06/07/08* → 产品模式；未命中前缀默认组件模式；产品模式跳过 Step5，仅执行 Step6+Step7/8。
+- 注意：需安装 Blender；`OPENROUTER_API_KEY`/`DEEPSEEK_API_KEY`/`NEWAPI_API_KEY`（兼容 `ARK_API_KEY`）按调用点配置；设置页默认隐藏，Logo 10 秒内连点 10 次可进入；大文件性能与 Three.js 渲染待优化；前端路由默认走 8008 端口；一次任务仅支持上传 1 个 PDF + 1 个 STEP；运行中全局仅允许 1 个任务，上传/生成会返回 409 `TASK_BUSY` 提示等待；task_id = PDF 文件名（去后缀），STEP 文件名可不同，后端生成时会按 task_id 重命名存储；同名生成返回 409，可在前端选择覆盖（成功任务归档到 `output_archive/`，失败/损坏任务直接删除）或生成第二套 `_v_n`；任务状态持久化到 `output/{task_id}/task_status.json`，支持 `/api/task/{task_id}/cancel` 停止保留结果与 `/api/task/{task_id}/resume` 继续生成；生成任务可被中断（删除/覆盖/残留清理时会中断后台线程并写入 `cancelled`）；模式判定：PDF 文件名前缀 01* → 组件模式；03/06/07/08* → 产品模式；未命中前缀默认组件模式；产品模式跳过 Step5，且 Step7 默认跳过焊接仅执行安全。
 - Viewer 扫码：`/viewer` 搜索栏支持扫码填充物料代码；若移动端以 `http://` 非安全上下文访问，浏览器通常会禁用摄像头，前端会提示并允许手动输入物料代码作为兜底。
 - Viewer 移动端布局：项目选择弹窗改为近全宽显示，列表采用单列信息与整行操作按钮，减少文字挤压和无效留白。
 - Generator/Viewer 任务缓存一致性：查看器删除任务后会同步清理 `generator_last_task` 与 `generator_current_task`；生成器读取上一次任务时若状态接口返回 404，会自动清理残留提示。
@@ -133,6 +134,7 @@ output/{task_id} (JSON + GLB + 图片)
 - 模型兜底与测试超时：设置页每个调用点可配置 `fallback_model`（主模型失败自动切换）；`/api/test-model` 返回 `used_model/used_fallback` 便于确认是否触发兜底；测试后端连接与一键全测加入超时提示，避免无限转圈。
 - 一键全测兜底覆盖：配置 `fallback_model` 后，前端会追加“兜底模型独立连通测试”，结果中以 `（兜底）` 前缀展示，避免主模型成功时遗漏兜底验证。
 - 焊接智能体请求策略：`WeldingAgent` 单独使用 `timeout=1800s` + `max_retries=0`，降低超长任务下同模型自动重试导致的重复计费风险；主模型失败后仍可切换兜底模型。
+- 焊接/安全智能体瘦身：两者仅接收精简步骤字段（`step_id/step_number/title/description/quality_check` 等），模型只返回增量标注（`welding_annotations/safety_annotations`）再由后端本地合并，显著减少 token 与长 JSON 往返。
 - 任务状态序列化：`_json_safe` 仅对容器做循环检测，避免普通值误写为 `"[circular]"`；恢复任务与手册读取/列表会对历史脏标题自动回退到 `task_id`。
 - ManualViewer 返回键：移动端弹层手动关闭不再触发 `history.back`，并新增 `currentStepIndex`（按 `taskId`）持久化恢复；抽屉历史层改为“点击打开时同步入栈”，降低首次返回竞态导致的“像刷新并回第一页”风险；历史版本 `query.version/source` 逻辑保持不变。
 - ManualViewer 细节修复：手机“选择步骤”抽屉按钮列表统一左对齐；恢复已删除零件时立即重算材质/位置，避免瞬时显示为“已装”。

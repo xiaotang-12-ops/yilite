@@ -22,8 +22,8 @@ docker-compose --version
 ### 1️⃣ 克隆项目
 
 ```bash
-git clone https://github.com/xiaotang-12-ops/Mecagent.git
-cd Mecagent
+git clone https://github.com/xiaotang-12-ops/yilite.git
+cd yilite
 ```
 
 ### 2️⃣ 配置 API 密钥
@@ -78,7 +78,7 @@ docker-compose logs -f
 系统会自动在项目目录下创建以下文件夹来保存数据：
 
 ```
-Mecagent/
+yilite/
 ├── uploads/          # 上传的 PDF 和 3D 模型文件
 ├── output/           # 生成的装配说明书
 ├── logs/             # 系统日志
@@ -259,7 +259,7 @@ docker-compose up -d
 
 1. **查看日志**: `docker-compose logs -f`
 2. **检查文档**: 阅读 [README.md](README.md)
-3. **提交 Issue**: [GitHub Issues](https://github.com/xiaotang-12-ops/Mecagent/issues)
+3. **提交 Issue**: [GitHub Issues](https://github.com/xiaotang-12-ops/yilite/issues)
 
 ---
 

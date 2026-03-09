@@ -1,5 +1,124 @@
 # Memory Changelog
 
+## v2.1.42 (2026-03-02)
+- **查看器管理员改名功能（仅管理员可操作）**：
+  - **用户提问**：
+    - “你做个这个功能出来吧，可以改名字的，但是要管理员才可以改。”
+  - **问题根因**：
+    1. 查看器列表项目名是只读展示，来自 `/api/manuals` 的 `productName`，前端没有重命名入口。
+    2. 后端缺少“改名”API，`assembly_manual.json` 与 `task_status.json` 的名称字段无法统一更新。
+  - **问题场景**：
+    - 用户需要在查看器里修正项目显示名，只能手改文件，操作门槛高且容易漏改。
+  - **修复方案**：
+    1. 前端 `Viewer.vue` 新增管理员专用“改名”按钮（桌面表格 + 移动端卡片），未登录管理员不可操作。
+    2. 前端新增改名弹窗与调用逻辑：`PUT /api/manual/{task_id}/rename`，成功后即时更新列表显示。
+    3. 后端新增 `RenameProjectRequest` 与改名接口，统一更新：
+       - `assembly_manual.json -> metadata.product_name`
+       - `draft.json -> metadata.product_name`
+       - `task_status.json -> config.projectName`
+       - 内存任务 `tasks[task_id].config.projectName`
+    4. 同步更新 `product_overview.product_name` 与 `product_assembly.product_name`，避免列表与详情名称口径不一致。
+  - **影响文件**：`frontend/src/views/Viewer.vue`、`backend/simple_app.py`、`VERSION`、`Memory_Development/changelog.md`、`Memory_Development/index.md`
+  - **记录人**：小雅
+
+## v2.1.41 (2026-03-02)
+- **查看器零件名显示修复（组件模式误显示 NAUO 序号）**：
+  - **用户提问**：
+    - “这个是新的图纸，但是我发现好几个没匹配上，而且有的模型甚至都没有名字。”
+    - “怎么会显示这个零件的名称是 nauo 什么的，这不合理，这应该是零件的名字才对。”
+  - **问题根因**：
+    1. `ManualViewer` 在加载 `step3_glb_inventory.json` 时写死读取 `glb_files.product_total.node_to_geometry`，组件模式下 `glb_files` 键通常是组件名（如 `01.03...连接器右组件`），导致映射未加载。
+    2. 名称映射优先级偏向 geometry 且缺少“步骤/BOM中文名优先”策略，显示可读性差。
+    3. `getDeletedPartDisplayName` 把 `glbNodeToGeometry`（数组）当字典索引使用，名称兜底逻辑不稳定。
+  - **问题场景**：
+    - 查看器点击零件弹窗时，标题显示 `NAUO13`/`NAUO: NAUO13`，没有显示真实零件名称。
+  - **修复方案**：
+    1. 新增 inventory 解析聚合器，合并 `glb_files` 下所有 `node_to_geometry`，同时兼容历史顶层结构。
+    2. `nodeNameToPartName` 改为多级映射：先取步骤/BOM中文名，再取 `bom_mapping_table`，最后用 geometry 名称兜底。
+    3. `getDeletedPartDisplayName` 改为统一复用 `nodeNameToPartName` 映射，不再错误索引数组。
+  - **影响文件**：`frontend/src/views/ManualViewer.vue`、`VERSION`、`Memory_Development/changelog.md`、`Memory_Development/index.md`
+  - **记录人**：小雅
+
+## v2.1.40 (2026-02-27)
+- **BOM匹配防幻觉 + 覆盖率口径修正（<70%才阻断）**：
+  - **用户提问**：
+    - “生成图纸还是要的，除非说匹配或者覆盖率低于70%。”
+    - “绝对不能幻觉。”
+    - “我们一定要确保充分沟通。”
+  - **问题根因**：
+    1. Agent2 提示词缺少“`bom_code` 必须来自候选列表”的硬约束，导致 AI 返回不存在的 code（幻觉 code）。
+    2. Step4 过滤器对所有零件采用同一严格规格门槛，非紧固件（如毛刷盘、警示贴、接头）在规格 token 稀疏时被误杀。
+    3. Agent4 覆盖率统计只看 `bom_seq` 是否出现，不看 `node_name` 是否为空，出现“看似覆盖、实际无高亮节点”的假达标。
+    4. Step6 数量对齐对紧固件优先采用 `node_count`，会把“匹配漏件”悄悄映射成“步骤数量变小”。
+  - **问题场景**：
+    - 查看器后期步骤大量灰色节点；同图不同次生成波动大；步骤有 `bom_seq` 但无 `node_name` 仍被判覆盖达标。
+  - **修复方案**：
+    1. Agent2 提示词加入 BOM 白名单约束：`ai_matched_pairs[].bom_code` 只能从输入未匹配 BOM code 中选择，无法确定则 `null`。
+    2. `build_ai_matching_prompt` 显式注入 `allowed_bom_codes`，减少模型自由发挥空间。
+    3. Step4 过滤新增分层策略：紧固件保持严格（强规格优先），非紧固件允许“锚点命中（名称/型号）”放行，降低误杀。
+    4. Step4 继续保留无效 code 强拒绝，保证“幻觉 code 不入库”。
+    5. Agent4 覆盖率改为双口径：`按序号覆盖` + `有node_name覆盖`，有效覆盖率取两者较低值。
+    6. 阈值策略调整：低于 `70%` 才阻断；`>=70%` 继续生成并返回告警；内部目标覆盖率为 `95%`，不足时优先重试优化。
+    7. Step6 数量对齐改为 BOM 数量优先，`node_count` 仅在 BOM 缺失时兜底，避免掩盖匹配失败。
+  - **影响文件**：`prompts/agent_2_bom_3d_matching.py`、`core/hierarchical_bom_matcher_v2.py`、`agents/product_assembly_agent.py`、`VERSION`、`Memory_Development/changelog.md`、`Memory_Development/index.md`
+  - **记录人**：小雅
+
+## v2.1.39 (2026-02-27)
+- **产品总装数量一致性修复（匹配控噪 + Step6强制对齐）**：
+  - **用户提问**：
+    - “关键是他真正匹配到的数量（3d模型里面真正的数量）。”
+    - “会不会很复杂，增加ai的负担，还是系统的负担？你会怎么改，方案是什么”
+  - **问题根因**：
+    1. `Step4` 在应用 AI 匹配结果时缺少硬过滤，低置信度/规格冲突的映射会污染 `bom_mapping_table.node_names`（例如把 12mm/20mm 垫圈错配到 `16*3`）。
+    2. 旧规格守卫把 `GB/T95-2002` 这类“标准号-年份”误当成尺寸 token，导致不同规格只要同标准号就可能被误放行。
+    3. `Step6` 直接采用 Agent4 产出的 `quantity`，未根据匹配结果做权威数量校验，导致 `step6 -> step7 -> assembly_manual` 数量漂移持续传播。
+    4. Agent4 提示词的产品级 BOM 清单未显式携带 `quantity`，模型更容易“猜数量”。
+  - **问题场景**：
+    - 同一图纸不同模型生成时，`step2_bom_data.json` 正常，但 `step6_product_result.json / assembly_manual.json` 出现 `seq20=3(应为6)`、`seq24=29(应为28)` 等口径错位。
+  - **修复方案**：
+    1. 在 `HierarchicalBOMMatcher` 增加 AI 匹配过滤器：`confidence >= 0.85`、规格令牌一致性检查、BOM 数量上限约束、重复 node 去重。
+    2. 规格守卫补强：剔除“标准号-年份”伪尺寸 token（如 `95*2002`）、增加类型 token（平垫圈/弹性垫圈）冲突拦截，并增加强规格冲突直拦（如 `16*3` vs `20*3`、`M10*75` vs `M10*80`）。
+    3. `bom_mapping_table` 生成改为优先基于最终 `bom_to_mesh`，避免中间态 `cleaned_parts` 与最终映射口径不一致。
+    4. 在 `ProductAssemblyAgent` 增加数量对齐器：紧固件优先采用 `node_count`，组件优先采用 BOM 数量，并在必要时同步修正文案中的数量词。
+    5. 在 Agent4 提示词中把产品级 BOM 的 `数量` 明确写入输入文本，降低模型“凭语义估计数量”的概率。
+  - **影响文件**：`core/hierarchical_bom_matcher_v2.py`、`core/bom_3d_matcher.py`、`agents/product_assembly_agent.py`、`prompts/agent_4_product_assembly.py`、`VERSION`、`Memory_Development/changelog.md`、`Memory_Development/index.md`
+  - **记录人**：小雅
+
+## v2.1.38 (2026-02-26)
+- **手册模式字段修复（产品总装被误标为 component）**：
+  - **用户提问**：
+    - “这个风险马上去修复，不过也是奇怪，为什么之前要匹配七步，这次才五步，我都是同一套图纸呀。”
+  - **问题根因**：
+    1. `ManualIntegratorV2.integrate()` 用 `product_assembly_result.get("steps")` 判断 `mode`，但上游产品结果实际字段为 `assembly_steps`。
+    2. 导致即使 `product_assembly.steps` 已正确生成，手册顶层 `mode` 仍被误写为 `component`，形成口径不一致风险。
+  - **问题场景**：
+    - 同一任务中出现 `product_assembly.steps > 0` 且 `component_assembly = []`，但 `assembly_manual.json.mode = component`。
+  - **修复方案**：
+    1. 在 `integrate()` 内先构建 `component_assembly` 与 `product_assembly`。
+    2. 基于“构建后的真实章节数据”判定模式：`product_assembly.steps` 非空则 `mode=product`，否则 `mode=component`。
+    3. 保持输出结构不变，仅修正 `mode` 判定口径，避免影响上下游字段契约。
+  - **影响文件**：`core/manual_integrator_v2.py`、`VERSION`、`Memory_Development/changelog.md`、`Memory_Development/index.md`
+  - **记录人**：小雅
+
+## v2.1.37 (2026-02-26)
+- **焊接/安全降本提速（产品模式跳焊接 + 双智能体瘦身）**：
+  - **用户提问**：
+    - “产品总装为什么要走焊接智能体，明明不需要焊接。”
+    - “焊接智能体应该只收每个步骤中文和图片，没必要传一大串 JSON；安全智能体也是同理。”
+  - **问题根因**：
+    1. Step7 对产品/组件模式共用同一分支，产品模式下也会无条件调用焊接智能体，产生额外耗时与费用。
+    2. 焊接/安全提示词把整份 `assembly_steps`（全字段）序列化后发送给模型，并要求模型返回整份 `enhanced_steps`，导致输入输出 token 双高。
+    3. 两个智能体没有“增量标注 + 本地合并”机制，模型承担了不必要的大 JSON 回写成本。
+  - **问题场景**：
+    - 产品总装任务（步骤很多）在 Step7 阶段耗时长、费用高，且业务上并不总需要焊接增强。
+  - **修复方案**：
+    1. `GeminiPipeline` 在产品模式下默认跳过焊接智能体，Step7 直接执行安全增强。
+    2. `WeldingAgent` 改为发送精简步骤字段，仅返回 `welding_annotations` 增量结果，再由后端按 `step_id/step_number` 合并回原步骤。
+    3. `SafetyFAQAgent` 同步改为精简输入与 `safety_annotations` 增量输出，并限制每步警告条数。
+    4. 焊接/安全提示词改为轻量 JSON 协议，移除“整份步骤回写”要求，降低上下文与响应体积。
+  - **影响文件**：`core/gemini_pipeline.py`、`agents/welding_agent.py`、`agents/safety_faq_agent.py`、`prompts/agent_5_welding.py`、`prompts/agent_6_safety_faq.py`、`VERSION`、`Memory_Development/index.md`、`Memory_Development/changelog.md`
+  - **记录人**：小雅
+
 ## v2.1.36 (2026-02-26)
 - **`[circular]` 标题污染修复（失败后继续生成场景）**：
   - **用户提问**：

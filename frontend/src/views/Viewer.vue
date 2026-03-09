@@ -94,7 +94,7 @@
               </template>
             </el-table-column>
             
-            <el-table-column label="操作" width="240">
+            <el-table-column label="操作" width="320">
               <template #default="{ row }">
                 <template v-if="row.status === 'completed'">
                   <el-button
@@ -127,6 +127,16 @@
                     中断/删除
                   </el-button>
                 </template>
+                <el-button
+                  v-if="isAdmin"
+                  type="warning"
+                  size="small"
+                  plain
+                  @click.stop="renameProject(row)"
+                >
+                  <el-icon><EditPen /></el-icon>
+                  改名
+                </el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -186,6 +196,16 @@
                     中断/删除
                   </el-button>
                 </template>
+                <el-button
+                  v-if="isAdmin"
+                  type="warning"
+                  size="small"
+                  plain
+                  @click.stop="renameProject(project)"
+                >
+                  <el-icon><EditPen /></el-icon>
+                  改名
+                </el-button>
               </div>
             </div>
           </div>
@@ -220,6 +240,8 @@
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="handleClose">取消</el-button>
+          <el-button v-if="!isAdmin" @click="showAdminLoginDialog = true">管理员登录</el-button>
+          <el-button v-else @click="logoutAdmin">退出管理员</el-button>
           <el-button v-if="isAdmin" type="primary" @click="$router.push('/generator')">
             <el-icon><Plus /></el-icon>
             新建项目
@@ -274,6 +296,34 @@
         <div class="dialog-footer">
           <el-button @click="showScannerDialog = false">关闭</el-button>
           <el-button type="primary" @click="confirmManualScan">填入搜索</el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+    <el-dialog
+      v-model="showAdminLoginDialog"
+      title="管理员登录"
+      width="400px"
+      :close-on-click-modal="false"
+    >
+      <el-form :model="loginForm" label-width="80px">
+        <el-form-item label="用户名">
+          <el-input v-model="loginForm.username" placeholder="请输入用户名" />
+        </el-form-item>
+        <el-form-item label="密码">
+          <el-input
+            v-model="loginForm.password"
+            type="password"
+            show-password
+            placeholder="请输入密码"
+            @keyup.enter="handleAdminLogin"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="showAdminLoginDialog = false">取消</el-button>
+          <el-button type="primary" @click="handleAdminLogin">登录</el-button>
         </div>
       </template>
     </el-dialog>
@@ -338,7 +388,7 @@ import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useMediaQuery } from '@vueuse/core'
 import {
-  Search, Document, View, Plus, FolderOpened, Delete, Camera
+  Search, Document, View, Plus, FolderOpened, Delete, Camera, EditPen
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import axios from 'axios'
@@ -364,7 +414,12 @@ const showScannerDialog = ref(false)
 const scanStarting = ref(false)
 const scanError = ref('')
 const manualScanInput = ref('')
+const showAdminLoginDialog = ref(false)
 const scannerVideoRef = ref<HTMLVideoElement | null>(null)
+const loginForm = reactive({
+  username: '',
+  password: ''
+})
 const projectDialogWidth = computed(() => (isMobile.value ? '96%' : '80%'))
 const scannerDialogWidth = computed(() => (isMobile.value ? '96%' : '420px'))
 const paginationLayout = computed(() =>
@@ -728,6 +783,68 @@ const deleteProject = async (project: any) => {
     if (error === 'cancel') return
     console.error('删除任务失败:', error)
     ElMessage.error('删除失败: ' + (error.response?.data?.detail || error.message))
+  }
+}
+
+const handleAdminLogin = () => {
+  const username = String(loginForm.username || '').trim()
+  const password = String(loginForm.password || '')
+  if (username === 'admin' && password === 'admin123') {
+    adminStore.login()
+    showAdminLoginDialog.value = false
+    loginForm.username = ''
+    loginForm.password = ''
+    ElMessage.success('管理员登录成功')
+    return
+  }
+  ElMessage.error('用户名或密码错误')
+}
+
+const logoutAdmin = () => {
+  adminStore.logout()
+  ElMessage.success('已退出管理员模式')
+}
+
+const renameProject = async (project: any) => {
+  if (!isAdmin.value) {
+    ElMessage.warning('请先登录管理员')
+    return
+  }
+
+  try {
+    const { value } = await ElMessageBox.prompt(
+      '请输入新的项目名称（仅影响查看器显示）',
+      '重命名项目',
+      {
+        confirmButtonText: '保存',
+        cancelButtonText: '取消',
+        inputValue: String(project.projectName || ''),
+        inputValidator: (v: string) => {
+          if (!v || !v.trim()) return '项目名称不能为空'
+          if (v.trim().length > 120) return '项目名称不能超过 120 个字符'
+          return true
+        }
+      }
+    )
+
+    const newName = String(value || '').trim()
+    const oldName = String(project.projectName || '').trim()
+    if (!newName || newName === oldName) {
+      ElMessage.info('名称未变化')
+      return
+    }
+
+    await axios.put(`/api/manual/${project.id}/rename`, { new_name: newName })
+
+    projects.value = projects.value.map((item: any) =>
+      item.id === project.id ? { ...item, projectName: newName } : item
+    )
+
+    ElMessage.success('项目名称已更新')
+  } catch (error: any) {
+    if (error === 'cancel' || error === 'close') return
+    console.error('重命名失败:', error)
+    ElMessage.error('重命名失败: ' + (error.response?.data?.detail || error.message))
   }
 }
 

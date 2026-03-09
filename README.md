@@ -1,6 +1,6 @@
 # 智能装配说明书生成系统
 
-[![Version](https://img.shields.io/badge/version-v2.1.36-blue.svg)](https://github.com/xiaotang-12-ops/yilite/releases)
+[![Version](https://img.shields.io/badge/version-v2.1.42-blue.svg)](https://github.com/xiaotang-12-ops/yilite/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Docker](https://img.shields.io/badge/docker-ready-brightgreen.svg)](DOCKER_DEPLOYMENT.md)
 
@@ -8,14 +8,14 @@
 
 一个基于AI的智能装配说明书生成系统，能够自动解析PDF工程图纸和3D模型，生成工人友好的交互式HTML装配说明书。
 
-**当前版本**: v2.1.36 | [查看版本历史](https://github.com/xiaotang-12-ops/yilite/releases) | [部署指南](DOCKER_DEPLOYMENT.md)
+**当前版本**: v2.1.42 | [查看版本历史](https://github.com/xiaotang-12-ops/yilite/releases) | [部署指南](DOCKER_DEPLOYMENT.md)
 
-## 🆕 最新更新 (v2.1.36)
+## 🆕 最新更新 (v2.1.42)
 
-- **🧠 NewAPI 多模型能力增强**：统一 `newapi` 提供方命名，支持主模型+兜底模型链路，设置页支持一键全测与能力警告。
-- **🧱 任务恢复与状态口径修复**：修复已删除任务残留、管理员刷新感知缺失、`[circular]` 标题污染等稳定性问题。
-- **⚙️ 长任务成本与超时控制优化**：焊接智能体超时与重试策略收敛，减少复杂图纸下的重复请求与额外消耗。
-- **🎨 查看器与设置页体验提升**：顶部工具栏高度抖动修复、测试超时提示补齐、调用点配置可视化增强。
+- **✏️ 查看器管理员改名功能**：`Viewer` 列表新增管理员专用改名入口，桌面和移动端都可直接修改项目显示名。
+- **🔁 项目名称全链路同步**：后端新增 `PUT /api/manual/{task_id}/rename`，统一更新 `assembly_manual.json`、`draft.json`、`task_status.json` 和内存任务状态。
+- **🧩 零件名称显示修复**：`ManualViewer` 聚合 `glb_files` 全量映射，优先展示步骤/BOM 中文名，避免把 `NAUO` 编号直接当零件名。
+- **🛡️ BOM 匹配与生成稳定性增强**：收紧幻觉 `bom_code`、修正覆盖率口径，并优化产品模式下的焊接/安全智能体调用链路。
 
 ### 🌟 v2.0.x 系列演进亮点
 
@@ -51,8 +51,8 @@ PDF工程图纸 + 3D模型 → AI解析引擎 → 装配规程生成 → HTML说
 
 ```bash
 # 1. 克隆项目
-git clone https://github.com/xiaotang-12-ops/Mecagent.git
-cd Mecagent
+git clone https://github.com/xiaotang-12-ops/yilite.git
+cd yilite
 
 # 2. 配置 API 密钥
 cp .env.example .env
@@ -74,8 +74,8 @@ docker-compose up -d
 
 ```bash
 # 克隆项目
-git clone https://github.com/xiaotang-12-ops/Mecagent.git
-cd Mecagent
+git clone https://github.com/xiaotang-12-ops/yilite.git
+cd yilite
 
 # 安装依赖
 pip install -r requirements.txt

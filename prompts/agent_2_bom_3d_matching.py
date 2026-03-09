@@ -466,6 +466,7 @@ AI_MATCHING_SYSTEM_PROMPT = """# 角色定位
 - **只输出JSON，不要输出其他内容**
 - **输出所有置信度≥0.70的匹配**（追求100%覆盖率）
 - **必须包含reasoning字段，说明匹配理由**
+- **`bom_code` 只能从输入给出的未匹配BOM列表中选择，禁止自造或改写BOM code**
 - **如果无法匹配，返回空数组[]**
 """
 
@@ -479,6 +480,10 @@ AI_MATCHING_USER_QUERY = """请对以下未匹配的零件进行智能匹配，*
 ## 未匹配的BOM项（{bom_count}个）
 
 {unmatched_bom}
+
+## ✅ 允许使用的BOM code白名单（必须严格使用）
+
+{allowed_bom_codes}
 
 ## 🧠 COT推理要求
 
@@ -506,6 +511,7 @@ AI_MATCHING_USER_QUERY = """请对以下未匹配的零件进行智能匹配，*
 2. **年份忽略**：标准号中的年份差异（如2000 vs 2015）可以忽略
 3. **一对多关系**：一个BOM可以对应多个3D零件（如螺栓有多个实例）
 4. **置信度阈值**：≥0.70即可输出，不要过于严格
+5. **禁止幻觉BOM code**：`ai_matched_pairs[].bom_code` 必须来自上方白名单；若无法确定请填 `null`
 
 ## 📋 输出格式
 
@@ -568,10 +574,19 @@ def build_ai_matching_prompt(
     for i, bom in enumerate(unmatched_bom, 1):  # 传所有BOM！
         bom_text += f"{i}. {bom.get('code')} | {bom.get('name')} | {bom.get('product_code', '')}\n"
 
+    # ✅ 显式传递可用 BOM code 白名单，降低模型幻觉 code 概率
+    allowed_codes = [
+        str(bom.get("code", "")).strip()
+        for bom in unmatched_bom
+        if str(bom.get("code", "")).strip()
+    ]
+    allowed_codes_text = ", ".join(allowed_codes) if allowed_codes else "（空）"
+
     system_prompt = AI_MATCHING_SYSTEM_PROMPT
     user_query = AI_MATCHING_USER_QUERY.format(
         unmatched_parts=parts_text,
         unmatched_bom=bom_text,
+        allowed_bom_codes=allowed_codes_text,
         parts_count=len(unmatched_parts),
         bom_count=len(unmatched_bom)
     )

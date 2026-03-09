@@ -113,6 +113,10 @@ class RollbackRequest(BaseModel):
     changelog: Optional[str] = None
 
 
+class RenameProjectRequest(BaseModel):
+    new_name: str = Field(..., min_length=1, max_length=120, description="新的项目名称")
+
+
 class InsertStepRequest(BaseModel):
     chapter_type: str  # component_assembly | product_assembly
     component_code: Optional[str] = None  # 组件装配时必填
@@ -1467,6 +1471,129 @@ async def delete_manual(task_id: str):
         print(f"❌ 删除说明书失败: {e}")
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"删除失败: {str(e)}")
+
+
+@app.put("/api/manual/{task_id}/rename")
+async def rename_project(task_id: str, request: RenameProjectRequest):
+    """
+    重命名任务显示名（查看器列表显示）
+    - completed: 更新 output/{task_id}/assembly_manual.json -> metadata.product_name
+    - processing/failed: 更新 output/{task_id}/task_status.json -> config.projectName
+    - 同步更新内存任务 tasks[task_id].config.projectName
+    """
+    try:
+        task_dir = OUTPUT_DIR / task_id
+        if not task_dir.exists():
+            raise HTTPException(status_code=404, detail=f"任务不存在: {task_id}")
+
+        new_name = (request.new_name or "").strip()
+        if not new_name:
+            raise HTTPException(status_code=400, detail="新名称不能为空")
+        if _is_circular_sentinel(new_name):
+            raise HTTPException(status_code=400, detail="新名称无效")
+
+        updated = {
+            "manual": False,
+            "draft": False,
+            "status": False,
+            "memory": False
+        }
+
+        # 1) 已发布手册（查看器 completed 列表主来源）
+        manual_path = task_dir / "assembly_manual.json"
+        if manual_path.exists():
+            with open(manual_path, "r", encoding="utf-8") as f:
+                manual_data = json.load(f)
+
+            metadata = manual_data.get("metadata")
+            if not isinstance(metadata, dict):
+                metadata = {}
+                manual_data["metadata"] = metadata
+            metadata["product_name"] = new_name
+
+            # 同步常见展示字段，避免手册内外口径不一致
+            product_overview = manual_data.get("product_overview")
+            if isinstance(product_overview, dict):
+                product_overview["product_name"] = new_name
+            product_assembly = manual_data.get("product_assembly")
+            if isinstance(product_assembly, dict):
+                product_assembly["product_name"] = new_name
+
+            with open(manual_path, "w", encoding="utf-8") as f:
+                json.dump(manual_data, f, ensure_ascii=False, indent=2)
+            updated["manual"] = True
+
+        # 2) 草稿（管理员编辑场景保持一致）
+        draft_path = task_dir / "draft.json"
+        if draft_path.exists():
+            with open(draft_path, "r", encoding="utf-8") as f:
+                draft_data = json.load(f)
+
+            metadata = draft_data.get("metadata")
+            if not isinstance(metadata, dict):
+                metadata = {}
+                draft_data["metadata"] = metadata
+            metadata["product_name"] = new_name
+
+            product_overview = draft_data.get("product_overview")
+            if isinstance(product_overview, dict):
+                product_overview["product_name"] = new_name
+            product_assembly = draft_data.get("product_assembly")
+            if isinstance(product_assembly, dict):
+                product_assembly["product_name"] = new_name
+
+            with open(draft_path, "w", encoding="utf-8") as f:
+                json.dump(draft_data, f, ensure_ascii=False, indent=2)
+            updated["draft"] = True
+
+        # 3) 任务状态（processing/failed 列表来源）
+        status_path = task_dir / "task_status.json"
+        if status_path.exists():
+            with open(status_path, "r", encoding="utf-8") as f:
+                status_data = json.load(f)
+
+            config = status_data.get("config")
+            if not isinstance(config, dict):
+                config = {}
+                status_data["config"] = config
+            config["projectName"] = new_name
+            status_data["project_name"] = new_name
+            status_data["updated_at"] = beijing_now().isoformat()
+
+            with open(status_path, "w", encoding="utf-8") as f:
+                json.dump(status_data, f, ensure_ascii=False, indent=2)
+            updated["status"] = True
+
+        # 4) 同步内存任务，防止正在运行时被旧值覆盖
+        if task_id in tasks:
+            task = tasks[task_id]
+            config = task.get("config")
+            if not isinstance(config, dict):
+                config = {}
+                task["config"] = config
+            config["projectName"] = new_name
+            task["project_name"] = new_name
+            task["updated_at"] = beijing_now()
+            _persist_task_status(task_id)
+            updated["memory"] = True
+
+        if not any(updated.values()):
+            raise HTTPException(status_code=404, detail="任务存在，但未找到可更新的名称字段")
+
+        print(f"✅ 项目重命名成功: {task_id} -> {new_name}")
+        return {
+            "success": True,
+            "taskId": task_id,
+            "productName": new_name,
+            "updated": updated
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ 项目重命名失败: {e}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"重命名失败: {str(e)}")
+
 
 @app.head("/api/manual/{task_id}/version")
 async def get_manual_version(task_id: str):

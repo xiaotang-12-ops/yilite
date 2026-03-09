@@ -6,7 +6,7 @@
 
 import json
 import re
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Set
 from pathlib import Path
 from processors.file_processor import ModelProcessor
 from processors.step_to_glb_converter import StepToGlbConverter
@@ -24,6 +24,8 @@ class HierarchicalBOMMatcher:
         """初始化匹配器"""
         self.model_processor = ModelProcessor()
         self.step_converter = StepToGlbConverter(self.model_processor)
+        # AI 匹配结果过滤阈值：防止低置信度结果污染 node 映射
+        self.ai_match_min_confidence = 0.85
     
     def process_hierarchical_matching(
         self,
@@ -212,6 +214,12 @@ class HierarchicalBOMMatcher:
                         api_key=ai_api_key
                     )
                     ai_results = ai_matcher.match_unmatched_parts(unmatched_parts, unmatched_bom)
+                    ai_results = self._filter_ai_results_with_guard(
+                        ai_results=ai_results,
+                        candidate_bom_items=unmatched_bom,
+                        existing_bom_to_mesh=code_bom_to_mesh,
+                        context="component",
+                    )
 
                     # ✅ 将AI匹配结果应用到cleaned_parts（更新bom_code）
                     cleaned_parts = code_matching_result.get("cleaned_parts", [])
@@ -257,10 +265,15 @@ class HierarchicalBOMMatcher:
                 import sys
                 sys.stdout.flush()
 
-                # ✅ 重新生成BOM映射宽表（使用更新后的cleaned_parts）
+                # ✅ 重新生成BOM映射宽表（基于最终映射，避免中间态丢失）
                 from core.bom_3d_matcher import BOM3DMatcher
                 matcher = BOM3DMatcher()
-                bom_mapping_table = matcher.generate_bom_mapping_table(component_bom, cleaned_parts)
+                bom_mapping_table = matcher.generate_bom_mapping_table(
+                    component_bom,
+                    cleaned_parts,
+                    bom_to_node_mapping=final_bom_to_mesh,
+                    parts_list=parts_list,
+                )
 
                 # ✅ 生成组件的爆炸视图数据
                 print_info(f"生成组件{file_index}爆炸视图数据...", indent=1)
@@ -484,6 +497,12 @@ class HierarchicalBOMMatcher:
                             api_key=ai_api_key
                         )
                         ai_results = ai_matcher.match_unmatched_parts(unmatched_parts, unmatched_bom)
+                        ai_results = self._filter_ai_results_with_guard(
+                            ai_results=ai_results,
+                            candidate_bom_items=unmatched_bom,
+                            existing_bom_to_mesh={**assembly_to_mesh, **code_bom_to_mesh},
+                            context="product",
+                        )
 
                         # 将AI匹配结果应用到cleaned_parts（更新bom_code）
                         for ai_result in ai_results:
@@ -535,10 +554,15 @@ class HierarchicalBOMMatcher:
                 import sys
                 sys.stdout.flush()
 
-                # ✅ 重新生成BOM映射宽表（使用更新后的cleaned_parts）
+                # ✅ 重新生成BOM映射宽表（基于最终映射，避免中间态丢失）
                 from core.bom_3d_matcher import BOM3DMatcher
                 matcher = BOM3DMatcher()
-                product_bom_mapping_table = matcher.generate_bom_mapping_table(product_bom, cleaned_parts)
+                product_bom_mapping_table = matcher.generate_bom_mapping_table(
+                    product_bom,
+                    cleaned_parts,
+                    bom_to_node_mapping=final_bom_to_mesh,
+                    parts_list=parts_list,
+                )
 
                 product_level_mapping = {
                     "glb_file": str(product_glb),
@@ -1007,6 +1031,431 @@ class HierarchicalBOMMatcher:
         if match:
             return match.group(0).lower()
         return ""
+
+    @staticmethod
+    def _safe_int(value, default: int = 0) -> int:
+        """安全转换整数，避免脏值导致流程中断。"""
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return default
+
+    def _extract_spec_tokens(self, text: str) -> Set[str]:
+        """
+        从文本提取规格令牌（M8、14#、G1/2、12MM 等）。
+        用于过滤明显不可能的 AI 错配。
+        """
+        if not text:
+            return set()
+
+        raw_text = str(text)
+        raw = raw_text.upper()
+        raw = (
+            raw.replace("×", "*")
+               .replace("／", "/")
+               .replace("．", ".")
+               .replace("－", "*")
+               .replace("-", "*")
+        )
+        tokens: Set[str] = set()
+
+        # 类型令牌：用于区分“平垫圈/弹垫圈”等同尺寸但不同品类的错配。
+        type_keywords = {
+            "TYPE_FLAT_WASHER": ("平垫圈", "平垫"),
+            "TYPE_SPRING_WASHER": ("弹性垫圈", "弹簧垫圈", "弹垫"),
+            "TYPE_BOLT": ("螺栓", "螺钉", "螺丝"),
+            "TYPE_NUT": ("螺母",),
+            "TYPE_KEY": ("平键",),
+        }
+        for type_token, keywords in type_keywords.items():
+            if any(keyword in raw_text for keyword in keywords):
+                tokens.add(type_token)
+
+        # 螺纹规格，如 M8 / M12*35
+        for token in re.findall(r"M\d+(?:\.\d+)?(?:\*\d+(?:\.\d+)?)?", raw):
+            token = token.strip()
+            if not token:
+                continue
+            tokens.add(token)
+            tokens.add(token.split("*", 1)[0])  # 兼容 M12 与 M12*35 对齐
+
+        # 如 14#
+        for token in re.findall(r"\d+\s*#", raw):
+            normalized = token.replace(" ", "")
+            if normalized:
+                tokens.add(normalized)
+                hash_size = normalized.replace("#", "")
+                if hash_size:
+                    tokens.add(f"HASH{hash_size}")
+
+        # 管螺纹，如 G1/2
+        for token in re.findall(r"G\d+/\d+", raw):
+            token = token.strip()
+            if token:
+                tokens.add(token)
+
+        # 直径，如 φ10 / Ø10
+        for token in re.findall(r"[ΦØ]\s*\d+(?:\.\d+)?", raw):
+            normalized = re.sub(r"\s+", "", token).replace("Ø", "Φ")
+            if normalized:
+                tokens.add(normalized)
+
+        # 纯尺寸，如 16*3 / 10*8*30（把 10*8-30 统一为 10*8*30）
+        for token in re.findall(r"\d+(?:\.\d+)?(?:\*\d+(?:\.\d+)?){1,2}", raw):
+            normalized = token.strip()
+            if not normalized:
+                continue
+            if self._is_year_like_dimension_token(normalized):
+                continue
+            tokens.add(normalized)
+            first_dim = normalized.split("*", 1)[0]
+            if first_dim:
+                tokens.add(f"DIM{first_dim}")
+
+        # 毫米维度，如 12mm
+        for token in re.findall(r"\d+(?:\.\d+)?\s*MM", raw):
+            normalized = token.replace(" ", "")
+            if normalized:
+                tokens.add(normalized)
+
+        return tokens
+
+    def _should_enforce_qty_limit(self, bom_item: Dict) -> bool:
+        """仅对标准紧固件启用数量上限，避免套件/组件被误截断。"""
+        code = str(bom_item.get("code") or "").strip()
+        name = str(bom_item.get("name") or "")
+        product_code = str(bom_item.get("product_code") or "").upper()
+
+        if code.startswith("02.03."):
+            return True
+
+        fastener_keywords = (
+            "螺栓", "螺母", "垫圈", "螺钉", "螺丝", "挡圈", "销", "平键", "键",
+        )
+        if any(keyword in name for keyword in fastener_keywords):
+            return True
+
+        if re.search(r"\bM\d+", product_code):
+            return True
+
+        return False
+
+    def _build_ai_guard(self, candidate_bom_items: List[Dict]) -> Dict[str, Dict]:
+        """构建 BOM 约束：数量上限 + 规格令牌。"""
+        guard: Dict[str, Dict] = {}
+        for item in candidate_bom_items or []:
+            code = str(item.get("code") or "").strip()
+            if not code:
+                continue
+            qty = self._safe_int(item.get("quantity"), 0)
+            name = str(item.get("name") or "")
+            product_code = str(item.get("product_code") or "")
+            spec_text = " ".join(
+                [
+                    product_code,
+                    name,
+                    str(item.get("code") or ""),
+                ]
+            )
+            is_fastener = self._should_enforce_qty_limit(item)
+            guard[code] = {
+                "qty_limit": qty,
+                "enforce_qty_limit": is_fastener,
+                "is_fastener": is_fastener,
+                "spec_tokens": self._extract_spec_tokens(spec_text),
+                "anchor_tokens": self._extract_anchor_tokens(name, product_code),
+            }
+        return guard
+
+    def _extract_anchor_tokens(self, name: str, product_code: str) -> Set[str]:
+        """
+        提取非紧固件锚点 token，用于在“规格信息不足”时避免误杀明显正确的匹配。
+        """
+        anchors: Set[str] = set()
+        merged_text = f"{name or ''} {product_code or ''}"
+
+        # 中文锚点：保留 2+ 连续中文词（如 圆形毛刷盘、直角过渡接头）。
+        for token in re.findall(r"[\u4e00-\u9fff]{2,}", merged_text):
+            norm = self._normalize_token(token)
+            if norm:
+                anchors.add(norm)
+
+        # 英文/数字锚点：用于贴纸、型号、代号等（如 warning-high-pressure、UCF206）。
+        for token in re.findall(r"[A-Za-z0-9][A-Za-z0-9./+#*\-]{2,}", merged_text):
+            norm = self._normalize_token(token)
+            if norm and len(norm) >= 4:
+                anchors.add(norm)
+
+        code_token = self._extract_code_token(product_code)
+        if code_token:
+            anchors.add(self._normalize_token(code_token))
+
+        return anchors
+
+    def _has_anchor_overlap(self, anchor_tokens: Set[str], ai_text: str, ai_spec_tokens: Set[str]) -> bool:
+        """判断 AI 文本是否包含 BOM 锚点，作为非紧固件放行条件。"""
+        if not anchor_tokens:
+            return False
+
+        norm_ai_text = self._normalize_token(ai_text)
+        ai_spec_norm = {self._normalize_token(token) for token in (ai_spec_tokens or set()) if token}
+
+        for anchor in anchor_tokens:
+            if not anchor:
+                continue
+            if anchor in norm_ai_text:
+                return True
+            if anchor in ai_spec_norm:
+                return True
+        return False
+
+    @staticmethod
+    def _is_year_like_dimension_token(token: str) -> bool:
+        """
+        识别形如 95*2002 / 5783*2016 的“标准号-年份”伪尺寸 token，
+        避免它们在规格交集中造成误放行。
+        """
+        if not re.fullmatch(r"\d+(?:\.\d+)?(?:\*\d+(?:\.\d+)?){1,2}", token):
+            return False
+        parts = token.split("*")
+        if len(parts) != 2:
+            return False
+        try:
+            year = int(float(parts[1]))
+        except ValueError:
+            return False
+        return 1900 <= year <= 2100
+
+    @staticmethod
+    def _extract_type_tokens(tokens: Set[str]) -> Set[str]:
+        """提取类型令牌（TYPE_*）。"""
+        return {t for t in (tokens or set()) if t.startswith("TYPE_")}
+
+    def _extract_direct_spec_tokens(self, tokens: Set[str]) -> Set[str]:
+        """
+        提取用于直接交集比较的规格令牌：
+        - 排除弱令牌：DIM/HASH/TYPE 与标准号年份伪尺寸
+        """
+        direct: Set[str] = set()
+        for token in tokens or set():
+            if not token:
+                continue
+            if token.startswith(("DIM", "HASH", "TYPE_")):
+                continue
+            if self._is_year_like_dimension_token(token):
+                continue
+            direct.add(token)
+        return direct
+
+    @staticmethod
+    def _extract_numeric_size_tokens(tokens: Set[str]) -> Set[str]:
+        """
+        提取“强规格”令牌，用于低置信度放行的二次判定。
+        仅接受尺寸级 token（如 14*2.5、10*8*30、M10*75），
+        排除标准号年份类 token（如 95*2002）。
+        """
+        strong: Set[str] = set()
+        for token in tokens or set():
+            if not token:
+                continue
+            if token.startswith("M") and "*" in token:
+                strong.add(token)
+                continue
+            if re.fullmatch(r"\d+(?:\.\d+)?(?:\*\d+(?:\.\d+)?){1,2}", token):
+                if not HierarchicalBOMMatcher._is_year_like_dimension_token(token):
+                    strong.add(token)
+        return strong
+
+    def _has_strong_spec_overlap(self, bom_spec_tokens: Set[str], ai_spec_tokens: Set[str]) -> bool:
+        """判断两侧是否存在强规格交集。"""
+        bom_strong = self._extract_numeric_size_tokens(bom_spec_tokens)
+        ai_strong = self._extract_numeric_size_tokens(ai_spec_tokens)
+        return bool(bom_strong & ai_strong)
+
+    def _is_ai_match_spec_compatible(
+        self,
+        bom_spec_tokens: Set[str],
+        ai_result: Optional[Dict] = None,
+        ai_spec_tokens: Optional[Set[str]] = None,
+    ) -> bool:
+        """
+        规格一致性校验：
+        - BOM 无规格令牌：不拦截
+        - AI 无可用规格信息：拦截（防止盲配）
+        - 两侧强规格冲突：拦截
+        - 两侧类型令牌冲突：拦截
+        """
+        if not bom_spec_tokens:
+            return True
+
+        if ai_spec_tokens is None:
+            ai_text = " ".join(
+                [
+                    str((ai_result or {}).get("geometry_name") or ""),
+                    str((ai_result or {}).get("reasoning") or ""),
+                    str((ai_result or {}).get("reason") or ""),
+                ]
+            )
+            ai_tokens = self._extract_spec_tokens(ai_text)
+        else:
+            ai_tokens = ai_spec_tokens
+        if not ai_tokens:
+            return False
+
+        # 若双方都有强规格且无交集，直接拦截（如 16*3 vs 20*3）。
+        bom_strong = self._extract_numeric_size_tokens(bom_spec_tokens)
+        ai_strong = self._extract_numeric_size_tokens(ai_tokens)
+        if bom_strong and ai_strong and not (bom_strong & ai_strong):
+            return False
+
+        # 类型冲突拦截（如 平垫圈 vs 弹性垫圈）。
+        bom_types = self._extract_type_tokens(bom_spec_tokens)
+        ai_types = self._extract_type_tokens(ai_tokens)
+        if bom_types and ai_types and not (bom_types & ai_types):
+            return False
+
+        # 直接交集优先（仅比较有效规格令牌，排除标准号年份类弱 token）。
+        direct_bom = self._extract_direct_spec_tokens(bom_spec_tokens)
+        direct_ai = self._extract_direct_spec_tokens(ai_tokens)
+        if direct_bom & direct_ai:
+            return True
+
+        # 兼容 14# <-> 14*3.6 这类表达差异（仅在双方不存在强规格冲突时启用）。
+        bom_hash = {t.replace("HASH", "") for t in bom_spec_tokens if t.startswith("HASH")}
+        ai_hash = {t.replace("HASH", "") for t in ai_tokens if t.startswith("HASH")}
+        bom_dim = {t.replace("DIM", "") for t in bom_spec_tokens if t.startswith("DIM")}
+        ai_dim = {t.replace("DIM", "") for t in ai_tokens if t.startswith("DIM")}
+
+        if (not bom_strong or not ai_strong) and bom_hash and ai_dim and (bom_hash & ai_dim):
+            return True
+        if (not bom_strong or not ai_strong) and ai_hash and bom_dim and (ai_hash & bom_dim):
+            return True
+
+        return False
+
+    def _filter_ai_results_with_guard(
+        self,
+        ai_results: List[Dict],
+        candidate_bom_items: List[Dict],
+        existing_bom_to_mesh: Optional[Dict[str, List[str]]] = None,
+        context: str = "unknown",
+    ) -> List[Dict]:
+        """
+        过滤 AI 匹配结果，降低误匹配污染：
+        1) 置信度阈值
+        2) 规格令牌一致性
+        3) BOM 数量上限
+        4) 去重（同一 bom_code + node_name）
+        """
+        if not ai_results:
+            return []
+
+        guard = self._build_ai_guard(candidate_bom_items)
+        existing_bom_to_mesh = existing_bom_to_mesh or {}
+
+        accepted_nodes: Dict[str, Set[str]] = {
+            code: {str(node) for node in (nodes or []) if node}
+            for code, nodes in existing_bom_to_mesh.items()
+        }
+        accepted_counts = {code: len(nodes) for code, nodes in accepted_nodes.items()}
+
+        filtered: List[Dict] = []
+        dropped_conf = 0
+        dropped_spec = 0
+        dropped_limit = 0
+        dropped_invalid = 0
+        dropped_duplicate = 0
+
+        for ai_result in ai_results:
+            bom_code = str(
+                ai_result.get("matched_bom_code")
+                or ai_result.get("bom_code")
+                or ""
+            ).strip()
+            node_name = str(ai_result.get("node_name") or "").strip()
+            try:
+                confidence = float(ai_result.get("confidence") or 0.0)
+            except (TypeError, ValueError):
+                confidence = 0.0
+
+            if not bom_code or not node_name or bom_code not in guard:
+                dropped_invalid += 1
+                continue
+
+            guard_item = guard[bom_code]
+            is_fastener = bool(guard_item.get("is_fastener", False))
+            ai_text = " ".join(
+                [
+                    str(ai_result.get("geometry_name") or ""),
+                    str(ai_result.get("reasoning") or ""),
+                    str(ai_result.get("reason") or ""),
+                ]
+            )
+            ai_spec_tokens = self._extract_spec_tokens(ai_text)
+            has_strong_overlap = self._has_strong_spec_overlap(
+                guard_item["spec_tokens"],
+                ai_spec_tokens,
+            )
+            has_anchor_overlap = self._has_anchor_overlap(
+                guard_item.get("anchor_tokens", set()),
+                ai_text=ai_text,
+                ai_spec_tokens=ai_spec_tokens,
+            )
+
+            if confidence < self.ai_match_min_confidence:
+                # 紧固件保持严格：仅在强规格完全对齐时，允许 0.80~0.85 低置信度放行。
+                if is_fastener:
+                    if confidence < 0.80 or not has_strong_overlap:
+                        dropped_conf += 1
+                        continue
+                else:
+                    # 非紧固件适度放宽：允许 0.75~0.85 的“锚点命中/强规格命中”结果。
+                    if confidence < 0.75 or (not has_strong_overlap and not has_anchor_overlap):
+                        dropped_conf += 1
+                        continue
+
+            if not self._is_ai_match_spec_compatible(
+                guard_item["spec_tokens"],
+                ai_spec_tokens=ai_spec_tokens,
+            ):
+                # 非紧固件若规格词稀疏但文本锚点明确，允许通过，避免大件/标识件误杀。
+                if is_fastener or not has_anchor_overlap:
+                    dropped_spec += 1
+                    continue
+
+            if bom_code not in accepted_nodes:
+                accepted_nodes[bom_code] = set()
+                accepted_counts[bom_code] = 0
+
+            if node_name in accepted_nodes[bom_code]:
+                dropped_duplicate += 1
+                continue
+
+            qty_limit = guard_item["qty_limit"]
+            enforce_qty_limit = guard_item.get("enforce_qty_limit", False)
+            if enforce_qty_limit and qty_limit > 0 and accepted_counts[bom_code] >= qty_limit:
+                dropped_limit += 1
+                continue
+
+            filtered.append(ai_result)
+            accepted_nodes[bom_code].add(node_name)
+            accepted_counts[bom_code] += 1
+
+        filtered_count = len(filtered)
+        dropped_total = len(ai_results) - filtered_count
+        print_info(
+            f"  AI匹配过滤({context}): 输入 {len(ai_results)} 条，保留 {filtered_count} 条，剔除 {dropped_total} 条",
+            indent=1,
+        )
+        if dropped_total:
+            print_warning(
+                "  过滤明细: "
+                f"低置信度={dropped_conf}, 规格冲突={dropped_spec}, 超数量={dropped_limit}, "
+                f"重复={dropped_duplicate}, 无效={dropped_invalid}",
+                indent=1,
+            )
+
+        return filtered
     
     def _get_component_bom(self, bom_data: List[Dict], comp_plan: Dict, drawing_index: int = None, file_name: str = "") -> List[Dict]:
         """

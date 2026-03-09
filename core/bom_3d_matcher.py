@@ -254,7 +254,13 @@ class BOM3DMatcher:
 
         return mapping
 
-    def generate_bom_mapping_table(self, bom_data: List[Dict], cleaned_parts: List[Dict]) -> List[Dict]:
+    def generate_bom_mapping_table(
+        self,
+        bom_data: List[Dict],
+        cleaned_parts: List[Dict],
+        bom_to_node_mapping: Optional[Dict[str, List[str]]] = None,
+        parts_list: Optional[List[Dict]] = None,
+    ) -> List[Dict]:
         """
         生成BOM映射宽表（包含完整的映射链条）
 
@@ -269,6 +275,24 @@ class BOM3DMatcher:
         Returns:
             宽表列表，每个元素包含完整的映射信息
         """
+        # 建立 node_name -> 几何名索引（优先使用全量 parts_list，回退 cleaned_parts）
+        node_to_geometry: Dict[str, str] = {}
+        for part in parts_list or []:
+            node_name = part.get("node_name")
+            if not node_name:
+                continue
+            geometry_name = part.get("fixed_name", part.get("geometry_name", "")) or ""
+            if geometry_name and node_name not in node_to_geometry:
+                node_to_geometry[node_name] = geometry_name
+
+        for part in cleaned_parts or []:
+            node_name = part.get("node_name")
+            if not node_name:
+                continue
+            geometry_name = part.get("fixed_name", part.get("geometry_name", "")) or ""
+            if geometry_name and node_name not in node_to_geometry:
+                node_to_geometry[node_name] = geometry_name
+
         # 按BOM代号分组cleaned_parts
         parts_by_bom_code = {}
         for part in cleaned_parts:
@@ -288,14 +312,36 @@ class BOM3DMatcher:
             name = bom_item.get("name", "")
             quantity = bom_item.get("quantity", 1)
 
-            # 查找匹配的3D零件
-            matched_parts = parts_by_bom_code.get(code, [])
+            # 优先使用最终 bom_to_mesh 结果，避免中间 cleaned_parts 口径丢失
+            final_nodes = []
+            if bom_to_node_mapping is not None:
+                final_nodes = [
+                    str(node)
+                    for node in (bom_to_node_mapping.get(code, []) or [])
+                    if node
+                ]
+                # 去重并保持顺序
+                final_nodes = list(dict.fromkeys(final_nodes))
 
+            if final_nodes:
+                geometry_names = [node_to_geometry.get(node, "") for node in final_nodes]
+                mapping_table.append({
+                    "seq": seq,
+                    "code": code,
+                    "product_code": product_code,
+                    "name": name,
+                    "quantity": quantity,
+                    "geometry_names": geometry_names,
+                    "node_names": final_nodes,
+                    "matched": True
+                })
+                continue
+
+            # 回退：兼容旧逻辑（基于 cleaned_parts 分组）
+            matched_parts = parts_by_bom_code.get(code, [])
             if matched_parts:
-                # 提取几何体名称和node_name
                 geometry_names = [p.get("fixed_name", p.get("geometry_name", "")) for p in matched_parts]
                 node_names = [p.get("node_name") for p in matched_parts]
-
                 mapping_table.append({
                     "seq": seq,
                     "code": code,
@@ -307,7 +353,6 @@ class BOM3DMatcher:
                     "matched": True
                 })
             else:
-                # 未匹配的BOM项
                 mapping_table.append({
                     "seq": seq,
                     "code": code,

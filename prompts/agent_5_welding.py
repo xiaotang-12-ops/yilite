@@ -250,25 +250,50 @@ WELDING_USER_QUERY = """请为以下装配步骤添加焊接要点（如果涉�
 """
 
 
-def build_welding_prompt(assembly_steps: list) -> tuple:
-    """
-    构建焊接工艺提示词
+WELDING_COMPACT_SYSTEM_PROMPT = """你是焊接工艺工程师。
 
-    Args:
-        assembly_steps: 装配步骤列表（来自Agent 3和Agent 4）
+任务：只判断每个步骤是否需要焊接，并补充简短焊接信息。
 
-    Returns:
-        (system_prompt, user_query) 元组
-    """
+只输出 JSON（不要 Markdown）：
+{
+  "welding_annotations": [
+    {
+      "step_id": "product_step_1",
+      "step_number": 1,
+      "required": true,
+      "welding": {
+        "welding_type": "角焊",
+        "welding_method": "CO2气保焊",
+        "weld_size": "焊脚高度6mm",
+        "welding_position": "零件A与零件B连接处",
+        "quality_requirements": "焊缝连续饱满，无裂纹",
+        "safety_notes": "佩戴焊接面罩与手套，保持通风"
+      }
+    },
+    {
+      "step_id": "product_step_2",
+      "step_number": 2,
+      "required": false
+    }
+  ]
+}
+规则：
+1) 不需要焊接时，required=false，不要输出 welding 字段。
+2) 需要焊接时，required=true，welding 字段尽量完整但保持简洁。
+3) step_id 必须来自输入，不要新增/改写。
+"""
+
+WELDING_COMPACT_USER_QUERY = """请基于步骤文本和图纸图片判断焊接需求。
+
+步骤数据（精简）：
+{steps_json}
+"""
+
+
+def build_welding_prompt(compact_steps: list) -> tuple:
+    """构建焊接提示词（精简输入，减少 token 消耗）。"""
     import json
 
-    # ✅ 将装配步骤转换为JSON字符串
-    steps_json = json.dumps(assembly_steps, ensure_ascii=False, indent=2)
-
-    system_prompt = WELDING_SYSTEM_PROMPT
-    user_query = WELDING_USER_QUERY.format(
-        assembly_steps_json=steps_json
-    )
-
-    return system_prompt, user_query
+    steps_json = json.dumps(compact_steps, ensure_ascii=False, separators=(",", ":"))
+    return WELDING_COMPACT_SYSTEM_PROMPT, WELDING_COMPACT_USER_QUERY.format(steps_json=steps_json)
 

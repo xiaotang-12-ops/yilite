@@ -1542,51 +1542,59 @@ class GeminiAssemblyPipeline:
         sys.stdout.flush()
 
         # ========== Agent 5: 焊接工程师 ==========
-        self.log_agent_call("焊接工程师", "为每个装配步骤添加焊接要点", "running")
+        # 规则：产品模式默认跳过焊接智能体，直接进入安全增强，节省 token 与耗时。
+        skip_welding_for_product_mode = bool(self.is_product_mode)
+        if skip_welding_for_product_mode:
+            print_info("⏭️ 产品模式：跳过焊接智能体，直接进入安全增强", indent=1)
+            enhanced_component_results = component_results
+            enhanced_product_result = product_result.copy()
+            self.log_agent_call("焊接工程师", "产品模式已跳过焊接增强", "success")
+        else:
+            self.log_agent_call("焊接工程师", "为每个装配步骤添加焊接要点", "running")
 
-        # 处理组件装配步骤
-        enhanced_component_results = []
-        for comp_result in component_results:
-            if not comp_result.get("success"):
+            # 处理组件装配步骤
+            enhanced_component_results = []
+            for comp_result in component_results:
+                if not comp_result.get("success"):
+                    enhanced_component_results.append(comp_result)
+                    continue
+
+                assembly_steps = comp_result.get("assembly_steps", [])
+
+                # ✅ 使用assembly_order来获取组件图片
+                assembly_order = comp_result.get("assembly_order", "")
+                component_images = image_hierarchy.get('component_images', {}).get(str(assembly_order), [])
+
+                welding_result = self.welding_agent.process(
+                    all_images=component_images,
+                    assembly_steps=assembly_steps
+                )
+
+                # 将焊接要点嵌入到步骤中
+                if welding_result.get("success"):
+                    enhanced_steps = welding_result.get("enhanced_steps", assembly_steps)
+                    comp_result["assembly_steps"] = enhanced_steps
+
                 enhanced_component_results.append(comp_result)
-                continue
 
-            assembly_steps = comp_result.get("assembly_steps", [])
+            # 处理产品装配步骤
+            enhanced_product_result = product_result.copy()
+            if product_result.get("success"):
+                product_steps = product_result.get("assembly_steps", [])
+                product_images = image_hierarchy.get('product_images', [])
 
-            # ✅ 使用assembly_order来获取组件图片
-            assembly_order = comp_result.get("assembly_order", "")
-            component_images = image_hierarchy.get('component_images', {}).get(str(assembly_order), [])
+                welding_result = self.welding_agent.process(
+                    all_images=product_images,
+                    assembly_steps=product_steps
+                )
 
-            welding_result = self.welding_agent.process(
-                all_images=component_images,
-                assembly_steps=assembly_steps
-            )
+                if welding_result.get("success"):
+                    enhanced_steps = welding_result.get("enhanced_steps", product_steps)
+                    enhanced_product_result["assembly_steps"] = enhanced_steps
 
-            # 将焊接要点嵌入到步骤中
-            if welding_result.get("success"):
-                enhanced_steps = welding_result.get("enhanced_steps", assembly_steps)
-                comp_result["assembly_steps"] = enhanced_steps
-
-            enhanced_component_results.append(comp_result)
-
-        # 处理产品装配步骤
-        enhanced_product_result = product_result.copy()
-        if product_result.get("success"):
-            product_steps = product_result.get("assembly_steps", [])
-            product_images = image_hierarchy.get('product_images', [])
-
-            welding_result = self.welding_agent.process(
-                all_images=product_images,
-                assembly_steps=product_steps
-            )
-
-            if welding_result.get("success"):
-                enhanced_steps = welding_result.get("enhanced_steps", product_steps)
-                enhanced_product_result["assembly_steps"] = enhanced_steps
-
-        print_success(f"⚡ 焊接要点已嵌入到装配步骤中", indent=1)
-        sys.stdout.flush()
-        self.log_agent_call("焊接工程师", "完成焊接要点标注", "success")
+            print_success(f"⚡ 焊接要点已嵌入到装配步骤中", indent=1)
+            sys.stdout.flush()
+            self.log_agent_call("焊接工程师", "完成焊接要点标注", "success")
 
         # ========== Agent 6: 安全专员 ==========
         self.log_agent_call("安全专员", "为每个装配步骤添加安全警告", "running")
@@ -1632,7 +1640,8 @@ class GeminiAssemblyPipeline:
         enhanced_result = {
             "type": "product" if self.is_product_mode else "component",
             "component_results": final_component_results,  # 组件模式时有数据，产品模式时为[]
-            "product_result": final_product_result  # 产品模式时有数据，组件模式时为{}
+            "product_result": final_product_result,  # 产品模式时有数据，组件模式时为{}
+            "welding_skipped": skip_welding_for_product_mode
         }
 
         with open(self.output_dir / "step7_enhanced_result.json", "w", encoding="utf-8") as f:
