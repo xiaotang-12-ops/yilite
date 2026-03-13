@@ -2,13 +2,13 @@
 """
 PDF 文本层 BOM 提取（确定性解析）
 
-目标：在不使用 OCR/视觉模型 的前提下，从 PDF 的文本层中稳定提取 BOM 7 列：
-seq, code, product_code, name, quantity, unit_weight, total_weight
+核心目标：优先稳定提取 6 列关键字段：
+seq, code, product_code, name, material, quantity
 
-设计前提（来自实际样本 BH1830 的文本层表现）：
-- 表格被线性化后，单元格通常以“逐行”形式输出（每个 cell 一行）
-- 典型记录结构：seq → code → product_code → name(可多行) → quantity → unit_weight/total_weight
-- unit_weight 与 total_weight 可能分两行，也可能同一行出现两个数值（如 "622.57 622.57"）
+设计原则：
+- 文本层解析首先保证“序号、物料代码、代号、名称、材料、数量”正确。
+- 重量字段属于弱约束，只做可选补充，不能反过来破坏 6 列关键字段。
+- 表格被线性化后，单元格通常以“逐行”形式输出（每个 cell 一行）。
 """
 
 from __future__ import annotations
@@ -21,6 +21,7 @@ from typing import Dict, List, Optional, Tuple
 _INT_RE = re.compile(r"^\d+$")
 _CODE_RE = re.compile(r"^\d{2}\.\d{2}(?:\.\d{2})?\.\d{4}$")
 _NUM_LINE_RE = re.compile(r"^\s*[-+]?\d+(?:\.\d+)?(?:\s+[-+]?\d+(?:\.\d+)?)*\s*$")
+_CHINESE_RE = re.compile(r"[\u4e00-\u9fff]")
 
 
 @dataclass
@@ -61,6 +62,120 @@ def _parse_numeric_tokens(line: str) -> List[float]:
     return out
 
 
+def _looks_like_record_start(lines: List[str], idx: int) -> bool:
+    if idx < 0 or idx + 1 >= len(lines):
+        return False
+    seq_raw = _normalize_cell(lines[idx])
+    code_raw = _normalize_cell(lines[idx + 1])
+    if not _INT_RE.match(seq_raw) or not _CODE_RE.match(code_raw):
+        return False
+    try:
+        seq_int = int(seq_raw)
+    except Exception:
+        return False
+    return 0 < seq_int <= 9999
+
+
+def _looks_like_product_code(text: str) -> bool:
+    text = _normalize_cell(text)
+    if not text:
+        return False
+    if _CHINESE_RE.search(text):
+        return False
+    return True
+
+
+def _find_record_end(lines: List[str], start_idx: int) -> int:
+    idx = start_idx + 2
+    while idx < len(lines):
+        if _looks_like_record_start(lines, idx):
+            return idx
+        idx += 1
+    return len(lines)
+
+
+def _extract_quantity_and_weights(body: List[str]) -> Tuple[Optional[int], Optional[int], Optional[float], Optional[float]]:
+    if not body:
+        return None, None, None, None
+
+    # 优先按“代号/名称/材料/数量/重量...”的自然顺序前向识别，
+    # 避免最后一条 BOM 把表尾里的整数误抓成数量。
+    for q_idx in range(len(body)):
+        qty_raw = _normalize_cell(body[q_idx])
+        if not _INT_RE.match(qty_raw):
+            continue
+        if q_idx < 2:
+            continue
+        try:
+            qty = int(qty_raw)
+        except Exception:
+            continue
+        if qty < 0 or qty > 100000:
+            continue
+
+        tail = body[q_idx + 1 :]
+        if not tail:
+            continue
+
+        first_tail = _parse_numeric_tokens(tail[0])
+        if not first_tail:
+            continue
+
+        unit_weight: Optional[float] = None
+        total_weight: Optional[float] = None
+
+        if len(first_tail) >= 2:
+            unit_weight = first_tail[0]
+            total_weight = first_tail[1]
+        else:
+            unit_weight = first_tail[0]
+            for extra in tail[1:3]:
+                extra_tail = _parse_numeric_tokens(extra)
+                if extra_tail:
+                    total_weight = extra_tail[0]
+                    break
+
+        return q_idx, qty, unit_weight, total_weight
+
+    # 兜底：只认第一处“前面至少有 名称/材料，后面没有被更早命中”的数量。
+    for q_idx in range(len(body)):
+        qty_raw = _normalize_cell(body[q_idx])
+        if not _INT_RE.match(qty_raw):
+            continue
+        if q_idx < 2:
+            continue
+        try:
+            qty = int(qty_raw)
+        except Exception:
+            continue
+        if qty < 0 or qty > 100000:
+            continue
+        return q_idx, qty, None, None
+
+    return None, None, None, None
+
+
+def _split_prefix_to_fields(prefix: List[str]) -> Tuple[str, str, str]:
+    product_code = ""
+    cells = [x for x in prefix if _normalize_cell(x)]
+    if not cells:
+        return "", "", ""
+
+    if _looks_like_product_code(cells[0]):
+        product_code = cells[0]
+        cells = cells[1:]
+
+    if not cells:
+        return product_code, "", ""
+
+    if len(cells) == 1:
+        return product_code, cells[0], ""
+
+    material = cells[-1]
+    name = " ".join(cells[:-1]).strip()
+    return product_code, name, material
+
+
 def _score_item(item: Dict) -> int:
     score = 0
     if item.get("code"):
@@ -68,6 +183,8 @@ def _score_item(item: Dict) -> int:
     if item.get("product_code"):
         score += 1
     if item.get("name"):
+        score += 1
+    if item.get("material"):
         score += 1
     if item.get("quantity") not in (None, "", 0):
         score += 1
@@ -126,76 +243,23 @@ def _extract_from_lines(lines: List[str], source_pdf: str) -> List[Dict]:
 
     i = 0
     while i + 1 < len(lines):
-        seq_raw = lines[i]
-        if not _INT_RE.match(seq_raw):
+        if not _looks_like_record_start(lines, i):
             i += 1
             continue
 
-        try:
-            seq_int = int(seq_raw)
-        except Exception:
-            i += 1
-            continue
-
-        if seq_int <= 0 or seq_int > 9999:
-            i += 1
-            continue
-
+        seq_int = int(lines[i])
         code = _normalize_cell(lines[i + 1])
-        if not _CODE_RE.match(code):
-            i += 1
+        next_i = _find_record_end(lines, i)
+        body = lines[i + 2 : next_i]
+
+        qty_idx, qty, unit_weight, total_weight = _extract_quantity_and_weights(body)
+        if qty_idx is None or qty is None:
+            i = next_i
             continue
 
-        # 在 code 后寻找 quantity（纯整数）并校验其后紧跟重量数字
-        # 说明：部分图纸可能缺少 product_code 列，因此 quantity 可能更靠前；
-        #      我们通过“quantity 后必须跟重量数字”来降低误判风险。
-        record_found: Optional[Tuple[int, int, float, float, int]] = None
-        search_start = i + 3  # 允许缺少 product_code 列：seq → code → name → quantity ...
-        search_end = min(i + 14, len(lines) - 1)
-        for q_idx in range(search_start, search_end):
-            qty_raw = lines[q_idx]
-            if not _INT_RE.match(qty_raw):
-                continue
-            try:
-                qty = int(qty_raw)
-            except Exception:
-                continue
-            if qty < 0 or qty > 100000:
-                continue
+        prefix = body[:qty_idx]
+        product_code, name, material = _split_prefix_to_fields(prefix)
 
-            # 解析重量：可能是一行两个数，也可能两行各一个数
-            if q_idx + 1 >= len(lines):
-                continue
-            w1_tokens = _parse_numeric_tokens(lines[q_idx + 1])
-            if len(w1_tokens) >= 2:
-                unit_w, total_w = w1_tokens[0], w1_tokens[1]
-                next_i = q_idx + 2
-                record_found = (q_idx, qty, unit_w, total_w, next_i)
-                break
-
-            if len(w1_tokens) == 1 and q_idx + 2 < len(lines):
-                w2_tokens = _parse_numeric_tokens(lines[q_idx + 2])
-                if len(w2_tokens) == 1:
-                    unit_w, total_w = w1_tokens[0], w2_tokens[0]
-                    next_i = q_idx + 3
-                    record_found = (q_idx, qty, unit_w, total_w, next_i)
-                    break
-
-        if not record_found:
-            i += 1
-            continue
-
-        q_idx, qty, unit_w, total_w, next_i = record_found
-        product_code = lines[i + 2] if i + 2 < len(lines) else ""
-        name_lines = lines[i + 3 : q_idx]
-        # 若 name 为空，通常表示缺少 product_code 列：把 product_code 置空，name 从 code 后开始吃
-        if not any(x for x in name_lines) and product_code:
-            name_lines = [product_code]
-            product_code = ""
-        name = " ".join([x for x in name_lines if x]).strip()
-
-        total_weight = total_w
-        unit_weight = unit_w
         weight = total_weight if total_weight is not None else unit_weight
 
         out.append(
@@ -204,10 +268,10 @@ def _extract_from_lines(lines: List[str], source_pdf: str) -> List[Dict]:
                 "code": code,
                 "product_code": product_code,
                 "name": name,
+                "material": material,
                 "quantity": int(qty),
                 "unit_weight": unit_weight,
                 "total_weight": total_weight,
-                # 兼容旧链路：step2 过去只有 weight 字段
                 "weight": weight,
                 "source_pdf": source_pdf,
             }

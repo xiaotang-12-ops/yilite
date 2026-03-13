@@ -17,7 +17,7 @@ docker-compose --version
 
 ---
 
-## 🚀 快速开始（3 步部署）
+## 🚀 快速开始（4 步部署）
 
 ### 1️⃣ 克隆项目
 
@@ -45,7 +45,21 @@ nano .env
 OPENROUTER_API_KEY=your_actual_api_key_here
 ```
 
-### 3️⃣ 启动服务
+### 3️⃣ 准备 HTTPS 证书目录
+
+启动前请先在宿主机准备本地证书目录：
+
+```text
+frontend/ssl/
+├── server.crt
+├── server.key
+├── rootCA.crt
+└── rootCA.cer
+```
+
+说明：`frontend/ssl/` 不在仓库中跟踪，容器会在运行时把该目录只读挂载到 `/etc/nginx/ssl`。
+
+### 4️⃣ 启动服务
 
 ```bash
 # 启动所有服务（后台运行）
@@ -68,6 +82,7 @@ docker-compose logs -f
 启动成功后，在浏览器中访问：
 
 - **前端界面**: http://localhost:3008
+- **前端界面（HTTPS，自签证书）**: https://localhost:3443
 - **后端 API 文档**: http://localhost:8008/api/docs
 - **健康检查**: http://localhost:8008/api/health
 

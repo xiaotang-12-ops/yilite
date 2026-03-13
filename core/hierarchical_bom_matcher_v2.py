@@ -26,6 +26,8 @@ class HierarchicalBOMMatcher:
         self.step_converter = StepToGlbConverter(self.model_processor)
         # AI 匹配结果过滤阈值：防止低置信度结果污染 node 映射
         self.ai_match_min_confidence = 0.85
+        # 最终 AI 补漏仅处理最后残留的小集合，允许略低于主阈值，但仍保留规格/数量守卫。
+        self.ai_final_fallback_min_confidence = 0.78
     
     def process_hierarchical_matching(
         self,
@@ -476,6 +478,8 @@ class HierarchicalBOMMatcher:
                 print_info(f"🤖 步骤3：AI匹配（兜底，处理仍未匹配的零件）", indent=1)
                 ai_bom_to_mesh = {}
                 ai_bom_matched_count = 0
+                final_ai_bom_to_mesh = {}
+                final_ai_bom_matched_count = 0
 
                 if unmatched_parts:
                     import sys
@@ -500,7 +504,7 @@ class HierarchicalBOMMatcher:
                         ai_results = self._filter_ai_results_with_guard(
                             ai_results=ai_results,
                             candidate_bom_items=unmatched_bom,
-                            existing_bom_to_mesh={**assembly_to_mesh, **code_bom_to_mesh},
+                            existing_bom_to_mesh=self._merge_bom_to_mesh_layers(assembly_to_mesh, code_bom_to_mesh),
                             context="product",
                         )
 
@@ -531,9 +535,56 @@ class HierarchicalBOMMatcher:
                 else:
                     print_info("  无需AI匹配（所有零件已匹配）", indent=1)
 
+                # ✅ 步骤3.5：最终 AI 补漏（只处理最后残留的小集合）
+                remaining_after_ai = [part for part in cleaned_parts if not part.get("bom_code")]
+                matched_bom_codes = hierarchy_matched_bom_codes | set(code_bom_to_mesh.keys()) | set(ai_bom_to_mesh.keys())
+                unmatched_bom_after_ai = [bom for bom in product_bom if bom.get("code") not in matched_bom_codes]
+                if remaining_after_ai and unmatched_bom_after_ai:
+                    print_info("🧠 步骤3.5：最终AI补漏（剩余少量未匹配项）", indent=1)
+                    from core.ai_matcher import AIBOMMatcher
+                    final_ai_matcher = AIBOMMatcher(
+                        task_id=task_id,
+                        provider=ai_provider,
+                        model_name=ai_model,
+                        fallback_model_name=ai_fallback_model,
+                        api_key=ai_api_key
+                    )
+                    final_ai_results = final_ai_matcher.match_unmatched_parts(remaining_after_ai, unmatched_bom_after_ai)
+                    final_ai_results = self._filter_ai_results_with_guard(
+                        ai_results=final_ai_results,
+                        candidate_bom_items=unmatched_bom_after_ai,
+                        existing_bom_to_mesh=self._merge_bom_to_mesh_layers(assembly_to_mesh, code_bom_to_mesh, ai_bom_to_mesh),
+                        context="product_final_ai",
+                        min_confidence=self.ai_final_fallback_min_confidence,
+                    )
+
+                    for ai_result in final_ai_results:
+                        bom_code = ai_result.get("matched_bom_code")
+                        node_name = ai_result.get("node_name")
+
+                        if bom_code and node_name:
+                            for part in cleaned_parts:
+                                if part.get("node_name") == node_name and not part.get("bom_code"):
+                                    part["bom_code"] = bom_code
+                                    part["match_method"] = "AI补漏"
+                                    part["confidence"] = ai_result.get("confidence", 0.0)
+                                    break
+
+                            if bom_code not in final_ai_bom_to_mesh:
+                                final_ai_bom_to_mesh[bom_code] = []
+                            final_ai_bom_to_mesh[bom_code].append(node_name)
+
+                    final_ai_bom_matched_count = len(final_ai_bom_to_mesh)
+
                 # ✅ 步骤4：合并匹配结果（层级优先）
-                # 合并顺序：层级匹配 → 代码匹配 → AI匹配
-                final_bom_to_mesh = {**assembly_to_mesh, **code_bom_to_mesh, **ai_bom_to_mesh}
+                # 合并顺序：层级匹配 → 代码匹配 → AI匹配 → 最终 AI 补漏
+                # 前面的层作为底座，后面的层只能补节点，不能覆盖。
+                final_bom_to_mesh = self._merge_bom_to_mesh_layers(
+                    assembly_to_mesh,
+                    code_bom_to_mesh,
+                    ai_bom_to_mesh,
+                    final_ai_bom_to_mesh,
+                )
                 total_bom_matched = len(final_bom_to_mesh)
                 final_bom_rate = total_bom_matched / total_bom if total_bom else 0
 
@@ -542,7 +593,10 @@ class HierarchicalBOMMatcher:
                 final_parts_rate = final_parts_matched / total_parts if total_parts else 0
 
                 # 打印匹配汇总
-                print_success(f"✅ 匹配完成 - 层级:{len(assembly_to_mesh)} + 代码:{code_bom_matched} + AI:{ai_bom_matched_count} = 总计:{total_bom_matched}/{total_bom}", indent=1)
+                print_success(
+                    f"✅ 匹配完成 - 层级:{len(assembly_to_mesh)} + 代码:{code_bom_matched} + AI:{ai_bom_matched_count} + AI补漏:{final_ai_bom_matched_count} = 总计:{total_bom_matched}/{total_bom}",
+                    indent=1,
+                )
                 print_info(f"  📋 BOM匹配率: {total_bom_matched}/{total_bom} ({final_bom_rate*100:.1f}%)", indent=1)
                 print_info(f"  🎨 3D零件覆盖率: {final_parts_matched}/{total_parts} ({final_parts_rate*100:.1f}%)", indent=1)
 
@@ -577,6 +631,7 @@ class HierarchicalBOMMatcher:
                     "hierarchy_matched": len(assembly_to_mesh),  # ✅ 新增：层级匹配数量
                     "code_matched": code_bom_matched,
                     "ai_matched": ai_bom_matched_count,
+                    "final_ai_matched": final_ai_bom_matched_count,
                     "matching_rate": final_bom_rate,  # ✅ 兼容旧代码
                     "assembly_to_mesh": assembly_to_mesh,
                     "step_assembly_hierarchy": str(hierarchy_output) if hierarchy_output.exists() else None
@@ -739,10 +794,7 @@ class HierarchicalBOMMatcher:
             product_code_text = str(bom_item.get("product_code_text") or product_code_orig).strip()
             bom_name = str(bom_item.get("name") or "").strip()
             bom_code = str(bom_item.get("code") or "").strip()
-
-            norm_product_code = self._normalize_token(product_code_orig)
-            norm_product_code_text = self._normalize_token(product_code_text)
-            bom_name_norm = self._normalize_token(bom_name)
+            name_variants = self._build_name_match_variants(bom_name)
 
             def _match_by_code(code_val: str) -> (Optional[str], List[str], bool):
                 norm_code = self._normalize_token(code_val)
@@ -754,12 +806,12 @@ class HierarchicalBOMMatcher:
                     if code_token:
                         candidates = [k for k in hierarchy_keys if code_token in self._normalize_token(k)]
                 filtered = list(candidates)
-                if bom_name_norm and filtered:
-                    name_filtered = [c for c in filtered if bom_name_norm in self._normalize_token(c)]
+                if name_variants and filtered:
+                    name_filtered = self._select_candidates_by_name_variants(filtered, name_variants)
                     if name_filtered:
                         filtered = name_filtered
                 selected = max(filtered, key=len) if filtered else None
-                name_in = bool(selected and bom_name_norm and bom_name_norm in self._normalize_token(selected))
+                name_in = bool(selected and self._select_candidates_by_name_variants([selected], name_variants))
                 return selected, candidates, name_in
 
             reasons: List[str] = []
@@ -768,7 +820,7 @@ class HierarchicalBOMMatcher:
             used_code = "orig"
 
             # 若原始 code 未命中或名称不符，尝试文本层 code（若与原值不同）
-            if (not assembly_name or (bom_name_norm and not name_in_selected)) and product_code_text and product_code_text != product_code_orig:
+            if (not assembly_name or (name_variants and not name_in_selected)) and product_code_text and product_code_text != product_code_orig:
                 assembly_name, code_hits, name_in_selected = _match_by_code(product_code_text)
                 used_code = "text"
                 if assembly_name:
@@ -776,12 +828,12 @@ class HierarchicalBOMMatcher:
 
             # 名称候选（独立于 code）
             candidates_by_name: List[str] = []
-            if bom_name_norm:
-                candidates_by_name = [k for k in hierarchy_keys if bom_name_norm in self._normalize_token(k)]
+            if name_variants:
+                candidates_by_name = self._select_candidates_by_name_variants(hierarchy_keys, name_variants)
 
             if assembly_name:
                 reasons.append("code_match")
-                if bom_name_norm and not name_in_selected:
+                if name_variants and not name_in_selected:
                     reasons.append("name_not_in_selected")
                     if len(candidates_by_name) == 1:
                         assembly_name = candidates_by_name[0]
@@ -821,6 +873,7 @@ class HierarchicalBOMMatcher:
                 "product_code_text": product_code_text,
                 "product_code_name": product_code_name,
                 "bom_name": bom_name,
+                "name_variants": name_variants,
                 "assembly_key_selected": assembly_name,
                 "candidates_by_code": code_hits,
                 "candidates_by_name": candidates_by_name,
@@ -1018,6 +1071,76 @@ class HierarchicalBOMMatcher:
             return ""
         return re.sub(r"[\s_\-]+", "", str(text)).lower()
 
+    def _build_name_match_variants(self, name: str) -> List[str]:
+        """为装配体名称生成去噪匹配变体，避免“组焊件/外购”这类尾缀把层级匹配卡死。"""
+        raw = str(name or "").strip()
+        if not raw:
+            return []
+
+        variants: List[str] = []
+
+        def _add_variant(text: str):
+            raw_variant = re.sub(r"\s+", "", str(text or ""))
+            norm = self._normalize_token(text)
+            min_len = 2 if raw_variant and re.fullmatch(r"[\u4e00-\u9fff]+", raw_variant) else 4
+            if norm and len(norm) >= min_len and norm not in variants:
+                variants.append(norm)
+
+        _add_variant(raw)
+
+        working = raw
+        for token in ("组焊件", "焊接件", "外购", "成品", "镀锌", "喷涂", "喷塑", "漆后"):
+            working = working.replace(token, " ")
+            _add_variant(working)
+
+        for token in re.findall(r"[\u4e00-\u9fff]{2,}", raw):
+            _add_variant(token)
+
+        return variants
+
+    def _select_candidates_by_name_variants(self, candidates: List[str], name_variants: List[str]) -> List[str]:
+        """按名称变体筛候选，优先保留最贴近 BOM 名称的装配体键。"""
+        if not candidates or not name_variants:
+            return []
+
+        best_score = 0
+        filtered: List[str] = []
+        for candidate in candidates:
+            norm_candidate = self._normalize_token(candidate)
+            score = 0
+            for variant in name_variants:
+                if variant and variant in norm_candidate:
+                    score = max(score, len(variant))
+
+            if score <= 0:
+                continue
+            if score > best_score:
+                best_score = score
+                filtered = [candidate]
+            elif score == best_score:
+                filtered.append(candidate)
+
+        if not filtered:
+            return []
+
+        non_virtual = [candidate for candidate in filtered if "虚拟组件" not in candidate]
+        return non_virtual or filtered
+
+    def _merge_bom_to_mesh_layers(self, *mappings: Dict[str, List[str]]) -> Dict[str, List[str]]:
+        """多层映射合并：前面的层作为底座，后面的层只能补点，不能覆盖已挂结果。"""
+        merged: Dict[str, List[str]] = {}
+        for mapping in mappings:
+            for bom_code, nodes in (mapping or {}).items():
+                bucket = merged.setdefault(bom_code, [])
+                existing = set(bucket)
+                for node in nodes or []:
+                    node_str = str(node or "").strip()
+                    if not node_str or node_str in existing:
+                        continue
+                    bucket.append(node_str)
+                    existing.add(node_str)
+        return merged
+
     def _extract_code_token(self, text: str) -> str:
         """提取类似 E-CW3T-02 或 XX.XX.XXXX 的代码片段。"""
         if not text:
@@ -1066,6 +1189,7 @@ class HierarchicalBOMMatcher:
             "TYPE_BOLT": ("螺栓", "螺钉", "螺丝"),
             "TYPE_NUT": ("螺母",),
             "TYPE_KEY": ("平键",),
+            "TYPE_OIL_CUP": ("油杯", "压注油杯"),
         }
         for type_token, keywords in type_keywords.items():
             if any(keyword in raw_text for keyword in keywords):
@@ -1117,6 +1241,16 @@ class HierarchicalBOMMatcher:
             normalized = token.replace(" ", "")
             if normalized:
                 tokens.add(normalized)
+
+        # 油杯常见表达是“油杯8/压注油杯8(成品)”，而 BOM 里经常写成 M8。
+        oil_cup_match = re.search(r"(?:压注油杯|油杯)\s*(\d+(?:\.\d+)?)", raw_text)
+        if oil_cup_match:
+            size = oil_cup_match.group(1)
+            if size:
+                size_token = size.rstrip("0").rstrip(".")
+                if size_token:
+                    tokens.add(f"M{size_token}")
+                    tokens.add(f"OILCUP{size_token}")
 
         return tokens
 
@@ -1339,6 +1473,7 @@ class HierarchicalBOMMatcher:
         candidate_bom_items: List[Dict],
         existing_bom_to_mesh: Optional[Dict[str, List[str]]] = None,
         context: str = "unknown",
+        min_confidence: Optional[float] = None,
     ) -> List[Dict]:
         """
         过滤 AI 匹配结果，降低误匹配污染：
@@ -1352,6 +1487,9 @@ class HierarchicalBOMMatcher:
 
         guard = self._build_ai_guard(candidate_bom_items)
         existing_bom_to_mesh = existing_bom_to_mesh or {}
+        target_min_confidence = self.ai_match_min_confidence if min_confidence is None else float(min_confidence)
+        fastener_floor = 0.80 if min_confidence is None else max(0.70, target_min_confidence - 0.08)
+        non_fastener_floor = 0.75 if min_confidence is None else max(0.65, target_min_confidence - 0.10)
 
         accepted_nodes: Dict[str, Set[str]] = {
             code: {str(node) for node in (nodes or []) if node}
@@ -1396,21 +1534,23 @@ class HierarchicalBOMMatcher:
                 guard_item["spec_tokens"],
                 ai_spec_tokens,
             )
+            direct_overlap = self._extract_direct_spec_tokens(guard_item["spec_tokens"]) & self._extract_direct_spec_tokens(ai_spec_tokens)
+            type_overlap = self._extract_type_tokens(guard_item["spec_tokens"]) & self._extract_type_tokens(ai_spec_tokens)
             has_anchor_overlap = self._has_anchor_overlap(
                 guard_item.get("anchor_tokens", set()),
                 ai_text=ai_text,
                 ai_spec_tokens=ai_spec_tokens,
             )
 
-            if confidence < self.ai_match_min_confidence:
+            if confidence < target_min_confidence:
                 # 紧固件保持严格：仅在强规格完全对齐时，允许 0.80~0.85 低置信度放行。
                 if is_fastener:
-                    if confidence < 0.80 or not has_strong_overlap:
+                    if confidence < fastener_floor or not (has_strong_overlap or (direct_overlap and type_overlap)):
                         dropped_conf += 1
                         continue
                 else:
                     # 非紧固件适度放宽：允许 0.75~0.85 的“锚点命中/强规格命中”结果。
-                    if confidence < 0.75 or (not has_strong_overlap and not has_anchor_overlap):
+                    if confidence < non_fastener_floor or (not has_strong_overlap and not has_anchor_overlap):
                         dropped_conf += 1
                         continue
 

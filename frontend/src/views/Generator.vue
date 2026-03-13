@@ -371,6 +371,12 @@ import {
 import ProcessingSteps from '../components/ProcessingSteps.vue'
 import axios from 'axios'
 
+const resolveApiBaseUrl = () => {
+  const configured = import.meta.env.VITE_API_BASE_URL?.trim()
+  if (configured) return configured.replace(/\/$/, '')
+  return '/api'
+}
+
 // 响应式数据
 const currentStep = ref(0)
 const isGenerating = ref(false)
@@ -1509,7 +1515,7 @@ const startGenerationTask = async (conflictStrategy: 'prompt' | 'overwrite' | 'd
 
 // 连接 EventSource (SSE)
 const connectEventSource = (taskId: string) => {
-  const sseUrl = `http://localhost:8008/api/stream/${taskId}`
+  const sseUrl = `${resolveApiBaseUrl()}/stream/${taskId}`
   eventSource = new EventSource(sseUrl)
 
   eventSource.onopen = () => {

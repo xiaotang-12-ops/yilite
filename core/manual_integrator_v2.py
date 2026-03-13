@@ -302,19 +302,27 @@ class ManualIntegratorV2:
         Returns:
             增强后的步骤列表（components 包含 node_name 字段）
         """
-        if not steps or not bom_to_mesh:
+        if not steps:
             return steps
+        bom_to_mesh = bom_to_mesh or {}
 
         enhanced_steps = []
 
         for step in steps:
             step_copy = step.copy()
+            missing_bindings = []
+            bound_any = False
 
             # 获取当前步骤的 component_code（产品装配步骤）
             component_code = step.get("component_code", "")
 
             # 查找对应的 node_names
             node_names = bom_to_mesh.get(component_code, [])
+            if component_code:
+                if node_names:
+                    bound_any = True
+                else:
+                    missing_bindings.append(component_code)
 
             # ✅ 为 components 注入 node_name
             if "components" in step_copy and step_copy["components"]:
@@ -337,6 +345,9 @@ class ManualIntegratorV2:
                     fastener_nodes = bom_to_mesh.get(fastener_code, [])
                     if fastener_nodes:
                         fastener_copy["node_name"] = fastener_nodes
+                        bound_any = True
+                    elif fastener_code:
+                        missing_bindings.append(fastener_code)
                     enhanced_fasteners.append(fastener_copy)
                 step_copy["fasteners"] = enhanced_fasteners
 
@@ -350,8 +361,25 @@ class ManualIntegratorV2:
                     part_nodes = bom_to_mesh.get(part_code, [])
                     if part_nodes:
                         part_copy["node_name"] = part_nodes
+                        bound_any = True
+                    elif part_code:
+                        missing_bindings.append(part_code)
                     enhanced_parts.append(part_copy)
                 step_copy["parts_used"] = enhanced_parts
+
+            unique_missing = []
+            seen_missing = set()
+            for code in missing_bindings:
+                code_str = str(code or "").strip()
+                if not code_str or code_str in seen_missing:
+                    continue
+                seen_missing.add(code_str)
+                unique_missing.append(code_str)
+
+            step_copy["has_3d_binding"] = bound_any
+            if unique_missing:
+                step_copy["missing_node_binding_codes"] = unique_missing
+                step_copy["binding_warning"] = "当前步骤存在未绑定3D节点的物料，需人工复核"
 
             enhanced_steps.append(step_copy)
 

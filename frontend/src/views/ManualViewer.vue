@@ -2082,6 +2082,11 @@ const previousStepNodeNames = computed(() => {
   return names
 })
 
+const currentStepFreshNodeNames = computed(() => {
+  const previousSet = new Set(previousStepNodeNames.value)
+  return currentStepNodeNames.value.filter(name => !previousSet.has(name))
+})
+
 const assembledNodeNames = computed(() => {
   const names: string[] = []
   for (let i = 0; i <= currentStepIndex.value; i++) {
@@ -4642,7 +4647,7 @@ const updateStepDisplay = (animate = true) => {
   if (!model) return
 
   const assembledSet = new Set(assembledNodeNames.value)
-  const currentSet = new Set(currentStepNodeNames.value)
+  const currentSet = new Set(currentStepFreshNodeNames.value)
   const manualStatusCache = new Map<string, AssemblyStatus | null>()
 
   // 材质定义

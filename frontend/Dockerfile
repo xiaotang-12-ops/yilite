@@ -29,6 +29,7 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 
 # 暴露端口
 EXPOSE 80
+EXPOSE 443
 
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \

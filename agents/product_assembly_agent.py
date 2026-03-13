@@ -49,6 +49,159 @@ class ProductAssemblyAgent(BaseGeminiAgent):
             return ""
         # 去除末尾的"空格+数字"（数字是数量，不是名称的一部分）
         return re.sub(r'\s+\d+$', '', name).strip()
+
+    @staticmethod
+    def _is_fastener_ref(bom_ref: Dict) -> bool:
+        """基于 BOM 权威字段判断当前序号更像紧固件还是组件。"""
+        code = str(bom_ref.get("code") or "").strip()
+        name = str(bom_ref.get("name") or "")
+        product_code = str(bom_ref.get("product_code") or "").upper()
+
+        if code.startswith("02.03."):
+            return True
+
+        fastener_keywords = (
+            "螺栓", "螺母", "垫圈", "螺钉", "螺丝", "挡圈", "销", "油杯", "接头", "键",
+        )
+        if any(keyword in name for keyword in fastener_keywords):
+            return True
+
+        if re.search(r"\bM\d+", product_code):
+            return True
+
+        return False
+
+    @staticmethod
+    def _pick_best_owner_item(candidates: List[Dict]) -> Dict:
+        """优先保留信息更完整、带节点的当前步骤归属条目。"""
+        if not candidates:
+            return {}
+
+        def sort_key(item: Dict) -> tuple:
+            node_name = item.get("node_name")
+            node_count = len(node_name or []) if isinstance(node_name, list) else (1 if node_name else 0)
+            return (
+                1 if node_count > 0 else 0,
+                node_count,
+                1 if str(item.get("bom_code") or "").strip() else 0,
+                1 if str(item.get("bom_name") or "").strip() else 0,
+                1 if str(item.get("spec") or "").strip() else 0,
+            )
+
+        return max(candidates, key=sort_key).copy()
+
+    @classmethod
+    def _merge_owner_item_with_ref(
+        cls,
+        owner_item: Dict,
+        bom_ref: Dict,
+        expected_seq: str,
+    ) -> Dict:
+        """用 BOM 宽表回填当前步骤真正拥有的 BOM 条目。"""
+        merged = owner_item.copy() if owner_item else {}
+
+        code = str(bom_ref.get("code") or "").strip()
+        name = str(bom_ref.get("name") or "").strip()
+        product_code = str(bom_ref.get("product_code") or "").strip()
+        quantity = cls._safe_int(bom_ref.get("quantity"), None)
+        node_names = list(bom_ref.get("node_names") or [])
+
+        merged["bom_seq"] = expected_seq
+        if code:
+            merged["bom_code"] = code
+        if name:
+            merged["bom_name"] = name
+        if product_code:
+            merged["spec"] = product_code
+        if quantity is not None:
+            merged["quantity"] = quantity
+        if node_names:
+            merged["node_name"] = node_names
+
+        return merged
+
+    @classmethod
+    def _sanitize_step_bom_ownership(
+        cls,
+        assembly_steps: List[Dict],
+        bom_mapping_table: List[Dict],
+    ) -> tuple[List[Dict], Dict[str, int]]:
+        """
+        收口产品总装步骤的 BOM 归属：
+        1. 每一步只保留当前 step_number 对应的 BOM 序号
+        2. 串进来的未来/过去序号一律剔除
+        3. 如果当前步骤缺少自己的 BOM 条目，则按 BOM 宽表回填
+        """
+        seq_ref = {
+            str(item.get("seq") or "").strip(): item
+            for item in (bom_mapping_table or [])
+            if str(item.get("seq") or "").strip()
+        }
+
+        removed_cross_step_items = 0
+        synthesized_owner_items = 0
+        normalized_steps = 0
+
+        for index, step in enumerate(assembly_steps or []):
+            raw_step_number = cls._safe_int(step.get("step_number"), index + 1)
+            expected_seq = str(raw_step_number if raw_step_number and raw_step_number > 0 else index + 1)
+            bom_ref = seq_ref.get(expected_seq)
+            if not bom_ref:
+                continue
+
+            component_candidates: List[Dict] = []
+            fastener_candidates: List[Dict] = []
+
+            for item in step.get("components", []) or []:
+                item_seq = str(item.get("bom_seq") or "").strip()
+                if item_seq == expected_seq:
+                    component_candidates.append(item)
+                elif item_seq:
+                    removed_cross_step_items += 1
+
+            for item in step.get("fasteners", []) or []:
+                item_seq = str(item.get("bom_seq") or "").strip()
+                if item_seq == expected_seq:
+                    fastener_candidates.append(item)
+                elif item_seq:
+                    removed_cross_step_items += 1
+
+            owner_field = None
+            owner_item: Dict = {}
+            if component_candidates:
+                owner_field = "components"
+                owner_item = cls._pick_best_owner_item(component_candidates)
+            elif fastener_candidates:
+                owner_field = "fasteners"
+                owner_item = cls._pick_best_owner_item(fastener_candidates)
+            else:
+                owner_field = "fasteners" if cls._is_fastener_ref(bom_ref) else "components"
+                synthesized_owner_items += 1
+
+            merged_item = cls._merge_owner_item_with_ref(owner_item, bom_ref, expected_seq)
+
+            prev_components = step.get("components", []) or []
+            prev_fasteners = step.get("fasteners", []) or []
+
+            if owner_field == "components":
+                step["components"] = [merged_item]
+                step["fasteners"] = []
+                step["component_code"] = merged_item.get("bom_code", "")
+                step["component_name"] = merged_item.get("bom_name", "")
+            else:
+                step["components"] = []
+                step["fasteners"] = [merged_item]
+                step["component_code"] = ""
+                step["component_name"] = ""
+
+            if step["components"] != prev_components or step["fasteners"] != prev_fasteners:
+                normalized_steps += 1
+
+        return assembly_steps, {
+            "removed_cross_step_items": removed_cross_step_items,
+            "synthesized_owner_items": synthesized_owner_items,
+            "normalized_steps": normalized_steps,
+        }
     
     def process(
         self,
@@ -151,6 +304,16 @@ class ProductAssemblyAgent(BaseGeminiAgent):
             # ✅ 使用BOM映射宽表添加mesh_id
             if bom_mapping_table:
                 assembly_steps = self._add_mesh_ids_from_table(assembly_steps, bom_mapping_table)
+                assembly_steps, ownership_stats = self._sanitize_step_bom_ownership(
+                    assembly_steps,
+                    bom_mapping_table,
+                )
+                if ownership_stats.get("normalized_steps"):
+                    print(
+                        "   ⚠️ 步骤归属已自动收口："
+                        f"清理 {ownership_stats.get('removed_cross_step_items', 0)} 个串入条目，"
+                        f"回填 {ownership_stats.get('synthesized_owner_items', 0)} 个缺失条目"
+                    )
             elif bom_to_mesh_mapping:
                 assembly_steps = self._add_mesh_ids(assembly_steps, bom_to_mesh_mapping)
 

@@ -1,8 +1,8 @@
 # 📸 项目快照 - Memory Development
 
 **创建时间**: 2025-11-18
-**最后校对**: 2026-03-02
-**当前版本**: v2.1.42
+**最后校对**: 2026-03-13
+**当前版本**: v2.1.48
 **项目状态**: 核心功能完成，可用
 
 ---
@@ -15,7 +15,7 @@
 ## 🏗️ 系统架构概览
 ```
 前端 (Vue 3 + Element Plus + Three.js)
-  ↕ HTTP API + WebSocket
+  ↕ 同源 HTTP(S) API + WebSocket/SSE
 后端 (FastAPI + Uvicorn)
   ↕
 6 个 AI Agent（OpenRouter/DeepSeek/NewAPI 可配置）
@@ -29,7 +29,7 @@ output/{task_id} (JSON + GLB + 图片)
 
 ## 核心文件结构
 - 统一入口：`backend/simple_app.py`（FastAPI）、`frontend/src/main.ts`（Vue 入口）
-- 核心流水线：`core/gemini_pipeline.py` 调度 FileClassifier、HierarchicalBOMMatcher、ManualIntegratorV2 及 6 个 Agent
+- 核心流水线：`core/gemini_pipeline.py` 调度 FileClassifier、HierarchicalBOMMatcher、ManualIntegratorV2 及 6 个 Agent；`core/pdf_text_bom_extractor.py` 负责 PDF 文本层 BOM 固定 6 列提取（`seq/code/product_code/name/material/quantity`）与纠偏补充；`HierarchicalBOMMatcher` 现采用层级结果锁定 + 最终 AI 补漏；`agents/product_assembly_agent.py` 现在会按 BOM 宽表强制收口产品步骤归属，确保“1 步 = 1 个 BOM 序号”；`ManualIntegratorV2` 会对未绑定 3D 节点的步骤显式打标
 - 提示词：`prompts/agent_*.py`（视觉规划、BOM-3D、组件装配、产品装配、焊接、安全FAQ）
 - 前端：`frontend/src/views`（Home、Generator、Viewer、ManualViewer、Engineer、Settings 等），`frontend/src/components`（ThreeViewer、Processing*、AssemblyManualViewer 等）
 
@@ -76,7 +76,7 @@ output/{task_id} (JSON + GLB + 图片)
 | --- | --- | --- | --- |
 | `/` | HomeNew.vue | 首页展示 | |
 | `/generator` | Generator.vue | 上传与任务发起 | 调 /api/upload, /api/generate |
-| `/viewer/:id?` | Viewer.vue | 3D 预览与结果查看 | 搜索栏支持“扫一扫”回填；手机端优化为更宽对话框和单列信息布局；管理员可在列表中改名 |
+| `/viewer/:id?` | Viewer.vue | 3D 预览与结果查看 | 搜索栏支持“扫一扫”回填；扫码成功后会直接写入 `searchQuery`；已验证 Android 系统浏览器在“自签 HTTPS + 首次信任证书”场景可调起摄像头；手机端优化为更宽对话框和单列信息布局；管理员可在列表中改名 |
 | `/manual/:taskId` | ManualViewer.vue | 装配手册查看/编辑 | 管理员支持草稿保存/发布；修复顶部工具栏在长标题步骤下的高度抖动 |
 | `/version-history/:taskId` | VersionHistory.vue | 历史版本与回滚 | 调 /api/manual/* history/version/rollback |
 | `/engineer` | Engineer.vue | 工程师视图（质检/分发） | |
@@ -85,7 +85,7 @@ output/{task_id} (JSON + GLB + 图片)
 | `/simple-glb-test` | SimpleGLBTest.vue | 轻量 GLB 测试 | |
 | `/icon-test` | IconTest.vue | 图标展示 | |
 
-默认 API 基础地址：`VITE_API_BASE_URL`，否则 `http://localhost:8008/api`；WebSocket 使用 `ws://localhost:8008/ws/task/{id}`。
+默认 API 基础地址：`VITE_API_BASE_URL`，否则同源 `/api`；WebSocket 默认跟随当前页面协议/主机拼接 `/ws/task/{id}`；SSE 默认走同源 `/api/stream/{id}`。
 
 ---
 
@@ -98,7 +98,7 @@ output/{task_id} (JSON + GLB + 图片)
 ---
 
 ## 运行与环境
-- Docker：`docker-compose up --build`（映射 8008:8008 后端，3008:80 前端）；镜像名附版本 `assembly-manual-*-v2.0.0`。
+- Docker：`docker-compose up --build`（映射 `8008:8008` 后端、`3008:80` 前端 HTTP、`3443:443` 前端 HTTPS）；前端 `HTTPS` 证书目录改为宿主机本地 `./frontend/ssl` 只读挂载到容器 `/etc/nginx/ssl`，不再打包进镜像；根目录 `.dockerignore` 与 `frontend/.dockerignore` 都会排除 `frontend/ssl/`；镜像名附版本 `assembly-manual-*-v2.1.48`。
 - 本地调试：后端 `uvicorn backend.simple_app:app --host 0.0.0.0 --port 8008`；前端 `npm install && npm run dev`（默认 3000）。
 - 必需环境变量：按调用点配置需要 `OPENROUTER_API_KEY` / `DEEPSEEK_API_KEY` / `NEWAPI_API_KEY`（兼容 `ARK_API_KEY`）；可选 `BLENDER_EXE` 指向 Blender 可执行文件。
 
@@ -107,9 +107,9 @@ output/{task_id} (JSON + GLB + 图片)
 ## 最近 3 个版本快照
 | 版本 | 日期 | 关键变更 |
 | --- | --- | --- |
-| v2.1.42 | 2026-03-02 | **查看器管理员改名功能**：<br/>- `Viewer` 列表（桌面/移动）新增管理员“改名”按钮与输入弹窗<br/>- 新增后端接口 `PUT /api/manual/{task_id}/rename`，统一更新 `assembly_manual.json`/`draft.json`/`task_status.json`<br/>- 同步内存任务 `config.projectName`，避免刷新或处理中任务把旧名覆盖回来 |
-| v2.1.41 | 2026-03-02 | **查看器零件名显示修复（组件模式误显示 NAUO 序号）**：<br/>- `ManualViewer` 改为聚合 `glb_files` 下全部 `node_to_geometry`，不再写死 `product_total`<br/>- 名称映射优先显示步骤/BOM中文名，缺失时再回退 geometry 名称<br/>- 修复已删除零件名称函数错误索引数组导致的兜底不稳定 |
-| v2.1.40 | 2026-02-27 | **BOM匹配防幻觉 + 覆盖率口径修正（<70%才阻断）**：<br/>- Agent2 增加 `allowed_bom_codes` 白名单约束，禁止输出不在输入候选中的 `bom_code`<br/>- Step4 过滤改为“紧固件严格、非紧固件锚点放行”，降低非紧固件误杀率<br/>- Agent4 覆盖率改为“双口径取低值”（`bom_seq` 覆盖 + `node_name` 覆盖）<br/>- 覆盖率阈值调整为 `<70%` 阻断、`>=70%` 继续生成并告警；Step6 数量改为 BOM 优先 |
+| v2.1.48 | 2026-03-13 | **HTTPS 证书改为部署时挂载（私钥不再进仓库/镜像）**：<br/>- `frontend/Dockerfile` 去掉 `COPY ssl`，前端镜像不再内置 `server.key`<br/>- `docker-compose.yml` 改为宿主机 `./frontend/ssl` 只读挂载到 `/etc/nginx/ssl`，扫码所需 `HTTPS` 能力保留<br/>- `.gitignore`、根目录 `.dockerignore`、`frontend/.dockerignore` 同时排除 `frontend/ssl/`，避免私钥进入 Git 或 Docker build context |
+| v2.1.47 | 2026-03-11 | **步骤标题去数量口径 + NewAPI 快捷模型补充**：<br/>- `agent_4_product_assembly.py` 和 `agent_3_component_assembly.py` 现在都明确要求 `title` 只能写“动作 + 零件名”，禁止数量/规格/括号，数量与规格只能写进 `description`<br/>- `Settings.vue` 的 `NewAPI` 快捷模型列表新增 `qwen3.5-plus-2026-02-15`，可直接下拉选择 |
+| v2.1.46 | 2026-03-10 | **产品总装步骤归属锁定 + 重复节点高亮收口**：<br/>- `agent_4_product_assembly.py` 的产品总装提示词改成“`components/fasteners` 只允许放当前步骤自己的 `bom_seq`”，其他紧固件只能写进描述，不能抢数组和 3D 高亮<br/>- `product_assembly_agent.py` 新增步骤归属清洗：按 `step_number + bom_mapping_table` 只保留当前步骤拥有的 BOM 条目，串入的未来/过去序号会被剔除，缺失条目按 BOM 宽表回填<br/>- `ManualViewer.vue` 当前步骤高亮改成只取“首次在本步出现的节点”，已经在前序步骤出现过的节点不再重新刷黄<br/>- 真实任务 `06.22.01.0007E-TS250-S45-ET剪树机S45连接器` 回放验证中，`seq 17 / NAUO71` 已从第 2 步移除，仅保留在第 17 步 |
 
 ---
 
@@ -127,7 +127,12 @@ output/{task_id} (JSON + GLB + 图片)
 ## 状态与注意事项
 - 正常：上传、生成、日志流、手册读取/编辑、模型与图片下载、设置管理。
 - 注意：需安装 Blender；`OPENROUTER_API_KEY`/`DEEPSEEK_API_KEY`/`NEWAPI_API_KEY`（兼容 `ARK_API_KEY`）按调用点配置；设置页默认隐藏，Logo 10 秒内连点 10 次可进入；大文件性能与 Three.js 渲染待优化；前端路由默认走 8008 端口；一次任务仅支持上传 1 个 PDF + 1 个 STEP；运行中全局仅允许 1 个任务，上传/生成会返回 409 `TASK_BUSY` 提示等待；task_id = PDF 文件名（去后缀），STEP 文件名可不同，后端生成时会按 task_id 重命名存储；同名生成返回 409，可在前端选择覆盖（成功任务归档到 `output_archive/`，失败/损坏任务直接删除）或生成第二套 `_v_n`；任务状态持久化到 `output/{task_id}/task_status.json`，支持 `/api/task/{task_id}/cancel` 停止保留结果与 `/api/task/{task_id}/resume` 继续生成；生成任务可被中断（删除/覆盖/残留清理时会中断后台线程并写入 `cancelled`）；模式判定：PDF 文件名前缀 01* → 组件模式；03/06/07/08* → 产品模式；未命中前缀默认组件模式；产品模式跳过 Step5，且 Step7 默认跳过焊接仅执行安全。
-- Viewer 扫码：`/viewer` 搜索栏支持扫码填充物料代码；若移动端以 `http://` 非安全上下文访问，浏览器通常会禁用摄像头，前端会提示并允许手动输入物料代码作为兜底。
+- PDF 文本层 BOM：当前文本提取优先保证 `seq/code/product_code/name/quantity` 5 列稳定；`unit_weight/total_weight` 仅做可选补充，不再因为重量列漂移就丢整行；`gemini_pipeline.py` 会优先采用文本层 `quantity` 纠正 Vision 冲突值。
+- PDF 文本层 BOM：当前主目标已升级为固定 6 列：`seq/code/product_code/name/material/quantity`；数量识别改为前向扫描，不再主要依赖尾部关键词截断；`gemini_pipeline.py` 会同步用文本层 `material` / `quantity` 纠正 Vision 结果。
+- 产品级 BOM/3D 匹配：层级匹配结果现在作为底座锁定，后续代码/AI 只能补节点不能覆盖；装配体名称匹配支持短中文锚点（如 `油缸`）；最后一层补漏改为复用同一 BOM-3D 匹配模型的“最终 AI 补漏”，不再扩张规则兜底，但 `M10*75` ↔ `M10×80` 这类硬规格冲突仍保持拦截。
+- 产品总装步骤归属：`product_assembly_agent.py` 会在 AI 生成后按 `bom_mapping_table` 收口每一步的 BOM 归属，当前步骤只能保留自己的 `bom_seq`；历史任务若仍有重复节点，`ManualViewer.vue` 也只会把“首次在当前步骤出现”的节点刷成黄色，已经在前序步骤出现过的节点保持蓝色。
+- 手册节点绑定告警：步骤会输出 `has_3d_binding`、`missing_node_binding_codes`、`binding_warning`，显式提示“当前步骤有文字但未绑定 3D 节点”。
+- Viewer 扫码：`/viewer` 搜索栏支持扫码填充物料代码；前端已切到同源 API/WS/SSE，支持内网自签 `HTTPS` 入口；已验证 Android 系统浏览器在“首次信任证书”后可直接扫码回填搜索框。第三方浏览器（如百度）兼容性不稳定，不建议作为交付验收标准；若客户固定内网 `IP` 变更，需在宿主机本地重签 `frontend/ssl/server.crt` / `server.key`；该目录不再纳入 Git 或镜像。
 - Viewer 移动端布局：项目选择弹窗改为近全宽显示，列表采用单列信息与整行操作按钮，减少文字挤压和无效留白。
 - Generator/Viewer 任务缓存一致性：查看器删除任务后会同步清理 `generator_last_task` 与 `generator_current_task`；生成器读取上一次任务时若状态接口返回 404，会自动清理残留提示。
 - NewAPI 兼容：provider 对外统一 `newapi`（兼容旧 `doubao`）；默认关闭 `thinking/reasoning_effort`，若模型返回 `Unknown parameter` 或参数不识别会自动降级；若返回 completion 上限（`at most N`）会自动降级到 `N` 后重试；多模态调用点（`assembly/welding/bom_vision`）不允许 `glm-5`，设置页会自动替换并警告，后端也会拒绝非法组合。

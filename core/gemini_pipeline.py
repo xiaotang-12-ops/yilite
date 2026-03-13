@@ -754,8 +754,8 @@ class GeminiAssemblyPipeline:
             用文本层结果纠正和补全 vision 抽取的字段，并补齐 vision 漏掉的行。
             
             策略：
-            1. 纠正：如果文本层有值且与Vision不同，用文本层覆盖（code, product_code, name）
-            2. 补全：如果Vision为空，用文本层填充（quantity, weight等）
+            1. 纠正：如果文本层有值且与Vision不同，用文本层覆盖关键字段（code, product_code, name, quantity）
+            2. 补全：如果Vision为空，用文本层填充重量等弱字段
             
             Returns:
                 (merged_items, correction_log)
@@ -799,8 +799,8 @@ class GeminiAssemblyPipeline:
                         })
                         item["code"] = code_text
                     
-                    # ✅ 纠正/补全 product_code 和 name 字段
-                    for field in ("product_code", "name"):
+                    # ✅ 纠正/补全 product_code、name、material 字段
+                    for field in ("product_code", "name", "material"):
                         text_val = _norm(sup.get(field))
                         vision_val = _norm(item.get(field))
                         
@@ -815,9 +815,20 @@ class GeminiAssemblyPipeline:
                             })
                             item[field] = text_val
 
-                    # ✅ 补全 quantity（保持原有逻辑）
-                    if item.get("quantity") in (None, "", 0) and sup.get("quantity") not in (None, "", 0):
-                        item["quantity"] = sup.get("quantity")
+                    # ✅ quantity 以文本层为准：文本层能读到时，允许纠正 Vision 冲突值
+                    text_qty = sup.get("quantity")
+                    vision_qty = item.get("quantity")
+                    if text_qty not in (None, "", 0):
+                        if vision_qty in (None, "", 0) or vision_qty != text_qty:
+                            correction_log.append({
+                                "seq": seq,
+                                "source_pdf": source_pdf,
+                                "field": "quantity",
+                                "vision_value": vision_qty if vision_qty not in (None, "") else "(empty)",
+                                "text_value": text_qty,
+                                "decision": "correct_to_text" if vision_qty not in (None, "", 0) else "supplement_from_text"
+                            })
+                            item["quantity"] = text_qty
 
                     # ✅ 补全重量字段（保持原有逻辑）
                     if item.get("unit_weight") is None and sup.get("unit_weight") is not None:

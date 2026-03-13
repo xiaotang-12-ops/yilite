@@ -286,6 +286,7 @@ type Provider = 'openrouter' | 'deepseek' | 'newapi' | 'doubao'
 const modelPresets = [
   { label: 'doubao-seed-2-0-lite-260215', value: 'doubao-seed-2-0-lite-260215' },
   { label: 'doubao-seed-2-0-pro-260215', value: 'doubao-seed-2-0-pro-260215' },
+  { label: 'qwen3.5-plus-2026-02-15', value: 'qwen3.5-plus-2026-02-15' },
   { label: 'gpt-5-mini', value: 'gpt-5-mini' },
   { label: 'glm-5', value: 'glm-5' }
 ]
@@ -314,6 +315,12 @@ interface Settings {
   websocketUrl: string
   apiBaseUrl: string
   callPoints: Record<string, CallPointConfig>
+}
+
+const resolveDefaultWebsocketUrl = () => {
+  if (typeof window === 'undefined') return 'ws://localhost:8008'
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+  return `${protocol}//${window.location.host}`
 }
 
 const callPointOrder = ['matching', 'assembly', 'welding', 'safety', 'bom_vision'] as const
@@ -390,7 +397,7 @@ const settings = ref<Settings>({
   openrouterApiKey: '',
   deepseekApiKey: '',
   newapiApiKey: '',
-  websocketUrl: 'ws://localhost:8008',
+  websocketUrl: resolveDefaultWebsocketUrl(),
   apiBaseUrl: '/api',
   callPoints: buildDefaultCallPoints()
 })
@@ -679,7 +686,7 @@ const resetSettings = () => {
     openrouterApiKey: '',
     deepseekApiKey: '',
     newapiApiKey: '',
-    websocketUrl: 'ws://localhost:8008',
+    websocketUrl: resolveDefaultWebsocketUrl(),
     apiBaseUrl: '/api',
     callPoints: buildDefaultCallPoints()
   }

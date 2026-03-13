@@ -1,5 +1,163 @@
 # Memory Changelog
 
+## v2.1.48 (2026-03-13)
+- **HTTPS 证书改为部署时挂载（私钥不再进仓库/镜像）**：
+  - **用户提问**：
+    - “那我还有一个问题，我到时候是要打包镜像到用户系统去解包的，肯定要带上这个秘钥吧，不然他们都用不了扫一扫功能了对吧，只是说我们不能上传到github上就是了，对吗”
+    - “可以，去改吧，记得改完后更新memory”
+  - **问题根因**：
+    1. `frontend/Dockerfile` 之前直接 `COPY ssl /etc/nginx/ssl`，导致 `frontend/ssl/server.key` 会被烤进前端镜像层。
+    2. 仓库 `.gitignore` 与 Docker 构建忽略规则都没有排除 `frontend/ssl/`，私钥既可能被 Git 跟踪，也可能在构建阶段被带进 build context。
+    3. HTTPS 扫码确实依赖运行时证书，但“部署机本地需要私钥”和“源码仓库/通用镜像可以携带私钥”是两回事，之前交付链路没有把这两个边界分开。
+  - **问题场景**：
+    - GitGuardian 已对仓库发出 `Generic Private Key exposed on GitHub` 告警；同时用户仍然需要保留手机扫码所依赖的 `HTTPS` 能力，不能简单关闭 `443`。
+  - **修复方案**：
+    1. `frontend/Dockerfile` 去掉 `COPY ssl`，前端镜像不再内置 `server.crt/server.key`。
+    2. `docker-compose.yml` 为前端新增宿主机本地证书目录只读挂载：`./frontend/ssl:/etc/nginx/ssl:ro`，保留 `3443` HTTPS 入口。
+    3. `.gitignore`、根目录 `.dockerignore`、`frontend/.dockerignore` 同时排除 `frontend/ssl/`，阻止私钥进入 Git 跟踪和 Docker build context。
+    4. 更新 `README.md`、`DEPLOYMENT.md`、`DOCKER_DEPLOYMENT.md`，明确 `frontend/ssl/` 是本地部署目录，不随仓库分发，且建议每个客户环境使用独立证书。
+    5. `frontend/ssl/*` 从 Git 跟踪中移除，但保留本地文件，避免影响当前部署调试。
+  - **影响文件**：`.gitignore`、`.dockerignore`、`frontend/.dockerignore`、`frontend/Dockerfile`、`docker-compose.yml`、`README.md`、`DEPLOYMENT.md`、`DOCKER_DEPLOYMENT.md`、`VERSION`、`Memory_Development/index.md`、`Memory_Development/changelog.md`、`frontend/ssl/*`
+  - **记录人**：小雅
+
+## v2.1.47 (2026-03-11)
+- **步骤标题去数量口径 + NewAPI 快捷模型补充**：
+  - **用户提问**：
+    - “我注意到新图纸生成的标题怎么会带数量，这个不需要。是不是提示词有问题。”
+    - “没事，你就改个提示词就行，就是让他不要生成这种带数量的就行。”
+    - “`qwen3.5-plus-2026-02-15` 这个模型加入到newapi的快捷模型里面方便我填入”
+  - **问题根因**：
+    1. `agent_4_product_assembly.py` 与 `agent_3_component_assembly.py` 对 `title` 的约束都只写了“10字以内”，没有明确禁止把数量、规格、括号带进标题。
+    2. 现有手册链路不会对标题做二次清洗，所以模型一旦输出 `安装油杯 (8 个)` 这类标题，就会一路保留到最终手册。
+    3. `Settings.vue` 的 `NewAPI` 快捷模型列表缺少 `qwen3.5-plus-2026-02-15`，只能手填。
+  - **问题场景**：
+    - 新生成图纸中出现 `安装油杯（8个）`、`安装 M10 螺母（6个）` 这类带数量标题，用户希望标题只保留动作和零件名。
+    - 设置页需要在 `NewAPI` 提供方下直接快捷选择 `qwen3.5-plus-2026-02-15`。
+  - **修复方案**：
+    1. 在 `prompts/agent_4_product_assembly.py` 明确写死：`title` 只允许“动作 + 零件名”，禁止数量/规格/括号；数量、规格、力矩只能写进 `description`。
+    2. 在 `prompts/agent_3_component_assembly.py` 同步加上同样的标题口径，避免组件模式继续生成带数量标题。
+    3. 在 `frontend/src/views/Settings.vue` 的 `modelPresets` 中加入 `qwen3.5-plus-2026-02-15`，作为 `NewAPI` 快捷模型可选项。
+  - **影响文件**：`prompts/agent_4_product_assembly.py`、`prompts/agent_3_component_assembly.py`、`frontend/src/views/Settings.vue`、`VERSION`、`Memory_Development/index.md`、`Memory_Development/changelog.md`
+  - **记录人**：小雅
+
+## v2.1.46 (2026-03-10)
+- **产品总装步骤归属锁定 + 重复节点高亮收口**：
+  - **用户提问**：
+    - “我试过了一套新的图纸，发现匹配率依然不行，甚至出现了很多比如放错了，比如第二步的六角头螺栓全螺纹8.8级 `NAUO71` 怎么会在第二步呢？”
+    - “我步数越来越后，发现这个零件竟然从黄色变成蓝色，蓝色变成黄色，什么意思？已装又正在装？”
+    - “最后记得更新memory”
+  - **问题根因**：
+    1. `prompts/agent_4_product_assembly.py` 之前同时要求“一个步骤只对应一个 BOM 序号”和“所有产品级紧固件都要出现在某个步骤的 `fasteners` 中”，提示词规则自相矛盾，导致模型会把后续独立 BOM 序号（如 `seq 16/17/24`）提前塞进前面的组件步骤。
+    2. `agents/product_assembly_agent.py` 后处理在给 `fasteners/components` 注入 `node_name` 时，只按 `bom_code/bom_seq` 查表，不校验“这个条目是不是当前步骤真正拥有的序号”，于是同一批 `node_name` 会被复制进多个步骤。
+    3. `ManualViewer.vue` 的颜色逻辑优先看“当前步骤是否包含该节点”，再看“该节点是否已装”，所以一旦上游步骤重复引用同一节点，就会出现先蓝后黄、像“已装又正在装”的视觉冲突。
+    4. 产品总装覆盖率检查只统计“序号是否在任一步骤出现过”，没有校验“该序号是否只出现在自己那一步”，所以重复串件也能假装覆盖率 100%。
+  - **问题场景**：
+    - 实际任务目录：`output/06.22.01.0007E-TS250-S45-ET剪树机S45连接器`
+    - 真实 `step6_product_result.json` 中，`seq 17 (02.03.0530, 六角头螺栓全螺纹8.8级)` 被同时塞进了第 `2 / 3 / 12 / 17` 步，`NAUO71` 因此会在前面步骤被刷黄，后面又重新刷黄。
+  - **修复方案**：
+    1. 重写 `agent_4_product_assembly.py` 的关键约束：`components/fasteners` 两个数组只能放当前步骤自己的 `bom_seq`；其他紧固件若需要说明，只能写进 `description`，不能抢数组归属和 3D 高亮。
+    2. 更新产品总装提示词示例与自检清单，明确“每个 `bom_seq` 在整个 `assembly_steps` 中只能出现一次”，并把“全覆盖”口径改成“每个 BOM 序号在 `components/fasteners` 中恰好出现一次”。
+    3. `agents/product_assembly_agent.py` 新增 `_sanitize_step_bom_ownership(...)`：按 `bom_mapping_table` 强制收口每一步的归属，只保留当前 `step_number` 对应的 BOM 条目；串进来的未来/过去序号一律剔除；若当前步骤缺少自己的 BOM 条目，则按宽表回填 `code/name/spec/quantity/node_name`。
+    4. `frontend/src/views/ManualViewer.vue` 新增 `currentStepFreshNodeNames`，当前步骤只高亮“第一次在本步出现”的节点；已经在前序步骤出现过的节点继续保持已装配蓝色，不再重新刷黄。
+    5. 新增 `tests/test_product_assembly_agent.py`，覆盖“跨步骤串入紧固件会被剔除”和“缺失当前步骤物料会按 BOM 宽表回填”两类边界。
+    6. 用真实任务输出做回放验证：收口后第 `2` 步只剩 `seq 2` 本体，第 `17` 步单独保留 `seq 17` 的 10 个节点；整套任务共清掉 `13` 个跨步骤串入条目。
+  - **影响文件**：`prompts/agent_4_product_assembly.py`、`agents/product_assembly_agent.py`、`frontend/src/views/ManualViewer.vue`、`tests/test_product_assembly_agent.py`、`VERSION`、`Memory_Development/index.md`、`Memory_Development/changelog.md`
+  - **记录人**：小雅
+
+## v2.1.45 (2026-03-10)
+- **BOM 匹配收口二次重构（最终 AI 补漏 + PDF 固定 6 列提取）**：
+  - **用户提问**：
+    - “最后的兜底还是得让ai来做匹配我觉得是最好的，数量应该不会很多我觉得。所以这个token我是可以接受的。当然了这个ai模型就用匹配的模型就好了，没必要单独配置”
+    - “我们只要拿到序号，物料代码，代号，名称，材料，数量不就好了吗，其他的我们不拿不就好了，难道做不到吗？”
+    - “可以，就依你，开始吧。”
+  - **问题根因**：
+    1. 上一轮虽然已经把层级锁定和手册告警补上，但最终补漏仍是规则兜底，长期会演变成“每来一种异名就继续往代码里加 case”的失控模式。
+    2. `pdf_text_bom_extractor.py` 仍以 5 列为主目标，`material` 没正式进文本层主链路，后续 `SimplePlanner` 这类依赖 `material` 的逻辑仍可能吃到 Vision 旧值或空值。
+    3. 文本层最后一条 BOM 的纠偏虽然有效，但上轮主要依赖尾部关键词截断止血，用户明确担心“尾部关键词”会误伤未来图纸。
+  - **问题场景**：
+    - 产品总装收口阶段只剩少量残件时，用户更接受消耗少量 token，让同一个匹配模型做最终补漏，而不是继续扩张规则兜底。
+    - PDF 结构即使带有 `单重/备注/工艺路线/技术要求` 等额外字段，系统也应该只稳定抓住 `序号/物料代码/代号/名称/材料/数量` 6 列主数据。
+  - **修复方案**：
+    1. `core/hierarchical_bom_matcher_v2.py` 去掉最终“规则兜底”阶段，改为 `步骤3.5：最终AI补漏`，直接复用当前 BOM-3D 匹配模型，不新增单独的 provider/model 配置项。
+    2. 最终 AI 补漏只处理最后残留的小集合，并继续复用现有硬约束：层级结果不可覆盖、BOM 数量上限、规格冲突拦截、重复节点去重。
+    3. AI 过滤器新增 `min_confidence` 参数：主匹配保持严格阈值；最终 AI 补漏允许略低于主阈值，但仍要求“规格/类型/锚点”至少满足一类证据，避免把无依据结果放进来。
+    4. `core/pdf_text_bom_extractor.py` 重构为固定 6 列提取：`seq/code/product_code/name/material/quantity`；数量识别改为前向扫描，不再依赖“从后往前找整数”。
+    5. 文本层字段拆分改为：`代号` 优先识别首列非中文编码，`材料` 取数量前最后一格，`名称` 取中间剩余格；对真实 `_v_1.pdf` 已回验成功。
+    6. 文本层合并回主链路时，`gemini_pipeline.py` 现在会把 `material` 与 `code/product_code/name/quantity` 一样纳入文本纠正，后续规划与匹配可直接复用。
+    7. 补充单测：覆盖 `PDF` 6 列提取、最终 AI 补漏阈值放宽逻辑、以及未绑 3D 步骤告警。
+  - **影响文件**：`core/pdf_text_bom_extractor.py`、`core/gemini_pipeline.py`、`core/hierarchical_bom_matcher_v2.py`、`tests/test_pdf_text_bom_extractor.py`、`tests/test_hierarchical_bom_matcher_v2.py`、`tests/test_manual_integrator_v2.py`、`VERSION`、`Memory_Development/index.md`、`Memory_Development/changelog.md`
+  - **记录人**：小雅
+
+## v2.1.44 (2026-03-10)
+- **产品总装 BOM/3D 匹配收口修复（尾部污染、层级锁定、标准件异名兜底）**：
+  - **用户提问**：
+    - “`seq` 为 1 的数量 2 是错的，我不知道他哪里来的数量 2，实际是数量 1，你看看他为什么会搞错。还有一些脏数据，这个看看怎么处理，肯定有问题的”
+    - “第二个，这个好像就很难受，是因为名字不对是吗？要不然就统一在最后来做一个匹配置信度比较低的处理算了”
+    - “第三个，感觉这个问题吧，经常看到，看看怎么解决”
+    - “第四个，层级匹配应该是优先的呀，你的意思 是层级匹配优先级被降低了？”
+    - “可以，都开始落地吧。最后记得更新memory”
+  - **问题根因**：
+    1. `pdf_text_bom_extractor.py` 对最后一条 BOM 没有尾部终止规则，`seq 1` 会把 `工艺路线/技术要求` 一起吞进 body，再从后往前捞到尾部的整数 `2` 误当数量。
+    2. 产品级层级匹配虽然先跑，但旧的合并方式允许后续散件/AI 结果覆盖前面的装配体结果，导致总成节点经常“先挂上、后掉件”。
+    3. 名称去噪规则对短中文锚点过严，像 `油缸` 这种 2 字锚点会被过滤掉，导致 `seq 8` 无法命中现成的 STEP 装配层级。
+    4. 标准件异名缺少最后一轮受限兜底，`M8` 和 `油杯8` 这种人能看懂、规则却没统一的写法会残留为未匹配。
+    5. 手册整合阶段以前只负责塞 `node_name`，没有显式标记“这一步只有文字，没有绑定 3D 节点”，容易制造假成功观感。
+  - **问题场景**：
+    - 实际任务目录：`output/03.05.01.0020E-TG22S-S45挖机夹木器S45连接器(2)_v_1`
+    - 用户重跑后重点关注产品总装：`seq 1` 数量与名称脏数据、`seq 1/4/5/8` 总成挂件不全、`seq 9` 油杯漏挂、以及“文字步骤正常但 3D 不亮”的假成功。
+  - **修复方案**：
+    1. `core/pdf_text_bom_extractor.py` 新增尾部截断规则：命中 `工艺路线/技术要求/设计/校对/...` 等尾部标记时立即截断当前 BOM body，避免最后一条记录继续吞表尾数据。
+    2. 文本层数量解析改为“先识别数量 + 1~2 个重量列，失败再保底取数量”，配合尾部截断后，`seq 1` 在真实 `_v_1.pdf` 中已回正为 `数量 1`、名称恢复为 `左爪总成组件-漆后 组焊件`。
+    3. `core/hierarchical_bom_matcher_v2.py` 增加装配体名称变体匹配，去掉 `组焊件/外购/漆后/镀锌` 等噪音尾缀；同时保留 2 字中文锚点（如 `油缸`），让 `seq 8` 也能回到层级匹配链路。
+    4. 产品级最终映射合并改为“层级为底座、后续只增量补点不能覆盖”，彻底锁死层级优先级，避免 `seq 1/4/5` 被后续散件匹配冲掉。
+    5. 新增“标准件异名规则兜底”步骤，只处理最后残留的标准件，并保留规格/数量守卫；真实 `_v_1` 回验里 `seq 9 (02.08.05.0004, M8 油杯)` 已能兜起 8 个节点。
+    6. 规格硬冲突继续保持拦截，`seq 11 (M10*75)` 对 `3D M10×80` 不放行，避免把错误规格伪装成匹配成功。
+    7. `core/manual_integrator_v2.py` 为步骤输出新增 `has_3d_binding`、`missing_node_binding_codes`、`binding_warning`，以后步骤只有文字、没有节点绑定时会显式打标。
+    8. 补充回归测试：覆盖 `PDF` 尾部污染、短中文锚点层级匹配、以及“未绑 3D 步骤告警”三类边界。
+  - **影响文件**：`core/pdf_text_bom_extractor.py`、`core/hierarchical_bom_matcher_v2.py`、`core/manual_integrator_v2.py`、`tests/test_pdf_text_bom_extractor.py`、`tests/test_hierarchical_bom_matcher_v2.py`、`tests/test_manual_integrator_v2.py`、`VERSION`、`Memory_Development/index.md`、`Memory_Development/changelog.md`
+  - **记录人**：小雅
+
+## v2.1.43 (2026-03-09)
+- **Viewer 内网 HTTPS 扫码实装验证（自签证书 + 同源协议）**：
+  - **用户提问**：
+    - “要不然这样，你试一下，做本地自签证书，然后我看看项目运行后，我这边手机看看能不能直接访问。”
+    - “可以，扫一扫也能用，我手机扫一扫后直接就填入到搜索框了。”
+    - “那现在既然证明可以扫码了，那就应该实装了，现在需要怎么做才能实装。”
+  - **问题根因**：
+    1. Viewer 扫码逻辑本身已存在，但前端仍有多处 `http://localhost` / `ws://localhost` / `EventSource(http://...)` 写死地址，`HTTPS` 页面下会触发混合内容或直连手机本机问题。
+    2. 前端容器仅暴露 `80`，没有 `443 ssl` 入口，手机浏览器在 `HTTP` 非安全上下文下无法稳定调起摄像头。
+    3. 自签证书与访问地址强绑定；局域网 `IP` 变化会导致证书不匹配，必须按客户固定内网 `IP` 重签。
+  - **问题场景**：
+    - 用户没有 IT 团队，希望系统部署在客户内网服务器上，通过手机浏览器直接使用“扫一扫”筛选说明书项目。
+    - 本地真机验证中，Android 系统浏览器在“首次信任证书”后可以正常扫码回填，但第三方浏览器（百度）兼容性不稳定。
+  - **修复方案**：
+    1. 前端 `api/index.ts` 改为同源 `/api`，`TaskWebSocket` 改为根据当前页面协议自动拼接 `ws://` / `wss://`。
+    2. `Generator.vue` 的 SSE 地址改为同源 `/api/stream/{id}`；`Settings.vue` 默认 WebSocket 地址改为跟随页面协议/主机。
+    3. `frontend/nginx.conf` 增加 `listen 443 ssl`，读取 `/etc/nginx/ssl/server.crt` / `server.key`。
+    4. `frontend/Dockerfile` 打包 `frontend/ssl/*` 证书文件；`docker-compose.yml` 暴露 `3443:443`，形成内网 HTTPS 入口。
+    5. 生成客户固定内网 `IP` 版本的自签证书（当前客户地址：`192.168.15.200`），本地 Android 系统浏览器真机验证通过：扫码成功后会自动写入 `searchQuery`。
+    6. 明确交付口径：当前默认访问地址为 `https://<固定IP>:3443/viewer`；若后续改宿主机端口为 `443:443`，则用户可直接访问 `https://<固定IP>/viewer`。
+  - **影响文件**：`frontend/src/api/index.ts`、`frontend/src/views/Generator.vue`、`frontend/src/views/Settings.vue`、`frontend/nginx.conf`、`frontend/Dockerfile`、`frontend/ssl/server.crt`、`frontend/ssl/server.key`、`frontend/ssl/rootCA.crt`、`frontend/ssl/rootCA.cer`、`docker-compose.yml`、`VERSION`、`Memory_Development/index.md`、`Memory_Development/frontend/routes.md`、`Memory_Development/changelog.md`
+  - **记录人**：小雅
+- **PDF 文本层 BOM 关键字段稳提 + `quantity` 文本纠偏**：
+  - **用户提问**：
+    - “所以现在 pdf 结构就算变化也没关系了对吧，我们都能拿到我们要的关键字段是吗？”
+    - “看看还有什么问题没解决，然后提供解决方案给我。我再来重跑看看。”
+  - **问题根因**：
+    1. 旧版 `pdf_text_bom_extractor.py` 把“`quantity` 后面必须紧跟两列重量”当成成行条件；一旦 PDF 文本层把重量列拆散、缺失或位置漂移，整行 BOM 会被直接丢掉。
+    2. 旧逻辑更偏向“重量列完整”而不是“关键 5 列稳定”，导致明明文本层还有 `seq/code/product_code/name/quantity`，也可能因为重量列异常而提取失败。
+    3. `gemini_pipeline.py` 之前对 `quantity` 只做“文本补空”，不能在 Vision 读错数量时用文本层纠偏，导致后续匹配/步骤数量仍可能延续错误值。
+  - **问题场景**：
+    - 用户重点关注“图片/图纸结构波动后，是否仍能稳定拿到关键字段”，因为后续 BOM 匹配、步骤生成、图片关联都依赖 `seq / 物料代码 / 代号 / 名称 / 数量` 这 5 列。
+    - 这次修复只覆盖“文本层提取与 `quantity` 纠偏”链路，不把后续规格过滤、重复锚点等未落地问题写成已修复。
+  - **修复方案**：
+    1. `core/pdf_text_bom_extractor.py` 改为先用“下一条 `seq + code` 记录头”切分 BOM 记录，不再要求 `quantity` 后必须紧跟两列重量才能认定整行有效。
+    2. 提取目标调整为“优先稳定拿到 `seq/code/product_code/name/quantity` 5 列”，`unit_weight/total_weight` 降级为可选补充字段，避免重量列反向拖垮主数据。
+    3. 新增 `_looks_like_record_start`、`_find_record_end`、`_extract_quantity_and_weights` 等辅助逻辑，支持尾部数量/重量弱约束解析。
+    4. `core/gemini_pipeline.py` 改为当文本层拿到 `quantity` 时，允许覆盖 Vision 冲突值，而不只是填补空值。
+  - **影响文件**：`core/pdf_text_bom_extractor.py`、`core/gemini_pipeline.py`、`Memory_Development/index.md`、`Memory_Development/changelog.md`
+  - **记录人**：小雅
+
 ## v2.1.42 (2026-03-02)
 - **查看器管理员改名功能（仅管理员可操作）**：
   - **用户提问**：

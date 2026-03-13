@@ -37,6 +37,7 @@ yarn.lock
 frontend/dist/
 frontend/.vite/
 frontend/.temp/
+frontend/ssl/
 
 # IDE
 .vscode/

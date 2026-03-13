@@ -143,6 +143,11 @@ PRODUCT_ASSEMBLY_SYSTEM_PROMPT = """# 🎯 角色定位
 - 每个步骤必须同时包含`components`和`fasteners`两个字段
 - 如果某个BOM序号是组件，放在`components`中，`fasteners`为空数组
 - 如果某个BOM序号是紧固件，放在`fasteners`中，`components`为空数组
+- **⚠️ `components/fasteners` 只允许放当前步骤自己的 BOM 序号**：
+  - 当前步骤如果对应组件序号，只能在 `components` 里放这个序号，`fasteners` 必须为空数组
+  - 当前步骤如果对应紧固件序号，只能在 `fasteners` 里放这个序号，`components` 必须为空数组
+  - 如果你想说明“该组件最终用哪些紧固件固定”，只能写进 `description`，不能把别的 BOM 序号提前塞进当前步骤的数组
+  - **同一个 `bom_seq` 在整个 `assembly_steps` 中只能出现一次**
 
 ---
 
@@ -210,17 +215,12 @@ PRODUCT_ASSEMBLY_SYSTEM_PROMPT = """# 🎯 角色定位
 **示例：**
 ```json
 {
-  "step_number": 1,
-  "title": "安装铰链座臂架",
+  "step_number": 5,
+  "title": "安装铰链座外臂架",
   "components": [
-    {"bom_seq": "5", "bom_name": "铰链座外臂架组件-漆后", "quantity": 1},
-    {"bom_seq": "6", "bom_name": "铰链座内臂架组件-漆后", "quantity": 1}
+    {"bom_seq": "5", "bom_name": "铰链座外臂架组件-漆后", "quantity": 1}
   ],
-  "fasteners": [
-    {"bom_seq": "41", "bom_name": "内六角平圆头螺钉8.8级", "spec": "M16*85", "quantity": 4, "torque": "150N·m"},
-    {"bom_seq": "42", "bom_name": "平垫圈8.8级", "spec": "16*3", "quantity": 4, "torque": ""},
-    {"bom_seq": "43", "bom_name": "1型非金属嵌件六角锁紧螺母8.8级", "spec": "M16", "quantity": 4, "torque": "150N·m"}
-  ]
+  "fasteners": []
 }
 ```
 
@@ -267,6 +267,10 @@ PRODUCT_ASSEMBLY_SYSTEM_PROMPT = """# 🎯 角色定位
 5. **⚠️ 使用BOM序号（bom_seq）而不是BOM代号（bom_code）**：
    - components和fasteners中都使用`bom_seq`字段
    - BOM序号是字符串类型的数字（如"1"、"2"、"3"）
+6. **⚠️ `title` 只允许写“动作 + 零件名”**：
+   - 正确示例：`安装油杯`、`安装M10螺母`、`放置基准组件`
+   - 错误示例：`安装油杯（8个）`、`安装M10螺栓（6个）`、`安装M8螺栓 M8*60`
+   - 数量、规格、力矩、括号说明只能写进 `description`，禁止写进 `title`
 
 ## 输出格式
 
@@ -284,7 +288,7 @@ PRODUCT_ASSEMBLY_SYSTEM_PROMPT = """# 🎯 角色定位
     {
       "step_id": "product_step_步骤号（如：product_step_1，全局唯一ID）",
       "step_number": 1,
-      "title": "步骤标题（10字以内）",
+      "title": "步骤标题（10字以内，只写动作+零件名，禁止数量/规格/括号）",
       "component_code": "组件BOM代号",
       "component_name": "组件名称",
       "drawing_number": "组件在图纸上的序号（如①、②）",
@@ -322,17 +326,17 @@ PRODUCT_ASSEMBLY_SYSTEM_PROMPT = """# 🎯 角色定位
 - 组件清单：
   1. 01.01.0001 - 底座组件-漆后 (已预装配)
   2. 01.01.0002 - 立柱组件-漆后 (已预装配)
-  3. 01.01.0003 - 平台组件-漆后 (已预装配)
+  3. 02.03.0100 - 六角头螺栓8.8级 (M16*60)
 - 产品级零件：
-  1. 02.03.0100 - 六角头螺栓8.8级 (M16*60)
-  2. 02.03.0200 - 平垫圈8.8级 (16*3)
-  3. 02.03.0300 - 弹簧垫圈 (16)
+  1. 01.01.0002 - 立柱组件-漆后
+  2. 02.03.0100 - 六角头螺栓8.8级 (M16*60)
+  3. 02.03.0200 - 平垫圈8.8级 (16*3)
 
 **示例输出：**
 ```json
 {
   "product_name": "液压升降平台",
-  "total_steps": 2,
+  "total_steps": 3,
   "assembly_steps": [
     {
       "step_id": "product_step_1",
@@ -343,64 +347,57 @@ PRODUCT_ASSEMBLY_SYSTEM_PROMPT = """# 🎯 角色定位
       "connection_type": "螺栓连接",
       "components": [
         {
-          "bom_code": "01.01.0002",
+          "bom_seq": "1",
           "bom_name": "立柱组件-漆后",
           "quantity": 1
         }
       ],
-      "fasteners": [
-        {
-          "bom_code": "02.03.0100",
-          "bom_name": "六角头螺栓8.8级",
-          "spec": "M16*60",
-          "quantity": 4,
-          "torque": "150N·m"
-        },
-        {
-          "bom_code": "02.03.0200",
-          "bom_name": "平垫圈8.8级",
-          "spec": "16*3",
-          "quantity": 4,
-          "torque": ""
-        },
-        {
-          "bom_code": "02.03.0300",
-          "bom_name": "弹簧垫圈",
-          "spec": "16",
-          "quantity": 4,
-          "torque": ""
-        }
-      ],
-      "description": "将立柱组件（01.01.0002）垂直放置在底座组件（01.01.0001）的安装孔上。使用4套M16*60螺栓（02.03.0100）、平垫圈（02.03.0200）和弹簧垫圈（02.03.0300）将立柱固定在底座上。先手动拧紧螺栓，然后使用扭力扳手按对角线顺序拧紧至150N·m。",
-      "quality_check": "检查立柱是否垂直，使用水平仪测量垂直度误差应小于2mm/m。检查所有螺栓是否达到规定扭矩，无松动。",
+      "fasteners": [],
+      "description": "将立柱组件（序号1，物料代码01.01.0002）垂直放置在底座组件（01.01.0001）的安装孔位上，并与后续紧固件序号对位。此步骤只完成组件就位，不要把后续螺栓和平垫圈写进当前步骤数组。",
+      "quality_check": "检查立柱组件是否到位、孔位是否对正，为后续紧固件安装预留空间。",
       "estimated_time_minutes": 20
     },
     {
       "step_id": "product_step_2",
       "step_number": 2,
-      "title": "安装平台",
-      "component_code": "01.01.0003",
-      "component_name": "平台组件-漆后",
+      "title": "安装螺栓",
+      "component_code": "",
+      "component_name": "",
       "connection_type": "螺栓连接",
+      "components": [],
       "fasteners": [
         {
-          "bom_code": "02.03.0100",
+          "bom_seq": "2",
           "bom_name": "六角头螺栓8.8级",
           "spec": "M16*60",
-          "quantity": 8,
+          "quantity": 4,
           "torque": "150N·m"
-        },
+        }
+      ],
+      "description": "安装序号2的 M16*60 螺栓，将前一步已经对位的立柱与底座连接并按对角线顺序预紧。",
+      "quality_check": "检查4个螺栓是否都已穿入正确孔位，螺纹无卡滞。",
+      "estimated_time_minutes": 10
+    },
+    {
+      "step_id": "product_step_3",
+      "step_number": 3,
+      "title": "安装平垫圈",
+      "component_code": "",
+      "component_name": "",
+      "connection_type": "螺栓连接",
+      "components": [],
+      "fasteners": [
         {
-          "bom_code": "02.03.0200",
+          "bom_seq": "3",
           "bom_name": "平垫圈8.8级",
           "spec": "16*3",
-          "quantity": 8,
+          "quantity": 4,
           "torque": ""
         }
       ],
-      "description": "将平台组件（01.01.0003）水平放置在立柱组件顶部的安装面上。使用8套M16*60螺栓（02.03.0100）和平垫圈（02.03.0200）将平台固定在立柱上。按对角线顺序分两次拧紧：第一次拧至100N·m，第二次拧至150N·m。",
-      "quality_check": "检查平台是否水平，四角高度差应小于3mm。检查所有螺栓是否达到规定扭矩。",
-      "estimated_time_minutes": 25
+      "description": "安装序号3的平垫圈，与前一步螺栓配套使用。",
+      "quality_check": "检查平垫圈数量齐全、方向正确、贴合安装面。",
+      "estimated_time_minutes": 8
     }
   ]
 }
@@ -419,12 +416,12 @@ PRODUCT_ASSEMBLY_SYSTEM_PROMPT = """# 🎯 角色定位
 
 **这是最重要的要求！**
 
-1. **所有产品级零件必须在步骤中出现**：检查产品级零件清单中的每一个零件，确保它们都出现在某个步骤的`fasteners`中
+1. **所有产品级零件必须在步骤中出现且只出现一次**：检查产品级零件清单中的每一个零件，确保它们在某个步骤的 `components` 或 `fasteners` 中恰好出现一次
 2. **不允许遗漏任何零件**：即使是一个小螺母、垫圈也不能遗漏
-3. **数量必须匹配**：每个零件在所有步骤中使用的总数量，必须等于零件清单中的数量
+3. **数量必须匹配**：每个零件在所有步骤中出现的总数量，必须等于零件清单中的数量
 4. **生成后自我验证**：
    - 列出产品级零件清单中的所有BOM代号
-   - 逐一检查每个BOM代号是否出现在步骤的fasteners中
+   - 逐一检查每个BOM代号是否只在一个步骤的 `components` 或 `fasteners` 中出现
    - 如果有遗漏，立即补充相应步骤
 
 **如果无法覆盖所有产品级零件，说明装配步骤不完整，需要重新生成！**
@@ -481,6 +478,7 @@ PRODUCT_ASSEMBLY_USER_QUERY = """请生成产品总装配步骤（将预装配�
    - **`components`字段**：列出该步骤安装的主要组件（BOM代号、名称、数量）
    - **`fasteners`字段**：列出该步骤使用的紧固件（螺栓、螺母、垫圈等，包含bom_code、bom_name、spec、quantity、torque）
    - **这两个字段用于3D模型高亮显示**：前端会根据这些BOM代号，通过BOM-3D匹配映射，自动高亮对应的3D零件
+   - **⚠️ 两个数组只能放当前步骤自己的 BOM 序号**，其他序号只能写进 `description` 作为说明，绝不能提前塞进数组里抢 3D 高亮
 7. 每个步骤要详细、可操作，并引用图纸编号
 8. 使用工人能看懂的语言
 9. 包含质量检查点
@@ -493,8 +491,8 @@ PRODUCT_ASSEMBLY_USER_QUERY = """请生成产品总装配步骤（将预装配�
 
 1. **产品级BOM全覆盖验证**：
    - [ ] 列出产品级零件清单中的所有BOM代号（共{total_product_bom}个）
-   - [ ] 逐一检查每个BOM代号是否出现在某个步骤的fasteners中
-   - [ ] 计算每个零件在所有步骤中使用的总数量，确保与零件清单中的数量一致
+   - [ ] 逐一检查每个BOM代号是否只在一个步骤的 `components` 或 `fasteners` 中出现
+   - [ ] 计算每个零件在所有步骤中出现的总数量，确保与零件清单中的数量一致
    - [ ] **如果有任何零件遗漏，立即添加新步骤或修改现有步骤来包含它**
 
 2. **装配逻辑验证**：

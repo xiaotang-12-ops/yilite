@@ -1,9 +1,25 @@
 // API服务模块
 import axios from 'axios'
 
+const resolveApiBaseUrl = () => {
+  const configured = import.meta.env.VITE_API_BASE_URL?.trim()
+  if (configured) return configured
+  return '/api'
+}
+
+const resolveWsBaseUrl = () => {
+  const configured = import.meta.env.VITE_WS_BASE_URL?.trim()
+  if (configured) return configured.replace(/\/$/, '')
+  if (typeof window !== 'undefined') {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+    return `${protocol}//${window.location.host}/ws`
+  }
+  return 'ws://localhost:8008/ws'
+}
+
 // 创建axios实例
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8008/api',
+  baseURL: resolveApiBaseUrl(),
   timeout: 300000, // 5分钟超时
   headers: {
     'Content-Type': 'application/json'
@@ -264,7 +280,7 @@ export class TaskWebSocket {
   }
 
   connect() {
-    const wsUrl = `ws://localhost:8008/ws/task/${this.taskId}`
+    const wsUrl = `${resolveWsBaseUrl()}/task/${this.taskId}`
     this.ws = new WebSocket(wsUrl)
 
     this.ws.onopen = () => {

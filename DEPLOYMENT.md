@@ -2,7 +2,7 @@
 
 本文档说明如何从 GitHub 克隆项目并使用 Docker 部署智能装配说明书生成系统。
 
-**当前版本**: v2.1.42 | [查看所有版本](https://github.com/xiaotang-12-ops/yilite/releases)
+**当前版本**: v2.1.48 | [查看所有版本](https://github.com/xiaotang-12-ops/yilite/releases)
 
 ---
 
@@ -48,7 +48,7 @@ cd yilite
 
 #### 部署特定版本
 
-如果你想部署特定版本（例如 `v2.1.42`），可以使用以下命令：
+如果你想部署特定版本（例如 `v2.1.48`），可以使用以下命令：
 
 ```bash
 # 克隆项目
@@ -59,7 +59,7 @@ cd yilite
 git tag
 
 # 切换到特定版本
-git checkout v2.1.42
+git checkout v2.1.48
 
 # 进入项目目录
 cd yilite
@@ -93,7 +93,24 @@ DEBUG=false
 VERBOSE=false
 ```
 
-### 步骤3: 启动服务
+### 步骤3: 准备 HTTPS 证书目录
+
+前端容器默认同时提供 `HTTP(3008)` 和 `HTTPS(3443)`，因此宿主机本地必须准备证书目录：
+
+```text
+frontend/ssl/
+├── server.crt
+├── server.key
+├── rootCA.crt   # 可选，用于给客户端安装信任链
+└── rootCA.cer   # 可选，Windows 安装时常用
+```
+
+说明：
+- `frontend/ssl/` 是本地部署目录，不随仓库分发
+- `server.crt` / `server.key` 会在运行时只读挂载到容器 `/etc/nginx/ssl`
+- 建议每个客户环境使用独立证书，避免多个现场共用同一把私钥
+
+### 步骤4: 启动服务
 
 ```bash
 # 构建并启动所有服务（首次启动需要下载镜像和构建，可能需要5-10分钟）
@@ -106,11 +123,12 @@ docker-compose ps
 docker-compose logs -f
 ```
 
-### 步骤4: 验证部署
+### 步骤5: 验证部署
 
 等待服务启动完成（约30-60秒），然后访问：
 
-- **前端页面**: http://localhost:3008
+- **前端页面（HTTP）**: http://localhost:3008
+- **前端页面（HTTPS，自签证书）**: https://localhost:3443
 - **后端API**: http://localhost:8008/api/docs
 
 如果能正常访问，说明部署成功！🎉
@@ -123,8 +141,8 @@ docker-compose logs -f
 
 | 服务名称 | 容器名称 | 端口 | 说明 |
 |---------|---------|------|------|
-| backend | assembly-backend-v2.1.42 | 8008 | FastAPI 后端服务 |
-| frontend | assembly-frontend-v2.1.42 | 3008 (映射到容器的80端口) | Vue 3 前端服务 |
+| backend | assembly-backend-v2.1.48 | 8008 | FastAPI 后端服务 |
+| frontend | assembly-frontend-v2.1.48 | 3008 / 3443 (映射到容器的 80 / 443 端口) | Vue 3 前端服务，支持 HTTP/HTTPS，证书来自宿主机挂载 |
 
 ### 数据持久化
 
@@ -208,13 +226,13 @@ docker-compose build backend
 ### 进入容器
 ```bash
 # 进入后端容器
-docker exec -it assembly-backend-v2.1.42 bash
+docker exec -it assembly-backend-v2.1.48 bash
 
 # 进入前端容器
-docker exec -it assembly-frontend-v2.1.42 sh
+docker exec -it assembly-frontend-v2.1.48 sh
 
 # 在后端容器中执行Python命令
-docker exec -it assembly-backend-v2.1.42 python -c "print('Hello')"
+docker exec -it assembly-backend-v2.1.48 python -c "print('Hello')"
 ```
 
 ---
@@ -262,8 +280,8 @@ Error: bind: address already in use
 
 3. 检查健康状态：
    ```bash
-   docker inspect assembly-backend-v2.1.42 | grep -A 10 Health
-   docker inspect assembly-frontend-v2.1.42 | grep -A 10 Health
+   docker inspect assembly-backend-v2.1.48 | grep -A 10 Health
+   docker inspect assembly-frontend-v2.1.48 | grep -A 10 Health
    ```
 
 ### 问题3: API密钥错误
@@ -343,7 +361,7 @@ docker-compose logs -f
 
 ### 安全配置
 1. **修改默认端口**: 不要使用默认的 3008 和 8008 端口
-2. **使用 HTTPS**: 配置 SSL 证书
+2. **使用 HTTPS**: 为每个客户环境准备独立 SSL 证书，并通过 `frontend/ssl/` 本地挂载
 3. **限制访问**: 使用防火墙限制访问来源
 4. **定期备份**: 备份 `output/` 和 `uploads/` 目录
 
@@ -377,8 +395,10 @@ docker-compose logs -f
 - [ ] Docker 和 Docker Compose 已安装
 - [ ] 代码已从 GitHub 克隆
 - [ ] `.env` 文件已配置（包含 API 密钥）
+- [ ] `frontend/ssl/server.crt` 与 `frontend/ssl/server.key` 已放到宿主机本地
 - [ ] 服务已启动（`docker-compose ps` 显示所有服务为 `Up`）
 - [ ] 前端页面可以访问（http://localhost:3008）
+- [ ] HTTPS 页面可以访问（https://localhost:3443）
 - [ ] 后端 API 可以访问（http://localhost:8008/api/docs）
 - [ ] 健康检查通过（`docker inspect` 显示 `healthy`）
 - [ ] 可以上传文件并生成装配说明书

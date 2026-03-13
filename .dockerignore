@@ -31,6 +31,7 @@ frontend/node_modules/
 frontend/dist/
 frontend/.vite/
 frontend/.cache/
+frontend/ssl/
 
 # 测试和文档
 *.md

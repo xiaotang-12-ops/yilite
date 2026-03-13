@@ -1,6 +1,6 @@
 # 智能装配说明书生成系统
 
-[![Version](https://img.shields.io/badge/version-v2.1.42-blue.svg)](https://github.com/xiaotang-12-ops/yilite/releases)
+[![Version](https://img.shields.io/badge/version-v2.1.48-blue.svg)](https://github.com/xiaotang-12-ops/yilite/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Docker](https://img.shields.io/badge/docker-ready-brightgreen.svg)](DOCKER_DEPLOYMENT.md)
 
@@ -8,14 +8,14 @@
 
 一个基于AI的智能装配说明书生成系统，能够自动解析PDF工程图纸和3D模型，生成工人友好的交互式HTML装配说明书。
 
-**当前版本**: v2.1.42 | [查看版本历史](https://github.com/xiaotang-12-ops/yilite/releases) | [部署指南](DOCKER_DEPLOYMENT.md)
+**当前版本**: v2.1.48 | [查看版本历史](https://github.com/xiaotang-12-ops/yilite/releases) | [部署指南](DOCKER_DEPLOYMENT.md)
 
-## 🆕 最新更新 (v2.1.42)
+## 🆕 最新更新 (v2.1.48)
 
-- **✏️ 查看器管理员改名功能**：`Viewer` 列表新增管理员专用改名入口，桌面和移动端都可直接修改项目显示名。
-- **🔁 项目名称全链路同步**：后端新增 `PUT /api/manual/{task_id}/rename`，统一更新 `assembly_manual.json`、`draft.json`、`task_status.json` 和内存任务状态。
-- **🧩 零件名称显示修复**：`ManualViewer` 聚合 `glb_files` 全量映射，优先展示步骤/BOM 中文名，避免把 `NAUO` 编号直接当零件名。
-- **🛡️ BOM 匹配与生成稳定性增强**：收紧幻觉 `bom_code`、修正覆盖率口径，并优化产品模式下的焊接/安全智能体调用链路。
+- **🔐 HTTPS 证书改为部署时挂载**：前端镜像不再内置 `frontend/ssl/*`；证书与私钥只保留在宿主机本地，通过 `docker-compose.yml` 只读挂载到 `/etc/nginx/ssl`。
+- **🧱 Docker 构建上下文移除证书目录**：根目录 `.dockerignore` 与 `frontend/.dockerignore` 同时排除 `frontend/ssl/`，避免私钥被顺手带进构建链路。
+- **📱 扫码 HTTPS 能力保留**：Nginx 仍然监听 `3443`，手机扫码所需的 HTTPS 能力不变，只是证书不再进入 Git 和镜像。
+- **📦 交付口径更新**：README、部署文档与 Memory 全部切到“客户本地证书目录挂载”方案，避免再次把私钥混进发布仓库。
 
 ### 🌟 v2.0.x 系列演进亮点
 
@@ -47,7 +47,7 @@ PDF工程图纸 + 3D模型 → AI解析引擎 → 装配规程生成 → HTML说
 
 ### 使用 Docker 部署（推荐）⭐
 
-**只需 3 步，5 分钟完成部署！**
+**只需 4 步，5 分钟完成部署！**
 
 ```bash
 # 1. 克隆项目
@@ -58,12 +58,28 @@ cd yilite
 cp .env.example .env
 # 编辑 .env 文件，填入你的 OPENROUTER_API_KEY
 
-# 3. 启动服务
+# 3. 准备 HTTPS 证书目录（前端容器必需）
+# 在 frontend/ssl/ 下放入 server.crt 和 server.key
+
+# 4. 启动服务
 docker-compose up -d
 ```
 
+证书目录结构示例：
+
+```text
+frontend/ssl/
+├── server.crt
+├── server.key
+├── rootCA.crt
+└── rootCA.cer
+```
+
+说明：`frontend/ssl/` 只作为本地部署目录使用，不纳入 Git；建议每个客户环境使用独立证书。
+
 **访问系统**：
 - 🌐 前端界面: http://localhost:3008
+- 🔒 HTTPS 前端: https://localhost:3443
 - 📚 API 文档: http://localhost:8008/api/docs
 
 **详细部署说明**: 请查看 [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md)
