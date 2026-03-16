@@ -1,6 +1,6 @@
 # 智能装配说明书生成系统
 
-[![Version](https://img.shields.io/badge/version-v2.1.48-blue.svg)](https://github.com/xiaotang-12-ops/yilite/releases)
+[![Version](https://img.shields.io/badge/version-v2.1.49-blue.svg)](https://github.com/xiaotang-12-ops/yilite/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Docker](https://img.shields.io/badge/docker-ready-brightgreen.svg)](DOCKER_DEPLOYMENT.md)
 
@@ -8,14 +8,15 @@
 
 一个基于AI的智能装配说明书生成系统，能够自动解析PDF工程图纸和3D模型，生成工人友好的交互式HTML装配说明书。
 
-**当前版本**: v2.1.48 | [查看版本历史](https://github.com/xiaotang-12-ops/yilite/releases) | [部署指南](DOCKER_DEPLOYMENT.md)
+**当前版本**: v2.1.49 | [查看版本历史](https://github.com/xiaotang-12-ops/yilite/releases) | [部署指南](DOCKER_DEPLOYMENT.md)
 
-## 🆕 最新更新 (v2.1.48)
+## 🆕 最新更新 (v2.1.49)
 
-- **🔐 HTTPS 证书改为部署时挂载**：前端镜像不再内置 `frontend/ssl/*`；证书与私钥只保留在宿主机本地，通过 `docker-compose.yml` 只读挂载到 `/etc/nginx/ssl`。
-- **🧱 Docker 构建上下文移除证书目录**：根目录 `.dockerignore` 与 `frontend/.dockerignore` 同时排除 `frontend/ssl/`，避免私钥被顺手带进构建链路。
+- **🧭 HTTPS 证书目录统一为根级 `ssl/`**：部署目录直接使用 `./ssl`，不再让 `frontend/ssl` 这种路径误导成“必须带前端源码”。
+- **🔐 HTTPS 证书继续部署时挂载**：前端镜像仍不内置 `server.crt/server.key`，证书与私钥只保留在宿主机本地，通过 `docker-compose.yml` 只读挂载到 `/etc/nginx/ssl`。
+- **🧱 Docker 构建上下文继续隔离证书**：根目录 `.gitignore` 与 `.dockerignore` 排除 `ssl/`，避免私钥进入 Git 或 Docker build context。
 - **📱 扫码 HTTPS 能力保留**：Nginx 仍然监听 `3443`，手机扫码所需的 HTTPS 能力不变，只是证书不再进入 Git 和镜像。
-- **📦 交付口径更新**：README、部署文档与 Memory 全部切到“客户本地证书目录挂载”方案，避免再次把私钥混进发布仓库。
+- **📦 交付口径收口**：README、部署文档与 Memory 全部统一为“部署目录根级 `ssl/` 挂载”，避免现场交付时继续混淆源码目录与证书目录。
 
 ### 🌟 v2.0.x 系列演进亮点
 
@@ -59,7 +60,7 @@ cp .env.example .env
 # 编辑 .env 文件，填入你的 OPENROUTER_API_KEY
 
 # 3. 准备 HTTPS 证书目录（前端容器必需）
-# 在 frontend/ssl/ 下放入 server.crt 和 server.key
+# 在 ssl/ 下放入 server.crt 和 server.key
 
 # 4. 启动服务
 docker-compose up -d
@@ -68,14 +69,14 @@ docker-compose up -d
 证书目录结构示例：
 
 ```text
-frontend/ssl/
+ssl/
 ├── server.crt
 ├── server.key
 ├── rootCA.crt
 └── rootCA.cer
 ```
 
-说明：`frontend/ssl/` 只作为本地部署目录使用，不纳入 Git；建议每个客户环境使用独立证书。
+说明：`ssl/` 只作为部署目录使用，不纳入 Git；建议每个客户环境使用独立证书。
 
 **访问系统**：
 - 🌐 前端界面: http://localhost:3008

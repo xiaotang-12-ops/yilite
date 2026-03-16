@@ -50,14 +50,14 @@ OPENROUTER_API_KEY=your_actual_api_key_here
 启动前请先在宿主机准备本地证书目录：
 
 ```text
-frontend/ssl/
+ssl/
 ├── server.crt
 ├── server.key
 ├── rootCA.crt
 └── rootCA.cer
 ```
 
-说明：`frontend/ssl/` 不在仓库中跟踪，容器会在运行时把该目录只读挂载到 `/etc/nginx/ssl`。
+说明：`ssl/` 不在仓库中跟踪，容器会在运行时把该目录只读挂载到 `/etc/nginx/ssl`。
 
 ### 4️⃣ 启动服务
 

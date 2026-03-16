@@ -1,5 +1,25 @@
 # Memory Changelog
 
+## v2.1.49 (2026-03-16)
+- **部署证书目录统一为根级 `ssl/`（避免继续误导成源码目录）**：
+  - **用户提问**：
+    - “改成部署版了？那我怕我忘记，我们项目干脆现在也改成这样算了，避免误导。然后你更新一下memory”
+  - **问题根因**：
+    1. `docker-compose.yml` 虽然已经把证书改为宿主机本地挂载，但路径仍写成 `./frontend/ssl`，名字上像“前端源码目录”，容易让交付方误以为客户环境也必须带上 `frontend/` 工程结构。
+    2. README、部署文档和 Memory 都沿用了 `frontend/ssl/` 口径，和实际交付包里更直观的 `./ssl` 目录不一致，增加现场部署沟通成本。
+    3. 根目录 `.gitignore` / `.dockerignore` 只排除了 `frontend/ssl/`，如果项目正式收口为 `./ssl` 却不补忽略规则，后续又可能把证书目录重新带进 Git 或 build context。
+  - **问题场景**：
+    - 用户需要把镜像包、配置文件和证书目录直接发给客户 Ubuntu VM 部署；继续沿用 `frontend/ssl/` 会误导现场人员，把“部署目录”错理解成“源码目录”。
+  - **修复方案**：
+    1. `docker-compose.yml` 把前端证书挂载从 `./frontend/ssl:/etc/nginx/ssl:ro` 改为 `./ssl:/etc/nginx/ssl:ro`，部署目录只保留根级 `ssl/`。
+    2. `.gitignore` 与根目录 `.dockerignore` 新增排除 `ssl/`；`frontend/.dockerignore` 去掉无意义的 `ssl/` 规则，避免继续暗示证书目录在前端子目录下。
+    3. `README.md`、`DEPLOYMENT.md`、`DOCKER_DEPLOYMENT.md` 全部改成根目录 `ssl/` 口径，明确客户交付只需镜像、`docker-compose.yml`、`.env` 和 `ssl/`。
+    4. 根目录新增运行时 `ssl/` 目录并同步放入当前客户 `192.168.15.200` 证书，保证项目本地和交付包口径一致。
+    5. 删除旧 `frontend/ssl/` 遗留目录，避免部署时继续把证书目录误解成前端源码目录。
+    6. 更新 `VERSION` 与 Memory 快照，记录这次部署口径收口。
+  - **影响文件**：`docker-compose.yml`、`.gitignore`、`.dockerignore`、`frontend/.dockerignore`、`README.md`、`DEPLOYMENT.md`、`DOCKER_DEPLOYMENT.md`、`VERSION`、`Memory_Development/index.md`、`Memory_Development/changelog.md`、`ssl/*`、`frontend/ssl/*`
+  - **记录人**：小雅
+
 ## v2.1.48 (2026-03-13)
 - **HTTPS 证书改为部署时挂载（私钥不再进仓库/镜像）**：
   - **用户提问**：

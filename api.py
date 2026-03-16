@@ -186,7 +186,8 @@ def extract_core_name_from_step(filename: str) -> str:
 @app.post("/api/upload")
 async def upload_files(files: List[UploadFile] = File(...)):
     """文件上传"""
-    if not fileraise HTTPException(status_code=400, detail="没有上传文件")
+    if not files:
+        raise HTTPException(status_code=400, detail="没有上传文件")
     
     uploaded_files = []
     upload_dir = Path("uploads")
