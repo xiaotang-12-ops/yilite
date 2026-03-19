@@ -1,5 +1,129 @@
 # Memory Changelog
 
+## v2.1.55 (2026-03-18)
+- **PDF 文本层 BOM 提取支持 5 位尾号代码**：
+  - **用户提问**：
+    - “看看我刚才上传的图纸，为什么才识别到两个bom”
+    - “我们代码存在什么问题还是ai模型的问题，你去深度分析看看，没我的允许禁止修改代码”
+    - “可以，按照方案A实现吧。”
+  - **问题根因**：
+    1. `core/pdf_text_bom_extractor.py` 的 `_CODE_RE` 仅接受 `4` 位尾号 BOM 代码，像 `01.01.01.10852/10853` 这种 `5` 位尾号真实物料代码不会被识别成新记录头。
+    2. 这会导致 `seq=1/2` 被并入前一条记录体内，最终 `step2_bom_data.json` 只剩 `seq=3/4` 两条。
+    3. 现有 `tests/test_pdf_text_bom_extractor.py` 只覆盖尾部截断，没有覆盖 `5` 位尾号 BOM 代码，所以问题之前不会被测试拦住。
+  - **问题场景**：
+    - `组件图1.pdf` 图纸右下角 BOM 表实际有 `4` 条，但任务输出的 `step2_bom_data.json` 只识别到 `2` 条，导致后续基准件、匹配率和装配步骤都跟着偏掉。
+  - **修复方案**：
+    1. 放宽 `core/pdf_text_bom_extractor.py` 中记录头 BOM 代码 regex，从固定 `4` 位尾号改为支持 `4-5` 位尾号。
+    2. 在 `tests/test_pdf_text_bom_extractor.py` 新增回归测试，直接覆盖 `01.01.01.10852/10853` 这类 `5` 位尾号 BOM 文本层提取。
+    3. 本地执行 `pytest tests/test_pdf_text_bom_extractor.py`，并复跑 `组件图1.pdf` 文本层提取，确认 BOM 数量从 `2` 条恢复到 `4` 条。
+  - **影响文件**：`core/pdf_text_bom_extractor.py`、`tests/test_pdf_text_bom_extractor.py`、`VERSION`、`Memory_Development/index.md`、`Memory_Development/changelog.md`
+  - **记录人**：小雅
+
+## v2.1.54 (2026-03-18)
+- **Viewer 搜索去掉旧 `taskId` 命中 + ManualViewer 录制文案更名**：
+  - **用户提问**：
+    - “我记得我们图纸里面的编辑按钮有一个录制功能，那个录制改成‘自动播放’”
+    - “旧的名字的就不要去搜索了。”
+    - “查看器的‘生成时间’改成‘修改时间’”
+  - **问题根因**：
+    1. `Viewer.vue` 的搜索条件此前把 `p.id(taskId)` 也纳入匹配，重命名项目后旧文件名/旧任务名仍会继续命中搜索结果。
+    2. `Viewer.vue` 列表时间列标题写的是“生成时间”，但后端 `/api/manuals` 对已完成项目返回的实际是 `assembly_manual.json` 的文件修改时间。
+    3. `ManualViewer.vue` 桌面管理员菜单把自动翻步功能命名为“录制”，和实际行为“自动逐步播放”不一致。
+  - **问题场景**：
+    - 项目改名后，管理员在 Viewer 搜索旧名字仍能搜到该图纸，容易误以为重命名没有生效。
+    - Viewer 列表时间会随着说明书文件回写变化，继续显示“生成时间”会误导用户。
+    - 管理员在手册页 `编辑` 菜单里看到“录制”，不容易第一时间理解成自动翻步演示。
+  - **修复方案**：
+    1. `Viewer.vue` 搜索过滤移除 `p.id` 匹配，仅保留 `projectName/projectNumber/description`。
+    2. `Viewer.vue` 桌面表格时间列文案从“生成时间”改为“修改时间”。
+    3. `ManualViewer.vue` 桌面管理员菜单把 `录制/停止录制` 改为 `自动播放/停止自动播放`，不改变原有播放逻辑。
+    4. 同步更新 `VERSION`、`Memory_Development/index.md`、`Memory_Development/frontend/routes.md` 和本变更记录，保证项目记忆与代码一致。
+  - **影响文件**：`frontend/src/views/Viewer.vue`、`frontend/src/views/ManualViewer.vue`、`VERSION`、`Memory_Development/index.md`、`Memory_Development/frontend/routes.md`、`Memory_Development/changelog.md`
+  - **记录人**：小雅
+
+## v2.1.53 (2026-03-17)
+- **项目分类接口兼容历史坏 `task_status.json`**：
+  - **用户提问**：
+    - “为啥会失败，移动到已完成的时候。”
+  - **问题根因**：
+    1. 截图里的失败项目不是分类值非法，而是它们各自目录下的 `task_status.json` 本来就已经损坏，文件停在半截 `"thread":`，导致 Python `json.load` 报 `Expecting value`。
+    2. `PUT /api/manual/{task_id}/category` 和 `PUT /api/manual/{task_id}/rename` 之前都直接 `json.load(task_status.json)`，没有对历史脏数据做任何兜底，所以一旦碰到旧坏文件，整个管理操作会被卡死。
+    3. 当前仓库 `output/` 下实际扫出了 `3` 个坏 `task_status.json`，说明这是历史遗留状态文件问题，不是单个项目或单次点击异常。
+  - **问题场景**：
+    - 管理员在 `Viewer` 桌面端点击 `移动到 -> 已完成` 时，前端弹出 `更新项目分类失败: Expecting value: line 1 column ...`，无法把旧项目从 `待调整` 挪到 `已完成`。
+  - **修复方案**：
+    1. `backend/simple_app.py` 新增 `_build_status_file_fallback(...)` 和 `_load_task_status_for_update(...)`，专门处理损坏或不可读的 `task_status.json`。
+    2. `PUT /api/manual/{task_id}/category` 与 `PUT /api/manual/{task_id}/rename` 改走新 helper；若状态文件损坏，就按 `assembly_manual.json`、任务目录时间戳和现有参数重建最小合法状态，再继续更新分类/名称。
+    3. 新增 `tests/test_project_category_management.py` 回归用例，覆盖“坏 `task_status.json` 仍能改分类”的核心场景。
+    4. 额外修复当前 `output/` 下已发现的 `3` 个坏 `task_status.json`，避免你现在这批历史项目继续报同样的错。
+  - **影响文件**：`backend/simple_app.py`、`tests/test_project_category_management.py`、`output/*/task_status.json`、`VERSION`、`Memory_Development/index.md`、`Memory_Development/backend/api.md`、`Memory_Development/changelog.md`
+  - **记录人**：小雅
+
+## v2.1.52 (2026-03-17)
+- **Viewer 桌面列表列宽可调 + 移动到按钮点击隔离**：
+  - **用户提问**：
+    - “把项目名称和分类间距啦开一点，项目名称需要比较多的空间，最好你写个脚本我自己能调。我调到合适的我和你说，还有就是操作有三个按钮也太拥挤了，我也要调。”
+    - “点击移动到按钮没用，会变成查看图纸。”
+  - **问题根因**：
+    1. `Viewer.vue` 桌面表格列宽此前基本写死，真实项目名较长时会把 `分类/操作` 列一起挤窄，用户只能改源码反复试。
+    2. 桌面端 `el-table` 开了 `@row-click="selectProject"`，但 `移动到` 下拉按钮所在区域没有完整阻断冒泡，点击时会先落到行点击逻辑，最终变成“查看说明书”。
+    3. `操作` 列里同时放 `查看说明书 / 移动到 / 改名` 三个按钮，原本的列宽和按钮间距没有给管理员调试空间，现场只能靠盲改样式。
+  - **问题场景**：
+    - 管理员在 `Viewer` 桌面端查看三分类项目列表时，长项目名会压缩 `分类` 和 `操作` 区；点击 `移动到` 还会误跳到图纸详情，导致项目管理体验中断。
+  - **修复方案**：
+    1. `Viewer.vue` 新增 `tableLayout` 响应式配置，接管 `项目名称/分类/操作` 列宽和按钮间距。
+    2. 暴露 `window.__viewerLayoutTuner.get()/set()`，允许在浏览器控制台一键调整 `projectNameMinWidth`、`categoryWidth`、`actionWidth`、`actionGap`，确认数值后再固化进源码。
+    3. `操作` 区包一层 `@click.stop` 的 `table-actions`，同时给 `移动到` 按钮补 `@click.stop`，彻底隔离行点击冒泡。
+    4. `table-actions` 改为 `flex-wrap` + 可调 `gap`，缓解三按钮并排拥挤的问题。
+    5. 更新 `VERSION`、`Memory_Development/index.md`、`Memory_Development/frontend/routes.md` 和本变更记录，保证记忆系统与代码一致。
+  - **影响文件**：`frontend/src/views/Viewer.vue`、`VERSION`、`Memory_Development/index.md`、`Memory_Development/frontend/routes.md`、`Memory_Development/changelog.md`
+  - **记录人**：小雅
+
+## v2.1.51 (2026-03-17)
+- **ManualViewer 桌面端管理员录制自动翻步**：
+  - **用户提问**：
+    - “帮我在pc端做一个功能，就是管理员登录后可以在具体某个图纸页面，点击编辑，然后点击录制，然后填写时间间隔，然后系统就会从第一步开始一直按照一定的间隔时间点击下一步到最后一步，最后一步结束后停止自动播放（最后停止时不需要任何弹窗等提醒，定格在最后一步就行，剩下的用户会操作）”
+    - “PLEASE IMPLEMENT THIS PLAN:”
+  - **问题根因**：
+    1. `ManualViewer.vue` 现有自动播放只在移动端 `mobile-action-bar` 暴露，PC 管理员的 `编辑` 菜单没有对应入口。
+    2. 旧自动播放固定 `3000ms`、从当前步骤继续播、结束弹 `播放完成`，与“从第一步开始、到最后一步静止、无提示”的管理员演示流程不一致。
+    3. 步骤切换、手册刷新、管理员退出和页面离开等链路没有统一清理录制定时器，新增 PC 录制后容易留下残余状态。
+  - **问题场景**：
+    - 管理员需要在 PC 图纸详情页输入一个时间间隔，让系统从第 1 步自动演示到最后一步；结束后停在最后一步，由现场用户继续后续操作。
+  - **修复方案**：
+    1. 在桌面端管理员 `编辑` 下拉新增 `录制/停止录制` 命令，仅非移动端、非历史只读模式可见。
+    2. 使用 `ElMessageBox.prompt` 收集 `0.5-60` 秒间隔，并记住上次输入；录制启动后先回到第 1 步，再用递归 `setTimeout` 单步推进到最后一步。
+    3. 录制结束时只清理定时器并停在最后一步，不再弹完成提示；手动点 `上一步/下一步`、桌面端步骤跳转、刷新手册、退出管理员、离开页面都会先停录制。
+    4. 保留移动端现有自动播放入口和行为，不把 PC 录制逻辑混进去。
+    5. 同步更新 `VERSION`、`Memory_Development/index.md`、`Memory_Development/frontend/routes.md` 和本变更记录，保持项目记忆一致。
+  - **影响文件**：`frontend/src/views/ManualViewer.vue`、`VERSION`、`Memory_Development/index.md`、`Memory_Development/frontend/routes.md`、`Memory_Development/changelog.md`
+  - **记录人**：小雅
+
+## v2.1.50 (2026-03-17)
+- **Viewer 三分类项目管理（待调整 / 已完成 / 旧版本）**：
+  - **用户提问**：
+    - “用户的需求我大概清楚了，就是需要三个按钮，点击就会出现相关的图纸。”
+    - “移动端没有管理员登录，只让看，所以不存在你说的那些，移动端默认就是只让工人看的，所以不需要登录管理员”
+    - “PLEASE IMPLEMENT THIS PLAN”
+  - **问题根因**：
+    1. `Viewer.vue` 之前只有技术状态 `completed/processing/failed`，没有业务分类字段，无法表达“待调整 / 已完成 / 旧版本”这类项目管理语义。
+    2. `/api/manuals` 只返回 `status`，前端即使加按钮也没有持久化分类来源，刷新或换设备后分类会丢失。
+    3. 移动端和桌面端共用同一套管理员入口，和“手机端只给工人看”的使用场景不一致。
+    4. `/api/manuals` 内部曾单独写死 `Path("output")`，和全局 `OUTPUT_DIR` 口径不一致，后续容易在启动目录变化时读错任务列表。
+  - **问题场景**：
+    - 管理员需要把新生成图纸默认放进 `待调整`，确认后移到 `已完成`，老图或弃用稿移到 `旧版本`。
+    - 工人手机端进入查看器时，只应看到 `已完成` 图纸，不应看到管理按钮或管理员登录入口。
+  - **修复方案**：
+    1. 新增后端统一分类常量 `pending/published/archived`，并让新生成任务默认落为 `pending`。
+    2. `/api/manuals` 返回 `projectCategory`；新增 `PUT /api/manual/{task_id}/category`，同步更新 `assembly_manual.json`、`draft.json`、`task_status.json` 和内存任务中的 `project_category`。
+    3. `core/storage.py` 在迁移、保存草稿、发布时自动补齐 `metadata.project_category`，兼容历史没有分类字段的旧手册。
+    4. `Viewer.vue` 桌面端新增 `待调整 / 已完成 / 旧版本` 三分类按钮和 `异常任务` 入口；每个已完成项目新增 `移动到` 下拉切换分类。
+    5. 移动端固定为工人查看入口：不显示管理员登录、不显示改名/移动按钮，只展示 `published` 项目。
+    6. 补充 `tests/test_project_category_management.py`，覆盖分类默认值、分类同步落盘，以及列表接口返回 `projectCategory/cancelled` 的核心链路。
+    7. 更新 `VERSION` 与 `Memory_Development` 快照，保持代码、接口说明和版本记录一致。
+  - **影响文件**：`utils/project_categories.py`、`backend/simple_app.py`、`core/storage.py`、`frontend/src/constants/projectCategories.ts`、`frontend/src/views/Viewer.vue`、`tests/test_project_category_management.py`、`VERSION`、`Memory_Development/index.md`、`Memory_Development/backend/api.md`、`Memory_Development/frontend/routes.md`、`Memory_Development/changelog.md`
+  - **记录人**：小雅
+
 ## v2.1.49 (2026-03-16)
 - **部署证书目录统一为根级 `ssl/`（避免继续误导成源码目录）**：
   - **用户提问**：

@@ -38,6 +38,14 @@ load_dotenv()
 
 # 存储管理
 from core.storage import ManualStorage
+from utils.project_categories import (
+    DEFAULT_PROJECT_CATEGORY,
+    PROJECT_CATEGORY_ARCHIVED,
+    PROJECT_CATEGORY_PENDING,
+    PROJECT_CATEGORY_PUBLISHED,
+    is_valid_project_category,
+    normalize_project_category,
+)
 from utils.time_utils import beijing_now, BEIJING_TZ
 from utils.newapi_compat import (
     NEWAPI_BASE_URL,
@@ -117,6 +125,10 @@ class RenameProjectRequest(BaseModel):
     new_name: str = Field(..., min_length=1, max_length=120, description="新的项目名称")
 
 
+class UpdateProjectCategoryRequest(BaseModel):
+    category: str = Field(..., description="项目分类：pending|published|archived")
+
+
 class InsertStepRequest(BaseModel):
     chapter_type: str  # component_assembly | product_assembly
     component_code: Optional[str] = None  # 组件装配时必填
@@ -148,6 +160,18 @@ def _normalize_project_name(value: Any, fallback: str) -> str:
         if candidate and not _is_circular_sentinel(candidate):
             return candidate
     return fallback
+
+
+def _ensure_manual_metadata(manual_data: Dict[str, Any]) -> Dict[str, Any]:
+    metadata = manual_data.get("metadata")
+    if not isinstance(metadata, dict):
+        metadata = {}
+        manual_data["metadata"] = metadata
+    return metadata
+
+
+def _normalize_persisted_project_category(value: Any) -> str:
+    return normalize_project_category(value, DEFAULT_PROJECT_CATEGORY)
 
 
 def _normalize_status_placeholders(status: Dict[str, Any]) -> Dict[str, Any]:
@@ -263,6 +287,87 @@ def _load_task_status_from_file(task_id: str) -> Optional[Dict[str, Any]]:
     except Exception as e:
         print(f"⚠️ 读取任务状态失败: {e}")
         return None
+
+
+def _build_status_file_fallback(
+    task_id: str,
+    task_dir: Path,
+    project_name: Optional[str] = None,
+    project_category: Optional[str] = None,
+    existing_status: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """为损坏的 task_status.json 重建最小可用状态，避免历史脏数据卡住管理接口。"""
+    status_data = dict(existing_status or {})
+    manual_name = task_id
+
+    manual_path = task_dir / "assembly_manual.json"
+    if manual_path.exists():
+        try:
+            with open(manual_path, "r", encoding="utf-8") as f:
+                manual_data = json.load(f)
+            metadata = manual_data.get("metadata")
+            if isinstance(metadata, dict):
+                manual_name = _normalize_project_name(metadata.get("product_name"), manual_name)
+        except Exception as e:
+            print(f"⚠️ 读取发布版手册名称失败，使用 task_id 兜底: {task_id}, {e}")
+
+    config = status_data.get("config")
+    if not isinstance(config, dict):
+        config = {}
+        status_data["config"] = config
+
+    resolved_name = _normalize_project_name(
+        project_name,
+        _normalize_project_name(config.get("projectName"), manual_name),
+    )
+    config["projectName"] = resolved_name
+    status_data["project_name"] = resolved_name
+
+    raw_status = str(status_data.get("status") or "").strip().lower()
+    status_data["status"] = raw_status if raw_status in ["processing", "failed", "cancelled", "completed"] else (
+        "completed" if manual_path.exists() else "failed"
+    )
+    status_data["progress"] = status_data.get("progress", 100 if status_data["status"] == "completed" else 0)
+    status_data["task_id"] = task_id
+
+    timestamp_fallback = datetime.fromtimestamp(task_dir.stat().st_mtime, tz=BEIJING_TZ).isoformat()
+    created_at = status_data.get("created_at")
+    status_data["created_at"] = created_at if isinstance(created_at, str) and created_at.strip() else timestamp_fallback
+    updated_at = status_data.get("updated_at")
+    status_data["updated_at"] = updated_at if isinstance(updated_at, str) and updated_at.strip() else status_data["created_at"]
+
+    normalized_category = _normalize_persisted_project_category(
+        project_category if project_category is not None else status_data.get("project_category")
+    )
+    status_data["project_category"] = normalized_category
+
+    return _normalize_status_placeholders(status_data)
+
+
+def _load_task_status_for_update(
+    task_id: str,
+    task_dir: Path,
+    project_name: Optional[str] = None,
+    project_category: Optional[str] = None,
+) -> Dict[str, Any]:
+    """加载可写状态；若 task_status.json 损坏，则自动重建最小合法结构。"""
+    status_data = _load_task_status_from_file(task_id)
+    if isinstance(status_data, dict):
+        return _build_status_file_fallback(
+            task_id=task_id,
+            task_dir=task_dir,
+            project_name=project_name,
+            project_category=project_category,
+            existing_status=status_data,
+        )
+
+    print(f"⚠️ task_status.json 损坏或不可读，准备自动重建: {task_id}")
+    return _build_status_file_fallback(
+        task_id=task_id,
+        task_dir=task_dir,
+        project_name=project_name,
+        project_category=project_category,
+    )
 
 def _count_manual_steps(manual: Dict[str, Any]) -> int:
     component_steps = 0
@@ -437,6 +542,7 @@ def _start_pipeline_thread(
             if result.get("success"):
                 tasks[task_id]["status"] = "completed"
                 tasks[task_id]["progress"] = 100
+                tasks[task_id]["project_category"] = PROJECT_CATEGORY_PENDING
             else:
                 tasks[task_id]["status"] = "failed"
                 failure_reason = result.get("error") or result.get("message") or ""
@@ -447,6 +553,11 @@ def _start_pipeline_thread(
             tasks[task_id]["result"] = result
             tasks[task_id]["updated_at"] = beijing_now()
             _persist_task_status(task_id)
+            if result.get("success"):
+                try:
+                    _sync_project_category(task_id, PROJECT_CATEGORY_PENDING)
+                except Exception as sync_error:
+                    print(f"⚠️ 默认项目分类写入失败: {sync_error}")
 
         except Exception as e:
             print(f"Pipeline执行错误: {e}")
@@ -477,6 +588,67 @@ def _start_pipeline_thread(
 def get_storage(task_id: str) -> ManualStorage:
     """获取指定任务的存储管理器"""
     return ManualStorage(base_dir=OUTPUT_DIR, task_id=task_id)
+
+
+def _apply_project_category_to_manual_data(manual_data: Dict[str, Any], category: str) -> None:
+    metadata = _ensure_manual_metadata(manual_data)
+    metadata["project_category"] = _normalize_persisted_project_category(category)
+
+
+def _sync_project_category(task_id: str, category: str) -> Dict[str, bool]:
+    """同步项目分类到发布版、草稿、任务状态和内存任务。"""
+    normalized_category = _normalize_persisted_project_category(category)
+    task_dir = OUTPUT_DIR / task_id
+    if not task_dir.exists():
+        raise HTTPException(status_code=404, detail=f"任务不存在: {task_id}")
+
+    updated = {
+        "manual": False,
+        "draft": False,
+        "status": False,
+        "memory": False,
+    }
+
+    manual_path = task_dir / "assembly_manual.json"
+    if manual_path.exists():
+        with open(manual_path, "r", encoding="utf-8") as f:
+            manual_data = json.load(f)
+        _apply_project_category_to_manual_data(manual_data, normalized_category)
+        with open(manual_path, "w", encoding="utf-8") as f:
+            json.dump(manual_data, f, ensure_ascii=False, indent=2)
+        updated["manual"] = True
+
+    draft_path = task_dir / "draft.json"
+    if draft_path.exists():
+        with open(draft_path, "r", encoding="utf-8") as f:
+            draft_data = json.load(f)
+        _apply_project_category_to_manual_data(draft_data, normalized_category)
+        with open(draft_path, "w", encoding="utf-8") as f:
+            json.dump(draft_data, f, ensure_ascii=False, indent=2)
+        updated["draft"] = True
+
+    status_path = task_dir / "task_status.json"
+    if status_path.exists():
+        status_data = _load_task_status_for_update(
+            task_id=task_id,
+            task_dir=task_dir,
+            project_category=normalized_category,
+        )
+        status_data["project_category"] = normalized_category
+        status_data["updated_at"] = beijing_now().isoformat()
+        with open(status_path, "w", encoding="utf-8") as f:
+            json.dump(status_data, f, ensure_ascii=False, indent=2)
+        updated["status"] = True
+
+    task = tasks.get(task_id)
+    if isinstance(task, dict):
+        task["project_category"] = normalized_category
+        result = task.get("result")
+        if isinstance(result, dict) and isinstance(result.get("manual"), dict):
+            _apply_project_category_to_manual_data(result["manual"], normalized_category)
+        updated["memory"] = True
+
+    return updated
 
 
 def _load_manual_for_edit(storage: ManualStorage, expected_version: Optional[int] = None) -> Dict[str, Any]:
@@ -911,6 +1083,7 @@ async def generate_manual(request: GenerationRequest):
             "status": "processing",
             "progress": 0,
             "config": {"projectName": effective_project_name},
+            "project_category": PROJECT_CATEGORY_PENDING,
             "pdf_files": [pdf_target_name],
             "model_files": [step_target_name],
             "created_at": beijing_now(),
@@ -957,6 +1130,9 @@ async def get_status(task_id: str):
                 **config,
                 "projectName": _normalize_project_name(config.get("projectName"), task_id),
             }
+            status["project_category"] = _normalize_persisted_project_category(
+                status.get("project_category")
+            )
             return _sanitize_task_for_persist(status)
         raise HTTPException(status_code=404, detail="任务不存在")
 
@@ -975,6 +1151,7 @@ async def get_status(task_id: str):
         **config,
         "projectName": _normalize_project_name(config.get("projectName"), task_id),
     }
+    status["project_category"] = _normalize_persisted_project_category(status.get("project_category"))
     return _sanitize_task_for_persist(status)
 
 @app.post("/api/task/{task_id}/cancel")
@@ -992,6 +1169,7 @@ async def cancel_task(task_id: str):
     task["failure_type"] = "cancelled"
     task["failure_hint"] = "任务已停止，可继续生成。"
     task["error"] = "cancelled"
+    task["project_category"] = _normalize_persisted_project_category(task.get("project_category"))
     task["updated_at"] = beijing_now()
     tasks[task_id] = task
     _persist_task_status(task_id)
@@ -1047,6 +1225,7 @@ async def resume_task(task_id: str):
         },
         "pdf_files": task.get("pdf_files") or pdf_files,
         "model_files": task.get("model_files") or model_files,
+        "project_category": _normalize_persisted_project_category(task.get("project_category")),
         "updated_at": beijing_now(),
         "resume": True,
         "failure_type": None,
@@ -1194,7 +1373,7 @@ async def list_manuals(include_failed: bool = Query(False, description="是否�
     ✅ 扫描output目录，返回所有包含assembly_manual.json的任务
     """
     try:
-        output_base = Path("output")
+        output_base = OUTPUT_DIR
         if not output_base.exists():
             return {"manuals": [], "total": 0}
 
@@ -1220,6 +1399,9 @@ async def list_manuals(include_failed: bool = Query(False, description="是否�
                     # 提取关键信息
                     metadata = manual_data.get('metadata', {})
                     product_name = _normalize_project_name(metadata.get('product_name'), task_dir.name)
+                    project_category = _normalize_persisted_project_category(
+                        metadata.get("project_category")
+                    )
 
                     # 统计信息
                     assembly_steps = manual_data.get('assembly_steps', [])
@@ -1230,7 +1412,8 @@ async def list_manuals(include_failed: bool = Query(False, description="是否�
                         'productName': product_name,
                         'timestamp': timestamp,
                         'stepCount': step_count,
-                        'status': 'completed'
+                        'status': 'completed',
+                        'projectCategory': project_category,
                     })
                 except Exception as e:
                     print(f"⚠️ 读取任务 {task_dir.name} 失败: {e}")
@@ -1239,9 +1422,13 @@ async def list_manuals(include_failed: bool = Query(False, description="是否�
                 # 失败/未完成的任务，尝试读取持久化状态
                 persisted = _load_task_status_from_file(task_dir.name) or {}
                 status = persisted.get("status", "failed")
+                normalized_status = status if status in ["processing", "failed", "cancelled"] else "failed"
                 product_name = _normalize_project_name(
                     (persisted.get("config") or {}).get("projectName"),
                     persisted.get("task_id") or task_dir.name,
+                )
+                project_category = _normalize_persisted_project_category(
+                    persisted.get("project_category")
                 )
                 timestamp = persisted.get("updated_at") or datetime.fromtimestamp(
                     task_dir.stat().st_mtime, tz=BEIJING_TZ
@@ -1251,7 +1438,8 @@ async def list_manuals(include_failed: bool = Query(False, description="是否�
                     'productName': product_name,
                     'timestamp': timestamp,
                     'stepCount': 0,
-                    'status': status if status in ["processing", "failed"] else "failed"
+                    'status': normalized_status,
+                    'projectCategory': project_category,
                 })
 
         # 按时间倒序排序
@@ -1389,9 +1577,11 @@ async def get_manual(task_id: str):
         storage = get_storage(task_id)
         storage.ensure_migration()
         manual_data = storage.load_published()
-        metadata = manual_data.get("metadata")
-        if isinstance(metadata, dict):
-            metadata["product_name"] = _normalize_project_name(metadata.get("product_name"), task_id)
+        metadata = _ensure_manual_metadata(manual_data)
+        metadata["product_name"] = _normalize_project_name(metadata.get("product_name"), task_id)
+        metadata["project_category"] = _normalize_persisted_project_category(
+            metadata.get("project_category")
+        )
 
         # ✅ 替换所有的{task_id}占位符为实际的task_id
         manual_json_str = json.dumps(manual_data, ensure_ascii=False)
@@ -1549,13 +1739,12 @@ async def rename_project(task_id: str, request: RenameProjectRequest):
         # 3) 任务状态（processing/failed 列表来源）
         status_path = task_dir / "task_status.json"
         if status_path.exists():
-            with open(status_path, "r", encoding="utf-8") as f:
-                status_data = json.load(f)
-
-            config = status_data.get("config")
-            if not isinstance(config, dict):
-                config = {}
-                status_data["config"] = config
+            status_data = _load_task_status_for_update(
+                task_id=task_id,
+                task_dir=task_dir,
+                project_name=new_name,
+            )
+            config = status_data["config"]
             config["projectName"] = new_name
             status_data["project_name"] = new_name
             status_data["updated_at"] = beijing_now().isoformat()
@@ -1593,6 +1782,42 @@ async def rename_project(task_id: str, request: RenameProjectRequest):
         print(f"❌ 项目重命名失败: {e}")
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"重命名失败: {str(e)}")
+
+
+@app.put("/api/manual/{task_id}/category")
+async def update_project_category(task_id: str, request: UpdateProjectCategoryRequest):
+    """
+    更新项目业务分类（待调整 / 已完成 / 旧版本）。
+    - 同步更新 output/{task_id}/assembly_manual.json -> metadata.project_category
+    - 若存在草稿，同步更新 output/{task_id}/draft.json -> metadata.project_category
+    - 若存在任务状态，同步更新 output/{task_id}/task_status.json -> project_category
+    - 同步更新内存任务 tasks[task_id].project_category
+    """
+    try:
+        raw_category = (request.category or "").strip().lower()
+        if not is_valid_project_category(raw_category):
+            allowed = ", ".join(
+                [PROJECT_CATEGORY_PENDING, PROJECT_CATEGORY_PUBLISHED, PROJECT_CATEGORY_ARCHIVED]
+            )
+            raise HTTPException(status_code=400, detail=f"category 只能是 {allowed}")
+
+        updated = _sync_project_category(task_id, raw_category)
+        if not any(updated.values()):
+            raise HTTPException(status_code=404, detail="任务存在，但未找到可更新的分类字段")
+
+        print(f"✅ 项目分类更新成功: {task_id} -> {raw_category}")
+        return {
+            "success": True,
+            "taskId": task_id,
+            "projectCategory": raw_category,
+            "updated": updated
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ 更新项目分类失败: {e}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"更新项目分类失败: {str(e)}")
 
 
 @app.head("/api/manual/{task_id}/version")

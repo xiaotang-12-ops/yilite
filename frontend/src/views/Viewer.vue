@@ -9,6 +9,40 @@
       class="project-dialog"
     >
       <div class="dialog-content">
+        <div v-if="canManageProjects" class="category-toolbar">
+          <div class="category-tabs">
+            <el-button
+              v-for="option in categoryOptions"
+              :key="option.value"
+              :type="categoryFilter === option.value ? 'primary' : 'default'"
+              :plain="categoryFilter !== option.value"
+              class="category-tab"
+              @click="selectCategory(option.value)"
+            >
+              {{ option.label }}
+              <span class="category-count">{{ categoryCounts[option.value] }}</span>
+            </el-button>
+          </div>
+          <el-button
+            :type="showingAbnormalTasks ? 'danger' : 'default'"
+            :plain="!showingAbnormalTasks"
+            class="abnormal-tab"
+            @click="selectCategory(ABNORMAL_LIST_MODE)"
+          >
+            异常任务
+            <span class="category-count">{{ abnormalProjects.length }}</span>
+          </el-button>
+        </div>
+
+        <el-alert
+          v-else-if="!isMobile"
+          class="viewer-mode-alert"
+          type="info"
+          :closable="false"
+          show-icon
+          title="当前仅展示已完成项目"
+        />
+
         <!-- 搜索和筛选 -->
         <div class="search-section">
           <el-input
@@ -53,7 +87,7 @@
             <el-table-column
               prop="projectName"
               label="项目名称"
-              :min-width="200"
+              :min-width="tableLayout.projectNameMinWidth"
             >
               <template #default="{ row }">
                 <div class="project-name">
@@ -63,7 +97,25 @@
               </template>
             </el-table-column>
             
-            <el-table-column prop="status" label="状态" width="120">
+            <el-table-column
+              v-if="canManageProjects"
+              prop="projectCategory"
+              label="分类"
+              :width="tableLayout.categoryWidth"
+            >
+              <template #default="{ row }">
+                <el-tag
+                  v-if="row.status === 'completed'"
+                  :type="getCategoryType(row.projectCategory)"
+                  size="small"
+                >
+                  {{ getCategoryText(row.projectCategory) }}
+                </el-tag>
+                <span v-else class="muted-text">异常任务</span>
+              </template>
+            </el-table-column>
+
+            <el-table-column prop="status" label="技术状态" width="120">
               <template #default="{ row }">
                 <el-tag
                   :type="getStatusType(row.status)"
@@ -74,7 +126,7 @@
               </template>
             </el-table-column>
             
-            <el-table-column prop="createdAt" label="生成时间" width="180">
+            <el-table-column prop="createdAt" label="修改时间" width="180">
               <template #default="{ row }">
                 {{ formatDate(row.createdAt) }}
               </template>
@@ -94,49 +146,73 @@
               </template>
             </el-table-column>
             
-            <el-table-column label="操作" width="320">
+            <el-table-column :width="canManageProjects ? tableLayout.actionWidth : 220" label="操作">
               <template #default="{ row }">
-                <template v-if="row.status === 'completed'">
-                  <el-button
-                    type="primary"
-                    size="small"
-                    @click.stop="viewProject(row)"
+                <div class="table-actions" :style="desktopActionStyle" @click.stop>
+                  <template v-if="row.status === 'completed'">
+                    <el-button
+                      type="primary"
+                      size="small"
+                      @click.stop="viewProject(row)"
+                    >
+                      <el-icon><View /></el-icon>
+                      查看说明书
+                    </el-button>
+                  </template>
+                  <template v-else-if="row.status === 'failed' || row.status === 'cancelled'">
+                    <el-button
+                      type="danger"
+                      size="small"
+                      @click.stop="deleteProject(row)"
+                    >
+                      <el-icon><Delete /></el-icon>
+                      删除任务
+                    </el-button>
+                  </template>
+                  <template v-else-if="row.status === 'processing'">
+                    <el-button
+                      type="danger"
+                      size="small"
+                      plain
+                      @click.stop="deleteProject(row)"
+                    >
+                      <el-icon><Delete /></el-icon>
+                      中断/删除
+                    </el-button>
+                  </template>
+                  <el-dropdown
+                    v-if="canManageProjects && row.status === 'completed'"
+                    trigger="click"
+                    @command="(category) => changeProjectCategory(row, category)"
                   >
-                    <el-icon><View /></el-icon>
-                    查看说明书
-                  </el-button>
-                </template>
-                <template v-else-if="row.status === 'failed'">
+                    <el-button size="small" plain @click.stop>
+                      移动到
+                      <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                    </el-button>
+                    <template #dropdown>
+                      <el-dropdown-menu>
+                        <el-dropdown-item
+                          v-for="option in categoryOptions"
+                          :key="option.value"
+                          :command="option.value"
+                          :disabled="row.projectCategory === option.value"
+                        >
+                          {{ option.label }}
+                        </el-dropdown-item>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
                   <el-button
-                    type="danger"
-                    size="small"
-                    @click.stop="deleteProject(row)"
-                  >
-                    <el-icon><Delete /></el-icon>
-                    删除任务
-                  </el-button>
-                </template>
-                <template v-else-if="row.status === 'processing'">
-                  <el-button
-                    type="danger"
+                    v-if="canManageProjects"
+                    type="warning"
                     size="small"
                     plain
-                    @click.stop="deleteProject(row)"
+                    @click.stop="renameProject(row)"
                   >
-                    <el-icon><Delete /></el-icon>
-                    中断/删除
+                    <el-icon><EditPen /></el-icon>
+                    改名
                   </el-button>
-                </template>
-                <el-button
-                  v-if="isAdmin"
-                  type="warning"
-                  size="small"
-                  plain
-                  @click.stop="renameProject(row)"
-                >
-                  <el-icon><EditPen /></el-icon>
-                  改名
-                </el-button>
+                </div>
               </template>
             </el-table-column>
           </el-table>
@@ -175,7 +251,7 @@
                     查看说明书
                   </el-button>
                 </template>
-                <template v-else-if="project.status === 'failed'">
+                <template v-else-if="project.status === 'failed' || project.status === 'cancelled'">
                   <el-button
                     type="danger"
                     size="small"
@@ -197,7 +273,7 @@
                   </el-button>
                 </template>
                 <el-button
-                  v-if="isAdmin"
+                  v-if="canManageProjects"
                   type="warning"
                   size="small"
                   plain
@@ -230,7 +306,7 @@
         <!-- 空状态 -->
         <div v-if="filteredProjects.length === 0 && !loading" class="empty-state">
           <el-empty description="暂无项目数据">
-            <el-button v-if="isAdmin" type="primary" @click="$router.push('/generator')">
+            <el-button v-if="canManageProjects" type="primary" @click="$router.push('/generator')">
               创建新项目
             </el-button>
           </el-empty>
@@ -240,9 +316,9 @@
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="handleClose">取消</el-button>
-          <el-button v-if="!isAdmin" @click="showAdminLoginDialog = true">管理员登录</el-button>
-          <el-button v-else @click="logoutAdmin">退出管理员</el-button>
-          <el-button v-if="isAdmin" type="primary" @click="$router.push('/generator')">
+          <el-button v-if="showAdminLoginAction" @click="showAdminLoginDialog = true">管理员登录</el-button>
+          <el-button v-else-if="canManageProjects" @click="logoutAdmin">退出管理员</el-button>
+          <el-button v-if="canManageProjects" type="primary" @click="$router.push('/generator')">
             <el-icon><Plus /></el-icon>
             新建项目
           </el-button>
@@ -301,6 +377,7 @@
     </el-dialog>
 
     <el-dialog
+      v-if="!isMobile"
       v-model="showAdminLoginDialog"
       title="管理员登录"
       width="400px"
@@ -388,12 +465,59 @@ import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useMediaQuery } from '@vueuse/core'
 import {
-  Search, Document, View, Plus, FolderOpened, Delete, Camera, EditPen
+  Search, Document, View, Plus, FolderOpened, Delete, Camera, EditPen, ArrowDown
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import axios from 'axios'
 import { BrowserMultiFormatReader, type IScannerControls } from '@zxing/browser'
 import { useAdminStore } from '../stores/admin'
+import {
+  DEFAULT_PROJECT_CATEGORY,
+  PROJECT_CATEGORY_ARCHIVED,
+  PROJECT_CATEGORY_LABELS,
+  PROJECT_CATEGORY_PENDING,
+  PROJECT_CATEGORY_PUBLISHED,
+  PROJECT_CATEGORY_TAG_TYPES,
+  type ProjectCategory
+} from '../constants/projectCategories'
+
+type ProjectStatus = 'completed' | 'processing' | 'failed' | 'cancelled'
+type ProjectListMode = ProjectCategory | 'abnormal'
+
+const PROJECT_STATUS_TAG_TYPES: Record<ProjectStatus, string> = {
+  completed: 'success',
+  processing: 'warning',
+  failed: 'danger',
+  cancelled: 'info'
+}
+
+const PROJECT_STATUS_TEXTS: Record<ProjectStatus, string> = {
+  completed: '已完成',
+  processing: '处理中',
+  failed: '失败',
+  cancelled: '已停止'
+}
+
+interface ProjectItem {
+  id: string
+  projectName: string
+  projectNumber?: string
+  status: ProjectStatus | string
+  projectCategory: ProjectCategory
+  createdAt: string
+  pdfCount: number
+  stepCount: number
+  processingTime: number
+  description: string
+  data?: any
+}
+
+interface ViewerTableLayout {
+  projectNameMinWidth: number
+  categoryWidth: number
+  actionWidth: number
+  actionGap: number
+}
 
 const router = useRouter()
 const isMobile = useMediaQuery('(max-width: 768px)')
@@ -406,7 +530,8 @@ adminStore.ensureInit()
 const showProjectDialog = ref(true)
 const loading = ref(false)
 const searchQuery = ref('')
-const statusFilter = ref('')
+const ABNORMAL_LIST_MODE = 'abnormal' as const
+const categoryFilter = ref<ProjectListMode>(DEFAULT_PROJECT_CATEGORY)
 const dateRange = ref([])
 const currentPage = ref(1)
 const pageSize = ref(20)
@@ -427,18 +552,85 @@ const paginationLayout = computed(() =>
 )
 const GENERATOR_LAST_TASK_KEY = 'generator_last_task'
 const GENERATOR_RECOVERY_TASK_KEY = 'generator_current_task'
+const categoryOptions: Array<{ value: ProjectCategory; label: string }> = [
+  { value: PROJECT_CATEGORY_PENDING, label: PROJECT_CATEGORY_LABELS[PROJECT_CATEGORY_PENDING] },
+  { value: PROJECT_CATEGORY_PUBLISHED, label: PROJECT_CATEGORY_LABELS[PROJECT_CATEGORY_PUBLISHED] },
+  { value: PROJECT_CATEGORY_ARCHIVED, label: PROJECT_CATEGORY_LABELS[PROJECT_CATEGORY_ARCHIVED] }
+]
+const canManageProjects = computed(() => !isMobile.value && isAdmin.value)
+const showAdminLoginAction = computed(() => !isMobile.value && !isAdmin.value)
+const effectiveListMode = computed<ProjectListMode>(() =>
+  canManageProjects.value ? categoryFilter.value : PROJECT_CATEGORY_PUBLISHED
+)
+const showingAbnormalTasks = computed(() => effectiveListMode.value === ABNORMAL_LIST_MODE)
+const tableLayout = reactive<ViewerTableLayout>({
+  projectNameMinWidth: 420,
+  categoryWidth: 96,
+  actionWidth: 300,
+  actionGap: 8
+})
 
 // ✅ 从 localStorage 加载项目数据
-const projects = ref<any[]>([])
+const projects = ref<ProjectItem[]>([])
 let scannerControls: IScannerControls | null = null
 let scannerReader: BrowserMultiFormatReader | null = null
+
+const normalizeProjectCategory = (value: unknown): ProjectCategory => {
+  if (typeof value === 'string') {
+    const category = value.trim().toLowerCase()
+    if (
+      category === PROJECT_CATEGORY_PENDING ||
+      category === PROJECT_CATEGORY_PUBLISHED ||
+      category === PROJECT_CATEGORY_ARCHIVED
+    ) {
+      return category
+    }
+  }
+  return DEFAULT_PROJECT_CATEGORY
+}
+
+const isAbnormalStatus = (status: unknown) => ['processing', 'failed', 'cancelled'].includes(String(status || ''))
+
+const setDefaultListMode = () => {
+  categoryFilter.value = canManageProjects.value ? DEFAULT_PROJECT_CATEGORY : PROJECT_CATEGORY_PUBLISHED
+}
+
+const desktopActionStyle = computed(() => ({
+  '--viewer-table-action-gap': `${tableLayout.actionGap}px`
+}))
+
+const updateTableLayout = (patch: Partial<ViewerTableLayout>) => {
+  for (const [key, value] of Object.entries(patch)) {
+    if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+      tableLayout[key as keyof ViewerTableLayout] = Math.round(value)
+    }
+  }
+
+  return { ...tableLayout }
+}
+
+const registerViewerLayoutTuner = () => {
+  if (typeof window === 'undefined') return
+
+  ;(window as any).__viewerLayoutTuner = {
+    get: () => ({ ...tableLayout }),
+    set: (patch: Partial<ViewerTableLayout>) => updateTableLayout(patch)
+  }
+}
+
+const unregisterViewerLayoutTuner = () => {
+  if (typeof window === 'undefined') return
+  delete (window as any).__viewerLayoutTuner
+}
 
 // 加载历史记录
 const loadHistory = async () => {
   try {
     // ✅ 优先从后端API获取所有已生成的说明书
     try {
-      const response = await axios.get('/api/manuals', { params: { include_failed: true } })
+      const response = await axios.get('/api/manuals', {
+        params: { include_failed: canManageProjects.value }
+      })
       const manuals = response.data.manuals || []
 
       console.log(`✅ 从后端加载了 ${manuals.length} 个说明书`)
@@ -448,13 +640,14 @@ const loadHistory = async () => {
         id: item.taskId,
         projectName: item.productName || '未命名产品',
         status: item.status || 'completed',
+        projectCategory: normalizeProjectCategory(item.projectCategory),
         createdAt: item.timestamp,
         pdfCount: 0,
         stepCount: item.stepCount || 0,
         processingTime: 0,
-        description: item.status === 'failed'
-          ? '任务未完成或失败，可删除后重试'
-          : `装配步骤: ${item.stepCount || 0} 个`
+        description: item.status === 'completed'
+          ? `装配步骤: ${item.stepCount || 0} 个`
+          : '任务未完成或失败，可删除后重试'
       }))
 
       return
@@ -474,6 +667,7 @@ const loadHistory = async () => {
         id: item.taskId,
         projectName: item.productName || '未命名产品',
         status: 'completed',
+        projectCategory: DEFAULT_PROJECT_CATEGORY,
         createdAt: item.timestamp,
         pdfCount: item.data?.pdf_files?.length || 0,
         stepCount: item.data?.assembly_steps?.length || 0,
@@ -490,31 +684,66 @@ const loadHistory = async () => {
   }
 }
 
+const accessibleProjects = computed(() => {
+  if (canManageProjects.value) {
+    return projects.value
+  }
+
+  return projects.value.filter(
+    project => project.status === 'completed' && project.projectCategory === PROJECT_CATEGORY_PUBLISHED
+  )
+})
+
 // 项目统计
 const projectStats = computed(() => {
-  const total = projects.value.length
-  const completed = projects.value.filter(p => p.status === 'completed').length
-  const processing = projects.value.filter(p => p.status === 'processing').length
+  const source = accessibleProjects.value
+  const total = source.length
+  const completed = source.filter(p => p.status === 'completed').length
+  const processing = source.filter(p => p.status === 'processing').length
   const avgTime = Math.round(
-    projects.value
+    source
       .filter(p => p.processingTime > 0)
       .reduce((sum, p) => sum + p.processingTime, 0) / 
-    projects.value.filter(p => p.processingTime > 0).length || 0
+    source.filter(p => p.processingTime > 0).length || 0
   )
   
   return { total, completed, processing, avgTime }
 })
 
+const completedProjects = computed(() =>
+  projects.value.filter(project => project.status === 'completed')
+)
+
+const abnormalProjects = computed(() =>
+  canManageProjects.value
+    ? projects.value.filter(project => isAbnormalStatus(project.status))
+    : []
+)
+
+const categoryCounts = computed<Record<ProjectCategory, number>>(() => ({
+  [PROJECT_CATEGORY_PENDING]: completedProjects.value.filter(
+    project => project.projectCategory === PROJECT_CATEGORY_PENDING
+  ).length,
+  [PROJECT_CATEGORY_PUBLISHED]: completedProjects.value.filter(
+    project => project.projectCategory === PROJECT_CATEGORY_PUBLISHED
+  ).length,
+  [PROJECT_CATEGORY_ARCHIVED]: completedProjects.value.filter(
+    project => project.projectCategory === PROJECT_CATEGORY_ARCHIVED
+  ).length
+}))
+
 // 最近项目
 const recentProjects = computed(() => {
-  return [...projects.value]
+  return [...accessibleProjects.value]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 5)
 })
 
 // 过滤后的项目
 const filteredProjects = computed(() => {
-  let filtered = projects.value
+  let filtered = showingAbnormalTasks.value
+    ? abnormalProjects.value
+    : completedProjects.value.filter(project => project.projectCategory === effectiveListMode.value)
   
   // 搜索过滤
   if (searchQuery.value) {
@@ -522,16 +751,10 @@ const filteredProjects = computed(() => {
     filtered = filtered.filter(p => 
       String(p.projectName || '').toLowerCase().includes(query) ||
       String(p.projectNumber || '').toLowerCase().includes(query) ||
-      String(p.description || '').toLowerCase().includes(query) ||
-      String(p.id || '').toLowerCase().includes(query)
+      String(p.description || '').toLowerCase().includes(query)
     )
   }
-  
-  // 状态过滤
-  if (statusFilter.value) {
-    filtered = filtered.filter(p => p.status === statusFilter.value)
-  }
-  
+
   // 日期范围过滤
   if (dateRange.value && dateRange.value.length === 2) {
     const [start, end] = dateRange.value
@@ -701,22 +924,35 @@ const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleString('zh-CN')
 }
 
-const getStatusType = (status: string) => {
-  const types = {
-    completed: 'success',
-    processing: 'warning', 
-    failed: 'danger'
+const normalizeProjectStatus = (status: unknown): ProjectStatus | null => {
+  switch (status) {
+    case 'completed':
+    case 'processing':
+    case 'failed':
+    case 'cancelled':
+      return status
+    default:
+      return null
   }
-  return types[status] || 'info'
+}
+
+const getStatusType = (status: string) => {
+  const normalizedStatus = normalizeProjectStatus(status)
+  return normalizedStatus ? PROJECT_STATUS_TAG_TYPES[normalizedStatus] : 'info'
 }
 
 const getStatusText = (status: string) => {
-  const texts = {
-    completed: '已完成',
-    processing: '处理中',
-    failed: '失败'
-  }
-  return texts[status] || '未知'
+  const normalizedStatus = normalizeProjectStatus(status)
+  return normalizedStatus ? PROJECT_STATUS_TEXTS[normalizedStatus] : '未知'
+}
+
+const getCategoryText = (category: ProjectCategory) => PROJECT_CATEGORY_LABELS[category]
+
+const getCategoryType = (category: ProjectCategory) => PROJECT_CATEGORY_TAG_TYPES[category]
+
+const selectCategory = (mode: ProjectListMode) => {
+  if (!canManageProjects.value) return
+  categoryFilter.value = mode
 }
 
 const selectProject = (row: any) => {
@@ -791,6 +1027,8 @@ const handleAdminLogin = () => {
   const password = String(loginForm.password || '')
   if (username === 'admin' && password === 'admin123') {
     adminStore.login()
+    setDefaultListMode()
+    void loadHistory()
     showAdminLoginDialog.value = false
     loginForm.username = ''
     loginForm.password = ''
@@ -802,11 +1040,13 @@ const handleAdminLogin = () => {
 
 const logoutAdmin = () => {
   adminStore.logout()
+  setDefaultListMode()
+  void loadHistory()
   ElMessage.success('已退出管理员模式')
 }
 
-const renameProject = async (project: any) => {
-  if (!isAdmin.value) {
+const renameProject = async (project: ProjectItem) => {
+  if (!canManageProjects.value) {
     ElMessage.warning('请先登录管理员')
     return
   }
@@ -848,6 +1088,30 @@ const renameProject = async (project: any) => {
   }
 }
 
+const changeProjectCategory = async (project: ProjectItem, category: ProjectCategory) => {
+  if (!canManageProjects.value || project.status !== 'completed') {
+    return
+  }
+
+  if (project.projectCategory === category) {
+    ElMessage.info(`项目已在“${getCategoryText(category)}”中`)
+    return
+  }
+
+  try {
+    await axios.put(`/api/manual/${project.id}/category`, { category })
+
+    projects.value = projects.value.map(item =>
+      item.id === project.id ? { ...item, projectCategory: category } : item
+    )
+
+    ElMessage.success(`已移动到“${getCategoryText(category)}”`)
+  } catch (error: any) {
+    console.error('更新项目分类失败:', error)
+    ElMessage.error('更新项目分类失败: ' + (error.response?.data?.detail || error.message))
+  }
+}
+
 const handleClose = () => {
   router.push('/')
 }
@@ -862,13 +1126,15 @@ const handleCurrentChange = (page: number) => {
 }
 
 // 监听过滤条件变化，重置到第一页
-watch([searchQuery, statusFilter, dateRange], () => {
+watch([searchQuery, categoryFilter, dateRange], () => {
   currentPage.value = 1
 })
 
 // 生命周期
 onMounted(() => {
   loading.value = true
+  setDefaultListMode()
+  registerViewerLayoutTuner()
 
   // ✅ 加载历史记录
   loadHistory()
@@ -880,6 +1146,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   stopScanner()
+  unregisterViewerLayoutTuner()
 })
 </script>
 
@@ -920,6 +1187,39 @@ onBeforeUnmount(() => {
 
 .dialog-content {
   padding: 24px;
+}
+
+.category-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f8fbff 0%, #ffffff 100%);
+
+  .category-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .category-tab,
+  .abnormal-tab {
+    min-width: 116px;
+  }
+}
+
+.category-count {
+  margin-left: 6px;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.viewer-mode-alert {
+  margin-bottom: 18px;
 }
 
 // 搜索区域
@@ -1010,9 +1310,21 @@ onBeforeUnmount(() => {
       }
     }
 
+    .muted-text {
+      font-size: 12px;
+      color: var(--el-text-color-secondary);
+    }
+
     .file-count {
       font-size: 12px;
       color: var(--el-text-color-secondary);
+    }
+
+    .table-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--viewer-table-action-gap, 8px);
     }
   }
 
@@ -1255,6 +1567,10 @@ onBeforeUnmount(() => {
     .date-picker {
       display: none;
     }
+  }
+
+  .viewer-mode-alert {
+    margin-bottom: 14px;
   }
 
   .projects-section {

@@ -19,7 +19,8 @@ from typing import Dict, List, Optional, Tuple
 
 
 _INT_RE = re.compile(r"^\d+$")
-_CODE_RE = re.compile(r"^\d{2}\.\d{2}(?:\.\d{2})?\.\d{4}$")
+# 真实图纸里末段既有 4 位，也有 5 位物料代码尾号（如 01.01.01.10852）。
+_CODE_RE = re.compile(r"^\d{2}\.\d{2}(?:\.\d{2})?\.\d{4,5}$")
 _NUM_LINE_RE = re.compile(r"^\s*[-+]?\d+(?:\.\d+)?(?:\s+[-+]?\d+(?:\.\d+)?)*\s*$")
 _CHINESE_RE = re.compile(r"[\u4e00-\u9fff]")
 

@@ -2,7 +2,7 @@
 
 本文档说明如何从 GitHub 克隆项目并使用 Docker 部署智能装配说明书生成系统。
 
-**当前版本**: v2.1.49 | [查看所有版本](https://github.com/xiaotang-12-ops/yilite/releases)
+**当前版本**: v2.1.55 | [查看所有版本](https://github.com/xiaotang-12-ops/yilite/releases)
 
 ---
 
@@ -48,7 +48,7 @@ cd yilite
 
 #### 部署特定版本
 
-如果你想部署特定版本（例如 `v2.1.49`），可以使用以下命令：
+如果你想部署特定版本（例如 `v2.1.55`），可以使用以下命令：
 
 ```bash
 # 克隆项目
@@ -59,7 +59,7 @@ cd yilite
 git tag
 
 # 切换到特定版本
-git checkout v2.1.49
+git checkout v2.1.55
 
 # 进入项目目录
 cd yilite
@@ -141,8 +141,8 @@ docker-compose logs -f
 
 | 服务名称 | 容器名称 | 端口 | 说明 |
 |---------|---------|------|------|
-| backend | assembly-backend-v2.1.49 | 8008 | FastAPI 后端服务 |
-| frontend | assembly-frontend-v2.1.49 | 3008 / 3443 (映射到容器的 80 / 443 端口) | Vue 3 前端服务，支持 HTTP/HTTPS，证书来自宿主机根级 `ssl/` 挂载 |
+| backend | assembly-backend-v2.1.55 | 8008 | FastAPI 后端服务 |
+| frontend | assembly-frontend-v2.1.55 | 3008 / 3443 (映射到容器的 80 / 443 端口) | Vue 3 前端服务，支持 HTTP/HTTPS，证书来自宿主机根级 `ssl/` 挂载 |
 
 ### 数据持久化
 
@@ -226,13 +226,13 @@ docker-compose build backend
 ### 进入容器
 ```bash
 # 进入后端容器
-docker exec -it assembly-backend-v2.1.49 bash
+docker exec -it assembly-backend-v2.1.55 bash
 
 # 进入前端容器
-docker exec -it assembly-frontend-v2.1.49 sh
+docker exec -it assembly-frontend-v2.1.55 sh
 
 # 在后端容器中执行Python命令
-docker exec -it assembly-backend-v2.1.49 python -c "print('Hello')"
+docker exec -it assembly-backend-v2.1.55 python -c "print('Hello')"
 ```
 
 ---

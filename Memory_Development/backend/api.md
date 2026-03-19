@@ -12,8 +12,9 @@
 | POST | `/api/task/{task_id}/resume` | 继续失败/中断任务 | 路径参数 | 基于 `output/{task_id}` 继续跑；若已完成/运行中会返回 409 冲突 |
 | GET | `/api/stream/{task_id}` | SSE 日志/进度流 | 路径参数 | 文本/event-stream，读取 utils.logger 日志缓冲 |
 | WS | `/ws/task/{task_id}` | WebSocket 进度流 | 路径参数 | 周期推送进度/完成/失败 |
-| GET | `/api/manuals` | 列出已生成手册 | - | 扫描 `output/*/assembly_manual.json`，返回列表 |
+| GET | `/api/manuals` | 列出已生成手册 | - | 扫描 `output/*/assembly_manual.json`，返回列表；每条含 `projectCategory`（`pending/published/archived`） |
 | GET | `/api/manual/{task_id}` | 读取已发布手册 | 路径参数 | 直接读文件，替换 JSON 中 `{task_id}` 占位 |
+| PUT | `/api/manual/{task_id}/category` | 更新项目业务分类 | JSON：`category`=`pending/published/archived` | 同步更新 `assembly_manual.json`、`draft.json`、`task_status.json` 和内存任务中的 `project_category`；若 `task_status.json` 是历史坏文件，会按发布版手册自动重建最小合法状态后继续写入 |
 | GET | `/api/manual/{task_id}/draft` | 读取草稿 | 路径参数 | 无草稿返回 404 |
 | POST | `/api/manual/{task_id}/save-draft` | 保存草稿 | JSON：`manual_data` | 写入 `draft.json`，不影响已发布 |
 | POST | `/api/manual/{task_id}/publish` | 发布草稿并归档 | JSON：`changelog`（必填），可选 `manual_data` | 生成/覆盖 `assembly_manual.json`，新增 `versions/v*.json` 和 `version_history.json` |

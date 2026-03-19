@@ -67,11 +67,12 @@
           </el-button>
           <el-select
             v-if="!isMobile"
-            v-model="currentStepIndex"
+            :model-value="currentStepIndex"
             class="step-jump-select"
             size="default"
             :disabled="totalSteps <= 1"
             filterable
+            @change="handleDesktopStepJump"
           >
             <el-option
               v-for="(step, index) in allSteps"
@@ -117,6 +118,10 @@
                   <el-dropdown-menu>
                     <el-dropdown-item command="editContent">
                       <el-icon><Edit /></el-icon> 编辑内容
+                    </el-dropdown-item>
+                    <el-dropdown-item command="toggleStepRecording">
+                      <el-icon><VideoPlay v-if="!isAdminStepRecording" /><VideoPause v-else /></el-icon>
+                      {{ isAdminStepRecording ? '停止自动播放' : '自动播放' }}
                     </el-dropdown-item>
                     <el-dropdown-item command="insertStep">
                       <el-icon><Plus /></el-icon> 插入步骤
@@ -1717,6 +1722,9 @@ const activeTab = ref('welding')
 // 自动播放相关
 const isAutoPlaying = ref(false)
 let autoPlayTimer: ReturnType<typeof setInterval> | null = null
+const isAdminStepRecording = ref(false)
+const adminRecordingIntervalSeconds = ref(3)
+let adminStepRecordingTimer: ReturnType<typeof setTimeout> | null = null
 const modelContainer = ref<HTMLElement | null>(null)
 const draftPromptVisible = ref(false)
 const draftPromptLoading = ref(false)
@@ -2538,6 +2546,7 @@ const closeMobileOverlays = () => {
 }
 
 onBeforeRouteLeave((_to, _from, next) => {
+  stopAdminStepRecording()
   if (isMobile.value) {
     persistMobileStepIndex()
   }
@@ -2686,6 +2695,7 @@ const handleLogin = () => {
 
 // 退出登录
 const logout = () => {
+  stopAdminStepRecording()
   adminStore.logout()
   ElMessage.success('已退出管理员模式')
 }
@@ -3065,6 +3075,7 @@ const openPublishDialog = () => {
 }
 
 const refreshManualFromServer = async () => {
+  stopAdminStepRecording()
   try {
     const stepBeforeRefresh = currentStepIndex.value
     let data
@@ -3340,10 +3351,26 @@ const goEditFromHistory = async () => {
 
 // ============ 下拉菜单命令处理 ============
 
-const handleEditCommand = (command: string) => {
+const handleEditCommand = async (command: string) => {
+  if (command !== 'toggleStepRecording' && isAdminStepRecording.value) {
+    stopAdminStepRecording()
+  }
+
   switch (command) {
     case 'editContent':
       showEditDialog.value = true
+      break
+    case 'toggleStepRecording':
+      if (isAdminStepRecording.value) {
+        stopAdminStepRecording()
+      } else {
+        try {
+          await startAdminStepRecording()
+        } catch (error: any) {
+          console.error('❌ 启动录制失败:', error)
+          ElMessage.error('启动录制失败: ' + (error?.message || '未知错误'))
+        }
+      }
       break
     case 'insertStep':
       openInsertDialog()
@@ -3647,6 +3674,9 @@ const loadLocalJSON = async () => {
     ElMessage.error('任务ID不存在')
     return
   }
+
+  stopAdminStepRecording()
+
   try {
     const stepBeforeLoad = currentStepIndex.value
     // ✅ 先加载 step3_glb_inventory.json（3D零件名称映射）
@@ -3820,18 +3850,108 @@ const handleDiscardDraftFromPrompt = async () => {
 }
 
 const previousStep = () => {
+  stopAdminStepRecording()
   if (currentStepIndex.value > 0) {
     currentStepIndex.value--
   }
 }
 
 const nextStep = () => {
+  stopAdminStepRecording()
   if (currentStepIndex.value < totalSteps.value - 1) {
     currentStepIndex.value++
   }
 }
 
-// 自动播放：每5秒切换到下一步，到最后一步停止
+const parseRecordingIntervalSeconds = (rawValue: string | number | null | undefined): number | null => {
+  const text = String(rawValue ?? '').trim()
+  if (!text) return null
+
+  const numeric = Number(text)
+  if (!Number.isFinite(numeric)) return null
+  if (numeric < 0.5 || numeric > 60) return null
+
+  return numeric
+}
+
+const stopAdminStepRecording = () => {
+  isAdminStepRecording.value = false
+  if (adminStepRecordingTimer) {
+    clearTimeout(adminStepRecordingTimer)
+    adminStepRecordingTimer = null
+  }
+}
+
+// PC 管理员录制：每次只调度下一次跳步，避免 GLB 切换慢时积压多个定时任务。
+const scheduleAdminStepRecording = () => {
+  if (!isAdminStepRecording.value) return
+  if (currentStepIndex.value >= totalSteps.value - 1) {
+    stopAdminStepRecording()
+    return
+  }
+
+  adminStepRecordingTimer = setTimeout(() => {
+    adminStepRecordingTimer = null
+    if (!isAdminStepRecording.value) return
+    if (currentStepIndex.value >= totalSteps.value - 1) {
+      stopAdminStepRecording()
+      return
+    }
+
+    currentStepIndex.value++
+
+    if (currentStepIndex.value >= totalSteps.value - 1) {
+      stopAdminStepRecording()
+      return
+    }
+
+    scheduleAdminStepRecording()
+  }, adminRecordingIntervalSeconds.value * 1000)
+}
+
+const startAdminStepRecording = async () => {
+  if (!isAdmin.value || isMobile.value || isReadOnlyMode.value) return
+
+  try {
+    const { value } = await ElMessageBox.prompt(
+      '请输入自动翻步的时间间隔（秒）',
+      '录制自动翻步',
+      {
+        confirmButtonText: '开始录制',
+        cancelButtonText: '取消',
+        inputValue: String(adminRecordingIntervalSeconds.value),
+        inputPlaceholder: '支持 0.5 到 60 秒，例如 3 或 1.5',
+        inputValidator: (inputValue: string) => {
+          if (!String(inputValue ?? '').trim()) return '时间间隔不能为空'
+          if (parseRecordingIntervalSeconds(inputValue) === null) {
+            return '请输入 0.5 到 60 之间的数字秒数'
+          }
+          return true
+        }
+      }
+    )
+
+    const intervalSeconds = parseRecordingIntervalSeconds(value)
+    if (intervalSeconds === null) return
+
+    adminRecordingIntervalSeconds.value = intervalSeconds
+    stopAdminStepRecording()
+    currentStepIndex.value = 0
+
+    if (totalSteps.value <= 1) {
+      return
+    }
+
+    isAdminStepRecording.value = true
+    await nextTick()
+    scheduleAdminStepRecording()
+  } catch (error: any) {
+    if (error === 'cancel') return
+    throw error
+  }
+}
+
+// 移动端自动播放：按固定 3 秒间隔切换到下一步，到最后一步停止
 const toggleAutoPlay = () => {
   if (isAutoPlaying.value) {
     // 停止播放
@@ -3871,6 +3991,13 @@ const stopAutoPlay = () => {
 
 const goToStep = (index: number) => {
   currentStepIndex.value = index
+}
+
+const handleDesktopStepJump = (index: number | string) => {
+  stopAdminStepRecording()
+  const targetIndex = Number(index)
+  if (!Number.isInteger(targetIndex)) return
+  goToStep(targetIndex)
 }
 
 const handleStepJump = (index: number) => {
@@ -5405,11 +5532,8 @@ onUnmounted(() => {
     clearTimeout(autoSaveTimer)
     autoSaveTimer = null
   }
-  // ✅ 清理自动播放计时器
-  if (autoPlayTimer) {
-    clearInterval(autoPlayTimer)
-    autoPlayTimer = null
-  }
+  stopAutoPlay()
+  stopAdminStepRecording()
   overlayStack.length = 0
   imageViewerVisible.value = false
   mobileImagePreviewVisible.value = false

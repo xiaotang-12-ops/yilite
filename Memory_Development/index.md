@@ -1,8 +1,8 @@
 # 📸 项目快照 - Memory Development
 
 **创建时间**: 2025-11-18
-**最后校对**: 2026-03-16
-**当前版本**: v2.1.49
+**最后校对**: 2026-03-18
+**当前版本**: v2.1.55
 **项目状态**: 核心功能完成，可用
 
 ---
@@ -29,7 +29,7 @@ output/{task_id} (JSON + GLB + 图片)
 
 ## 核心文件结构
 - 统一入口：`backend/simple_app.py`（FastAPI）、`frontend/src/main.ts`（Vue 入口）
-- 核心流水线：`core/gemini_pipeline.py` 调度 FileClassifier、HierarchicalBOMMatcher、ManualIntegratorV2 及 6 个 Agent；`core/pdf_text_bom_extractor.py` 负责 PDF 文本层 BOM 固定 6 列提取（`seq/code/product_code/name/material/quantity`）与纠偏补充；`HierarchicalBOMMatcher` 现采用层级结果锁定 + 最终 AI 补漏；`agents/product_assembly_agent.py` 现在会按 BOM 宽表强制收口产品步骤归属，确保“1 步 = 1 个 BOM 序号”；`ManualIntegratorV2` 会对未绑定 3D 节点的步骤显式打标
+- 核心流水线：`core/gemini_pipeline.py` 调度 FileClassifier、HierarchicalBOMMatcher、ManualIntegratorV2 及 6 个 Agent；`core/pdf_text_bom_extractor.py` 负责 PDF 文本层 BOM 固定 6 列提取（`seq/code/product_code/name/material/quantity`）与纠偏补充，当前支持 `01.01.01.4422` 和 `01.01.01.10852` 这类 `4-5` 位尾号 BOM 代码；`HierarchicalBOMMatcher` 现采用层级结果锁定 + 最终 AI 补漏；`agents/product_assembly_agent.py` 现在会按 BOM 宽表强制收口产品步骤归属，确保“1 步 = 1 个 BOM 序号”；`ManualIntegratorV2` 会对未绑定 3D 节点的步骤显式打标
 - 提示词：`prompts/agent_*.py`（视觉规划、BOM-3D、组件装配、产品装配、焊接、安全FAQ）
 - 前端：`frontend/src/views`（Home、Generator、Viewer、ManualViewer、Engineer、Settings 等），`frontend/src/components`（ThreeViewer、Processing*、AssemblyManualViewer 等）
 
@@ -46,9 +46,10 @@ output/{task_id} (JSON + GLB + 图片)
 | POST | `/api/task/{task_id}/resume` | 继续失败/中断任务 | 基于 `output/{task_id}` 继续跑，若已完成或运行中返回 409 冲突 |
 | GET | `/api/stream/{task_id}` | SSE 日志/进度流 | 结合 utils.logger 缓冲 |
 | WS | `/ws/task/{task_id}` | WebSocket 进度流 | 周期推送进度/完成/失败 |
-| GET | `/api/manuals` | 列出已生成手册 | 扫描 `output/*/assembly_manual.json` |
+| GET | `/api/manuals` | 列出已生成手册 | 扫描 `output/*/assembly_manual.json`；返回 `projectCategory`（`pending/published/archived`） |
 | GET | `/api/manual/{task_id}` | 读取手册 JSON | 直接读文件，替换 `{task_id}` 占位 |
 | PUT | `/api/manual/{task_id}/rename` | 重命名项目显示名 | 同步更新 `assembly_manual.json`/`draft.json`/`task_status.json`/内存任务 |
+| PUT | `/api/manual/{task_id}/category` | 更新项目业务分类 | 同步更新 `assembly_manual.json`/`draft.json`/`task_status.json`/内存任务中的 `project_category` |
 | GET | `/api/manual/{task_id}/draft` | 读取草稿 | 无草稿返回 404 |
 | DELETE | `/api/manual/{task_id}/draft` | 丢弃草稿 | 删除 `draft.json`，恢复到已发布版本 |
 | POST | `/api/manual/{task_id}/save-draft` | 保存草稿 | 写入 `draft.json`，不影响已发布，支持 `_edit_version` 乐观锁 |
@@ -76,8 +77,8 @@ output/{task_id} (JSON + GLB + 图片)
 | --- | --- | --- | --- |
 | `/` | HomeNew.vue | 首页展示 | |
 | `/generator` | Generator.vue | 上传与任务发起 | 调 /api/upload, /api/generate |
-| `/viewer/:id?` | Viewer.vue | 3D 预览与结果查看 | 搜索栏支持“扫一扫”回填；扫码成功后会直接写入 `searchQuery`；已验证 Android 系统浏览器在“自签 HTTPS + 首次信任证书”场景可调起摄像头；手机端优化为更宽对话框和单列信息布局；管理员可在列表中改名 |
-| `/manual/:taskId` | ManualViewer.vue | 装配手册查看/编辑 | 管理员支持草稿保存/发布；修复顶部工具栏在长标题步骤下的高度抖动 |
+| `/viewer/:id?` | Viewer.vue | 3D 预览与结果查看 | 搜索栏支持“扫一扫”回填；扫码成功后会直接写入 `searchQuery`；已验证 Android 系统浏览器在“自签 HTTPS + 首次信任证书”场景可调起摄像头；移动端固定为工人查看入口，仅展示 `已完成(published)` 项目且不提供管理员登录；桌面端管理员新增 `待调整/已完成/旧版本/异常任务` 视图和项目 `移动到` 分类能力；搜索不再匹配原始 `taskId` 旧名字，时间列文案改为“修改时间” |
+| `/manual/:taskId` | ManualViewer.vue | 装配手册查看/编辑 | 管理员支持草稿保存/发布；桌面端新增 `编辑 -> 自动播放` 自动翻步，可输入 `0.5-60` 秒间隔后从第一步播到最后一步；修复顶部工具栏在长标题步骤下的高度抖动 |
 | `/version-history/:taskId` | VersionHistory.vue | 历史版本与回滚 | 调 /api/manual/* history/version/rollback |
 | `/engineer` | Engineer.vue | 工程师视图（质检/分发） | |
 | `/settings` | Settings.vue | AI 设置（隐藏入口） | Logo 10 秒内连点 10 次解锁；调 /api/settings；支持每调用点 `兜底模型`；一键全测会分别测试主模型与兜底模型；测试后端/全测具备超时提示；`newapi` 下多模态调用点不展示 `glm-5`，手填会自动替换并提示 |
@@ -107,9 +108,9 @@ output/{task_id} (JSON + GLB + 图片)
 ## 最近 3 个版本快照
 | 版本 | 日期 | 关键变更 |
 | --- | --- | --- |
-| v2.1.49 | 2026-03-16 | **部署证书目录统一为根级 `ssl/`（避免和源码目录混淆）**：<br/>- `docker-compose.yml` 的证书挂载从 `./frontend/ssl` 改为 `./ssl`，部署目录不再伪装成前端源码结构<br/>- `README.md`、`DEPLOYMENT.md`、`DOCKER_DEPLOYMENT.md` 全部改成根目录 `ssl/` 口径，现场交付只需要镜像包、`docker-compose.yml`、`.env` 和 `ssl/`<br/>- `.gitignore` 与 `.dockerignore` 同步排除 `ssl/`；根目录新增 `ssl/` 作为运行时证书目录，并移除旧 `frontend/ssl` 遗留目录 |
-| v2.1.48 | 2026-03-13 | **HTTPS 证书改为部署时挂载（私钥不再进仓库/镜像）**：<br/>- `frontend/Dockerfile` 去掉 `COPY ssl`，前端镜像不再内置 `server.key`<br/>- `docker-compose.yml` 改为宿主机 `./frontend/ssl` 只读挂载到 `/etc/nginx/ssl`，扫码所需 `HTTPS` 能力保留<br/>- `.gitignore`、根目录 `.dockerignore`、`frontend/.dockerignore` 同时排除 `frontend/ssl/`，避免私钥进入 Git 或 Docker build context |
-| v2.1.47 | 2026-03-11 | **步骤标题去数量口径 + NewAPI 快捷模型补充**：<br/>- `agent_4_product_assembly.py` 和 `agent_3_component_assembly.py` 现在都明确要求 `title` 只能写“动作 + 零件名”，禁止数量/规格/括号，数量与规格只能写进 `description`<br/>- `Settings.vue` 的 `NewAPI` 快捷模型列表新增 `qwen3.5-plus-2026-02-15`，可直接下拉选择 |
+| v2.1.55 | 2026-03-18 | **PDF 文本层 BOM 提取支持 5 位尾号代码**：<br/>- `pdf_text_bom_extractor.py` 的记录头识别从固定 `4` 位尾号放宽到 `4-5` 位，`01.01.01.10852/10853` 这类真实 BOM 代码不再被漏掉<br/>- 新增回归测试覆盖 `5` 位尾号 BOM 文本层提取，防止再次只识别到后半段 BOM<br/>- 本地复跑 `组件图1.pdf` 文本层提取后，BOM 数量从 `2` 条恢复为 `4` 条 |
+| v2.1.54 | 2026-03-18 | **Viewer 搜索去掉旧 `taskId` 命中 + ManualViewer 录制文案更名**：<br/>- `Viewer.vue` 搜索不再匹配 `taskId`，重命名后旧名字不会继续命中搜索结果<br/>- 查看器表格时间列文案从“生成时间”改为“修改时间”，与后端返回的文件修改时间口径一致<br/>- `ManualViewer.vue` 的桌面端管理员菜单把 `录制/停止录制` 改为 `自动播放/停止自动播放` |
+| v2.1.53 | 2026-03-17 | **项目分类接口兼容历史坏 `task_status.json`**：<br/>- `simple_app.py` 新增坏状态文件自动重建 helper，`PUT /api/manual/{task_id}/category` 与 `PUT /api/manual/{task_id}/rename` 遇到损坏 `task_status.json` 不再直接报 `Expecting value`<br/>- 历史脏数据会按 `assembly_manual.json` 和任务目录信息重建最小合法状态，再继续写入 `project_category/projectName`<br/>- 已补回归测试覆盖“坏 `task_status.json` 仍能改分类”场景，并修复当前 `output/` 下 3 个坏状态文件 |
 
 ---
 
@@ -128,11 +129,14 @@ output/{task_id} (JSON + GLB + 图片)
 - 正常：上传、生成、日志流、手册读取/编辑、模型与图片下载、设置管理。
 - 注意：需安装 Blender；`OPENROUTER_API_KEY`/`DEEPSEEK_API_KEY`/`NEWAPI_API_KEY`（兼容 `ARK_API_KEY`）按调用点配置；设置页默认隐藏，Logo 10 秒内连点 10 次可进入；大文件性能与 Three.js 渲染待优化；前端路由默认走 8008 端口；一次任务仅支持上传 1 个 PDF + 1 个 STEP；运行中全局仅允许 1 个任务，上传/生成会返回 409 `TASK_BUSY` 提示等待；task_id = PDF 文件名（去后缀），STEP 文件名可不同，后端生成时会按 task_id 重命名存储；同名生成返回 409，可在前端选择覆盖（成功任务归档到 `output_archive/`，失败/损坏任务直接删除）或生成第二套 `_v_n`；任务状态持久化到 `output/{task_id}/task_status.json`，支持 `/api/task/{task_id}/cancel` 停止保留结果与 `/api/task/{task_id}/resume` 继续生成；生成任务可被中断（删除/覆盖/残留清理时会中断后台线程并写入 `cancelled`）；模式判定：PDF 文件名前缀 01* → 组件模式；03/06/07/08* → 产品模式；未命中前缀默认组件模式；产品模式跳过 Step5，且 Step7 默认跳过焊接仅执行安全。
 - PDF 文本层 BOM：当前文本提取优先保证 `seq/code/product_code/name/quantity` 5 列稳定；`unit_weight/total_weight` 仅做可选补充，不再因为重量列漂移就丢整行；`gemini_pipeline.py` 会优先采用文本层 `quantity` 纠正 Vision 冲突值。
-- PDF 文本层 BOM：当前主目标已升级为固定 6 列：`seq/code/product_code/name/material/quantity`；数量识别改为前向扫描，不再主要依赖尾部关键词截断；`gemini_pipeline.py` 会同步用文本层 `material` / `quantity` 纠正 Vision 结果。
+- PDF 文本层 BOM：当前主目标已升级为固定 6 列：`seq/code/product_code/name/material/quantity`；数量识别改为前向扫描，不再主要依赖尾部关键词截断；`gemini_pipeline.py` 会同步用文本层 `material` / `quantity` 纠正 Vision 结果；记录头中的 BOM 代码当前支持 `4-5` 位尾号，避免 `01.01.01.10852` 这类真实物料代码被误丢。
 - 产品级 BOM/3D 匹配：层级匹配结果现在作为底座锁定，后续代码/AI 只能补节点不能覆盖；装配体名称匹配支持短中文锚点（如 `油缸`）；最后一层补漏改为复用同一 BOM-3D 匹配模型的“最终 AI 补漏”，不再扩张规则兜底，但 `M10*75` ↔ `M10×80` 这类硬规格冲突仍保持拦截。
 - 产品总装步骤归属：`product_assembly_agent.py` 会在 AI 生成后按 `bom_mapping_table` 收口每一步的 BOM 归属，当前步骤只能保留自己的 `bom_seq`；历史任务若仍有重复节点，`ManualViewer.vue` 也只会把“首次在当前步骤出现”的节点刷成黄色，已经在前序步骤出现过的节点保持蓝色。
 - 手册节点绑定告警：步骤会输出 `has_3d_binding`、`missing_node_binding_codes`、`binding_warning`，显式提示“当前步骤有文字但未绑定 3D 节点”。
 - Viewer 扫码：`/viewer` 搜索栏支持扫码填充物料代码；前端已切到同源 API/WS/SSE，支持内网自签 `HTTPS` 入口；已验证 Android 系统浏览器在“首次信任证书”后可直接扫码回填搜索框。第三方浏览器（如百度）兼容性不稳定，不建议作为交付验收标准；若客户固定内网 `IP` 变更，需在宿主机本地重签 `ssl/server.crt` / `server.key`；该目录不再纳入 Git 或镜像。
+- Viewer 项目管理：项目列表新增业务分类 `pending/published/archived`；桌面端管理员可在 `待调整/已完成/旧版本` 与 `异常任务` 间切换，并通过 `移动到` 下拉修改分类；桌面表格支持通过 `window.__viewerLayoutTuner` 临时调 `项目名称/分类/操作` 列宽与按钮间距；移动端固定为工人查看入口，不显示管理员登录且只展示 `published` 项目。
+- Viewer 搜索与时间文案：搜索不再匹配原始 `taskId`，避免重命名后旧名字继续命中；列表时间列文案改为“修改时间”，与后端返回的发布文件修改时间口径一致。
+- Viewer 项目管理容错：`PUT /api/manual/{task_id}/category` 与 `PUT /api/manual/{task_id}/rename` 遇到历史损坏的 `task_status.json` 会按发布版手册和任务目录自动重建最小合法状态，不再因为半截 `"thread":` 旧数据卡住分类/改名。
 - Viewer 移动端布局：项目选择弹窗改为近全宽显示，列表采用单列信息与整行操作按钮，减少文字挤压和无效留白。
 - Generator/Viewer 任务缓存一致性：查看器删除任务后会同步清理 `generator_last_task` 与 `generator_current_task`；生成器读取上一次任务时若状态接口返回 404，会自动清理残留提示。
 - NewAPI 兼容：provider 对外统一 `newapi`（兼容旧 `doubao`）；默认关闭 `thinking/reasoning_effort`，若模型返回 `Unknown parameter` 或参数不识别会自动降级；若返回 completion 上限（`at most N`）会自动降级到 `N` 后重试；多模态调用点（`assembly/welding/bom_vision`）不允许 `glm-5`，设置页会自动替换并警告，后端也会拒绝非法组合。
@@ -145,6 +149,7 @@ output/{task_id} (JSON + GLB + 图片)
 - ManualViewer 细节修复：手机“选择步骤”抽屉按钮列表统一左对齐；恢复已删除零件时立即重算材质/位置，避免瞬时显示为“已装”。
 - ManualViewer 草稿弹窗：改为两动作（继续编辑 / 丢弃回线上）+ 丢弃二次确认；弹窗显示 `draftCreatedAt` 与 `lastUpdated`，旧草稿无创建字段时给出兜底说明。
 - ManualViewer 管理员登录态：监听 `isAdmin` 切换并自动刷新；若登录切管理员后发现版本/更新时间变化，会提示“数据已更新，已自动刷新”。
+- ManualViewer 桌面端录制：管理员可在 `编辑 -> 自动播放` 中输入 `0.5-60` 秒间隔，从第一步自动翻到最后一步；自动播放中手动切步、刷新手册、退出管理员或离开页面会自动停录制，结束时无弹窗提示。
 - ManualViewer 顶部工具栏：长步骤标题会在进度区内截断，右侧操作区与管理员徽标保持单行，步骤切换不再出现高度忽高忽低。
 - ManualViewer 相机：加载/切换 GLB 时基于包围盒自动框选，动态设置 near/far，并收敛模型放大上限（≤1e4）以避免深度闪烁和“需大幅放大才能看到”问题；移动端图纸/抽屉会写入一层同页历史用于“返回键先关弹层”，并通过弹层关闭链路收口减少返回竞态；移动端预览支持“返回键先关预览/抽屉”“轻点图片关闭”。
 - STEP→GLB：`trimesh` 子进程 120s 硬超时（超时强制终止），不再启用 ocp_tessellate 兜底；并新增“自动简化”兜底（仅超大 nodes 模型触发，合并刷丝/毛刷等特征层为盘级 mesh），需要时可在上传前提示大文件转 STL。

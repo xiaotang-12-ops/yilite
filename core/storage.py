@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from utils.project_categories import DEFAULT_PROJECT_CATEGORY, normalize_project_category
 from utils.time_utils import beijing_now
 
 
@@ -152,6 +153,20 @@ class ManualStorage:
             manual["_edit_version"] = 0
             changed = True
 
+        metadata = manual.get("metadata")
+        if not isinstance(metadata, dict):
+            metadata = {}
+            manual["metadata"] = metadata
+            changed = True
+
+        normalized_category = normalize_project_category(
+            metadata.get("project_category"),
+            DEFAULT_PROJECT_CATEGORY,
+        )
+        if metadata.get("project_category") != normalized_category:
+            metadata["project_category"] = normalized_category
+            changed = True
+
         def upgrade_steps(steps: List[Dict[str, Any]]) -> bool:
             local_changed = False
             if not isinstance(steps, list):
@@ -201,6 +216,7 @@ class ManualStorage:
         if not manual_data:
             raise ValueError("manual_data is empty")
         manual_data = dict(manual_data)
+        self._upgrade_manual_schema(manual_data)
         existing = self.load_draft()
         existing_created_at = None
         if isinstance(existing, dict):
@@ -235,6 +251,8 @@ class ManualStorage:
         draft = manual_data or self.load_draft()
         if draft is None:
             raise FileNotFoundError("draft.json not found, please save draft first")
+        draft = dict(draft)
+        self._upgrade_manual_schema(draft)
 
         next_number = self._max_version_number(versions) + 1
         new_version = self._format_version(next_number)
