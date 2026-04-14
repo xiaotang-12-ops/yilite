@@ -90,6 +90,16 @@
             <el-icon><Document /></el-icon>
             步骤
           </el-button>
+          <el-button
+            v-if="!isMobile"
+            class="auto-page-button"
+            :type="isAutoPaging ? 'danger' : 'success'"
+            plain
+            @click="toggleAutoPaging"
+          >
+            <el-icon><VideoPlay v-if="!isAutoPaging" /><VideoPause v-else /></el-icon>
+            {{ isAutoPaging ? '停止翻页' : '自动翻页' }}
+          </el-button>
         </div>
 
         <!-- 管理员登录/管理按钮（只读模式下隐藏） -->
@@ -118,10 +128,6 @@
                   <el-dropdown-menu>
                     <el-dropdown-item command="editContent">
                       <el-icon><Edit /></el-icon> 编辑内容
-                    </el-dropdown-item>
-                    <el-dropdown-item command="toggleStepRecording">
-                      <el-icon><VideoPlay v-if="!isAdminStepRecording" /><VideoPause v-else /></el-icon>
-                      {{ isAdminStepRecording ? '停止自动播放' : '自动播放' }}
                     </el-dropdown-item>
                     <el-dropdown-item command="insertStep">
                       <el-icon><Plus /></el-icon> 插入步骤
@@ -184,12 +190,12 @@
         步骤/参考
       </el-button>
       <el-button
-        :type="isAutoPlaying ? 'danger' : 'success'"
+        :type="isAutoPaging ? 'danger' : 'success'"
         plain
-        @click="toggleAutoPlay"
+        @click="toggleAutoPaging"
       >
-        <el-icon><VideoPlay v-if="!isAutoPlaying" /><VideoPause v-else /></el-icon>
-        {{ isAutoPlaying ? '停止播放' : '自动播放' }}
+        <el-icon><VideoPlay v-if="!isAutoPaging" /><VideoPause v-else /></el-icon>
+        {{ isAutoPaging ? '停止翻页' : '自动翻页' }}
       </el-button>
     </div>
 
@@ -1719,12 +1725,10 @@ const restoreMobileStepIndex = (fallbackIndex = 0) => {
 
 const activeTab = ref('welding')
 
-// 自动播放相关
-const isAutoPlaying = ref(false)
-let autoPlayTimer: ReturnType<typeof setInterval> | null = null
-const isAdminStepRecording = ref(false)
-const adminRecordingIntervalSeconds = ref(3)
-let adminStepRecordingTimer: ReturnType<typeof setTimeout> | null = null
+// 自动翻页相关
+const isAutoPaging = ref(false)
+const autoPageIntervalSeconds = ref(3)
+let autoPageTimer: ReturnType<typeof setTimeout> | null = null
 const modelContainer = ref<HTMLElement | null>(null)
 const draftPromptVisible = ref(false)
 const draftPromptLoading = ref(false)
@@ -2546,7 +2550,7 @@ const closeMobileOverlays = () => {
 }
 
 onBeforeRouteLeave((_to, _from, next) => {
-  stopAdminStepRecording()
+  stopAutoPaging()
   if (isMobile.value) {
     persistMobileStepIndex()
   }
@@ -2695,7 +2699,7 @@ const handleLogin = () => {
 
 // 退出登录
 const logout = () => {
-  stopAdminStepRecording()
+  stopAutoPaging()
   adminStore.logout()
   ElMessage.success('已退出管理员模式')
 }
@@ -3075,7 +3079,7 @@ const openPublishDialog = () => {
 }
 
 const refreshManualFromServer = async () => {
-  stopAdminStepRecording()
+  stopAutoPaging()
   try {
     const stepBeforeRefresh = currentStepIndex.value
     let data
@@ -3352,25 +3356,13 @@ const goEditFromHistory = async () => {
 // ============ 下拉菜单命令处理 ============
 
 const handleEditCommand = async (command: string) => {
-  if (command !== 'toggleStepRecording' && isAdminStepRecording.value) {
-    stopAdminStepRecording()
+  if (isAutoPaging.value) {
+    stopAutoPaging()
   }
 
   switch (command) {
     case 'editContent':
       showEditDialog.value = true
-      break
-    case 'toggleStepRecording':
-      if (isAdminStepRecording.value) {
-        stopAdminStepRecording()
-      } else {
-        try {
-          await startAdminStepRecording()
-        } catch (error: any) {
-          console.error('❌ 启动录制失败:', error)
-          ElMessage.error('启动录制失败: ' + (error?.message || '未知错误'))
-        }
-      }
       break
     case 'insertStep':
       openInsertDialog()
@@ -3675,7 +3667,7 @@ const loadLocalJSON = async () => {
     return
   }
 
-  stopAdminStepRecording()
+  stopAutoPaging()
 
   try {
     const stepBeforeLoad = currentStepIndex.value
@@ -3850,20 +3842,20 @@ const handleDiscardDraftFromPrompt = async () => {
 }
 
 const previousStep = () => {
-  stopAdminStepRecording()
+  stopAutoPaging()
   if (currentStepIndex.value > 0) {
     currentStepIndex.value--
   }
 }
 
 const nextStep = () => {
-  stopAdminStepRecording()
+  stopAutoPaging()
   if (currentStepIndex.value < totalSteps.value - 1) {
     currentStepIndex.value++
   }
 }
 
-const parseRecordingIntervalSeconds = (rawValue: string | number | null | undefined): number | null => {
+const parseAutoPageIntervalSeconds = (rawValue: string | number | null | undefined): number | null => {
   const text = String(rawValue ?? '').trim()
   if (!text) return null
 
@@ -3874,56 +3866,54 @@ const parseRecordingIntervalSeconds = (rawValue: string | number | null | undefi
   return numeric
 }
 
-const stopAdminStepRecording = () => {
-  isAdminStepRecording.value = false
-  if (adminStepRecordingTimer) {
-    clearTimeout(adminStepRecordingTimer)
-    adminStepRecordingTimer = null
+const stopAutoPaging = () => {
+  isAutoPaging.value = false
+  if (autoPageTimer) {
+    clearTimeout(autoPageTimer)
+    autoPageTimer = null
   }
 }
 
-// PC 管理员录制：每次只调度下一次跳步，避免 GLB 切换慢时积压多个定时任务。
-const scheduleAdminStepRecording = () => {
-  if (!isAdminStepRecording.value) return
+// 自动翻页：每次只调度下一次跳步，避免 GLB 切换慢时积压多个定时任务。
+const scheduleAutoPaging = () => {
+  if (!isAutoPaging.value) return
   if (currentStepIndex.value >= totalSteps.value - 1) {
-    stopAdminStepRecording()
+    stopAutoPaging()
     return
   }
 
-  adminStepRecordingTimer = setTimeout(() => {
-    adminStepRecordingTimer = null
-    if (!isAdminStepRecording.value) return
+  autoPageTimer = setTimeout(() => {
+    autoPageTimer = null
+    if (!isAutoPaging.value) return
     if (currentStepIndex.value >= totalSteps.value - 1) {
-      stopAdminStepRecording()
+      stopAutoPaging()
       return
     }
 
     currentStepIndex.value++
 
     if (currentStepIndex.value >= totalSteps.value - 1) {
-      stopAdminStepRecording()
+      stopAutoPaging()
       return
     }
 
-    scheduleAdminStepRecording()
-  }, adminRecordingIntervalSeconds.value * 1000)
+    scheduleAutoPaging()
+  }, autoPageIntervalSeconds.value * 1000)
 }
 
-const startAdminStepRecording = async () => {
-  if (!isAdmin.value || isMobile.value || isReadOnlyMode.value) return
-
+const startAutoPaging = async () => {
   try {
     const { value } = await ElMessageBox.prompt(
-      '请输入自动翻步的时间间隔（秒）',
-      '录制自动翻步',
+      '请输入自动翻页的时间间隔（秒）',
+      '自动翻页',
       {
-        confirmButtonText: '开始录制',
+        confirmButtonText: '开始',
         cancelButtonText: '取消',
-        inputValue: String(adminRecordingIntervalSeconds.value),
+        inputValue: String(autoPageIntervalSeconds.value),
         inputPlaceholder: '支持 0.5 到 60 秒，例如 3 或 1.5',
         inputValidator: (inputValue: string) => {
           if (!String(inputValue ?? '').trim()) return '时间间隔不能为空'
-          if (parseRecordingIntervalSeconds(inputValue) === null) {
+          if (parseAutoPageIntervalSeconds(inputValue) === null) {
             return '请输入 0.5 到 60 之间的数字秒数'
           }
           return true
@@ -3931,61 +3921,37 @@ const startAdminStepRecording = async () => {
       }
     )
 
-    const intervalSeconds = parseRecordingIntervalSeconds(value)
+    const intervalSeconds = parseAutoPageIntervalSeconds(value)
     if (intervalSeconds === null) return
 
-    adminRecordingIntervalSeconds.value = intervalSeconds
-    stopAdminStepRecording()
+    autoPageIntervalSeconds.value = intervalSeconds
+    stopAutoPaging()
     currentStepIndex.value = 0
 
     if (totalSteps.value <= 1) {
       return
     }
 
-    isAdminStepRecording.value = true
+    isAutoPaging.value = true
     await nextTick()
-    scheduleAdminStepRecording()
+    scheduleAutoPaging()
   } catch (error: any) {
-    if (error === 'cancel') return
+    if (error === 'cancel' || error === 'close') return
     throw error
   }
 }
 
-// 移动端自动播放：按固定 3 秒间隔切换到下一步，到最后一步停止
-const toggleAutoPlay = () => {
-  if (isAutoPlaying.value) {
-    // 停止播放
-    stopAutoPlay()
-  } else {
-    // 开始播放
-    startAutoPlay()
-  }
-}
-
-const startAutoPlay = () => {
-  // 如果已经是最后一步，不启动
-  if (currentStepIndex.value >= totalSteps.value - 1) {
-    ElMessage.info('已经是最后一步了')
+const toggleAutoPaging = async () => {
+  if (isAutoPaging.value) {
+    stopAutoPaging()
     return
   }
 
-  isAutoPlaying.value = true
-  autoPlayTimer = setInterval(() => {
-    if (currentStepIndex.value < totalSteps.value - 1) {
-      currentStepIndex.value++
-    } else {
-      // 到达最后一步，自动停止
-      stopAutoPlay()
-      ElMessage.success('播放完成')
-    }
-  }, 3000) // 3秒间隔
-}
-
-const stopAutoPlay = () => {
-  isAutoPlaying.value = false
-  if (autoPlayTimer) {
-    clearInterval(autoPlayTimer)
-    autoPlayTimer = null
+  try {
+    await startAutoPaging()
+  } catch (error: any) {
+    console.error('❌ 启动自动翻页失败:', error)
+    ElMessage.error('启动自动翻页失败: ' + (error?.message || '未知错误'))
   }
 }
 
@@ -3994,13 +3960,14 @@ const goToStep = (index: number) => {
 }
 
 const handleDesktopStepJump = (index: number | string) => {
-  stopAdminStepRecording()
+  stopAutoPaging()
   const targetIndex = Number(index)
   if (!Number.isInteger(targetIndex)) return
   goToStep(targetIndex)
 }
 
 const handleStepJump = (index: number) => {
+  stopAutoPaging()
   goToStep(index)
   showStepJumpDrawer.value = false
 }
@@ -5532,8 +5499,7 @@ onUnmounted(() => {
     clearTimeout(autoSaveTimer)
     autoSaveTimer = null
   }
-  stopAutoPlay()
-  stopAdminStepRecording()
+  stopAutoPaging()
   overlayStack.length = 0
   imageViewerVisible.value = false
   mobileImagePreviewVisible.value = false
@@ -5888,6 +5854,10 @@ onUnmounted(() => {
 
     .step-jump-button {
       min-width: 72px;
+    }
+
+    .auto-page-button {
+      min-width: 104px;
     }
 
     .step-jump-select {

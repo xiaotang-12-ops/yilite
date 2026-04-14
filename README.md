@@ -1,6 +1,6 @@
 # 智能装配说明书生成系统
 
-[![Version](https://img.shields.io/badge/version-v2.1.55-blue.svg)](https://github.com/xiaotang-12-ops/yilite/releases)
+[![Version](https://img.shields.io/badge/version-v2.1.57-blue.svg)](https://github.com/xiaotang-12-ops/yilite/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Docker](https://img.shields.io/badge/docker-ready-brightgreen.svg)](DOCKER_DEPLOYMENT.md)
 
@@ -8,15 +8,15 @@
 
 一个基于AI的智能装配说明书生成系统，能够自动解析PDF工程图纸和3D模型，生成工人友好的交互式HTML装配说明书。
 
-**当前版本**: v2.1.55 | [查看版本历史](https://github.com/xiaotang-12-ops/yilite/releases) | [部署指南](DOCKER_DEPLOYMENT.md)
+**当前版本**: v2.1.57 | [查看版本历史](https://github.com/xiaotang-12-ops/yilite/releases) | [部署指南](DOCKER_DEPLOYMENT.md)
 
-## 🆕 最新更新 (v2.1.55)
+## 🆕 最新更新 (v2.1.57)
 
+- **🤖 首页头像与字号调节**：全局导航、favicon 与 PWA 图标统一为 AI 机器人头像，隐藏设置页新增“界面字号调节”，可直接调首页标题、说明文字和手机导航字号。
+- **↔️ ManualViewer 自动翻页公共化**：桌面端入口已移到公共导航区，手机端统一改为输入秒数后开始，历史版本只读页也可使用。
 - **📋 BOM 文本层提取支持 5 位尾号代码**：`01.01.01.10852/10853` 这类真实物料代码不再被误判为非法记录头，避免图纸只识别出后半段 BOM。
 - **🧪 增加 BOM 提取回归测试**：补上 5 位尾号 BOM 代码样本，后续再改提取规则时能第一时间拦住回归。
 - **📁 项目分类管理落地**：桌面端管理员支持 `待调整/已完成/旧版本` 三分类和 `移动到` 操作，移动端固定只展示 `已完成` 项目。
-- **▶️ 手册桌面端自动播放上线**：管理员可在 `编辑 -> 自动播放` 中输入间隔，从第一步自动翻到最后一步。
-- **🐳 Docker 发版口径同步**：`docker-compose.yml` 中前后端镜像与容器名已切到 `v2.1.55`，与本次 tag 保持一致。
 
 ### 🌟 v2.0.x 系列演进亮点
 
