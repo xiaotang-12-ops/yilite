@@ -1,8 +1,8 @@
 # 📸 项目快照 - Memory Development
 
 **创建时间**: 2025-11-18
-**最后校对**: 2026-03-18
-**当前版本**: v2.1.55
+**最后校对**: 2026-04-14
+**当前版本**: v2.1.57
 **项目状态**: 核心功能完成，可用
 
 ---
@@ -75,13 +75,13 @@ output/{task_id} (JSON + GLB + 图片)
 ## 前端路由（Vite 入口）
 | Path | 组件 | 作用 | 备注 |
 | --- | --- | --- | --- |
-| `/` | HomeNew.vue | 首页展示 | |
+| `/` | HomeNew.vue | 首页展示 | 全局导航头像改为本地 `ai-robot-avatar.png`；移动端导航长品牌名缩小并两行完整显示；首页主标题采用 `title-kicker/title-primary/title-secondary` 三层排版，突出“自动解析”，避免长中文标题被动挤成孤行；标题整体比例、手机标题比例和首页说明文字比例改由 `visual_font_settings` 本地字号配置驱动 |
 | `/generator` | Generator.vue | 上传与任务发起 | 调 /api/upload, /api/generate |
 | `/viewer/:id?` | Viewer.vue | 3D 预览与结果查看 | 搜索栏支持“扫一扫”回填；扫码成功后会直接写入 `searchQuery`；已验证 Android 系统浏览器在“自签 HTTPS + 首次信任证书”场景可调起摄像头；移动端固定为工人查看入口，仅展示 `已完成(published)` 项目且不提供管理员登录；桌面端管理员新增 `待调整/已完成/旧版本/异常任务` 视图和项目 `移动到` 分类能力；搜索不再匹配原始 `taskId` 旧名字，时间列文案改为“修改时间” |
-| `/manual/:taskId` | ManualViewer.vue | 装配手册查看/编辑 | 管理员支持草稿保存/发布；桌面端新增 `编辑 -> 自动播放` 自动翻步，可输入 `0.5-60` 秒间隔后从第一步播到最后一步；修复顶部工具栏在长标题步骤下的高度抖动 |
+| `/manual/:taskId` | ManualViewer.vue | 装配手册查看/编辑 | 管理员支持草稿保存/发布；桌面端公共导航区与移动端底部栏都支持 `自动翻页`，统一输入 `0.5-60` 秒间隔后从第一步翻到最后一步；历史版本只读页也可使用；修复顶部工具栏在长标题步骤下的高度抖动 |
 | `/version-history/:taskId` | VersionHistory.vue | 历史版本与回滚 | 调 /api/manual/* history/version/rollback |
 | `/engineer` | Engineer.vue | 工程师视图（质检/分发） | |
-| `/settings` | Settings.vue | AI 设置（隐藏入口） | Logo 10 秒内连点 10 次解锁；调 /api/settings；支持每调用点 `兜底模型`；一键全测会分别测试主模型与兜底模型；测试后端/全测具备超时提示；`newapi` 下多模态调用点不展示 `glm-5`，手填会自动替换并提示 |
+| `/settings` | Settings.vue | AI 设置（隐藏入口） | Logo 10 秒内连点 10 次解锁；调 /api/settings；支持每调用点 `兜底模型`；一键全测会分别测试主模型与兜底模型；测试后端/全测具备超时提示；`newapi` 下多模态调用点不展示 `glm-5`，手填会自动替换并提示；新增“界面字号调节”，可保存首页标题/说明文字与手机导航标题字号，配置写入 `localStorage.visual_font_settings` 并实时预览 |
 | `/glb-test` | GLBTest.vue | GLB 场景调试 | |
 | `/simple-glb-test` | SimpleGLBTest.vue | 轻量 GLB 测试 | |
 | `/icon-test` | IconTest.vue | 图标展示 | |
@@ -108,9 +108,9 @@ output/{task_id} (JSON + GLB + 图片)
 ## 最近 3 个版本快照
 | 版本 | 日期 | 关键变更 |
 | --- | --- | --- |
+| v2.1.57 | 2026-04-14 | **首页 AI 机器人头像与标题排版优化**：<br/>- 新增本地 `frontend/public/ai-robot-avatar.png`，全局导航头像、favicon、Apple touch icon 与 PWA manifest 图标统一使用机器人头像<br/>- `HomeNew.vue` 首页标题改为“小标签 + 主标题 + 副标题”三层排版：`工业装配工艺知识 / 自动解析 / 数字孪生化指导系统`<br/>- 补齐桌面、平板、移动端标题字号断点，并压缩移动端导航品牌长标题，避免文字截断或挤占导航按钮<br/>- 新增 `useVisualFontSettings` 和隐藏设置页“界面字号调节”，后续可在头像 10 连点入口内直接调首页标题、说明文字和手机导航字号 |
+| v2.1.56 | 2026-03-23 | **ManualViewer 自动翻页公共化**：<br/>- `ManualViewer.vue` 把桌面管理员录制和手机自动播放收口成一套公共 `自动翻页` 状态与定时器<br/>- 桌面入口移到顶部公共导航区，手机端改为同一套“输入秒数后开始”，历史版本只读页也允许使用<br/>- 用户文案统一为 `自动翻页 / 停止翻页 / 开始`，并移除“播放完成”提示 |
 | v2.1.55 | 2026-03-18 | **PDF 文本层 BOM 提取支持 5 位尾号代码**：<br/>- `pdf_text_bom_extractor.py` 的记录头识别从固定 `4` 位尾号放宽到 `4-5` 位，`01.01.01.10852/10853` 这类真实 BOM 代码不再被漏掉<br/>- 新增回归测试覆盖 `5` 位尾号 BOM 文本层提取，防止再次只识别到后半段 BOM<br/>- 本地复跑 `组件图1.pdf` 文本层提取后，BOM 数量从 `2` 条恢复为 `4` 条 |
-| v2.1.54 | 2026-03-18 | **Viewer 搜索去掉旧 `taskId` 命中 + ManualViewer 录制文案更名**：<br/>- `Viewer.vue` 搜索不再匹配 `taskId`，重命名后旧名字不会继续命中搜索结果<br/>- 查看器表格时间列文案从“生成时间”改为“修改时间”，与后端返回的文件修改时间口径一致<br/>- `ManualViewer.vue` 的桌面端管理员菜单把 `录制/停止录制` 改为 `自动播放/停止自动播放` |
-| v2.1.53 | 2026-03-17 | **项目分类接口兼容历史坏 `task_status.json`**：<br/>- `simple_app.py` 新增坏状态文件自动重建 helper，`PUT /api/manual/{task_id}/category` 与 `PUT /api/manual/{task_id}/rename` 遇到损坏 `task_status.json` 不再直接报 `Expecting value`<br/>- 历史脏数据会按 `assembly_manual.json` 和任务目录信息重建最小合法状态，再继续写入 `project_category/projectName`<br/>- 已补回归测试覆盖“坏 `task_status.json` 仍能改分类”场景，并修复当前 `output/` 下 3 个坏状态文件 |
 
 ---
 
@@ -149,7 +149,7 @@ output/{task_id} (JSON + GLB + 图片)
 - ManualViewer 细节修复：手机“选择步骤”抽屉按钮列表统一左对齐；恢复已删除零件时立即重算材质/位置，避免瞬时显示为“已装”。
 - ManualViewer 草稿弹窗：改为两动作（继续编辑 / 丢弃回线上）+ 丢弃二次确认；弹窗显示 `draftCreatedAt` 与 `lastUpdated`，旧草稿无创建字段时给出兜底说明。
 - ManualViewer 管理员登录态：监听 `isAdmin` 切换并自动刷新；若登录切管理员后发现版本/更新时间变化，会提示“数据已更新，已自动刷新”。
-- ManualViewer 桌面端录制：管理员可在 `编辑 -> 自动播放` 中输入 `0.5-60` 秒间隔，从第一步自动翻到最后一步；自动播放中手动切步、刷新手册、退出管理员或离开页面会自动停录制，结束时无弹窗提示。
+- ManualViewer 自动翻页：桌面端公共导航区与移动端底部栏都可输入 `0.5-60` 秒间隔后开始，从第一步自动翻到最后一步；自动翻页中手动切步、步骤跳转、刷新手册、退出管理员或离开页面会自动停止，结束时无弹窗提示；历史版本只读页同样可用。
 - ManualViewer 顶部工具栏：长步骤标题会在进度区内截断，右侧操作区与管理员徽标保持单行，步骤切换不再出现高度忽高忽低。
 - ManualViewer 相机：加载/切换 GLB 时基于包围盒自动框选，动态设置 near/far，并收敛模型放大上限（≤1e4）以避免深度闪烁和“需大幅放大才能看到”问题；移动端图纸/抽屉会写入一层同页历史用于“返回键先关弹层”，并通过弹层关闭链路收口减少返回竞态；移动端预览支持“返回键先关预览/抽屉”“轻点图片关闭”。
 - STEP→GLB：`trimesh` 子进程 120s 硬超时（超时强制终止），不再启用 ocp_tessellate 兜底；并新增“自动简化”兜底（仅超大 nodes 模型触发，合并刷丝/毛刷等特征层为盘级 mesh），需要时可在上传前提示大文件转 STL。

@@ -11,8 +11,9 @@
       <!-- 左侧主标题区域 -->
       <div class="main-title-section">
         <h1 class="main-title">
-          <!-- <div class="title-line">易力特</div> -->
-          <div class="title-line">装配指导</div>
+          <div class="title-kicker">工业装配工艺知识</div>
+          <div class="title-primary">自动解析</div>
+          <div class="title-secondary">数字孪生化指导系统</div>
         </h1>
         
         <div class="feature-list">
@@ -574,22 +575,48 @@ onUnmounted(() => {
 
 
 .main-title {
-  font-size: 6rem;
+  /* 三层标题让长中文标题有主次关系，避免末尾词被动挤成孤行。 */
   font-weight: 900;
-  line-height: 1.05;
-  margin-bottom: 20px; /* 收紧与下方的间距 */
-  text-transform: uppercase;
+  line-height: 1;
+  margin-bottom: 28px;
+  text-transform: none;
 
-  .title-line {
+  .title-kicker {
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: 14px;
+    padding: 6px 12px;
+    border-left: 4px solid var(--accent-color);
+    background: rgba(0, 102, 204, 0.08);
+    color: var(--text-color);
+    font-size: calc(1.35rem * var(--visual-home-title-scale, 1));
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .title-primary {
     display: block;
-    line-height: 1.08;
-    padding: 0;
-    margin: 4px 0;
+    background: linear-gradient(90deg, var(--text-color), var(--accent-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-size: calc(5.5rem * var(--visual-home-title-scale, 1));
+    font-weight: 900;
+    line-height: 0.95;
+    text-shadow: 0 10px 28px rgba(0, 102, 204, 0.12);
+  }
+
+  .title-secondary {
+    display: block;
+    margin-top: 10px;
     background: linear-gradient(45deg, var(--text-color), var(--accent-color));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    text-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+    font-size: calc(4rem * var(--visual-home-title-scale, 1));
+    font-weight: 850;
+    line-height: 1.05;
+    text-shadow: 0 10px 28px rgba(0, 102, 204, 0.1);
   }
 }
 
@@ -601,7 +628,7 @@ onUnmounted(() => {
     align-items: center;
     gap: 15px;
     margin-bottom: 18px;
-    font-size: 20px;
+    font-size: calc(20px * var(--visual-home-feature-scale, 1));
     color: var(--text-secondary);
 
     .feature-arrow {
@@ -737,8 +764,19 @@ onUnmounted(() => {
   }
 
   .main-title {
-    font-size: 3.8rem;
     margin-bottom: 30px;
+
+    .title-kicker {
+      font-size: calc(1.15rem * var(--visual-home-title-scale, 1));
+    }
+
+    .title-primary {
+      font-size: calc(4.4rem * var(--visual-home-title-scale, 1));
+    }
+
+    .title-secondary {
+      font-size: calc(3.1rem * var(--visual-home-title-scale, 1));
+    }
   }
 
   .feature-list {
@@ -760,8 +798,19 @@ onUnmounted(() => {
   }
 
   .main-title {
-    font-size: 3.2rem;
     margin-bottom: 25px;
+
+    .title-kicker {
+      font-size: calc(1.05rem * var(--visual-home-title-scale, 1));
+    }
+
+    .title-primary {
+      font-size: calc(3.7rem * var(--visual-home-title-scale, 1));
+    }
+
+    .title-secondary {
+      font-size: calc(2.6rem * var(--visual-home-title-scale, 1));
+    }
   }
 
   .stats-section {
@@ -798,15 +847,28 @@ onUnmounted(() => {
   }
 
   .main-title {
-    font-size: 2.5rem;
     margin-bottom: 20px;
+
+    .title-kicker {
+      margin-bottom: 10px;
+      font-size: calc(0.95rem * var(--visual-home-mobile-title-scale, 1));
+    }
+
+    .title-primary {
+      font-size: calc(2.75rem * var(--visual-home-mobile-title-scale, 1));
+    }
+
+    .title-secondary {
+      margin-top: 8px;
+      font-size: calc(1.95rem * var(--visual-home-mobile-title-scale, 1));
+    }
   }
 
   .feature-list {
     margin-bottom: 20px;
 
     .feature-item {
-      font-size: 14px;
+      font-size: calc(14px * var(--visual-home-feature-scale, 1));
       margin-bottom: 8px;
     }
   }

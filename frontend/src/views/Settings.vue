@@ -193,6 +193,108 @@
           </div>
         </el-form-item>
 
+        <!-- 界面字号配置 -->
+        <el-divider content-position="left">
+          <el-icon><Tools /></el-icon>
+          <span style="margin-left: 8px;">界面字号调节</span>
+        </el-divider>
+
+        <div class="visual-font-panel">
+          <div class="visual-font-grid">
+            <el-form-item label="首页标题整体">
+              <el-slider
+                v-model="visualFontSettings.homeTitleScale"
+                :min="visualFontLimits.homeTitleScale.min"
+                :max="visualFontLimits.homeTitleScale.max"
+                :step="visualFontLimits.homeTitleScale.step"
+                :format-tooltip="formatScaleTip"
+                show-input
+              />
+              <div class="form-item-tip">
+                调整桌面和平板端首页主标题整体比例。
+              </div>
+            </el-form-item>
+
+            <el-form-item label="首页标题手机">
+              <el-slider
+                v-model="visualFontSettings.homeMobileTitleScale"
+                :min="visualFontLimits.homeMobileTitleScale.min"
+                :max="visualFontLimits.homeMobileTitleScale.max"
+                :step="visualFontLimits.homeMobileTitleScale.step"
+                :format-tooltip="formatScaleTip"
+                show-input
+              />
+              <div class="form-item-tip">
+                单独控制手机端首页标题，避免长标题显示不全。
+              </div>
+            </el-form-item>
+
+            <el-form-item label="首页说明文字">
+              <el-slider
+                v-model="visualFontSettings.homeFeatureScale"
+                :min="visualFontLimits.homeFeatureScale.min"
+                :max="visualFontLimits.homeFeatureScale.max"
+                :step="visualFontLimits.homeFeatureScale.step"
+                :format-tooltip="formatScaleTip"
+                show-input
+              />
+              <div class="form-item-tip">
+                调整首页左侧“上传图纸”等说明文字比例。
+              </div>
+            </el-form-item>
+
+            <el-form-item label="手机导航字号">
+              <el-slider
+                v-model="visualFontSettings.navMobileFontSize"
+                :min="visualFontLimits.navMobileFontSize.min"
+                :max="visualFontLimits.navMobileFontSize.max"
+                :step="visualFontLimits.navMobileFontSize.step"
+                :format-tooltip="formatPxTip"
+                show-input
+              />
+              <div class="form-item-tip">
+                调整顶部导航长系统名在手机端的字号，单位 px。
+              </div>
+            </el-form-item>
+
+            <el-form-item label="手机导航宽度">
+              <el-slider
+                v-model="visualFontSettings.navMobileMaxWidth"
+                :min="visualFontLimits.navMobileMaxWidth.min"
+                :max="visualFontLimits.navMobileMaxWidth.max"
+                :step="visualFontLimits.navMobileMaxWidth.step"
+                :format-tooltip="formatPxTip"
+                show-input
+              />
+              <div class="form-item-tip">
+                控制手机端系统名最大占宽，右侧按钮空间仍会自动保留。
+              </div>
+            </el-form-item>
+          </div>
+
+          <div class="visual-preview">
+            <div class="visual-preview-title">
+              <span class="preview-kicker">工业装配工艺知识</span>
+              <strong>自动解析</strong>
+              <span>数字孪生化指导系统</span>
+            </div>
+            <div class="visual-preview-nav">
+              工业装配工艺知识自动解析与数字孪生化指导系统
+            </div>
+          </div>
+
+          <div class="visual-font-actions">
+            <el-button type="primary" plain @click="saveVisualSettings">
+              <el-icon><Select /></el-icon>
+              <span>保存界面字号</span>
+            </el-button>
+            <el-button @click="resetVisualSettings">
+              <el-icon><RefreshLeft /></el-icon>
+              <span>恢复字号默认</span>
+            </el-button>
+          </div>
+        </div>
+
         <!-- 操作按钮 -->
         <el-form-item>
           <el-button type="primary" @click="saveSettings" :loading="saving">
@@ -269,10 +371,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Setting, Key, Lock, Tools, Connection, Link, Select, RefreshLeft, QuestionFilled, Cpu } from '@element-plus/icons-vue'
 import axios from 'axios'
+import { useVisualFontSettings } from '../composables/useVisualFontSettings'
 
 const DEFAULT_OPENROUTER_MODEL = 'google/gemini-2.5-flash-preview-09-2025'
 const DEFAULT_DEEPSEEK_MODEL = 'deepseek-chat'
@@ -401,6 +504,19 @@ const settings = ref<Settings>({
   apiBaseUrl: '/api',
   callPoints: buildDefaultCallPoints()
 })
+
+const {
+  visualFontSettings,
+  visualFontLimits,
+  applyVisualFontSettings,
+  saveVisualFontSettings,
+  resetVisualFontSettings
+} = useVisualFontSettings()
+
+// 设置页拖动滑块时先实时预览，是否长期保留由“保存界面字号”决定。
+watch(visualFontSettings, () => {
+  applyVisualFontSettings()
+}, { deep: true })
 
 const saving = ref(false)
 const testing = ref(false)
@@ -618,6 +734,20 @@ onMounted(() => {
   loadSettings()
 })
 
+const formatScaleTip = (value: number) => `${Math.round(value * 100)}%`
+
+const formatPxTip = (value: number) => `${value}px`
+
+const saveVisualSettings = () => {
+  saveVisualFontSettings()
+  ElMessage.success('界面字号已保存')
+}
+
+const resetVisualSettings = () => {
+  resetVisualFontSettings()
+  ElMessage.success('界面字号已恢复默认')
+}
+
 const saveSettings = async () => {
   saving.value = true
   statusMessage.value = ''
@@ -625,6 +755,7 @@ const saveSettings = async () => {
   try {
     // 保存到localStorage
     localStorage.setItem('app_settings', JSON.stringify(settings.value))
+    saveVisualFontSettings()
 
     const callPointsPayload: Record<string, { provider: Provider; model: string; fallback_model?: string; custom_key?: string }> = {}
     const adjustedMainPoints: string[] = []
@@ -928,6 +1059,83 @@ const testModel = async () => {
   flex: 1;
 }
 
+.visual-font-panel {
+  width: 100%;
+  margin-bottom: 18px;
+}
+
+.visual-font-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2px;
+}
+
+.visual-font-grid :deep(.el-form-item) {
+  margin-bottom: 18px;
+}
+
+.visual-font-grid :deep(.el-slider) {
+  width: 100%;
+}
+
+.visual-preview {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 280px);
+  gap: 16px;
+  align-items: center;
+  margin: 4px 0 16px 150px;
+  padding: 16px;
+  border: 1px solid #dcdfe6;
+  border-radius: 8px;
+  background: #f7fbff;
+}
+
+.visual-preview-title {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  color: #1f2937;
+  line-height: 1.05;
+}
+
+.visual-preview-title .preview-kicker {
+  width: fit-content;
+  padding: 3px 8px;
+  border-left: 3px solid var(--el-color-primary);
+  background: rgba(64, 158, 255, 0.08);
+  font-size: calc(12px * var(--visual-home-title-scale, 1));
+  font-weight: 700;
+}
+
+.visual-preview-title strong {
+  font-size: calc(28px * var(--visual-home-title-scale, 1));
+  font-weight: 900;
+}
+
+.visual-preview-title span:last-child {
+  font-size: calc(20px * var(--visual-home-title-scale, 1));
+  font-weight: 800;
+}
+
+.visual-preview-nav {
+  max-width: min(var(--visual-nav-mobile-max-width, 226px), 100%);
+  padding: 10px;
+  border: 1px dashed var(--el-color-primary);
+  border-radius: 8px;
+  color: #1f2937;
+  font-size: var(--visual-nav-mobile-font-size, 10px);
+  line-height: 1.18;
+  word-break: break-all;
+}
+
+.visual-font-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-left: 150px;
+}
+
 .help-card {
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
 }
@@ -935,5 +1143,52 @@ const testModel = async () => {
 :deep(.el-step__description) {
   padding-right: 20px;
   line-height: 1.8;
+}
+
+@media (max-width: 768px) {
+  .settings-container {
+    padding: 12px;
+  }
+
+  :deep(.el-form-item) {
+    display: block;
+  }
+
+  :deep(.el-form-item__label) {
+    width: 100% !important;
+    justify-content: flex-start;
+    margin-bottom: 6px;
+  }
+
+  :deep(.el-form-item__content) {
+    margin-left: 0 !important;
+  }
+
+  .callpoint-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .callpoint-key-row,
+  .callpoint-fallback-row {
+    margin-left: 0;
+  }
+
+  .callpoint-label,
+  .callpoint-provider,
+  .callpoint-model,
+  .callpoint-model-preset {
+    width: 100%;
+  }
+
+  .visual-preview {
+    grid-template-columns: 1fr;
+    margin-left: 0;
+  }
+
+  .visual-font-actions {
+    margin-left: 0;
+  }
 }
 </style>

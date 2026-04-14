@@ -1,5 +1,56 @@
 # Memory Changelog
 
+## v2.1.57 (2026-04-14)
+- **首页 AI 机器人头像与标题排版优化**：
+  - **用户提问**：
+    - “我们这个项目，我现在需要你找到头像的地方，我要换头像，你找一下图片，就是ai机器人有关的，替换掉这个系统的图片。然后自己要去检查效果看起来要协调”
+    - “工业装配工艺知识 自动解析与数字孪生化指导系统 这个文字太大了，我需要缩小”
+    - “怎么样去设计这个字体的排版看起来好看点。”
+    - “可以，就按照你这个来改”
+    - “更新了什么去更新到memory”
+    - “帮我做个功能去调整这些字体和大小。入口就设定我们项目有的点击头像十次里面，具体布局怎么安排你定。”
+  - **问题根因**：
+    1. 全局导航原本直接使用 `/logo.png` 作为品牌图片，浏览器 favicon、Apple touch icon 和 PWA manifest 仍指向 `/logo1.jpg`，系统图标口径不统一，且不是 AI 机器人视觉。
+    2. 首页 `HomeNew.vue` 的主标题原先使用同一层级的 `.title-line`，长中文标题在桌面宽度下容易被动折成多行，末尾“指导系统”形成孤立行，视觉层级不清晰。
+    3. 首页 AI 员工卡片头像实际是 emoji 文本，不是图片资源；因此本轮“系统图片”替换应落在全局导航/系统图标入口，而不是误改 AI 员工卡片。
+    4. 标题和手机导航字号仍散落在 `App.vue`、`HomeNew.vue` 的 SCSS 中，每次微调都需要改代码、重新构建，缺少面向使用者的调节入口。
+  - **问题场景**：
+    - 用户希望首页和系统入口更偏 AI 机器人气质，同时标题文案 `工业装配工艺知识 / 自动解析与数字孪生化指导系统` 在大屏首页中更协调，不压住背景网格和右侧智能体卡片。
+    - 用户后续希望自行调整首页标题、说明文字和手机导航标题大小，不再每次让开发者改 SCSS。
+  - **修复方案**：
+    1. 新增本地 PNG 资源 `frontend/public/ai-robot-avatar.png`，采用蓝白机器人主体与橙色点缀，呼应首页蓝色科技网格和原品牌色。
+    2. `App.vue` 将全局导航头像从 `/logo.png` 改为 `/ai-robot-avatar.png`，保留原隐藏设置入口的点击区域与逻辑。
+    3. `frontend/index.html` 与 `frontend/public/manifest.json` 同步把 favicon、Apple touch icon、PWA icon 改为 `/ai-robot-avatar.png`，避免页面内头像与系统图标不一致。
+    4. `HomeNew.vue` 将首页标题改为三层结构：`title-kicker` 显示 `工业装配工艺知识`，`title-primary` 强调 `自动解析`，`title-secondary` 显示 `数字孪生化指导系统`。
+    5. 补齐 `1400px / 1200px / 768px` 响应式标题字号，避免移动端或窄屏下继续出现长标题挤压。
+    6. `App.vue` 移动端导航将品牌头像缩小到 `44px`，长品牌名缩到 `10px` 并允许两行完整显示，避免手机端出现省略号截断。
+    7. 新增 `frontend/src/composables/useVisualFontSettings.ts`，统一管理 `visual_font_settings` 本地配置，负责读取、容错归一化、保存和下发 CSS 变量。
+    8. `HomeNew.vue` 与 `App.vue` 改为消费 CSS 变量：支持首页标题整体比例、手机标题比例、首页说明文字比例、手机导航字号和手机导航最大宽度。
+    9. `Settings.vue` 在头像 10 连点隐藏入口内新增“界面字号调节”区，滑块实时预览，支持保存/恢复默认，并补齐手机端设置页表单换行，避免窄屏配置项挤出。
+  - **影响文件**：`frontend/src/App.vue`、`frontend/index.html`、`frontend/public/manifest.json`、`frontend/public/ai-robot-avatar.png`、`frontend/src/views/HomeNew.vue`、`frontend/src/views/Settings.vue`、`frontend/src/composables/useVisualFontSettings.ts`、`VERSION`、`Memory_Development/index.md`、`Memory_Development/frontend/routes.md`、`Memory_Development/changelog.md`
+  - **记录人**：小雅
+
+## v2.1.56 (2026-03-23)
+- **ManualViewer 自动翻页公共化**：
+  - **用户提问**：
+    - “这个自动播放，首先名字改一下，改成自动翻页，开始录制改成开始”
+    - “然后这个功能用户是说所有人都可以用，那就不能放在管理员这里了，你看看怎么设计”
+    - “PLEASE IMPLEMENT THIS PLAN:”
+  - **问题根因**：
+    1. `ManualViewer.vue` 把桌面端自动翻步入口挂在管理员 `编辑` 菜单里，并用 `isAdmin/isReadOnlyMode` 直接拦截，导致“所有人都能用”的浏览能力被错误建模成管理员功能。
+    2. 桌面端“录制自动翻步 / 开始录制”与手机端“自动播放 / 停止播放”是两套分离实现，文案和交互都不一致，容易误导用户以为会生成视频。
+    3. 手机端仍固定 `3` 秒并在结束后弹 `播放完成`，与新的“自动翻页”产品口径不一致。
+  - **问题场景**：
+    - 普通用户在桌面端查看装配手册时，需要直接使用自动翻页辅助浏览；历史版本只读页也需要可演示；当前入口位置和文案都会让用户误判功能性质。
+  - **修复方案**：
+    1. `ManualViewer.vue` 将桌面管理员录制与手机自动播放收口成一套公共 `autoPage` 状态和递归 `setTimeout` 调度逻辑。
+    2. 桌面端把入口移到顶部公共导航区，手机端保留底部按钮但统一改为“输入秒数后开始”，并允许历史版本只读页使用。
+    3. 全量文案统一为 `自动翻页 / 停止翻页 / 开始`，弹窗标题改为 `自动翻页`，移除“播放完成”提示。
+    4. 手动切步、步骤跳转、刷新手册、退出管理员、离开页面都会先停止自动翻页，避免残留定时器。
+    5. 同步更新 `README.md`、`VERSION`、`Memory_Development/index.md`、`Memory_Development/frontend/routes.md` 和本变更记录，保持代码与记忆系统一致。
+  - **影响文件**：`frontend/src/views/ManualViewer.vue`、`README.md`、`VERSION`、`Memory_Development/index.md`、`Memory_Development/frontend/routes.md`、`Memory_Development/changelog.md`
+  - **记录人**：小雅
+
 ## v2.1.55 (2026-03-18)
 - **PDF 文本层 BOM 提取支持 5 位尾号代码**：
   - **用户提问**：

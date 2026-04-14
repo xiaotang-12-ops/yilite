@@ -4,10 +4,10 @@
     <nav class="app-nav">
       <div class="nav-content">
         <div class="nav-brand" @click="handleLogoClick">
-          <img class="brand-icon" src="/logo.png" alt="品牌Logo" />
+          <!-- 品牌头像只替换展示图，点击区域仍保留隐藏设置入口解锁逻辑。 -->
+          <img class="brand-icon" src="/ai-robot-avatar.png" alt="AI机器人头像" />
           <div class="brand-text">
-            <h1>装配指导</h1>
-            <span>Assembly Instructions</span>
+            <h1>工业装配工艺知识自动解析与数字孪生化指导系统</h1>
           </div>
         </div>
         
@@ -153,6 +153,7 @@ import { storeToRefs } from 'pinia'
 import { useDark, useToggle, useMediaQuery } from '@vueuse/core'
 import { Sunny, Moon, House, DocumentAdd, View, Setting, Menu, Lock, User } from '@element-plus/icons-vue'
 import { useAdminStore } from './stores/admin'
+import { useVisualFontSettings } from './composables/useVisualFontSettings'
 
 const isDark = useDark()
 const toggleDark = useToggle(isDark)
@@ -162,8 +163,10 @@ const router = useRouter()
 const logoClickTimes = ref<number[]>([])
 const adminStore = useAdminStore()
 const { isAdmin } = storeToRefs(adminStore)
+const { applyVisualFontSettings } = useVisualFontSettings()
 
 adminStore.ensureInit()
+applyVisualFontSettings()
 
 const SETTINGS_UNLOCK_KEY = 'settings_unlock_until'
 const SETTINGS_UNLOCK_WINDOW_MS = 10000
@@ -455,8 +458,25 @@ const handleLogoClick = () => {
     .nav-actions {
       gap: 8px;
     }
+    .nav-brand {
+      flex: 1;
+      min-width: 0;
+      gap: 8px;
+    }
+    .nav-brand .brand-icon {
+      width: 44px;
+      height: 44px;
+    }
+    .nav-brand .brand-text {
+      min-width: 0;
+    }
     .nav-brand h1 {
-      font-size: 16px;
+      /* 手机端完整显示长品牌名，同时给右侧按钮保留稳定空间。 */
+      max-width: min(var(--visual-nav-mobile-max-width, 226px), calc(100vw - 164px));
+      overflow: visible;
+      display: block;
+      font-size: var(--visual-nav-mobile-font-size, 10px);
+      line-height: 1.18;
     }
   }
 
