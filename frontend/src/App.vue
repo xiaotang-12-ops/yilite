@@ -1,9 +1,16 @@
-，<template>
+<template>
   <div id="app" class="app-container">
     <!-- 全局导航栏 -->
     <nav class="app-nav">
       <div class="nav-content">
-        <div class="nav-brand" @click="handleLogoClick">
+        <div
+          class="nav-brand"
+          @mousedown.left="handleLogoPressStart"
+          @mouseup="handleLogoPressEnd"
+          @mouseleave="handleLogoPressEnd"
+          @contextmenu.prevent
+        >
+          <!-- 用户现场版本保留原 Logo 与标题，仅把隐藏设置入口改成左键长按 5 秒。 -->
           <img class="brand-icon" src="/logo.png" alt="品牌Logo" />
           <div class="brand-text">
             <h1>装配指导</h1>
@@ -146,7 +153,7 @@
 </template>
 
 <script setup lang="ts">
-import { watch, ref } from 'vue'
+import { watch, ref, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { storeToRefs } from 'pinia'
@@ -159,15 +166,14 @@ const toggleDark = useToggle(isDark)
 const isMobile = useMediaQuery('(max-width: 1024px)')
 const mobileMenuOpen = ref(false)
 const router = useRouter()
-const logoClickTimes = ref<number[]>([])
+const settingsUnlockTimer = ref<number | null>(null)
 const adminStore = useAdminStore()
 const { isAdmin } = storeToRefs(adminStore)
 
 adminStore.ensureInit()
 
 const SETTINGS_UNLOCK_KEY = 'settings_unlock_until'
-const SETTINGS_UNLOCK_WINDOW_MS = 10000
-const SETTINGS_UNLOCK_CLICKS = 10
+const SETTINGS_UNLOCK_HOLD_MS = 5000
 const SETTINGS_UNLOCK_TTL_MS = 15000
 
 // 更新主题CSS变量
@@ -235,18 +241,33 @@ const handleLogout = () => {
   }
 }
 
-const handleLogoClick = () => {
-  const now = Date.now()
-  const windowStart = now - SETTINGS_UNLOCK_WINDOW_MS
-  logoClickTimes.value = logoClickTimes.value.filter((time) => time >= windowStart)
-  logoClickTimes.value.push(now)
-
-  if (logoClickTimes.value.length >= SETTINGS_UNLOCK_CLICKS) {
-    sessionStorage.setItem(SETTINGS_UNLOCK_KEY, String(now + SETTINGS_UNLOCK_TTL_MS))
-    logoClickTimes.value = []
-    router.push('/settings')
+const clearSettingsUnlockTimer = () => {
+  if (settingsUnlockTimer.value !== null) {
+    window.clearTimeout(settingsUnlockTimer.value)
+    settingsUnlockTimer.value = null
   }
 }
+
+const handleLogoPressStart = (event: MouseEvent) => {
+  if (event.button !== 0) {
+    return
+  }
+
+  clearSettingsUnlockTimer()
+  settingsUnlockTimer.value = window.setTimeout(() => {
+    sessionStorage.setItem(SETTINGS_UNLOCK_KEY, String(Date.now() + SETTINGS_UNLOCK_TTL_MS))
+    clearSettingsUnlockTimer()
+    router.push('/settings')
+  }, SETTINGS_UNLOCK_HOLD_MS)
+}
+
+const handleLogoPressEnd = () => {
+  clearSettingsUnlockTimer()
+}
+
+onBeforeUnmount(() => {
+  clearSettingsUnlockTimer()
+})
 </script>
 
 <style lang="scss">

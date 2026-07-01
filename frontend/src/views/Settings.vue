@@ -22,6 +22,7 @@
             show-password
             placeholder="请输入OpenRouter API Key"
             clearable
+            @input="markKeyTouched('openrouter')"
           >
             <template #prepend>
               <el-icon><Lock /></el-icon>
@@ -33,6 +34,9 @@
               获取API Key
             </el-link>
           </div>
+          <div v-if="persistedKeyPresence.openrouter" class="form-item-tip">
+            服务端已保存现有 Key；本次留空且不改动时会继续保留。
+          </div>
         </el-form-item>
         <el-form-item label="DeepSeek API Key">
           <el-input
@@ -41,6 +45,7 @@
             show-password
             placeholder="请输入DeepSeek API Key"
             clearable
+            @input="markKeyTouched('deepseek')"
           >
             <template #prepend>
               <el-icon><Lock /></el-icon>
@@ -48,6 +53,9 @@
           </el-input>
           <div class="form-item-tip">
             DeepSeek用于文本类调用点（匹配/安全）
+          </div>
+          <div v-if="persistedKeyPresence.deepseek" class="form-item-tip">
+            服务端已保存现有 Key；本次留空且不改动时会继续保留。
           </div>
         </el-form-item>
         <el-form-item label="NewAPI API Key">
@@ -57,6 +65,7 @@
             show-password
             placeholder="请输入NewAPI API Key"
             clearable
+            @input="markKeyTouched('newapi')"
           >
             <template #prepend>
               <el-icon><Lock /></el-icon>
@@ -64,6 +73,9 @@
           </el-input>
           <div class="form-item-tip">
             NewAPI用于视觉/文本调用点（兼容 OpenAI 协议）
+          </div>
+          <div v-if="persistedKeyPresence.newapi" class="form-item-tip">
+            服务端已保存现有 Key；本次留空且不改动时会继续保留。
           </div>
         </el-form-item>
 
@@ -317,6 +329,14 @@ interface Settings {
   callPoints: Record<string, CallPointConfig>
 }
 
+type KeyField = 'openrouter' | 'deepseek' | 'newapi'
+
+interface KeyPresenceState {
+  openrouter: boolean
+  deepseek: boolean
+  newapi: boolean
+}
+
 const resolveDefaultWebsocketUrl = () => {
   if (typeof window === 'undefined') return 'ws://localhost:8008'
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
@@ -408,6 +428,56 @@ const testingModel = ref(false)
 const statusMessage = ref('')
 const statusType = ref<'success' | 'warning' | 'error' | 'info'>('info')
 const modelPresetSelections = ref<Record<string, string>>({})
+const persistedKeyPresence = ref<KeyPresenceState>({
+  openrouter: false,
+  deepseek: false,
+  newapi: false
+})
+const serverKeyPresenceKnown = ref(false)
+const keyFieldTouched = ref<Record<KeyField, boolean>>({
+  openrouter: false,
+  deepseek: false,
+  newapi: false
+})
+
+// 这里专门记录“服务端是否已有 Key”与“本次是否主动编辑过输入框”。
+// 这样浏览器本地缓存丢失或 Docker 重启后重新打开设置页时，空白输入框不会误把后端已保存的 Key 清掉。
+const resetKeyTouched = () => {
+  keyFieldTouched.value = {
+    openrouter: false,
+    deepseek: false,
+    newapi: false
+  }
+}
+
+const markKeyTouched = (field: KeyField) => {
+  keyFieldTouched.value = {
+    ...keyFieldTouched.value,
+    [field]: true
+  }
+}
+
+const updatePersistedKeyPresenceFromServer = (payload?: Record<string, any>) => {
+  persistedKeyPresence.value = {
+    openrouter: Boolean(payload?.has_openrouter_key),
+    deepseek: Boolean(payload?.has_deepseek_key),
+    newapi: Boolean(payload?.has_newapi_key ?? payload?.has_doubao_key)
+  }
+}
+
+const resolveKeyPayload = (field: KeyField, value: string) => {
+  const trimmed = value.trim()
+  if (trimmed) {
+    return value
+  }
+  if (keyFieldTouched.value[field]) {
+    return ''
+  }
+  if (!serverKeyPresenceKnown.value) {
+    return null
+  }
+  return persistedKeyPresence.value[field] ? null : ''
+}
 
 const resolveProviderModel = (provider: Provider, model?: string) => {
   const normalizedProvider = normalizeProvider(provider)
@@ -605,10 +675,14 @@ const loadSettings = async () => {
 
   try {
     const response = await axios.get(`${settings.value.apiBaseUrl}/settings`)
+    serverKeyPresenceKnown.value = true
+    updatePersistedKeyPresenceFromServer(response.data)
     if (response.data?.call_points) {
       settings.value.callPoints = normalizeServerCallPoints(response.data.call_points)
     }
+    resetKeyTouched()
   } catch (error) {
+    serverKeyPresenceKnown.value = false
     console.warn('获取后端设置失败:', error)
   }
 }
@@ -623,9 +697,6 @@ const saveSettings = async () => {
   statusMessage.value = ''
 
   try {
-    // 保存到localStorage
-    localStorage.setItem('app_settings', JSON.stringify(settings.value))
-
     const callPointsPayload: Record<string, { provider: Provider; model: string; fallback_model?: string; custom_key?: string }> = {}
     const adjustedMainPoints: string[] = []
     const adjustedFallbackPoints: string[] = []
@@ -650,14 +721,23 @@ const saveSettings = async () => {
       }
     })
 
+    const apiKeyPayload = {
+      openrouter_api_key: resolveKeyPayload('openrouter', settings.value.openrouterApiKey),
+      deepseek_api_key: resolveKeyPayload('deepseek', settings.value.deepseekApiKey),
+      newapi_api_key: resolveKeyPayload('newapi', settings.value.newapiApiKey),
+      doubao_api_key: resolveKeyPayload('newapi', settings.value.newapiApiKey) // legacy payload for backward compatibility
+    }
+
     // 发送到后端
-    await axios.post(`${settings.value.apiBaseUrl}/settings`, {
-      openrouter_api_key: settings.value.openrouterApiKey,
-      deepseek_api_key: settings.value.deepseekApiKey,
-      newapi_api_key: settings.value.newapiApiKey,
-      doubao_api_key: settings.value.newapiApiKey, // legacy payload for backward compatibility
+    const response = await axios.post(`${settings.value.apiBaseUrl}/settings`, {
+      ...apiKeyPayload,
       call_points: callPointsPayload
     })
+
+    localStorage.setItem('app_settings', JSON.stringify(settings.value))
+    updatePersistedKeyPresenceFromServer(response.data)
+    serverKeyPresenceKnown.value = true
+    resetKeyTouched()
 
     statusMessage.value = '设置保存成功！'
     statusType.value = 'success'
@@ -691,6 +771,11 @@ const resetSettings = () => {
     callPoints: buildDefaultCallPoints()
   }
   localStorage.removeItem('app_settings')
+  keyFieldTouched.value = {
+    openrouter: true,
+    deepseek: true,
+    newapi: true
+  }
   statusMessage.value = '已重置为默认设置'
   statusType.value = 'info'
   ElMessage.info('已重置为默认设置')
