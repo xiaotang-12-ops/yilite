@@ -1,0 +1,81 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e5]: 智能装配说明书生成系统
+    - generic [ref=e6]: 正在加载中...
+  - generic [ref=e8]:
+    - navigation [ref=e9]:
+      - generic [ref=e10]:
+        - generic [ref=e11]:
+          - img "AI机器人头像" [ref=e12]
+          - heading "工业装配工艺知识自动解析与数字孪生化指导系统" [level=1] [ref=e14]
+        - generic [ref=e15]:
+          - link "首页" [ref=e16] [cursor=pointer]:
+            - /url: /
+            - img [ref=e18]
+            - generic [ref=e20]: 首页
+          - link "查看器" [ref=e21] [cursor=pointer]:
+            - /url: /viewer
+            - img [ref=e23]
+            - generic [ref=e25]: 查看器
+        - generic [ref=e26]:
+          - button [ref=e27] [cursor=pointer]:
+            - img [ref=e30]
+          - button "管理员登录" [ref=e32] [cursor=pointer]:
+            - generic [ref=e33]:
+              - img [ref=e35]
+              - text: 管理员登录
+    - main [ref=e38]:
+      - generic [ref=e44]:
+        - generic [ref=e45]:
+          - heading "工业装配工艺知识 自动解析 数字孪生化指导系统" [level=1] [ref=e46]:
+            - generic [ref=e47]: 工业装配工艺知识
+            - generic [ref=e48]: 自动解析
+            - generic [ref=e49]: 数字孪生化指导系统
+          - generic [ref=e50]:
+            - generic [ref=e51]:
+              - generic [ref=e52]: ">"
+              - generic [ref=e53]: 上传图纸和3D模型
+            - generic [ref=e54]:
+              - generic [ref=e55]: ">"
+              - generic [ref=e56]: AI自动识别分析
+            - generic [ref=e57]:
+              - generic [ref=e58]: ">"
+              - generic [ref=e59]: 生成精确装配方案
+        - generic [ref=e61]:
+          - generic [ref=e62]:
+            - generic [ref=e63]: 👁️
+            - generic [ref=e64]: 视觉规划
+            - generic [ref=e65]: AI员工
+          - generic [ref=e67]:
+            - generic [ref=e68]: 🔗
+            - generic [ref=e69]: BOM匹配
+            - generic [ref=e70]: AI员工
+          - generic [ref=e72]:
+            - generic [ref=e73]: 🔧
+            - generic [ref=e74]: 组件装配
+            - generic [ref=e75]: AI员工
+          - generic [ref=e77]:
+            - generic [ref=e78]: 🏗️
+            - generic [ref=e79]: 产品总装
+            - generic [ref=e80]: AI员工
+          - generic [ref=e82]:
+            - generic [ref=e83]: ⚡
+            - generic [ref=e84]: 焊接工艺
+            - generic [ref=e85]: AI员工
+          - generic [ref=e87]:
+            - generic [ref=e88]: 🛡️
+            - generic [ref=e89]: 安全FAQ
+            - generic [ref=e90]: AI员工
+        - generic [ref=e92]:
+          - generic [ref=e93]:
+            - generic [ref=e94]: "6"
+            - generic [ref=e95]: 个AI员工协作
+          - generic [ref=e96]:
+            - generic [ref=e97]: "8"
+            - generic [ref=e98]: 个步骤全流程
+          - generic [ref=e99]:
+            - generic [ref=e100]: 多模态
+            - generic [ref=e101]: 视觉智能体
+          - generic [ref=e102]:
+            - generic [ref=e103]: 3D
+            - generic [ref=e104]: 组件实时显示

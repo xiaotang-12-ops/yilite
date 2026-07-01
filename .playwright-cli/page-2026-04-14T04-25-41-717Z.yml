@@ -1,0 +1,307 @@
+- generic [ref=e1]:
+  - generic [ref=e8]:
+    - navigation [ref=e9]:
+      - generic [ref=e10]:
+        - generic [ref=e11]:
+          - img "AI机器人头像" [ref=e12]
+          - heading "工业装配工艺知识自动解析与数字孪生化指导系统" [level=1] [ref=e14]
+        - generic [ref=e15]:
+          - link "首页" [ref=e16] [cursor=pointer]:
+            - /url: /
+            - img [ref=e18]
+            - generic [ref=e20]: 首页
+          - link "查看器" [ref=e21] [cursor=pointer]:
+            - /url: /viewer
+            - img [ref=e23]
+            - generic [ref=e25]: 查看器
+        - generic [ref=e26]:
+          - button [ref=e27] [cursor=pointer]:
+            - img [ref=e30]
+          - button "管理员登录" [ref=e32] [cursor=pointer]:
+            - generic [ref=e33]:
+              - img [ref=e35]
+              - text: 管理员登录
+    - main [ref=e38]:
+      - generic [ref=e105]:
+        - generic [ref=e106]:
+          - generic [ref=e108]:
+            - img [ref=e110]
+            - generic [ref=e112]: 系统设置
+          - generic [ref=e114]:
+            - separator [ref=e115]:
+              - generic [ref=e116]:
+                - img [ref=e118]
+                - text: API密钥配置
+            - generic [ref=e120]:
+              - generic [ref=e121]: OpenRouter API Key
+              - generic [ref=e122]:
+                - generic [ref=e123]:
+                  - img [ref=e126]
+                  - textbox "OpenRouter API Key" [ref=e130]:
+                    - /placeholder: 请输入OpenRouter API Key
+                - generic [ref=e131]:
+                  - text: 视觉调用点使用OpenRouter，
+                  - link "获取API Key" [ref=e132] [cursor=pointer]:
+                    - /url: https://openrouter.ai/keys
+                    - generic [ref=e133]: 获取API Key
+            - generic [ref=e134]:
+              - generic [ref=e135]: DeepSeek API Key
+              - generic [ref=e136]:
+                - generic [ref=e137]:
+                  - img [ref=e140]
+                  - textbox "DeepSeek API Key" [ref=e144]:
+                    - /placeholder: 请输入DeepSeek API Key
+                - generic [ref=e145]: DeepSeek用于文本类调用点（匹配/安全）
+            - generic [ref=e146]:
+              - generic [ref=e147]: NewAPI API Key
+              - generic [ref=e148]:
+                - generic [ref=e149]:
+                  - img [ref=e152]
+                  - textbox "NewAPI API Key" [ref=e156]:
+                    - /placeholder: 请输入NewAPI API Key
+                - generic [ref=e157]: NewAPI用于视觉/文本调用点（兼容 OpenAI 协议）
+            - separator [ref=e158]:
+              - generic [ref=e159]:
+                - img [ref=e161]
+                - text: 调用点模型配置
+            - group "调用点" [ref=e164]:
+              - generic [ref=e165]: 调用点
+              - generic [ref=e166]:
+                - generic [ref=e167]:
+                  - generic [ref=e168]:
+                    - generic [ref=e169]:
+                      - generic [ref=e170]: 匹配
+                      - generic [ref=e172] [cursor=pointer]:
+                        - generic:
+                          - combobox [ref=e174]
+                          - generic [ref=e175]: OpenRouter
+                        - img [ref=e178]
+                      - textbox "模型ID" [ref=e182]: google/gemini-2.5-flash-preview-09-2025
+                    - generic [ref=e184]:
+                      - img [ref=e187]
+                      - textbox "独立Key（可选，留空则使用上方对应提供方的默认Key）" [ref=e190]
+                    - generic [ref=e192]:
+                      - img [ref=e195]
+                      - textbox "兜底模型（可选，主模型失败时自动切换）" [ref=e198]
+                  - generic [ref=e199]:
+                    - generic [ref=e200]:
+                      - generic [ref=e201]: 组件/产品
+                      - generic [ref=e203] [cursor=pointer]:
+                        - generic:
+                          - combobox [ref=e205]
+                          - generic [ref=e206]: OpenRouter
+                        - img [ref=e209]
+                      - textbox "模型ID" [ref=e213]: google/gemini-2.5-flash-preview-09-2025
+                    - generic [ref=e215]:
+                      - img [ref=e218]
+                      - textbox "独立Key（可选，留空则使用上方对应提供方的默认Key）" [ref=e221]
+                    - generic [ref=e223]:
+                      - img [ref=e226]
+                      - textbox "兜底模型（可选，主模型失败时自动切换）" [ref=e229]
+                  - generic [ref=e230]:
+                    - generic [ref=e231]:
+                      - generic [ref=e232]: 焊接
+                      - generic [ref=e234] [cursor=pointer]:
+                        - generic:
+                          - combobox [ref=e236]
+                          - generic [ref=e237]: OpenRouter
+                        - img [ref=e240]
+                      - textbox "模型ID" [ref=e244]: google/gemini-2.5-flash-preview-09-2025
+                    - generic [ref=e246]:
+                      - img [ref=e249]
+                      - textbox "独立Key（可选，留空则使用上方对应提供方的默认Key）" [ref=e252]
+                    - generic [ref=e254]:
+                      - img [ref=e257]
+                      - textbox "兜底模型（可选，主模型失败时自动切换）" [ref=e260]
+                  - generic [ref=e261]:
+                    - generic [ref=e262]:
+                      - generic [ref=e263]: 安全
+                      - generic [ref=e265] [cursor=pointer]:
+                        - generic:
+                          - combobox [ref=e267]
+                          - generic [ref=e268]: OpenRouter
+                        - img [ref=e271]
+                      - textbox "模型ID" [ref=e275]: google/gemini-2.5-flash-preview-09-2025
+                    - generic [ref=e277]:
+                      - img [ref=e280]
+                      - textbox "独立Key（可选，留空则使用上方对应提供方的默认Key）" [ref=e283]
+                    - generic [ref=e285]:
+                      - img [ref=e288]
+                      - textbox "兜底模型（可选，主模型失败时自动切换）" [ref=e291]
+                  - generic [ref=e292]:
+                    - generic [ref=e293]:
+                      - generic [ref=e294]: BOM视觉提取
+                      - generic [ref=e296] [cursor=pointer]:
+                        - generic:
+                          - combobox [ref=e298]
+                          - generic [ref=e299]: OpenRouter
+                        - img [ref=e302]
+                      - textbox "模型ID" [ref=e306]: google/gemini-2.5-flash-preview-09-2025
+                    - generic [ref=e308]:
+                      - img [ref=e311]
+                      - textbox "独立Key（可选，留空则使用上方对应提供方的默认Key）" [ref=e314]
+                    - generic [ref=e316]:
+                      - img [ref=e319]
+                      - textbox "兜底模型（可选，主模型失败时自动切换）" [ref=e322]
+                - generic [ref=e323]:
+                  - text: 视觉调用点支持OpenRouter/NewAPI；文本调用点可选OpenRouter/DeepSeek/NewAPI
+                  - link "OpenRouter模型列表" [ref=e324] [cursor=pointer]:
+                    - /url: https://openrouter.ai/models
+                    - generic [ref=e325]: OpenRouter模型列表
+                  - text: 💡 如果某个调用点需要不同的Key（如NewAPI中不同渠道的Key），请填写"独立Key"
+            - separator [ref=e326]:
+              - generic [ref=e327]:
+                - img [ref=e329]
+                - text: 系统配置
+            - generic [ref=e331]:
+              - generic [ref=e332]: WebSocket地址
+              - generic [ref=e333]:
+                - generic [ref=e334]:
+                  - img [ref=e337]
+                  - textbox "WebSocket地址" [ref=e341]:
+                    - /placeholder: ws://localhost:8008
+                    - text: ws://localhost:3008
+                - generic [ref=e342]: WebSocket服务器地址，用于实时进度推送
+            - generic [ref=e343]:
+              - generic [ref=e344]: API基础地址
+              - generic [ref=e345]:
+                - generic [ref=e346]:
+                  - img [ref=e349]
+                  - textbox "API基础地址" [ref=e352]:
+                    - /placeholder: http://localhost:8008/api
+                    - text: /api
+                - generic [ref=e353]: 后端API服务器地址
+            - separator [ref=e354]:
+              - generic [ref=e355]:
+                - img [ref=e357]
+                - text: 界面字号调节
+            - generic [ref=e359]:
+              - generic [ref=e360]:
+                - group "首页标题整体" [ref=e361]:
+                  - generic [ref=e362]: 首页标题整体
+                  - generic [ref=e363]:
+                    - generic [ref=e364]:
+                      - slider "slider between 0.75 and 1.2" [ref=e367] [cursor=pointer]
+                      - generic [ref=e369]:
+                        - button "decrease number" [ref=e370] [cursor=pointer]:
+                          - img [ref=e372]
+                        - button "increase number" [ref=e374] [cursor=pointer]:
+                          - img [ref=e376]
+                        - spinbutton [ref=e380]: "1.00"
+                    - generic [ref=e381]: 调整桌面和平板端首页主标题整体比例。
+                - group "首页标题手机" [ref=e382]:
+                  - generic [ref=e383]: 首页标题手机
+                  - generic [ref=e384]:
+                    - generic [ref=e385]:
+                      - slider "slider between 0.6 and 1.1" [ref=e388] [cursor=pointer]
+                      - generic [ref=e390]:
+                        - button "decrease number" [ref=e391] [cursor=pointer]:
+                          - img [ref=e393]
+                        - button "increase number" [ref=e395] [cursor=pointer]:
+                          - img [ref=e397]
+                        - spinbutton [ref=e401]: "0.72"
+                    - generic [ref=e402]: 单独控制手机端首页标题，避免长标题显示不全。
+                - group "首页说明文字" [ref=e403]:
+                  - generic [ref=e404]: 首页说明文字
+                  - generic [ref=e405]:
+                    - generic [ref=e406]:
+                      - slider "slider between 0.75 and 1.2" [ref=e409] [cursor=pointer]
+                      - generic [ref=e411]:
+                        - button "decrease number" [ref=e412] [cursor=pointer]:
+                          - img [ref=e414]
+                        - button "increase number" [ref=e416] [cursor=pointer]:
+                          - img [ref=e418]
+                        - spinbutton [ref=e422]: "1.00"
+                    - generic [ref=e423]: 调整首页左侧“上传图纸”等说明文字比例。
+                - group "手机导航字号" [ref=e424]:
+                  - generic [ref=e425]: 手机导航字号
+                  - generic [ref=e426]:
+                    - generic [ref=e427]:
+                      - slider "slider between 8 and 14" [ref=e430] [cursor=pointer]
+                      - generic [ref=e432]:
+                        - button "decrease number" [ref=e433] [cursor=pointer]:
+                          - img [ref=e435]
+                        - button "increase number" [ref=e437] [cursor=pointer]:
+                          - img [ref=e439]
+                        - spinbutton [ref=e443]: "9.0"
+                    - generic [ref=e444]: 调整顶部导航长系统名在手机端的字号，单位 px。
+                - group "手机导航宽度" [ref=e445]:
+                  - generic [ref=e446]: 手机导航宽度
+                  - generic [ref=e447]:
+                    - generic [ref=e448]:
+                      - slider "slider between 150 and 280" [ref=e451] [cursor=pointer]
+                      - generic [ref=e453]:
+                        - button "decrease number" [ref=e454] [cursor=pointer]:
+                          - img [ref=e456]
+                        - button "increase number" [ref=e458] [cursor=pointer]:
+                          - img [ref=e460]
+                        - spinbutton [ref=e464]: "226"
+                    - generic [ref=e465]: 控制手机端系统名最大占宽，右侧按钮空间仍会自动保留。
+              - generic [ref=e466]:
+                - generic [ref=e467]:
+                  - generic [ref=e468]: 工业装配工艺知识
+                  - strong [ref=e469]: 自动解析
+                  - generic [ref=e470]: 数字孪生化指导系统
+                - generic [ref=e471]: 工业装配工艺知识自动解析与数字孪生化指导系统
+              - generic [ref=e472]:
+                - button "保存界面字号" [active] [ref=e473] [cursor=pointer]:
+                  - generic [ref=e474]:
+                    - img [ref=e476]
+                    - generic [ref=e478]: 保存界面字号
+                - button "恢复字号默认" [ref=e479] [cursor=pointer]:
+                  - generic [ref=e480]:
+                    - img [ref=e482]
+                    - generic [ref=e484]: 恢复字号默认
+            - generic [ref=e486]:
+              - button "保存设置" [ref=e487] [cursor=pointer]:
+                - generic [ref=e488]:
+                  - img [ref=e490]
+                  - generic [ref=e492]: 保存设置
+              - button "重置为默认" [ref=e493] [cursor=pointer]:
+                - generic [ref=e494]:
+                  - img [ref=e496]
+                  - generic [ref=e498]: 重置为默认
+              - button "测试后端连接" [ref=e499] [cursor=pointer]:
+                - generic [ref=e500]:
+                  - img [ref=e502]
+                  - generic [ref=e505]: 测试后端连接
+              - button "一键全测" [ref=e506] [cursor=pointer]:
+                - generic [ref=e507]:
+                  - img [ref=e509]
+                  - generic [ref=e512]: 一键全测
+        - generic [ref=e513]:
+          - generic [ref=e515]:
+            - img [ref=e517]
+            - generic [ref=e519]: 使用说明
+          - generic [ref=e521]:
+            - generic [ref=e522]:
+              - generic [ref=e527]: "1"
+              - generic [ref=e528]:
+                - generic [ref=e529]: 获取 OpenRouter / NewAPI API Key
+                - generic [ref=e531]:
+                  - text: 1. 访问
+                  - link "OpenRouter API Keys" [ref=e532] [cursor=pointer]:
+                    - /url: https://openrouter.ai/keys
+                    - generic [ref=e533]: OpenRouter API Keys
+                  - text: 2. 或在你的 NewAPI 平台创建 API Key
+                  - text: 3. 创建API Key并复制
+            - generic [ref=e534]:
+              - generic [ref=e539]: "2"
+              - generic [ref=e540]:
+                - generic [ref=e541]: 配置调用点模型
+                - generic [ref=e543]:
+                  - text: 1. 按调用点选择提供方（OpenRouter/DeepSeek/NewAPI）
+                  - text: 2. 选择提供方后会自动填入默认模型ID
+                  - text: 3. 如需自定义模型，可手动修改
+            - generic [ref=e544]:
+              - generic [ref=e547]: "3"
+              - generic [ref=e548]:
+                - generic [ref=e549]: 配置并测试
+                - generic [ref=e551]:
+                  - text: 1. 将API Key和模型ID粘贴到上方输入框
+                  - text: 2. 点击"保存设置"按钮
+                  - text: 3. 点击"测试后端连接"验证后端服务
+                  - text: 4. 点击"一键全测"验证所有调用点模型是否可用
+  - alert [ref=e552]:
+    - img [ref=e554]
+    - paragraph [ref=e556]: 界面字号已保存
