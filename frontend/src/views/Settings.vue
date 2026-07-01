@@ -1104,17 +1104,17 @@ const testModel = async () => {
   padding: 3px 8px;
   border-left: 3px solid var(--el-color-primary);
   background: rgba(64, 158, 255, 0.08);
-  font-size: calc(12px * var(--visual-home-title-scale, 1));
+  font-size: var(--visual-preview-kicker-font-size, 12px);
   font-weight: 700;
 }
 
 .visual-preview-title strong {
-  font-size: calc(28px * var(--visual-home-title-scale, 1));
+  font-size: var(--visual-preview-primary-font-size, 28px);
   font-weight: 900;
 }
 
 .visual-preview-title span:last-child {
-  font-size: calc(20px * var(--visual-home-title-scale, 1));
+  font-size: var(--visual-preview-secondary-font-size, 20px);
   font-weight: 800;
 }
 

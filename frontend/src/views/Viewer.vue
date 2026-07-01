@@ -156,7 +156,7 @@
                       @click.stop="viewProject(row)"
                     >
                       <el-icon><View /></el-icon>
-                      查看说明书
+                      装配作业
                     </el-button>
                   </template>
                   <template v-else-if="row.status === 'failed' || row.status === 'cancelled'">
@@ -248,7 +248,7 @@
                     @click.stop="viewProject(project)"
                   >
                     <el-icon><View /></el-icon>
-                    查看说明书
+                    装配作业
                   </el-button>
                 </template>
                 <template v-else-if="project.status === 'failed' || project.status === 'cancelled'">
@@ -963,7 +963,7 @@ const selectProject = (row: any) => {
 
 const viewProject = async (project: any) => {
   if (project.status !== 'completed') {
-    ElMessage.warning('项目尚未完成，无法查看说明书')
+    ElMessage.warning('项目尚未完成，无法查看装配作业')
     return
   }
 

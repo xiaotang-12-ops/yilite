@@ -35,8 +35,10 @@
     <!-- 顶部进度条（图片放大时隐藏） -->
     <div class="top-bar">
       <div class="product-info">
-        <h1>{{ productName }}</h1>
-        <el-tag v-if="!isMobile" type="info" size="large">装配说明书</el-tag>
+        <h1 class="manual-header-title">
+          <span>AI智能装配</span>
+          <span>工艺数字化平台</span>
+        </h1>
       </div>
 
       <div class="progress-section">
@@ -1950,11 +1952,6 @@ const drawingImages = computed(() => {
     `/api/manual/${taskId}/pdf_images/page_001.png`,
     `/api/manual/${taskId}/pdf_images/page_002.png`
   ]
-})
-
-const productName = computed(() => {
-  if (!manualData.value) return '加载中...'
-  return manualData.value?.product_overview?.product_name || '装配说明书'
 })
 
 // ✅ 构建完整的步骤列表：组件装配 + 产品装配（按 display_order 排序，并动态计算 step_number）
@@ -5748,9 +5745,20 @@ onUnmounted(() => {
     min-width: 250px;
 
     h1 {
-      margin: 0 0 8px 0;
+      margin: 0;
       font-size: 24px;
       font-weight: 700;
+    }
+
+    .manual-header-title {
+      /* 按现场要求固定成两行标题，避免恢复成旧的标签框样式。 */
+      display: flex;
+      flex-direction: column;
+      line-height: 1.15;
+
+      span {
+        display: block;
+      }
     }
   }
 

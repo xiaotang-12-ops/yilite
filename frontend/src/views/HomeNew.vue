@@ -11,9 +11,10 @@
       <!-- 左侧主标题区域 -->
       <div class="main-title-section">
         <h1 class="main-title">
-          <div class="title-kicker">工业装配工艺知识</div>
-          <div class="title-primary">自动解析</div>
-          <div class="title-secondary">数字孪生化指导系统</div>
+          <div class="title-primary">
+            <span>AI智能装配</span>
+            <span>工艺数字化平台</span>
+          </div>
         </h1>
         
         <div class="feature-list">
@@ -568,7 +569,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  max-width: 700px;
+  max-width: 780px;
   margin-top: 10px;
 }
 
@@ -589,21 +590,29 @@ onUnmounted(() => {
     border-left: 4px solid var(--accent-color);
     background: rgba(0, 102, 204, 0.08);
     color: var(--text-color);
-    font-size: calc(1.35rem * var(--visual-home-title-scale, 1));
+    font-size: var(--visual-home-title-kicker-font-size, 1.35rem);
     font-weight: 700;
     line-height: 1.2;
   }
 
   .title-primary {
-    display: block;
+    /* 首页主标题按业务语义固定换行，避免被容器宽度挤成“作业/指导系统”的错误断行。 */
+    display: flex;
+    flex-direction: column;
     background: linear-gradient(90deg, var(--text-color), var(--accent-color));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    font-size: calc(5.5rem * var(--visual-home-title-scale, 1));
+    font-size: var(--visual-home-title-primary-font-size, 5rem);
     font-weight: 900;
-    line-height: 0.95;
+    line-height: 1.08;
+    padding-bottom: 0.08em;
     text-shadow: 0 10px 28px rgba(0, 102, 204, 0.12);
+
+    span {
+      display: block;
+      white-space: nowrap;
+    }
   }
 
   .title-secondary {
@@ -613,7 +622,7 @@ onUnmounted(() => {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    font-size: calc(4rem * var(--visual-home-title-scale, 1));
+    font-size: var(--visual-home-title-secondary-font-size, 4rem);
     font-weight: 850;
     line-height: 1.05;
     text-shadow: 0 10px 28px rgba(0, 102, 204, 0.1);
@@ -628,7 +637,7 @@ onUnmounted(() => {
     align-items: center;
     gap: 15px;
     margin-bottom: 18px;
-    font-size: calc(20px * var(--visual-home-feature-scale, 1));
+    font-size: var(--visual-home-feature-font-size, 20px);
     color: var(--text-secondary);
 
     .feature-arrow {
@@ -767,15 +776,15 @@ onUnmounted(() => {
     margin-bottom: 30px;
 
     .title-kicker {
-      font-size: calc(1.15rem * var(--visual-home-title-scale, 1));
+      font-size: var(--visual-home-title-kicker-1400-font-size, 1.15rem);
     }
 
     .title-primary {
-      font-size: calc(4.4rem * var(--visual-home-title-scale, 1));
+      font-size: var(--visual-home-title-primary-1400-font-size, 4.4rem);
     }
 
     .title-secondary {
-      font-size: calc(3.1rem * var(--visual-home-title-scale, 1));
+      font-size: var(--visual-home-title-secondary-1400-font-size, 3.1rem);
     }
   }
 
@@ -801,15 +810,15 @@ onUnmounted(() => {
     margin-bottom: 25px;
 
     .title-kicker {
-      font-size: calc(1.05rem * var(--visual-home-title-scale, 1));
+      font-size: var(--visual-home-title-kicker-1200-font-size, 1.05rem);
     }
 
     .title-primary {
-      font-size: calc(3.7rem * var(--visual-home-title-scale, 1));
+      font-size: var(--visual-home-title-primary-1200-font-size, 3.7rem);
     }
 
     .title-secondary {
-      font-size: calc(2.6rem * var(--visual-home-title-scale, 1));
+      font-size: var(--visual-home-title-secondary-1200-font-size, 2.6rem);
     }
   }
 
@@ -851,16 +860,16 @@ onUnmounted(() => {
 
     .title-kicker {
       margin-bottom: 10px;
-      font-size: calc(0.95rem * var(--visual-home-mobile-title-scale, 1));
+      font-size: var(--visual-home-title-kicker-mobile-font-size, 0.95rem);
     }
 
     .title-primary {
-      font-size: calc(2.75rem * var(--visual-home-mobile-title-scale, 1));
+      font-size: var(--visual-home-title-primary-mobile-font-size, 2.75rem);
     }
 
     .title-secondary {
       margin-top: 8px;
-      font-size: calc(1.95rem * var(--visual-home-mobile-title-scale, 1));
+      font-size: var(--visual-home-title-secondary-mobile-font-size, 1.95rem);
     }
   }
 
@@ -868,7 +877,7 @@ onUnmounted(() => {
     margin-bottom: 20px;
 
     .feature-item {
-      font-size: calc(14px * var(--visual-home-feature-scale, 1));
+      font-size: var(--visual-home-feature-mobile-font-size, 14px);
       margin-bottom: 8px;
     }
   }

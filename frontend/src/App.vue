@@ -1,4 +1,4 @@
-，<template>
+<template>
   <div id="app" class="app-container">
     <!-- 全局导航栏 -->
     <nav class="app-nav">
@@ -7,7 +7,7 @@
           <!-- 品牌头像只替换展示图，点击区域仍保留隐藏设置入口解锁逻辑。 -->
           <img class="brand-icon" src="/ai-robot-avatar.png" alt="AI机器人头像" />
           <div class="brand-text">
-            <h1>工业装配工艺知识自动解析与数字孪生化指导系统</h1>
+            <h1 class="brand-title">AI智能装配工艺数字化平台</h1>
           </div>
         </div>
         
@@ -302,6 +302,12 @@ const handleLogoClick = () => {
         font-weight: 600;
         color: var(--el-text-color-primary);
       }
+
+      .brand-title {
+        /* 顶部导航品牌名按现场要求保持单行展示。 */
+        white-space: nowrap;
+        line-height: 1.15;
+      }
       
       span {
         font-size: 12px;
@@ -477,6 +483,10 @@ const handleLogoClick = () => {
       display: block;
       font-size: var(--visual-nav-mobile-font-size, 10px);
       line-height: 1.18;
+    }
+    .nav-brand .brand-title {
+      white-space: nowrap;
+      line-height: 1.15;
     }
   }
 
