@@ -3,6 +3,7 @@
 简化版后端测试
 """
 
+import copy
 import os
 import sys
 import json
@@ -23,6 +24,14 @@ OUTPUT_DIR = project_root / "output"
 OUTPUT_DIR.mkdir(exist_ok=True)  # 确保目录存在
 OUTPUT_ARCHIVE_DIR = project_root / "output_archive"
 OUTPUT_ARCHIVE_DIR.mkdir(exist_ok=True)  # 归档目录，覆盖时用于备份
+# 运行时设置单独落在可挂载目录，避免容器/系统重启后又退回默认 provider/model。
+RUNTIME_SETTINGS_DIR = project_root / "runtime_settings"
+RUNTIME_SETTINGS_FILE = RUNTIME_SETTINGS_DIR / "app_settings.json"
+runtime_settings_meta: Dict[str, Any] = {
+    "config_source": "env_only",
+    "saved_at": "",
+    "last_error": ""
+}
 
 from fastapi import FastAPI, UploadFile, File, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
@@ -2185,6 +2194,137 @@ def _mask_key(value: str) -> str:
         return ""
     return value[:10] + "..."
 
+def _build_env_app_settings() -> Dict[str, Any]:
+    """从环境变量构造一份兜底设置，供首次启动或持久化文件损坏时回退。"""
+    resolved_newapi_key = os.getenv("NEWAPI_API_KEY", "") or os.getenv("ARK_API_KEY", "")
+    return {
+        "openrouter_api_key": os.getenv("OPENROUTER_API_KEY", ""),
+        "deepseek_api_key": os.getenv("DEEPSEEK_API_KEY", ""),
+        "newapi_api_key": resolved_newapi_key,
+        "doubao_api_key": resolved_newapi_key,  # legacy alias
+        "call_points": _build_default_call_points()
+    }
+
+def _normalize_persisted_call_points(persisted_call_points: Any) -> Dict[str, Dict[str, str]]:
+    """历史文件里只要 provider/model 合法，就尽量恢复；非法值按默认模型兜底。"""
+    normalized = _build_default_call_points()
+    if not isinstance(persisted_call_points, dict):
+        return normalized
+
+    for call_point_id, definition in AI_CALL_POINT_DEFS.items():
+        raw_point = persisted_call_points.get(call_point_id, {})
+        if not isinstance(raw_point, dict):
+            continue
+
+        default_point = normalized[call_point_id]
+        provider_candidate = normalize_provider(raw_point.get("provider") or default_point["provider"])
+        provider = provider_candidate if provider_candidate in definition["allowed_providers"] else default_point["provider"]
+
+        model = str(raw_point.get("model") or "").strip() or _default_model_for_provider(provider)
+        try:
+            _validate_call_point_model(call_point_id, provider, model)
+        except ValueError:
+            model = _default_model_for_provider(provider)
+
+        fallback_model = str(raw_point.get("fallback_model") or "").strip()
+        if fallback_model:
+            try:
+                _validate_call_point_model(call_point_id, provider, fallback_model)
+            except ValueError:
+                fallback_model = ""
+
+        custom_key = str(raw_point.get("custom_key") or "").strip()
+        normalized[call_point_id] = {
+            "provider": provider,
+            "model": model,
+            "fallback_model": fallback_model,
+            "custom_key": custom_key
+        }
+
+    return normalized
+
+def _apply_runtime_settings_to_env(settings_state: Dict[str, Any]) -> None:
+    """内存设置生效后同步回当前进程环境，复用现有 getenv 兜底链路。"""
+    os.environ["OPENROUTER_API_KEY"] = settings_state.get("openrouter_api_key", "")
+    os.environ["DEEPSEEK_API_KEY"] = settings_state.get("deepseek_api_key", "")
+    resolved_newapi_key = settings_state.get("newapi_api_key", "") or settings_state.get("doubao_api_key", "")
+    os.environ["NEWAPI_API_KEY"] = resolved_newapi_key
+    os.environ["ARK_API_KEY"] = resolved_newapi_key
+
+def _set_runtime_settings_meta(config_source: str, saved_at: str = "", last_error: str = "") -> None:
+    """统一记录运行时设置来源，便于重启后排查到底读了持久化文件还是环境变量。"""
+    runtime_settings_meta["config_source"] = config_source
+    runtime_settings_meta["saved_at"] = saved_at
+    runtime_settings_meta["last_error"] = last_error
+
+def _load_runtime_app_settings() -> Dict[str, Any]:
+    """优先读取宿主机挂载的运行时设置文件，不存在时回退环境变量和默认调用点。"""
+    settings_state = _build_env_app_settings()
+    if not RUNTIME_SETTINGS_FILE.exists():
+        _set_runtime_settings_meta("env_only")
+        print(f"ℹ️ AI 设置来源：环境变量/默认值（未发现 {RUNTIME_SETTINGS_FILE}）")
+        return settings_state
+
+    try:
+        raw_text = RUNTIME_SETTINGS_FILE.read_text(encoding="utf-8")
+        raw_settings = json.loads(raw_text)
+    except Exception as exc:
+        _set_runtime_settings_meta("env_fallback", last_error=str(exc))
+        print(f"⚠️ 读取运行时设置文件失败，已回退环境变量: {exc}")
+        return settings_state
+
+    if not isinstance(raw_settings, dict):
+        _set_runtime_settings_meta("env_fallback", last_error="runtime_settings_format_invalid")
+        print("⚠️ 运行时设置文件格式非法，已回退环境变量")
+        return settings_state
+
+    for key_name in ("openrouter_api_key", "deepseek_api_key"):
+        value = raw_settings.get(key_name)
+        if isinstance(value, str):
+            settings_state[key_name] = value
+
+    persisted_newapi_key = raw_settings.get("newapi_api_key")
+    persisted_doubao_key = raw_settings.get("doubao_api_key")
+    resolved_newapi_key = ""
+    if isinstance(persisted_newapi_key, str) and persisted_newapi_key:
+        resolved_newapi_key = persisted_newapi_key
+    elif isinstance(persisted_doubao_key, str) and persisted_doubao_key:
+        resolved_newapi_key = persisted_doubao_key
+    if resolved_newapi_key:
+        settings_state["newapi_api_key"] = resolved_newapi_key
+        settings_state["doubao_api_key"] = resolved_newapi_key
+
+    settings_state["call_points"] = _normalize_persisted_call_points(raw_settings.get("call_points"))
+    saved_at = raw_settings.get("saved_at") if isinstance(raw_settings.get("saved_at"), str) else ""
+    _set_runtime_settings_meta("persistent", saved_at=saved_at)
+    print(f"ℹ️ AI 设置来源：持久化文件 {RUNTIME_SETTINGS_FILE}")
+    return settings_state
+
+def _persist_runtime_app_settings(settings_state: Dict[str, Any]) -> str:
+    """原子写入宿主机可挂载目录，避免写一半的 JSON 把下次启动卡死。"""
+    RUNTIME_SETTINGS_DIR.mkdir(parents=True, exist_ok=True)
+    saved_at = beijing_now().isoformat()
+    payload = {
+        "openrouter_api_key": settings_state.get("openrouter_api_key", ""),
+        "deepseek_api_key": settings_state.get("deepseek_api_key", ""),
+        "newapi_api_key": settings_state.get("newapi_api_key", "") or settings_state.get("doubao_api_key", ""),
+        "doubao_api_key": settings_state.get("newapi_api_key", "") or settings_state.get("doubao_api_key", ""),
+        "call_points": settings_state.get("call_points", {}),
+        "saved_at": saved_at
+    }
+    temp_file = RUNTIME_SETTINGS_FILE.with_suffix(".tmp")
+    try:
+        temp_file.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        temp_file.replace(RUNTIME_SETTINGS_FILE)
+    except Exception:
+        if temp_file.exists():
+            try:
+                temp_file.unlink()
+            except Exception as cleanup_error:
+                print(f"⚠️ 清理运行时设置临时文件失败: {cleanup_error}")
+        raise
+    return saved_at
+
 def _resolve_call_points(
     incoming: Optional[Dict[str, "CallPointConfig"]],
     default_model: Optional[str] = None
@@ -2257,48 +2397,65 @@ class CallPointConfig(BaseModel):
     custom_key: Optional[str] = None  # 新增：调用点独立的API Key
 
 class SettingsModel(BaseModel):
-    openrouter_api_key: str = ""
-    deepseek_api_key: str = ""
-    newapi_api_key: str = ""
-    doubao_api_key: str = ""  # legacy alias
+    openrouter_api_key: Optional[str] = None
+    deepseek_api_key: Optional[str] = None
+    newapi_api_key: Optional[str] = None
+    doubao_api_key: Optional[str] = None  # legacy alias
     call_points: Dict[str, CallPointConfig] = Field(default_factory=dict)
     default_model: Optional[str] = None  # 兼容旧字段
 
-# 全局设置存储（内存中）
-app_settings = {
-    "openrouter_api_key": os.getenv("OPENROUTER_API_KEY", ""),
-    "deepseek_api_key": os.getenv("DEEPSEEK_API_KEY", ""),
-    "newapi_api_key": os.getenv("NEWAPI_API_KEY", "") or os.getenv("ARK_API_KEY", ""),
-    "doubao_api_key": os.getenv("NEWAPI_API_KEY", "") or os.getenv("ARK_API_KEY", ""),  # legacy alias
-    "call_points": _build_default_call_points()
-}
+# 全局设置存储：启动时优先从 runtime_settings/app_settings.json 恢复，否则回退环境变量/默认值。
+app_settings = _load_runtime_app_settings()
+_apply_runtime_settings_to_env(app_settings)
 
 @app.post("/api/settings")
 async def save_settings(settings: SettingsModel):
     """保存系统设置"""
     try:
-        app_settings["openrouter_api_key"] = settings.openrouter_api_key
-        app_settings["deepseek_api_key"] = settings.deepseek_api_key
-        resolved_newapi_key = settings.newapi_api_key or settings.doubao_api_key
-        app_settings["newapi_api_key"] = resolved_newapi_key
-        app_settings["doubao_api_key"] = resolved_newapi_key  # legacy mirror
+        previous_settings = copy.deepcopy(app_settings)
+        previous_meta = dict(runtime_settings_meta)
+        next_settings = copy.deepcopy(app_settings)
 
-        # 更新环境变量
-        os.environ["OPENROUTER_API_KEY"] = settings.openrouter_api_key
-        os.environ["DEEPSEEK_API_KEY"] = settings.deepseek_api_key
-        os.environ["NEWAPI_API_KEY"] = resolved_newapi_key
-        os.environ["ARK_API_KEY"] = resolved_newapi_key
+        if settings.openrouter_api_key is not None:
+            next_settings["openrouter_api_key"] = settings.openrouter_api_key
+        if settings.deepseek_api_key is not None:
+            next_settings["deepseek_api_key"] = settings.deepseek_api_key
 
+        if settings.newapi_api_key is not None:
+            resolved_newapi_key = settings.newapi_api_key
+        elif settings.doubao_api_key is not None:
+            resolved_newapi_key = settings.doubao_api_key
+        else:
+            resolved_newapi_key = next_settings.get("newapi_api_key", "") or next_settings.get("doubao_api_key", "")
+
+        next_settings["newapi_api_key"] = resolved_newapi_key
+        next_settings["doubao_api_key"] = resolved_newapi_key  # legacy mirror
         resolved_call_points = _resolve_call_points(settings.call_points, settings.default_model)
-        app_settings["call_points"] = resolved_call_points
+        next_settings["call_points"] = resolved_call_points
+
+        saved_at = _persist_runtime_app_settings(next_settings)
+        app_settings.clear()
+        app_settings.update(next_settings)
+        _apply_runtime_settings_to_env(app_settings)
+        _set_runtime_settings_meta("persistent", saved_at=saved_at)
 
         return {
             "success": True,
-            "message": "设置保存成功"
+            "message": "设置保存成功",
+            "config_source": runtime_settings_meta.get("config_source", "unknown"),
+            "settings_saved_at": runtime_settings_meta.get("saved_at", "")
         }
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
+        app_settings.clear()
+        app_settings.update(previous_settings)
+        _apply_runtime_settings_to_env(app_settings)
+        _set_runtime_settings_meta(
+            previous_meta.get("config_source", "env_only"),
+            saved_at=previous_meta.get("saved_at", ""),
+            last_error=str(e)
+        )
         raise HTTPException(status_code=500, detail=f"保存设置失败: {str(e)}")
 
 @app.get("/api/settings")
@@ -2313,7 +2470,24 @@ async def get_settings():
         "has_deepseek_key": bool(app_settings["deepseek_api_key"]),
         "has_newapi_key": bool(app_settings.get("newapi_api_key", "")),
         "has_doubao_key": bool(app_settings.get("newapi_api_key", "")),  # legacy alias
+        "config_source": runtime_settings_meta.get("config_source", "unknown"),
+        "settings_saved_at": runtime_settings_meta.get("saved_at", ""),
+        "has_runtime_settings_file": RUNTIME_SETTINGS_FILE.exists(),
+        "settings_last_error": runtime_settings_meta.get("last_error", ""),
         "call_points": _build_call_point_payload()
+    }
+
+@app.get("/api/settings/health")
+async def get_settings_health():
+    """返回运行时设置来源，便于重启后确认是否成功恢复持久化配置。"""
+    return {
+        "config_source": runtime_settings_meta.get("config_source", "unknown"),
+        "settings_saved_at": runtime_settings_meta.get("saved_at", ""),
+        "has_runtime_settings_file": RUNTIME_SETTINGS_FILE.exists(),
+        "settings_last_error": runtime_settings_meta.get("last_error", ""),
+        "has_openrouter_key": bool(app_settings["openrouter_api_key"]),
+        "has_deepseek_key": bool(app_settings["deepseek_api_key"]),
+        "has_newapi_key": bool(app_settings.get("newapi_api_key", ""))
     }
 
 class TestModelRequest(BaseModel):

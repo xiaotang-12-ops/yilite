@@ -2,7 +2,7 @@
 
 **创建时间**: 2025-11-18
 **最后校对**: 2026-07-01
-**当前版本**: v2.1.57
+**当前版本**: v2.1.58
 **项目状态**: 核心功能完成，可用
 
 ---
@@ -74,7 +74,7 @@ output/{task_id} (JSON + GLB + 图片)
 | HEAD | `/api/manual/{task_id}/version` | 获取手册版本 | Header `X-Manual-Version` |
 | GET | `/api/manual/{task_id}/glb/{glb}` | 下载 GLB | 支持 `glb_files/` 或根目录 |
 | GET | `/api/manual/{task_id}/pdf_images/{path}` | 下载 PDF 图片 | 统一 `pdf_images/{pdf_name}/page_xxx.png` |
-| POST | `/api/settings` | 保存 AI 设置 | OpenRouter/DeepSeek/NewAPI Key + 调用点模型配置（含可选 `fallback_model/custom_key`），内存存储并写入 env；多模态调用点若配置 `newapi + glm-5`（主模型或兜底模型）会返回 400 |
+| POST | `/api/settings` | 保存 AI 设置 | OpenRouter/DeepSeek/NewAPI Key + 调用点模型配置（含可选 `fallback_model/custom_key`），同步写入内存、当前进程环境变量和 `runtime_settings/app_settings.json`；多模态调用点若配置 `newapi + glm-5`（主模型或兜底模型）会返回 400 |
 | GET | `/api/settings` | 获取 AI 设置 | 返回脱敏 key、调用点配置（含可选提供方） |
 | POST | `/api/test-model` | 连通性测试 | 支持 OpenRouter/DeepSeek/NewAPI；可传 `fallback_model` 自动切换并返回 `used_fallback`；返回能力警告 |
 
@@ -89,7 +89,7 @@ output/{task_id} (JSON + GLB + 图片)
 | `/manual/:taskId` | ManualViewer.vue | 装配手册查看/编辑 | 管理员支持草稿保存/发布；桌面端公共导航区与移动端底部栏都支持 `自动翻页`，统一输入 `0.5-60` 秒间隔后从第一步翻到最后一步；历史版本只读页也可使用；修复顶部工具栏在长标题步骤下的高度抖动 |
 | `/version-history/:taskId` | VersionHistory.vue | 历史版本与回滚 | 调 /api/manual/* history/version/rollback |
 | `/engineer` | Engineer.vue | 工程师视图（质检/分发） | |
-| `/settings` | Settings.vue | AI 设置（隐藏入口） | Logo 10 秒内连点 10 次解锁；调 /api/settings；支持每调用点 `兜底模型`；一键全测会分别测试主模型与兜底模型；测试后端/全测具备超时提示；`newapi` 下多模态调用点不展示 `glm-5`，手填会自动替换并提示；新增“界面字号调节”，可保存首页标题/说明文字与手机导航标题字号，配置写入 `localStorage.visual_font_settings` 并实时预览 |
+| `/settings` | Settings.vue | AI 设置（隐藏入口） | 桌面端改为对导航头像鼠标左键长按 `5` 秒解锁；调 /api/settings；支持每调用点 `兜底模型`；一键全测会分别测试主模型与兜底模型；测试后端/全测具备超时提示；`newapi` 下多模态调用点不展示 `glm-5`，手填会自动替换并提示；AI 设置会写入后端 `runtime_settings/app_settings.json`，浏览器只保留当前页面回显缓存；界面字号配置继续写入 `localStorage.visual_font_settings` 并实时预览 |
 | `/glb-test` | GLBTest.vue | GLB 场景调试 | |
 | `/simple-glb-test` | SimpleGLBTest.vue | 轻量 GLB 测试 | |
 | `/icon-test` | IconTest.vue | 图标展示 | |
@@ -107,7 +107,7 @@ output/{task_id} (JSON + GLB + 图片)
 ---
 
 ## 运行与环境
-- Docker：`docker-compose up --build`（映射 `8008:8008` 后端、`3008:80` 前端 HTTP、`3443:443` 前端 HTTPS）；前端 `HTTPS` 证书目录统一为宿主机本地 `./ssl` 只读挂载到容器 `/etc/nginx/ssl`，不再打包进镜像；根目录 `.gitignore` 与 `.dockerignore` 都会排除 `ssl/`；镜像名附版本 `assembly-manual-*-v2.1.49`。
+- Docker：`docker-compose up --build`（映射 `8008:8008` 后端、`3008:80` 前端 HTTP、`3443:443` 前端 HTTPS）；前端 `HTTPS` 证书目录统一为宿主机本地 `./ssl` 只读挂载到容器 `/etc/nginx/ssl`，不再打包进镜像；后端新增 `./runtime_settings:/app/runtime_settings` 持久化 AI 设置；根目录 `.gitignore` 与 `.dockerignore` 都会排除 `ssl/` 与 `runtime_settings/`；镜像/容器名应随 `VERSION` 走，例如当前为 `assembly-manual-*:v2.1.58`。
 - 本地调试：后端 `uvicorn backend.simple_app:app --host 0.0.0.0 --port 8008`；前端 `npm install && npm run dev`（默认 3000）。
 - 必需环境变量：按调用点配置需要 `OPENROUTER_API_KEY` / `DEEPSEEK_API_KEY` / `NEWAPI_API_KEY`（兼容 `ARK_API_KEY`）；可选 `BLENDER_EXE` 指向 Blender 可执行文件。
 
@@ -116,9 +116,9 @@ output/{task_id} (JSON + GLB + 图片)
 ## 最近 3 个版本快照
 | 版本 | 日期 | 关键变更 |
 | --- | --- | --- |
+| v2.1.58 | 2026-07-01 | **设置页入口改为头像长按 + AI 设置后端持久化**：<br/>- 隐藏设置入口从“10 秒内连点 10 次”改成“导航头像鼠标左键长按 5 秒”，降低误触<br/>- `/api/settings` 保存后会把 provider/model/fallback/custom key 与 API Key 原子写入 `runtime_settings/app_settings.json`<br/>- Docker 新增 `./runtime_settings:/app/runtime_settings` 挂载，容器或系统重启后不再退回默认 `openrouter` |
 | v2.1.57 | 2026-04-14 | **首页 AI 机器人头像与标题排版优化**：<br/>- 新增本地 `frontend/public/ai-robot-avatar.png`，全局导航头像、favicon、Apple touch icon 与 PWA manifest 图标统一使用机器人头像<br/>- `HomeNew.vue` 首页标题改为“小标签 + 主标题 + 副标题”三层排版：`工业装配工艺知识 / 自动解析 / 数字孪生化指导系统`<br/>- 补齐桌面、平板、移动端标题字号断点，并压缩移动端导航品牌长标题，避免文字截断或挤占导航按钮<br/>- 新增 `useVisualFontSettings` 和隐藏设置页“界面字号调节”，后续可在头像 10 连点入口内直接调首页标题、说明文字和手机导航字号 |
 | v2.1.56 | 2026-03-23 | **ManualViewer 自动翻页公共化**：<br/>- `ManualViewer.vue` 把桌面管理员录制和手机自动播放收口成一套公共 `自动翻页` 状态与定时器<br/>- 桌面入口移到顶部公共导航区，手机端改为同一套“输入秒数后开始”，历史版本只读页也允许使用<br/>- 用户文案统一为 `自动翻页 / 停止翻页 / 开始`，并移除“播放完成”提示 |
-| v2.1.55 | 2026-03-18 | **PDF 文本层 BOM 提取支持 5 位尾号代码**：<br/>- `pdf_text_bom_extractor.py` 的记录头识别从固定 `4` 位尾号放宽到 `4-5` 位，`01.01.01.10852/10853` 这类真实 BOM 代码不再被漏掉<br/>- 新增回归测试覆盖 `5` 位尾号 BOM 文本层提取，防止再次只识别到后半段 BOM<br/>- 本地复跑 `组件图1.pdf` 文本层提取后，BOM 数量从 `2` 条恢复为 `4` 条 |
 
 ---
 
@@ -135,7 +135,7 @@ output/{task_id} (JSON + GLB + 图片)
 
 ## 状态与注意事项
 - 正常：上传、生成、日志流、手册读取/编辑、模型与图片下载、设置管理。
-- 注意：需安装 Blender；`OPENROUTER_API_KEY`/`DEEPSEEK_API_KEY`/`NEWAPI_API_KEY`（兼容 `ARK_API_KEY`）按调用点配置；设置页默认隐藏，Logo 10 秒内连点 10 次可进入；大文件性能与 Three.js 渲染待优化；前端路由默认走 8008 端口；一次任务仅支持上传 1 个 PDF + 1 个 STEP；运行中全局仅允许 1 个任务，上传/生成会返回 409 `TASK_BUSY` 提示等待；task_id = PDF 文件名（去后缀），STEP 文件名可不同，后端生成时会按 task_id 重命名存储；同名生成返回 409，可在前端选择覆盖（成功任务归档到 `output_archive/`，失败/损坏任务直接删除）或生成第二套 `_v_n`；任务状态持久化到 `output/{task_id}/task_status.json`，支持 `/api/task/{task_id}/cancel` 停止保留结果与 `/api/task/{task_id}/resume` 继续生成；生成任务可被中断（删除/覆盖/残留清理时会中断后台线程并写入 `cancelled`）；模式判定：PDF 文件名前缀 01* → 组件模式；03/06/07/08* → 产品模式；未命中前缀默认组件模式；产品模式跳过 Step5，且 Step7 默认跳过焊接仅执行安全。
+- 注意：需安装 Blender；`OPENROUTER_API_KEY`/`DEEPSEEK_API_KEY`/`NEWAPI_API_KEY`（兼容 `ARK_API_KEY`）按调用点配置；设置页默认隐藏，桌面端需对导航头像鼠标左键长按 `5` 秒可进入；AI 设置保存后会写入 `runtime_settings/app_settings.json`，但浏览器 `localStorage` 仍只负责当前浏览器页面回显；大文件性能与 Three.js 渲染待优化；前端路由默认走 8008 端口；一次任务仅支持上传 1 个 PDF + 1 个 STEP；运行中全局仅允许 1 个任务，上传/生成会返回 409 `TASK_BUSY` 提示等待；task_id = PDF 文件名（去后缀），STEP 文件名可不同，后端生成时会按 task_id 重命名存储；同名生成返回 409，可在前端选择覆盖（成功任务归档到 `output_archive/`，失败/损坏任务直接删除）或生成第二套 `_v_n`；任务状态持久化到 `output/{task_id}/task_status.json`，支持 `/api/task/{task_id}/cancel` 停止保留结果与 `/api/task/{task_id}/resume` 继续生成；生成任务可被中断（删除/覆盖/残留清理时会中断后台线程并写入 `cancelled`）；模式判定：PDF 文件名前缀 01* → 组件模式；03/06/07/08* → 产品模式；未命中前缀默认组件模式；产品模式跳过 Step5，且 Step7 默认跳过焊接仅执行安全。
 - PDF 文本层 BOM：当前文本提取优先保证 `seq/code/product_code/name/quantity` 5 列稳定；`unit_weight/total_weight` 仅做可选补充，不再因为重量列漂移就丢整行；`gemini_pipeline.py` 会优先采用文本层 `quantity` 纠正 Vision 冲突值。
 - PDF 文本层 BOM：当前主目标已升级为固定 6 列：`seq/code/product_code/name/material/quantity`；数量识别改为前向扫描，不再主要依赖尾部关键词截断；`gemini_pipeline.py` 会同步用文本层 `material` / `quantity` 纠正 Vision 结果；记录头中的 BOM 代码当前支持 `4-5` 位尾号，避免 `01.01.01.10852` 这类真实物料代码被误丢。
 - 产品级 BOM/3D 匹配：层级匹配结果现在作为底座锁定，后续代码/AI 只能补节点不能覆盖；装配体名称匹配支持短中文锚点（如 `油缸`）；最后一层补漏改为复用同一 BOM-3D 匹配模型的“最终 AI 补漏”，不再扩张规则兜底，但 `M10*75` ↔ `M10×80` 这类硬规格冲突仍保持拦截。

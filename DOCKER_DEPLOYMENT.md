@@ -43,6 +43,8 @@ nano .env
 **在 `.env` 文件中修改**：
 ```bash
 OPENROUTER_API_KEY=your_actual_api_key_here
+DEEPSEEK_API_KEY=your_deepseek_api_key_here
+NEWAPI_API_KEY=your_newapi_key_here
 ```
 
 ### 3️⃣ 准备 HTTPS 证书目录
@@ -58,6 +60,15 @@ ssl/
 ```
 
 说明：`ssl/` 不在仓库中跟踪，容器会在运行时把该目录只读挂载到 `/etc/nginx/ssl`。
+
+同时建议保留运行时设置目录：
+
+```text
+runtime_settings/
+└── app_settings.json
+```
+
+说明：保存过的 AI provider/model/fallback/custom key 与 API Key 会落在这里，Docker 重启后会自动恢复。
 
 ### 4️⃣ 启动服务
 
@@ -98,7 +109,8 @@ yilite/
 ├── output/           # 生成的装配说明书
 ├── logs/             # 系统日志
 ├── pipeline_output/  # 处理流程中间结果
-└── debug_output/     # 调试信息
+├── debug_output/     # 调试信息
+└── runtime_settings/ # AI 设置持久化文件
 ```
 
 **即使重启 Docker 容器，这些数据也不会丢失。**

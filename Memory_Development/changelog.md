@@ -1,5 +1,37 @@
 # Memory Changelog
 
+## v2.1.58 (2026-07-01)
+- **设置页入口改为头像长按 5 秒 + AI 设置后端持久化**：
+  - **用户提问**：
+    - “现在改成对着头像，长按鼠标左键五秒才能访问进去”
+    - “配置又变成默认那个openrouter了导致无法使用。你去检查看看当前是不是这样。我要做成只要保存了，无论怎么样了重启系统，配置都是默认保存好的”
+  - **问题根因**：
+    1. `App.vue` 之前把隐藏设置入口写成“10 秒内连点 10 次”，误触门槛低，而且和用户现在要的“长按 5 秒”口径不一致。
+    2. `backend/simple_app.py` 的 `app_settings` 只存在内存里，启动时直接从环境变量和 `_build_default_call_points()` 初始化；`POST /api/settings` 也只更新内存和当前进程环境变量，没有任何落盘。
+    3. `Settings.vue` 虽然会把配置写到浏览器 `localStorage.app_settings`，但页面加载后仍会调用 `GET /api/settings` 拉后端调用点配置；一旦 Docker 或系统重启，后端回到默认 `openrouter`，前端又会被这份默认值覆盖。
+    4. `docker-compose.yml` 之前没有为 AI 设置提供专门的宿主机挂载目录，因此就算后端想落盘，也没有稳定持久化位置。
+  - **问题场景**：
+    - 用户把多个调用点切到 `newapi` 并配置了 `fallback_model/custom_key`，但客户系统重启或 Docker 重启后，调用点重新回到默认 `openrouter`，导致现场直接不可用。
+  - **修复方案**：
+    1. `frontend/src/App.vue` 将隐藏设置入口改为“导航头像鼠标左键长按 `5` 秒”，通过 `mousedown/up/leave` 定时器控制进入 `/settings`，不再使用连点计数。
+    2. `backend/simple_app.py` 新增 `runtime_settings/app_settings.json` 作为运行时设置文件；启动时优先读文件，失败或不存在时再回退环境变量和默认调用点。
+    3. `POST /api/settings` 现在先原子写入 `runtime_settings/app_settings.json`，只有落盘成功后才切换内存和进程环境；若写盘失败会保留旧配置并返回 500，避免“接口报错但内存已改、下次重启又回旧值”的漂移。
+    4. `GET /api/settings` 与新增的 `GET /api/settings/health` 会返回 `config_source/settings_saved_at/has_runtime_settings_file/settings_last_error`，便于重启后快速判断配置到底是读了持久化文件还是回退环境变量。
+    5. `frontend/src/views/Settings.vue` 增加“留空未改动则保留服务端已有 Key”语义：浏览器 `localStorage` 丢失时不会因为空输入框再次保存而把后端已持久化的 Key 清空；如果当前页尚未成功拉到一次 `/api/settings`，空值也默认走“保留”而不是“清空”。
+    6. `docker-compose.yml` 为后端新增 `./runtime_settings:/app/runtime_settings` 绑定挂载，并补齐 `DEEPSEEK_API_KEY/NEWAPI_API_KEY/ARK_API_KEY` 环境变量透传；镜像/容器名同步更新到 `v2.1.58`。
+    7. `.env.example` 补齐 `DEEPSEEK_API_KEY/NEWAPI_API_KEY` 示例；根目录 `.gitignore` 和 `.dockerignore` 同步排除 `runtime_settings/`，避免客户现场保存的密钥再次被误提交到 Git 或被打进镜像构建上下文。
+  - **验证**：
+    1. `python -m py_compile backend/simple_app.py`
+    2. 临时 Python 回归脚本验证 `_persist_runtime_app_settings()` + `_load_runtime_app_settings()` 可正确恢复 `provider/model/fallback/custom_key`，并会把不支持多模态的 `glm-5` 自动兜底回 `DEFAULT_NEWAPI_MODEL`
+    3. `npm --prefix frontend run build`
+    4. `docker compose config`
+  - **影响文件**：`frontend/src/App.vue`、`backend/simple_app.py`、`docker-compose.yml`、`.gitignore`、`.dockerignore`、`README.md`、`DOCKER_DEPLOYMENT.md`、`VERSION`、`Memory_Development/index.md`、`Memory_Development/frontend/routes.md`、`Memory_Development/backend/api.md`、`Memory_Development/changelog.md`
+  - **决策摘要**：
+    - 根因不是前端展示错了，而是后端 `app_settings` 只保存在进程内存里；只修前端 `localStorage` 不能解决 Docker/系统重启后的实际运行配置丢失。
+    - 本轮没有把设置改写回 `.env`，因为调用点 `provider/model/fallback/custom_key` 是结构化配置，直接塞回环境变量既脆弱也难维护；因此改为独立运行时 JSON 文件。
+    - 当前遗留边界：浏览器 `localStorage.app_settings` 仍只是前端回显缓存，不是权威配置源；权威运行时配置现在以后端 `runtime_settings/app_settings.json` 为准。
+    - 本轮没有额外加“长按 5 秒”的可视进度提示，因为该入口本来就是隐藏入口，当前优先级是防误触和稳定持久化，不是公开交互可发现性。
+
 ## 2026-07-01 Git 版本口径校正（无业务代码变更）
 - **问题背景**：
   - 2026-07-01 复盘时确认：用户现场实际部署包 `assembly-manual_images_v2.1.55.tar` 与历史云端 `release: v2.1.55` 提交不是完全同一份前端代码。

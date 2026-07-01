@@ -33,6 +33,7 @@ frontend/.vite/
 frontend/.cache/
 ssl/
 frontend/ssl/
+runtime_settings/
 
 # 测试和文档
 *.md

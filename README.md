@@ -1,6 +1,6 @@
 # 智能装配说明书生成系统
 
-[![Version](https://img.shields.io/badge/version-v2.1.57-blue.svg)](https://github.com/xiaotang-12-ops/yilite/releases)
+[![Version](https://img.shields.io/badge/version-v2.1.58-blue.svg)](https://github.com/xiaotang-12-ops/yilite/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Docker](https://img.shields.io/badge/docker-ready-brightgreen.svg)](DOCKER_DEPLOYMENT.md)
 
@@ -8,7 +8,7 @@
 
 一个基于AI的智能装配说明书生成系统，能够自动解析PDF工程图纸和3D模型，生成工人友好的交互式HTML装配说明书。
 
-**当前版本**: v2.1.57 | [查看版本历史](https://github.com/xiaotang-12-ops/yilite/releases) | [部署指南](DOCKER_DEPLOYMENT.md)
+**当前版本**: v2.1.58 | [查看版本历史](https://github.com/xiaotang-12-ops/yilite/releases) | [部署指南](DOCKER_DEPLOYMENT.md)
 
 ## 版本与分支口径（2026-07-01 校正）
 
@@ -17,8 +17,10 @@
 - `v2.1.55`：正式标签，指向提交 `7556710`，表示依据 `assembly-manual_images_v2.1.55.tar` 反推并恢复出的用户现场部署版本。
 - `v2.1.55-cloud-base`：历史保留标签，指向提交 `93e6640`，表示当年云端原始 `release: v2.1.55` 基线；该提交的前端不包含现场包中的 `自动翻页` 改动。
 
-## 🆕 最新更新 (v2.1.57)
+## 🆕 最新更新 (v2.1.58)
 
+- **🔐 设置页入口改为头像长按 5 秒**：隐藏设置不再靠 `10` 连点，桌面端现在必须对导航头像持续按住鼠标左键 `5` 秒才能进入，降低误触概率。
+- **💾 AI 配置改为后端持久化**：`/api/settings` 现在会把 `provider/model/fallback/custom key` 和 API Key 写入宿主机 `runtime_settings/app_settings.json`，系统重启或 Docker 重启后不再退回默认 `openrouter`；如果浏览器本地缓存丢了，设置页留空且不改动也会继续保留服务端已有 Key。
 - **🤖 首页头像与字号调节**：全局导航、favicon 与 PWA 图标统一为 AI 机器人头像，隐藏设置页新增“界面字号调节”，可直接调首页标题、说明文字和手机导航字号。
 - **↔️ ManualViewer 自动翻页公共化**：桌面端入口已移到公共导航区，手机端统一改为输入秒数后开始，历史版本只读页也可使用。
 - **📋 BOM 文本层提取支持 5 位尾号代码**：`01.01.01.10852/10853` 这类真实物料代码不再被误判为非法记录头，避免图纸只识别出后半段 BOM。
@@ -84,6 +86,15 @@ ssl/
 ```
 
 说明：`ssl/` 只作为部署目录使用，不纳入 Git；建议每个客户环境使用独立证书。
+
+运行时设置目录：
+
+```text
+runtime_settings/
+└── app_settings.json
+```
+
+说明：后台保存过 AI 配置后，会自动把调用点 provider/model/fallback/custom key 与 API Key 写进该目录；容器重启后会优先从这里恢复设置。
 
 **访问系统**：
 - 🌐 前端界面: http://localhost:3008

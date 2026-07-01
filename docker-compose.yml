@@ -3,16 +3,19 @@ name: assembly-manual
 services:
   # 后端服务
   backend:
-    image: assembly-manual-backend:v2.1.55
+    image: assembly-manual-backend:v2.1.58
     
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: assembly-backend-v2.1.55
+    container_name: assembly-backend-v2.1.58
     restart: unless-stopped
     environment:
       # API密钥 - 从.env文件读取
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - NEWAPI_API_KEY=${NEWAPI_API_KEY}
+      - ARK_API_KEY=${ARK_API_KEY}
       # 可选配置
       - BLENDER_EXE=${BLENDER_EXE:-blender}
       - DEBUG=${DEBUG:-false}
@@ -27,6 +30,8 @@ services:
       - ./debug_output:/app/debug_output
       - ./logs:/app/logs
       - ./temp:/app/temp
+      # 运行时 AI 设置单独持久化，避免容器重启后 provider/model/fallback 退回默认值。
+      - ./runtime_settings:/app/runtime_settings
     ports:
       - "8008:8008"
     networks:
@@ -40,12 +45,12 @@ services:
 
   # 前端服务
   frontend:
-    image: assembly-manual-frontend:v2.1.55
+    image: assembly-manual-frontend:v2.1.58
     
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: assembly-frontend-v2.1.55
+    container_name: assembly-frontend-v2.1.58
     restart: unless-stopped
     ports:
       - "3008:80"
