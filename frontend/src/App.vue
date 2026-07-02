@@ -8,6 +8,9 @@
           @mousedown.left="handleLogoPressStart"
           @mouseup="handleLogoPressEnd"
           @mouseleave="handleLogoPressEnd"
+          @touchstart.passive="handleLogoTouchStart"
+          @touchend="handleLogoPressEnd"
+          @touchcancel="handleLogoPressEnd"
           @contextmenu.prevent
         >
           <!-- 用户现场版本保留原 Logo 与标题，仅把隐藏设置入口改成左键长按 5 秒。 -->
@@ -248,17 +251,25 @@ const clearSettingsUnlockTimer = () => {
   }
 }
 
-const handleLogoPressStart = (event: MouseEvent) => {
-  if (event.button !== 0) {
-    return
-  }
-
+const startSettingsUnlockTimer = () => {
   clearSettingsUnlockTimer()
   settingsUnlockTimer.value = window.setTimeout(() => {
     sessionStorage.setItem(SETTINGS_UNLOCK_KEY, String(Date.now() + SETTINGS_UNLOCK_TTL_MS))
     clearSettingsUnlockTimer()
     router.push('/settings')
   }, SETTINGS_UNLOCK_HOLD_MS)
+}
+
+const handleLogoPressStart = (event: MouseEvent) => {
+  if (event.button !== 0) {
+    return
+  }
+
+  startSettingsUnlockTimer()
+}
+
+const handleLogoTouchStart = () => {
+  startSettingsUnlockTimer()
 }
 
 const handleLogoPressEnd = () => {

@@ -12,6 +12,7 @@
    - 保留用户现场原 `logo.png` 和标题
    - 不再使用“10 秒内连点 10 次”进入 `/settings`
    - 改为品牌区鼠标左键长按 5 秒解锁
+   - 额外补了 `touchstart / touchend / touchcancel`，避免后续移动端调试时完全进不去
 
 2. **AI 设置改为后端落盘持久化**
    - `OpenRouter / DeepSeek / NewAPI` Key
@@ -71,7 +72,7 @@
 - `docker-compose.yml`
   - 增加 `./runtime_settings:/app/runtime_settings`
 - `tests/test_runtime_settings_persistence.py`
-  - 覆盖“保留、清空、文件优先、失败回滚”四条回归
+  - 覆盖“保留、局部调用点保留、清空、文件优先、失败回滚”五条回归
 
 ---
 
@@ -117,13 +118,16 @@ runtime_settings/
 - `npm --prefix frontend run build`
 - `docker compose config`
 - `pytest tests/test_runtime_settings_persistence.py`
+- `docker compose up -d --build`
+- `docker compose restart backend frontend`
+- 重启后再次访问 `http://127.0.0.1:8008/api/settings/health`，确认 `config_source = runtime_file`
+- 用户已手测桌面端“长按 5 秒进入设置页”，反馈“没啥太大问题”
 
 已确认通过外部代码审核。
 
-未做：
+仍需后续补齐：
 
-- 基于新容器的真实浏览器“长按 5 秒进入设置页”验收
-- 一次真实 Docker 重启后的端到端回归
+- 若后续确实要在平板/手机上进入隐藏设置页，建议再做一次真实触屏长按验收
 
 ---
 

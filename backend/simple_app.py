@@ -2381,7 +2381,8 @@ class SettingsModel(BaseModel):
     deepseek_api_key: Optional[str] = None
     newapi_api_key: Optional[str] = None
     doubao_api_key: Optional[str] = None  # legacy alias
-    call_points: Dict[str, CallPointConfig] = Field(default_factory=dict)
+    # 这里显式允许缺省，表示“沿用当前调用点配置”；不要把未传误解成“清空整个调用点对象”。
+    call_points: Optional[Dict[str, CallPointConfig]] = None
     default_model: Optional[str] = None  # 兼容旧字段
 
 # 运行期设置始终先装进内存，再同步到环境变量，供后续模型调用链统一读取。

@@ -98,6 +98,38 @@ def test_save_settings_explicit_empty_string_clears_key(runtime_settings_context
     assert saved_payload["openrouter_api_key"] == ""
 
 
+def test_save_settings_partial_call_points_keeps_existing_entries(runtime_settings_context):
+    baseline_call_points = copy.deepcopy(simple_app.app_settings["call_points"])
+    call_point_ids = list(simple_app.AI_CALL_POINT_DEFS.keys())
+    target_call_point = call_point_ids[0]
+    untouched_call_point = call_point_ids[1]
+
+    response = asyncio.run(
+        simple_app.save_settings(
+            simple_app.SettingsModel(
+                call_points={
+                    target_call_point: simple_app.CallPointConfig(
+                        provider="deepseek",
+                        model="deepseek-chat",
+                        fallback_model="",
+                        custom_key="partial-call-point-key",
+                    )
+                }
+            )
+        )
+    )
+
+    runtime_file = runtime_settings_context["runtime_file"]
+    saved_payload = json.loads(runtime_file.read_text(encoding="utf-8"))
+
+    assert response["success"] is True
+    assert saved_payload["call_points"][target_call_point]["provider"] == "deepseek"
+    assert saved_payload["call_points"][target_call_point]["model"] == "deepseek-chat"
+    assert saved_payload["call_points"][target_call_point]["custom_key"] == "partial-call-point-key"
+    assert saved_payload["call_points"][untouched_call_point] == baseline_call_points[untouched_call_point]
+    assert simple_app.app_settings["call_points"][untouched_call_point] == baseline_call_points[untouched_call_point]
+
+
 def test_load_runtime_app_settings_prefers_runtime_file_over_env(runtime_settings_context, monkeypatch: pytest.MonkeyPatch):
     runtime_file = runtime_settings_context["runtime_file"]
     runtime_file.parent.mkdir(parents=True, exist_ok=True)

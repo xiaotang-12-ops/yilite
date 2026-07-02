@@ -31,17 +31,17 @@
     - 现场机器或 Docker 重启后，设置页里原本切到 `NewAPI`、配置好的兜底模型和独立 Key 会回落到默认 `openrouter`，导致功能不可用。
   - **修复方案**：
     1. 先把 `dev` 重置回用户部署基线 `7556710 (v2.1.55)`，并保留旧 `dev` 与本地未提交内容的备份分支，确保这次功能是从用户版继续长出来。
-    2. `frontend/src/App.vue` 保留用户现场版原 Logo/标题，只把隐藏设置入口改成“品牌区鼠标左键长按 5 秒”，并补定时器清理，避免误触和残留计时器。
+    2. `frontend/src/App.vue` 保留用户现场版原 Logo/标题，只把隐藏设置入口改成“品牌区鼠标左键长按 5 秒”，并补定时器清理；审查后又补了 `touchstart/touchend/touchcancel`，避免后续移动端调试时完全无法进入设置页。
     3. `backend/simple_app.py` 新增 `runtime_settings/app_settings.json` 持久化链路：启动优先读取、保存先原子落盘、成功后再切换内存和环境变量、失败时回滚；同时新增 `/api/settings/health` 便于排查当前到底读的是运行时文件还是环境变量。
     4. `frontend/src/views/Settings.vue` 增加 `persistedKeyPresence/serverKeyPresenceKnown/keyFieldTouched` 语义：未改动且服务端已有 Key 时，空白保存默认表示“保留”；只有明确改空并保存才表示“清空”。
     5. `docker-compose.yml` 新增 `runtime_settings` 挂载，并补齐 `DEEPSEEK_API_KEY/NEWAPI_API_KEY/ARK_API_KEY` 透传；镜像/容器名升级到 `v2.1.56`，避免继续与用户现场 `v2.1.55` 混淆。
-    6. 新增 `tests/test_runtime_settings_persistence.py`，把“保留现有 Key、显式清空、优先读取 runtime 文件、落盘失败回滚”四条回归收进仓库。
+    6. 新增 `tests/test_runtime_settings_persistence.py`，把“保留现有 Key、局部调用点保留、显式清空、优先读取 runtime 文件、落盘失败回滚”五条回归收进仓库。
     7. 同步更新 `VERSION`、`README.md`、`DEPLOYMENT.md` 和 `Memory_Development/*` 口径，让后续 AI 能直接看懂这次分支/版本/设置持久化决策，并知道升级前要先停旧容器。
   - **决策摘要**：
     - **根因判断**：问题不只是前端入口，而是“用户版基线选错 + 后端无持久化 + 前端空值语义过于激进”三件事叠在一起。
     - **方案取舍**：本轮选择“直接在已重置回用户版基线的 `dev` 上改”，没有再碰 `main`，也没有把后续头像线硬合回来，优先保证用户版加功能时的基线纯净。
     - **未选方案**：没有继续沿用“双工作树并行开发再手工同步”的做法，因为那会持续制造“当前到底哪套才是用户版”的歧义；也没有只写 `.env`，因为调用点 `provider/model/fallback_model/custom_key` 这类结构化设置本来就不适合塞回环境变量。
-    - **当前遗留边界**：当前运行中的 Docker 容器仍是之前启动的 `v2.1.58` 镜像，尚未基于这次 `dev=v2.1.56` 代码重建并做真实浏览器/重启验收。
+    - **当前遗留边界**：本地已补做 `docker compose up -d --build`、`docker compose restart backend frontend` 和 `/api/settings/health` 取证，确认重启后仍从 `runtime_settings/app_settings.json` 恢复；桌面端长按已由用户手测通过。当前只剩“若未来要在平板/手机上进入隐藏设置页，还需再做一次真实触屏长按验收”这一条边界。
   - **影响文件**：`frontend/src/App.vue`、`frontend/src/views/Settings.vue`、`backend/simple_app.py`、`docker-compose.yml`、`.env.example`、`.gitignore`、`.dockerignore`、`tests/test_runtime_settings_persistence.py`、`VERSION`、`README.md`、`DEPLOYMENT.md`、`Memory_Development/index.md`、`Memory_Development/backend/api.md`、`Memory_Development/frontend/routes.md`、`Memory_Development/changelog.md`
   - **记录人**：Codex
 
