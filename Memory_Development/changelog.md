@@ -15,6 +15,36 @@
 - **影响文件**：`README.md`、`RELEASE_v2.1.55.md`、`Memory_Development/index.md`、`Memory_Development/changelog.md`
 - **记录人**：Codex
 
+## v2.1.56 (2026-07-02)
+- **用户部署线补功能：设置页入口改为长按 + AI 配置跨重启持久化**：
+  - **用户提问**：
+    - “我们其实不能碰那个分支，因为那个分支完整的暴露了用户现在正在用的版本，所以我还是觉得应该把我们当前的dev分支线变成用户正在用的版本，然后再进行开发。”
+    - “连续点击十次打开配置模型页面……现在改成对着头像，长按鼠标左键五秒才能访问进去。”
+    - “你去检查看看当前是不是这样。我要做成只要保存了，无论怎么样了重启系统，配置都是默认保存好的”
+  - **问题根因**：
+    1. 之前误把后续开发线当成用户部署线继续改，`dev` 一度混入机器人头像与其它后续页面改动，不适合直接给用户版加功能。
+    2. 用户版基线里的 `/settings` 仍然是 “10 秒内连点 10 次” 一次性解锁，入口口径与这次需求不符。
+    3. `backend/simple_app.py` 的 AI 设置只保存在进程内 `app_settings` 和 `os.environ`，容器/系统重启后会重新回落到环境变量与默认 `openrouter` 配置。
+    4. `Settings.vue` 保存时会把当前输入框的空字符串直接发给后端；当浏览器本地缓存丢失、页面显示空白但服务端其实已有 Key 时，用户点保存会把现有 Key 误清空。
+  - **问题场景**：
+    - 用户现场当前跑的是 `v2.1.55` 这条稳定线，需要在不混入机器人头像等后续 UI 改造的前提下，只给设置页补“更隐蔽入口 + 跨重启持久化”。
+    - 现场机器或 Docker 重启后，设置页里原本切到 `NewAPI`、配置好的兜底模型和独立 Key 会回落到默认 `openrouter`，导致功能不可用。
+  - **修复方案**：
+    1. 先把 `dev` 重置回用户部署基线 `7556710 (v2.1.55)`，并保留旧 `dev` 与本地未提交内容的备份分支，确保这次功能是从用户版继续长出来。
+    2. `frontend/src/App.vue` 保留用户现场版原 Logo/标题，只把隐藏设置入口改成“品牌区鼠标左键长按 5 秒”，并补定时器清理，避免误触和残留计时器。
+    3. `backend/simple_app.py` 新增 `runtime_settings/app_settings.json` 持久化链路：启动优先读取、保存先原子落盘、成功后再切换内存和环境变量、失败时回滚；同时新增 `/api/settings/health` 便于排查当前到底读的是运行时文件还是环境变量。
+    4. `frontend/src/views/Settings.vue` 增加 `persistedKeyPresence/serverKeyPresenceKnown/keyFieldTouched` 语义：未改动且服务端已有 Key 时，空白保存默认表示“保留”；只有明确改空并保存才表示“清空”。
+    5. `docker-compose.yml` 新增 `runtime_settings` 挂载，并补齐 `DEEPSEEK_API_KEY/NEWAPI_API_KEY/ARK_API_KEY` 透传；镜像/容器名升级到 `v2.1.56`，避免继续与用户现场 `v2.1.55` 混淆。
+    6. 新增 `tests/test_runtime_settings_persistence.py`，把“保留现有 Key、显式清空、优先读取 runtime 文件、落盘失败回滚”四条回归收进仓库。
+    7. 同步更新 `VERSION`、`README.md`、`DEPLOYMENT.md` 和 `Memory_Development/*` 口径，让后续 AI 能直接看懂这次分支/版本/设置持久化决策，并知道升级前要先停旧容器。
+  - **决策摘要**：
+    - **根因判断**：问题不只是前端入口，而是“用户版基线选错 + 后端无持久化 + 前端空值语义过于激进”三件事叠在一起。
+    - **方案取舍**：本轮选择“直接在已重置回用户版基线的 `dev` 上改”，没有再碰 `main`，也没有把后续头像线硬合回来，优先保证用户版加功能时的基线纯净。
+    - **未选方案**：没有继续沿用“双工作树并行开发再手工同步”的做法，因为那会持续制造“当前到底哪套才是用户版”的歧义；也没有只写 `.env`，因为调用点 `provider/model/fallback_model/custom_key` 这类结构化设置本来就不适合塞回环境变量。
+    - **当前遗留边界**：当前运行中的 Docker 容器仍是之前启动的 `v2.1.58` 镜像，尚未基于这次 `dev=v2.1.56` 代码重建并做真实浏览器/重启验收。
+  - **影响文件**：`frontend/src/App.vue`、`frontend/src/views/Settings.vue`、`backend/simple_app.py`、`docker-compose.yml`、`.env.example`、`.gitignore`、`.dockerignore`、`tests/test_runtime_settings_persistence.py`、`VERSION`、`README.md`、`DEPLOYMENT.md`、`Memory_Development/index.md`、`Memory_Development/backend/api.md`、`Memory_Development/frontend/routes.md`、`Memory_Development/changelog.md`
+  - **记录人**：Codex
+
 ## v2.1.55 (2026-03-18)
 - **PDF 文本层 BOM 提取支持 5 位尾号代码**：
   - **用户提问**：

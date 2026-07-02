@@ -72,6 +72,7 @@ pipeline_output/
 *.temp
 temp/
 tmp/
+runtime_settings/
 
 # Large model files
 *.glb
@@ -100,6 +101,7 @@ Thumbs.db
 # Test files
 test_*.py
 *_test.py
+!tests/test_runtime_settings_persistence.py
 
 # Backup files
 *.backup

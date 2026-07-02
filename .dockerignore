@@ -45,6 +45,7 @@ tests/
 temp/
 logs/
 debug_output/
+runtime_settings/
 *.tmp
 *.bak
 

@@ -26,8 +26,9 @@
 | HEAD | `/api/manual/{task_id}/version` | 取已发布版本号 | 路径参数 | Header `X-Manual-Version` |
 | GET | `/api/manual/{task_id}/glb/{glb}` | 下载 GLB | 路径参数 | 查找 `output/{task}/glb_files/{glb}` 或根目录 |
 | GET | `/api/manual/{task_id}/pdf_images/{path}` | 下载 PDF 图片 | 路径参数 | 访问 `output/{task}/pdf_images/{pdf_name}/page_xxx.png` |
-| POST | `/api/settings` | 保存 AI 设置 | JSON：`openrouter_api_key`,`deepseek_api_key`,`newapi_api_key`（兼容 `doubao_api_key`）、`call_points`（`matching/assembly/welding/safety/bom_vision` → `{provider,model,fallback_model?,custom_key?}`），兼容 `default_model` | 保存在内存 `app_settings`，更新环境变量（含 `NEWAPI_API_KEY` / `ARK_API_KEY`）；若多模态调用点配置 `newapi + glm-5`（主模型或兜底模型）会返回 400 |
-| GET | `/api/settings` | 获取 AI 设置 | - | 返回脱敏的 key、`has_*`、`call_points`（含 `allowed_providers`/`requires_images`） |
+| POST | `/api/settings` | 保存 AI 设置 | JSON：`openrouter_api_key`,`deepseek_api_key`,`newapi_api_key`（兼容 `doubao_api_key`，允许 `null` 表示保留现有值）、`call_points`（`matching/assembly/welding/safety/bom_vision` → `{provider,model,fallback_model?,custom_key?}`），兼容 `default_model` | 先原子写入 `runtime_settings/app_settings.json`，成功后再更新内存 `app_settings` 与环境变量（含 `NEWAPI_API_KEY` / `ARK_API_KEY`）；返回 `has_*` 与 `settings_saved_at`；若多模态调用点配置 `newapi + glm-5`（主模型或兜底模型）会返回 400 |
+| GET | `/api/settings` | 获取 AI 设置 | - | 返回脱敏的 key、`has_*`、`call_points`（含 `allowed_providers`/`requires_images`），以及 `config_source/settings_saved_at/has_runtime_settings_file/settings_last_error` |
+| GET | `/api/settings/health` | 获取设置持久化状态 | - | 返回当前设置来源（`runtime_file/env_only`）、运行时设置文件存在性、最近一次保存时间和 key 存在状态 |
 | POST | `/api/test-model` | 模型连通性测试 | JSON：`provider`,`model`，可选 `fallback_model`、`custom_key`、`openrouter_api_key`/`deepseek_api_key`/`newapi_api_key`（兼容 `doubao_api_key`）/`api_key`/`probe_capabilities` | 调用 ChatCompletion（默认超时 30s）；主模型失败会自动尝试 `fallback_model`，返回 `used_model`、`used_fallback`；`newapi` 下额外返回 `warnings`（thinking 参数支持、completion 上限探测）与 `capability` 字段 |
 
 ### 任务/输出目录结构
