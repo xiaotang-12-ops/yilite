@@ -92,6 +92,49 @@ def _terminate_process(process: Process) -> None:
     process.join(timeout=2)
 
 
+def _recover_glb_result_from_output(output_path: str, reason: str) -> Optional[Dict[str, Any]]:
+    """
+    OCP 子进程有时会先把 GLB 落盘，再在 queue 回传前卡住。
+    这里仅在产物能被正常加载时回收为成功，避免把假失败继续透给上层。
+    """
+    path = Path(output_path)
+    if not path.exists() or path.stat().st_size <= 0:
+        return None
+
+    try:
+        import trimesh
+
+        scene = trimesh.load(path, force="scene")
+        parts_info = []
+        if isinstance(scene, trimesh.Scene):
+            for node_name in scene.graph.nodes_geometry:
+                try:
+                    _, geom_name = scene.graph[node_name]
+                    geom_name = str(geom_name)
+                except Exception:
+                    geom_name = ""
+                parts_info.append({"node_name": str(node_name), "geometry_name": geom_name})
+            parts_count = len(parts_info)
+        else:
+            parts_info.append({"node_name": "single_mesh", "geometry_name": "mesh_0"})
+            parts_count = 1
+
+        return {
+            "success": True,
+            "output_path": str(path),
+            "message": "转换成功（由已生成的GLB结果回收）",
+            "method": "ocp",
+            "parts_count": parts_count,
+            "parts_info": parts_info,
+            "recovered_from_output": {
+                "reason": reason,
+                "size_bytes": path.stat().st_size,
+            },
+        }
+    except Exception:
+        return None
+
+
 @dataclass(frozen=True)
 class OcpFallbackOptions:
     enabled: bool = True
@@ -489,6 +532,8 @@ def convert_step_to_glb_with_ocp(
         return {"success": False, "error": "OCP fallback disabled", "message": "ocp转换失败"}
 
     timeout = int(timeout_seconds or options.timeout_seconds)
+    # 先清掉旧产物，避免把历史 GLB 误判成当前这次转换成功。
+    Path(output_path).unlink(missing_ok=True)
     result_queue: Queue = Queue()
     process: Process = Process(target=_ocp_worker, args=(step_path, output_path, scale_factor, result_queue))
     process.start()
@@ -496,6 +541,9 @@ def convert_step_to_glb_with_ocp(
 
     if process.is_alive():
         _terminate_process(process)
+        recovered = _recover_glb_result_from_output(output_path, f"timeout_{timeout}s")
+        if recovered:
+            return recovered
         return {
             "success": False,
             "error": f"OCP STEP->GLB 转换超时（{timeout}s）",
@@ -503,6 +551,9 @@ def convert_step_to_glb_with_ocp(
         }
 
     if result_queue.empty():
+        recovered = _recover_glb_result_from_output(output_path, "empty_queue")
+        if recovered:
+            return recovered
         return {"success": False, "error": "OCP 转换进程未返回结果", "message": "ocp转换失败"}
 
     return result_queue.get()

@@ -1,4 +1,4 @@
-"""STEP 转 GLB 转换器，附带编码检测与GLB名称修复。"""
+"""STEP 转 GLB 转换器，附带格式预检、编码检测与GLB名称修复。"""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from typing import Optional
 import chardet
 import trimesh
 
-from processors.file_processor import ModelProcessor
+from processors.file_processor import ModelProcessor, _inspect_step_file_format
 from utils.logger import print_info, print_warning
 
 
@@ -33,12 +33,27 @@ class StepToGlbConverter:
     }
 
     def convert(self, step_path: str, output_path: str, scale_factor: float = 0.001) -> dict:
-        """将STEP转换为GLB，自动探测并转换编码，完成后修复GLB名称。"""
+        """将STEP转换为GLB，自动预检格式/编码，完成后修复GLB名称。"""
         tmp_file: Optional[Path] = None
         encoding = None
         confidence = 0.0
         try:
             source_path = Path(step_path)
+
+            # 先挡掉明显不是文本 STEP 的文件，避免被 chardet 误判成中文编码后继续跑重转换。
+            step_probe = _inspect_step_file_format(str(source_path))
+            if source_path.suffix.lower() in (".step", ".stp") and not step_probe.get("supported"):
+                return {
+                    "success": False,
+                    "error": (
+                        "当前系统仅支持文本 STEP（ISO-10303-21 / Part 21）导入，"
+                        "该文件头部不像标准文本 STEP，更像二进制或其他 CAD 导出格式。"
+                        "请让用户重新导出为标准 STEP 后再上传。"
+                    ),
+                    "message": "step格式不支持",
+                    "step_probe": step_probe,
+                }
+
             encoding, confidence = self.detect_encoding(source_path)
             use_path = source_path
 
@@ -70,6 +85,8 @@ class StepToGlbConverter:
                 result["encoding_detected"] = encoding or "unknown"
                 result["encoding_confidence"] = confidence
                 self._fix_glb_names(Path(output_path))
+            elif step_probe:
+                result.setdefault("step_probe", step_probe)
 
             return result
         finally:

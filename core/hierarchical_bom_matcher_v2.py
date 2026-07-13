@@ -6,7 +6,7 @@
 
 import json
 import re
-from typing import Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set
 from pathlib import Path
 from processors.file_processor import ModelProcessor
 from processors.step_to_glb_converter import StepToGlbConverter
@@ -81,6 +81,8 @@ class HierarchicalBOMMatcher:
         component_level_mappings = {}
         product_level_mapping = {}
         glb_files = {}
+        # 记录组件/产品级 STEP->GLB 的真实失败原因，避免上层只看到“匹配结果为空”。
+        conversion_failures: List[Dict[str, Any]] = []
 
         # ========== 1. 处理组件级别 ==========
         print_substep("步骤1：处理组件级别的STEP文件")
@@ -172,6 +174,17 @@ class HierarchicalBOMMatcher:
             
             if not convert_result["success"]:
                 print_error(f"GLB转换失败: {convert_result.get('error')}", indent=1)
+                conversion_failures.append(
+                    {
+                        "level": "component",
+                        "step_file": str(step_file),
+                        "glb_file": str(glb_file),
+                        "component_code": comp_code,
+                        "drawing_index": file_index,
+                        "error": convert_result.get("error") or convert_result.get("message") or "STEP->GLB 转换失败",
+                        "raw_result": convert_result,
+                    }
+                )
                 continue
             
             parts_list = convert_result.get("parts_info", [])
@@ -640,6 +653,15 @@ class HierarchicalBOMMatcher:
                 glb_files["product_total"] = str(product_glb)
             else:
                 print_error(f"GLB转换失败: {convert_result.get('error')}", indent=1)
+                conversion_failures.append(
+                    {
+                        "level": "product",
+                        "step_file": str(product_step),
+                        "glb_file": str(product_glb),
+                        "error": convert_result.get("error") or convert_result.get("message") or "STEP->GLB 转换失败",
+                        "raw_result": convert_result,
+                    }
+                )
         else:
             print_warning("未找到产品总图的STEP文件")
         
@@ -680,12 +702,18 @@ class HierarchicalBOMMatcher:
             print_warning(f"生成 GLB 清单失败: {e}")
             print_warning(f"详细堆栈: {traceback.format_exc()}")
         
-        return {
-            "success": True,
+        success = bool(component_level_mappings) or bool(product_level_mapping)
+        result = {
+            "success": success,
             "component_level_mappings": component_level_mappings,
             "product_level_mapping": product_level_mapping,
-            "glb_files": glb_files
+            "glb_files": glb_files,
         }
+        if conversion_failures:
+            result["conversion_failures"] = conversion_failures
+            # 优先把最先发生的 STEP/GLB 失败原因透给上层，避免被统一 validation_failed 淹没。
+            result["error"] = conversion_failures[0].get("error")
+        return result
 
     # ---------- 装配层级辅助 ----------
     def _build_assembly_mesh_mapping(

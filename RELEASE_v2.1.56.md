@@ -1,8 +1,8 @@
-# Release v2.1.56 - 用户部署线设置持久化与隐藏入口升级
+# Release v2.1.56 - 设置持久化、STEP 转换与失败提示升级
 
 > **发布日期**: 2026-07-02  
 > **版本范围**: v2.1.55 - v2.1.56  
-> **重大更新**: 用户部署线隐藏设置入口改为长按 5 秒、AI 配置改为跨重启持久化、镜像与部署口径升级到 `v2.1.56`
+> **重大更新**: 隐藏设置入口改为长按 5 秒、AI 配置跨重启持久化、STEP 转换分流与失败原因提示补强、镜像与部署口径升级到 `v2.1.56`
 
 ---
 
@@ -30,6 +30,16 @@
    - `docker-compose.yml` 的前后端镜像名与容器名同步改为 `v2.1.56`
    - 新增 `runtime_settings` 绑定挂载
    - 补齐 `DEEPSEEK_API_KEY / NEWAPI_API_KEY / ARK_API_KEY` 透传
+
+5. **STEP 转换分流与结果回收**
+   - 非标准/二进制 STEP 在重转换前直接返回明确格式提示
+   - 大模型自动切到更稳的 OCP-first 路径，并放宽转换时间窗口
+   - 子进程已生成 GLB 但未及时回传时，会在校验文件可用后回收为成功结果
+
+6. **STEP 失败原因直达前端**
+   - 组件级和产品级转换错误会沿流水线向上透传
+   - STEP 格式不兼容和转换超时使用独立 `failure_type/failure_hint`
+   - 前端不再先显示一条误导性的“任务处理失败”通用日志
 
 ---
 
@@ -73,6 +83,14 @@
   - 增加 `./runtime_settings:/app/runtime_settings`
 - `tests/test_runtime_settings_persistence.py`
   - 覆盖“保留、局部调用点保留、清空、文件优先、失败回滚”五条回归
+- `processors/file_processor.py` / `processors/ocp_step_to_glb.py`
+  - 增加格式预检、大模型策略、双转换错误保留和已生成 GLB 回收
+- `core/hierarchical_bom_matcher_v2.py` / `core/gemini_pipeline.py`
+  - 将 STEP 转换真实错误沿任务状态链路向上透传
+- `frontend/src/views/Generator.vue`
+  - 等待最终 `failure_hint/error` 后再展示失败原因
+- `tests/test_step_conversion_failures.py`
+  - 覆盖格式分流、大模型策略、双转换错误和用户提示分类
 
 ---
 
@@ -93,13 +111,19 @@ docker stop assembly-backend-v2.1.58 assembly-frontend-v2.1.58
 docker rm assembly-backend-v2.1.58 assembly-frontend-v2.1.58
 ```
 
-2. **重建并启动 `v2.1.56`**
+2. **导入客户镜像包**
 
 ```bash
-docker-compose up -d --build
+docker load -i assembly-manual_images_v2.1.56.tar
 ```
 
-3. **首次保存后会生成运行时设置文件**
+3. **启动 `v2.1.56`**
+
+```bash
+docker compose up -d
+```
+
+4. **首次保存后会生成运行时设置文件**
 
 ```text
 runtime_settings/
@@ -118,6 +142,7 @@ runtime_settings/
 - `npm --prefix frontend run build`
 - `docker compose config`
 - `pytest tests/test_runtime_settings_persistence.py`
+- `pytest tests/test_step_conversion_failures.py`
 - `docker compose up -d --build`
 - `docker compose restart backend frontend`
 - 重启后再次访问 `http://127.0.0.1:8008/api/settings/health`，确认 `config_source = runtime_file`

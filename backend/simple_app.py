@@ -459,6 +459,26 @@ def _classify_failure(error_message: Optional[str]) -> Dict[str, Any]:
             "failure_hint": "源文件缺失，请删除任务后重新上传。"
         }
 
+    # STEP 文件格式/解析问题：这类错误需要明确告诉前端用户，不要再落成“生成内容为空”。
+    if (
+        "当前系统仅支持文本 step" in lower
+        or "step格式不支持" in lower
+        or "expecting step" in lower
+        or "step 读取失败" in message
+        or "step文件解析失败" in message
+    ):
+        return {
+            "failure_type": "unsupported_step_format",
+            "failure_hint": "STEP 文件格式不兼容，请重新导出为标准文本 STEP（AP203/AP214/AP242）后再上传。"
+        }
+
+    # STEP 转换超时：和“内容为空”不是一回事，单独给出更准确的提示。
+    if "step->glb 转换超时" in lower or "ocp step->glb 转换超时" in lower:
+        return {
+            "failure_type": "step_conversion_timeout",
+            "failure_hint": "STEP 模型转换超时，请联系管理员排查模型复杂度或转换链路。"
+        }
+
     # 内容为空/校验失败
     if "validation_failed" in lower or "manual_empty" in lower or "content empty" in lower or "steps empty" in lower:
         return {

@@ -12,7 +12,7 @@ import subprocess
 import signal
 from multiprocessing import Process, Queue
 from pathlib import Path
-from typing import List, Dict, Optional, Tuple
+from typing import Any, List, Dict, Optional, Tuple
 from datetime import datetime
 import fitz  # PyMuPDF
 from PIL import Image
@@ -66,6 +66,150 @@ def _step_has_very_long_lines(step_path: str) -> Tuple[bool, Dict[str, int]]:
         return False, {"max_len": 0, "hits": 0, "threshold": threshold}
 
     return False, {"max_len": max_len, "hits": hits, "threshold": threshold}
+
+
+def _inspect_step_file_format(step_path: str) -> Dict[str, Any]:
+    """
+    轻量预检 STEP 文件头：
+    - 当前链路只稳定支持 Part 21 文本 STEP（常见头部为 ISO-10303-21）。
+    - 对明显的二进制/伪 STEP 提前失败，避免被编码探测误判后继续耗时转换。
+    """
+    info: Dict[str, Any] = {
+        "exists": False,
+        "size_bytes": 0,
+        "has_iso_signature": False,
+        "nul_ratio": 0.0,
+        "non_text_ratio": 0.0,
+        "preview": "",
+        "supported": False,
+    }
+
+    try:
+        path = Path(step_path)
+        info["exists"] = path.exists()
+        if not path.exists():
+            return info
+
+        info["size_bytes"] = path.stat().st_size
+        sample = path.read_bytes()[:4096]
+        if not sample:
+            return info
+
+        ascii_head = sample[:256].decode("ascii", errors="ignore").upper()
+        nul_count = sample.count(b"\x00")
+        printable_count = sum(1 for b in sample if b in (9, 10, 13) or 32 <= b <= 126)
+        non_text_ratio = 1 - (printable_count / len(sample))
+
+        info["has_iso_signature"] = "ISO-10303-21" in ascii_head
+        info["nul_ratio"] = round(nul_count / len(sample), 4)
+        info["non_text_ratio"] = round(non_text_ratio, 4)
+        info["preview"] = "".join(chr(b) if 32 <= b <= 126 else "." for b in sample[:64])
+        info["supported"] = bool(
+            info["has_iso_signature"] and info["nul_ratio"] <= 0.02 and info["non_text_ratio"] <= 0.35
+        )
+        return info
+    except Exception:
+        return info
+
+
+def _resolve_large_step_policy(step_path: str, timeout_seconds: int) -> Dict[str, Any]:
+    """
+    大 STEP 走更稳的策略：
+    - 文件体积超过阈值时，优先 OCP，避免先在 trimesh/cascadio 上白等 120 秒。
+    - 同时放宽 trimesh 超时，给仍可成功的重模型多一点时间窗口。
+    """
+    threshold_mb = 80
+    large_timeout_seconds = 600
+    try:
+        threshold_mb = int(os.getenv("STEP_LARGE_FILE_MB", str(threshold_mb)))
+    except Exception:
+        pass
+    try:
+        large_timeout_seconds = int(os.getenv("STEP_LARGE_TIMEOUT_SECONDS", str(large_timeout_seconds)))
+    except Exception:
+        pass
+
+    size_bytes = 0
+    try:
+        size_bytes = Path(step_path).stat().st_size
+    except Exception:
+        pass
+
+    threshold_bytes = max(threshold_mb, 1) * 1024 * 1024
+    is_large = size_bytes >= threshold_bytes if size_bytes else False
+    resolved_timeout = max(timeout_seconds, large_timeout_seconds) if is_large else timeout_seconds
+
+    return {
+        "size_bytes": size_bytes,
+        "size_mb": round(size_bytes / 1024 / 1024, 2) if size_bytes else 0.0,
+        "threshold_mb": threshold_mb,
+        "is_large": is_large,
+        "resolved_timeout_seconds": resolved_timeout,
+        "large_timeout_seconds": large_timeout_seconds,
+    }
+
+
+def _build_step_dual_failure(trimesh_result: Dict[str, Any], ocp_result: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    保留两条转换链路的真实失败信息，避免用户只看到表层的“120s 超时”。
+    """
+    trimesh_error = trimesh_result.get("error") or trimesh_result.get("message") or "unknown"
+    ocp_error = ocp_result.get("error") or ocp_result.get("message") or "unknown"
+    return {
+        "success": False,
+        "error": f"STEP->GLB 失败：trimesh={trimesh_error}；OCP={ocp_error}",
+        "message": "step转换失败",
+        "attempts": {
+            "trimesh": trimesh_result,
+            "ocp": ocp_result,
+        },
+    }
+
+
+def _recover_glb_result_from_output(output_path: str, method: str, reason: str) -> Optional[Dict[str, Any]]:
+    """
+    Windows + multiprocessing 下偶尔会出现：
+    - 子进程已经把 GLB 写盘
+    - 但 queue.put 之前/期间卡住，父进程只看到“超时”或“没有返回结果”
+
+    这里做一次保守回收：只有当 GLB 文件确实存在且可被 trimesh 正常加载时，才转为成功。
+    """
+    path = Path(output_path)
+    if not path.exists() or path.stat().st_size <= 0:
+        return None
+
+    try:
+        import trimesh
+
+        scene = trimesh.load(path, force="scene")
+        parts_info = []
+        if isinstance(scene, trimesh.Scene):
+            for node_name in scene.graph.nodes_geometry:
+                try:
+                    _, geometry_name = scene.graph[node_name]
+                    geometry_name = str(geometry_name)
+                except Exception:
+                    geometry_name = ""
+                parts_info.append({"node_name": str(node_name), "geometry_name": geometry_name})
+            parts_count = len(parts_info)
+        else:
+            parts_info.append({"node_name": "single_mesh", "geometry_name": "mesh_0"})
+            parts_count = 1
+
+        return {
+            "success": True,
+            "output_path": str(path),
+            "message": "转换成功（由已生成的GLB结果回收）",
+            "method": method,
+            "parts_count": parts_count,
+            "parts_info": parts_info,
+            "recovered_from_output": {
+                "reason": reason,
+                "size_bytes": path.stat().st_size,
+            },
+        }
+    except Exception:
+        return None
 
 
 def _trimesh_step_to_glb_worker(in_path: str, out_path: str, scale: float, queue: Queue) -> None:
@@ -373,16 +517,43 @@ class ModelProcessor:
         file_ext = os.path.splitext(step_path)[1].lower()
         is_step = file_ext in [".step", ".stp"]
 
-        # ✅ 对“高风险 STEP”优先走 OCP 兜底（避免先等 trimesh 硬超时）
+        # STEP 入口先做格式与体积预检：
+        # 1. 明显不是文本 STEP 的文件直接拒绝，避免用户只看到神秘超时。
+        # 2. 对超大 STEP 提前切到更稳的 OCP-first 策略，不再一刀切 120 秒。
         prefer_ocp_first = False
+        step_probe: Dict[str, Any] = {}
+        step_policy: Dict[str, Any] = {}
         if is_step:
+            step_probe = _inspect_step_file_format(step_path)
+            if not step_probe.get("supported"):
+                return {
+                    "success": False,
+                    "error": (
+                        "当前系统仅支持文本 STEP（ISO-10303-21 / Part 21）导入，"
+                        "该文件头部不像标准文本 STEP，更像二进制或其他 CAD 导出格式。"
+                        "请让用户重新导出为标准 STEP 后再上传。"
+                    ),
+                    "message": "step格式不支持",
+                    "step_probe": step_probe,
+                }
+
+            step_policy = _resolve_large_step_policy(step_path, timeout_seconds)
+            timeout_seconds = step_policy["resolved_timeout_seconds"]
+            if step_policy.get("is_large"):
+                prefer_ocp_first = True
+                print(
+                    "   ⚠️  STEP 体积较大，优先走 OCP："
+                    f"{step_policy['size_mb']}MB >= {step_policy['threshold_mb']}MB，"
+                    f"trimesh超时放宽到 {timeout_seconds}s"
+                )
+
             prefer_ocp_first = os.getenv("STEP_TO_GLB_PREFER_OCP", "").strip().lower() in (
                 "1",
                 "true",
                 "yes",
                 "y",
                 "on",
-            )
+            ) or prefer_ocp_first
             if not prefer_ocp_first:
                 risky, info = _step_has_very_long_lines(step_path)
                 if risky:
@@ -397,6 +568,10 @@ class ModelProcessor:
             ocp_attempted = True
             ocp_result = self._convert_with_ocp(step_path, output_path, scale_factor)
             if ocp_result.get("success"):
+                if step_probe:
+                    ocp_result["step_probe"] = step_probe
+                if step_policy:
+                    ocp_result["step_policy"] = step_policy
                 return ocp_result
 
         result = self._convert_with_trimesh(
@@ -406,6 +581,10 @@ class ModelProcessor:
             timeout_seconds=timeout_seconds,
         )
         if result.get("success"):
+            if step_probe:
+                result["step_probe"] = step_probe
+            if step_policy:
+                result["step_policy"] = step_policy
             return result
 
         # ✅ 兜底：trimesh 超时/失败时，尝试 OCP 转换
@@ -417,7 +596,25 @@ class ModelProcessor:
                     "error": result.get("error"),
                     "message": result.get("message"),
                 }
+                if step_probe:
+                    ocp_result["step_probe"] = step_probe
+                if step_policy:
+                    ocp_result["step_policy"] = step_policy
                 return ocp_result
+            dual_failure = _build_step_dual_failure(result, ocp_result)
+            if step_probe:
+                dual_failure["step_probe"] = step_probe
+            if step_policy:
+                dual_failure["step_policy"] = step_policy
+            return dual_failure
+
+        if is_step and ocp_attempted:
+            dual_failure = _build_step_dual_failure(result, ocp_result)
+            if step_probe:
+                dual_failure["step_probe"] = step_probe
+            if step_policy:
+                dual_failure["step_policy"] = step_policy
+            return dual_failure
 
         return result
 
@@ -444,6 +641,9 @@ class ModelProcessor:
         """
         使用trimesh进行转换（保留装配层级），并在独立进程中设置硬超时。
         """
+        # 先清掉同路径旧产物，避免“上一次成功文件”被误回收成这一次的结果。
+        Path(output_path).unlink(missing_ok=True)
+
         result_queue: Queue = Queue()
         process: Process = Process(
             target=_trimesh_step_to_glb_worker,
@@ -454,6 +654,9 @@ class ModelProcessor:
 
         if process.is_alive():
             _terminate_process(process)
+            recovered = _recover_glb_result_from_output(output_path, "trimesh", f"timeout_{timeout_seconds}s")
+            if recovered:
+                return recovered
             return {
                 "success": False,
                 "error": f"STEP->GLB 转换超时（{timeout_seconds}s）",
@@ -461,6 +664,9 @@ class ModelProcessor:
             }
 
         if result_queue.empty():
+            recovered = _recover_glb_result_from_output(output_path, "trimesh", "empty_queue")
+            if recovered:
+                return recovered
             return {
                 "success": False,
                 "error": "转换进程未返回结果",

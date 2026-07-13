@@ -488,6 +488,15 @@ class GeminiAssemblyPipeline:
                     step_dir, bom_data, planning_result, file_hierarchy
                 )
             if not self._is_valid_matching_result(matching_result):
+                # Step4 已经能拿到更具体的 STEP/GLB 转换失败原因时，优先向上透传；
+                # 只有确实拿不到细节时，才回退成统一 validation_failed。
+                failure_reason = ""
+                if isinstance(matching_result, dict):
+                    failure_reason = (
+                        str(matching_result.get("error") or matching_result.get("message") or "").strip()
+                    )
+                if failure_reason:
+                    raise ValueError(failure_reason)
                 raise ValueError("validation_failed: matching_result_invalid")
             
             # ========== 主线路: Agent 3-6 ==========

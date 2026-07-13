@@ -1636,7 +1636,7 @@ const handleSSEMessage = async (data: any) => {
       } else if (data.status === 'completed') {
         addLog('✅ 任务处理完成', 'success')
       } else if (data.status === 'failed') {
-        addLog('❌ 任务处理失败', 'error')
+        // 失败原因要等 complete 事件里的 failure_hint / error，避免先打一条误导性的通用失败日志。
       } else if (data.status === 'cancelled') {
         addLog('⏹ 任务已停止', 'warning')
       }

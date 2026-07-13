@@ -1,21 +1,61 @@
 # Memory Changelog
 
-## 2026-07-01 Git 版本口径校正（无业务代码变更）
-- **问题背景**：
-  - 2026-07-01 复盘时确认：用户现场实际部署包 `assembly-manual_images_v2.1.55.tar` 与历史云端 `release: v2.1.55` 提交不是完全同一份前端代码。
-  - 旧的 `v2.1.55` tag 曾被打在云端原始基线 `93e6640` 上，后续又将 `main` 恢复成更贴近现场部署的版本，导致“tag / main / 部署包”三者口径混杂。
-- **证据摘要**：
-  1. 部署包后端文件与 `93e6640` 哈希一致。
-  2. 部署包前端已包含 `自动翻页 / 停止翻页`，而 `93e6640` 的 `ManualViewer.vue` 仍是 `自动播放 / 停止自动播放`。
-  3. 因此用户现场最终版本应以“恢复后的部署版”而不是单纯 `93e6640` 作为正式口径。
-- **校正结果**：
-  1. `v2.1.55` tag 改指 `7556710`，用于代表用户现场实际部署版本。
-  2. 新增 `v2.1.55-cloud-base` tag 指向 `93e6640`，保留历史上的云端原始 `release: v2.1.55` 提交。
-  3. 仓库分支口径统一为 `main = 用户部署/正式版本`、`dev = 后续开发分支`。
-- **影响文件**：`README.md`、`RELEASE_v2.1.55.md`、`Memory_Development/index.md`、`Memory_Development/changelog.md`
-- **记录人**：Codex
-
-## v2.1.56 (2026-07-02)
+## v2.1.56 (2026-07-01)
+- **STEP->GLB 转换链路补强：区分非标准 STEP、放宽重模型链路，并回收已生成的 GLB 结果（2026-07-02）**：
+  - **用户提问**：
+    - “所以有没有办法真正解决这个问题，我现在要的是解决方案。”
+    - “那你的意思是我现在重新跑一次？你还说你改了我么你项目的打吗了是吗，那你要更新changelog呀”
+  - **问题根因**：
+    1. 旧链路默认把 `.step/.stp` 都当成可解析的文本 STEP，像二进制/非标准导出文件也会继续进入 `trimesh/cascadio`，最后只表现成超时或 `converted.glb` 缺失，错误口径误导排查。
+    2. `processors/file_processor.py` 的 `step_to_glb(...)` 使用固定 `120s` `trimesh` 子进程超时，较大或几何复杂的 STEP 即使最终能产出 GLB，也可能先被父进程判成失败。
+    3. 旧逻辑在 `trimesh` 失败后才尝试 OCP 兜底，但如果 OCP 也失败，只会把最早那条 `trimesh` 表层错误返回，真实的 OCP 错误会被吃掉。
+    4. Windows + `multiprocessing` 场景下，子进程可能已经把 GLB 写盘，但在 `queue.put(...)` 前后卡住；旧父进程看不到结果时会直接返回失败，形成“产物已经生成但接口仍报错”的假失败。
+  - **问题场景**：
+    - 用户上传 STEP 后，系统日志显示“开始加载 STEP 文件”，随后卡在 `STEP->GLB 转换超时（120s）`，并继续触发 `validation_failed: matching_result_invalid`。
+    - 对比样本 `uploads/03.05.09.0165E-MQC50-360°快速连接器.STEP` 的文件头不是 `ISO-10303-21;`，解析报错也不是正常文本 STEP 语法，更像二进制/非标准导出格式。
+    - 归档文本样本 `output_archive/03.02.10.0007T-AS3000-BIG BM清除器Big BM连接器/...step` 在旧逻辑下会出现 OCP 超时，但磁盘上实际上已经写出了可正常加载的 GLB。
+  - **修复方案**：
+    1. `processors/file_processor.py` 新增 `_inspect_step_file_format(...)`，读取 STEP 文件头并按 `ISO-10303-21`、`nul_ratio`、`non_text_ratio` 做轻量预检；明显不是文本 STEP 的文件直接返回 `step格式不支持`，不再伪装成超时。
+    2. 同文件新增 `_resolve_large_step_policy(...)`，对体积较大的 STEP 自动切到更稳的 `OCP-first` 路径，并放宽 `trimesh` 超时窗口，避免所有重模型都先在 `120s` 固定超时上白等。
+    3. 同文件新增 `_build_step_dual_failure(...)`，把 `trimesh` 与 OCP 两条链路的失败信息一并透传到 `attempts`，不再只返回表层超时。
+    4. `processors/file_processor.py` 与 `processors/ocp_step_to_glb.py` 分别新增 `_recover_glb_result_from_output(...)`，在子进程超时或 `queue` 为空时，如果磁盘上的 GLB 已经存在且能被 `trimesh.load(..., force=\"scene\")` 正常加载，就回收成成功结果。
+    5. `processors/step_to_glb_converter.py` 在进入编码探测前复用同一份 STEP 预检，避免二进制样本先被 `chardet` 误判编码，再白跑一轮重转换。
+  - **验证结果**：
+    1. `python -m py_compile processors/file_processor.py processors/ocp_step_to_glb.py processors/step_to_glb_converter.py` 通过。
+    2. 对比样本 `uploads/03.05.09.0165E-MQC50-360°快速连接器.STEP` 预检结果为 `has_iso_signature=false / supported=false`，现在会秒级明确返回“当前系统仅支持文本 STEP（ISO-10303-21 / Part 21）导入”。
+    3. 文本样本 `output_archive/03.02.10.0007T-AS3000-BIG BM清除器Big BM连接器/...step` 现在会返回 `success=true`，`method=ocp`，并带 `recovered_from_output.reason=timeout_600s`；生成的 `GLB` 已实测可被 `trimesh` 正常加载，`geometry=420`。
+    4. 外部代码审查已完成，结论为“代码审查通过”，无阻塞问题；已记录非阻塞观察项，如重复预检与可观测性可继续优化。
+  - **决策摘要**：
+    - **根因判断**：这次不是单一“再加一点超时”就能解决，而是三类问题叠加：非标准 STEP 被误送入转换链路、重模型固定 `120s` 超时、以及“GLB 已写盘但接口仍判失败”的假失败。
+    - **方案取舍**：本轮优先补后端转换链路的入口校验、分流策略和结果回收，没有直接大改整个生成工作流，也没有把问题先甩给用户重新导出。
+    - **未选方案**：没有把所有 STEP 一刀切改成 OCP-only，因为那会扩大回归面；也没有直接调高全局固定超时，因为那不能解决二进制/伪 STEP 和假失败。
+    - **当前遗留边界**：用户原始失败文件 `MQC40` 当前不在宿主目录，尚未用这份原件做最终回归；并且当前运行中的 Docker 容器是否已重建需单独确认，因为 `docker-compose.yml` 使用 `build` 镜像 + 数据卷，不会自动热加载仓库源码。
+  - **影响文件**：`processors/file_processor.py`、`processors/ocp_step_to_glb.py`、`processors/step_to_glb_converter.py`、`Memory_Development/changelog.md`
+  - **记录人**：Codex
+- **前端失败提示透传真实 STEP 原因，避免把格式错误显示成“生成内容为空”（2026-07-03）**：
+  - **用户提问**：
+    - “可以，那估计就是这份文件存在问题，那你就要日志上写清楚了，不然前端用户还一脸懵，搞得我们系统问题，知道我说的日志是哪边吗”
+  - **问题根因**：
+    1. `core/hierarchical_bom_matcher_v2.py` 在 Step4 里只打印 `GLB转换失败`，但不会把具体错误带进返回值；上层只能看到“匹配结果为空”。
+    2. `core/gemini_pipeline.py` 在 Step4 无效时统一抛 `validation_failed: matching_result_invalid`，把真实 STEP/GLB 错误抹平成校验失败。
+    3. `backend/simple_app.py` 的 `_classify_failure(...)` 会把这类统一错误映射成“生成内容为空，请删除后重试。”。
+    4. `frontend/src/views/Generator.vue` 在 `status_change=failed` 时还会先打一条泛化日志 `❌ 任务处理失败`，进一步误导用户。
+  - **修复方案**：
+    1. `core/hierarchical_bom_matcher_v2.py` 新增 `conversion_failures` 收集器，组件级/产品级 `STEP->GLB` 失败时把真实 `error`、源 STEP、目标 GLB 一并带回 Step4 结果。
+    2. `core/gemini_pipeline.py` 在 Step4 返回无效结果时，优先抛出 `matching_result.error/message`，只有确实拿不到细节时才回退成统一 `validation_failed`。
+    3. `backend/simple_app.py` 的 `_classify_failure(...)` 新增 `unsupported_step_format` 与 `step_conversion_timeout` 两类失败提示，分别对应“STEP 文件格式不兼容”和“STEP 模型转换超时”。
+    4. `frontend/src/views/Generator.vue` 去掉 `status_change=failed` 的泛化日志，改为等 `complete` 事件里的 `failure_hint/error` 作为最终前端可见错误。
+  - **验证结果**：
+    1. `python -m py_compile backend/simple_app.py core/gemini_pipeline.py core/hierarchical_bom_matcher_v2.py` 通过。
+    2. `_classify_failure(...)` 已用样例字符串验证：`当前系统仅支持文本 STEP...` 与 `unexpected QUID, expecting STEP` 会落到 `unsupported_step_format`；`STEP->GLB 转换超时（120s）` 会落到 `step_conversion_timeout`。
+    3. 外部代码审查已完成，结论为“代码审查通过”；已记录剩余风险主要是“尚未做真实浏览器回归、尚未用原失败文件做端到端重跑”。
+  - **决策摘要**：
+    - **根因判断**：真正的问题不是前端不会显示错误，而是后端在 Step4 到任务状态这条链路里把具体 STEP 错误抹平了。
+    - **方案取舍**：本轮优先修“错误透传链路”和“前端误导性日志”，不扩大到重新设计整个失败状态机。
+    - **未选方案**：没有只改前端文案，因为那会继续依赖后端给出的泛化 `failure_hint`；也没有把所有失败都硬编码成 STEP 错误，避免污染其他校验失败场景。
+    - **当前遗留边界**：还未用原始失败文件做浏览器端到端回归；如果 SSE 在 `status_change` 后、`complete` 前异常中断，当前实现仍主要依赖后续 `complete` 或轮询状态来显示详细原因。
+  - **影响文件**：`core/hierarchical_bom_matcher_v2.py`、`core/gemini_pipeline.py`、`backend/simple_app.py`、`frontend/src/views/Generator.vue`、`Memory_Development/changelog.md`
+  - **记录人**：Codex
 - **用户部署线补功能：设置页入口改为长按 + AI 配置跨重启持久化**：
   - **用户提问**：
     - “我们其实不能碰那个分支，因为那个分支完整的暴露了用户现在正在用的版本，所以我还是觉得应该把我们当前的dev分支线变成用户正在用的版本，然后再进行开发。”
@@ -44,6 +84,21 @@
     - **当前遗留边界**：本地已补做 `docker compose up -d --build`、`docker compose restart backend frontend` 和 `/api/settings/health` 取证，确认重启后仍从 `runtime_settings/app_settings.json` 恢复；桌面端长按已由用户手测通过。当前只剩“若未来要在平板/手机上进入隐藏设置页，还需再做一次真实触屏长按验收”这一条边界。
   - **影响文件**：`frontend/src/App.vue`、`frontend/src/views/Settings.vue`、`backend/simple_app.py`、`docker-compose.yml`、`.env.example`、`.gitignore`、`.dockerignore`、`tests/test_runtime_settings_persistence.py`、`VERSION`、`README.md`、`DEPLOYMENT.md`、`Memory_Development/index.md`、`Memory_Development/backend/api.md`、`Memory_Development/frontend/routes.md`、`Memory_Development/changelog.md`
   - **记录人**：Codex
+
+## 2026-07-01 Git 版本口径校正（无业务代码变更）
+- **问题背景**：
+  - 2026-07-01 复盘时确认：用户现场实际部署包 `assembly-manual_images_v2.1.55.tar` 与历史云端 `release: v2.1.55` 提交不是完全同一份前端代码。
+  - 旧的 `v2.1.55` tag 曾被打在云端原始基线 `93e6640` 上，后续又将 `main` 恢复成更贴近现场部署的版本，导致“tag / main / 部署包”三者口径混杂。
+- **证据摘要**：
+  1. 部署包后端文件与 `93e6640` 哈希一致。
+  2. 部署包前端已包含 `自动翻页 / 停止翻页`，而 `93e6640` 的 `ManualViewer.vue` 仍是 `自动播放 / 停止自动播放`。
+  3. 因此用户现场最终版本应以“恢复后的部署版”而不是单纯 `93e6640` 作为正式口径。
+- **校正结果**：
+  1. `v2.1.55` tag 改指 `7556710`，用于代表用户现场实际部署版本。
+  2. 新增 `v2.1.55-cloud-base` tag 指向 `93e6640`，保留历史上的云端原始 `release: v2.1.55` 提交。
+  3. 仓库分支口径统一为 `main = 用户部署/正式版本`、`dev = 后续开发分支`。
+- **影响文件**：`README.md`、`RELEASE_v2.1.55.md`、`Memory_Development/index.md`、`Memory_Development/changelog.md`
+- **记录人**：Codex
 
 ## v2.1.55 (2026-03-18)
 - **PDF 文本层 BOM 提取支持 5 位尾号代码**：
