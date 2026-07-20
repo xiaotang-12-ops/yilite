@@ -1,9 +1,9 @@
 # 📸 项目快照 - Memory Development
 
 **创建时间**: 2025-11-18
-**最后校对**: 2026-07-02
-**当前版本**: v2.1.56
-**项目状态**: 核心功能完成，可用
+**最后校对**: 2026-07-20
+**当前版本**: v2.1.57
+**项目状态**: 核心功能完成，可用；ManualViewer“调整位置”右侧无蒙层面板已由小糖完成页面验收
 
 ---
 
@@ -87,7 +87,7 @@ output/{task_id} (JSON + GLB + 图片)
 | `/` | HomeNew.vue | 首页展示 | |
 | `/generator` | Generator.vue | 上传与任务发起 | 调 /api/upload, /api/generate |
 | `/viewer/:id?` | Viewer.vue | 3D 预览与结果查看 | 搜索栏支持“扫一扫”回填；扫码成功后会直接写入 `searchQuery`；已验证 Android 系统浏览器在“自签 HTTPS + 首次信任证书”场景可调起摄像头；移动端固定为工人查看入口，仅展示 `已完成(published)` 项目且不提供管理员登录；桌面端管理员新增 `待调整/已完成/旧版本/异常任务` 视图和项目 `移动到` 分类能力；搜索不再匹配原始 `taskId` 旧名字，时间列文案改为“修改时间” |
-| `/manual/:taskId` | ManualViewer.vue | 装配手册查看/编辑 | 管理员支持草稿保存/发布；桌面端新增 `编辑 -> 自动播放` 自动翻步，可输入 `0.5-60` 秒间隔后从第一步播到最后一步；修复顶部工具栏在长标题步骤下的高度抖动 |
+| `/manual/:taskId` | ManualViewer.vue | 装配手册查看/编辑 | 管理员支持草稿保存/发布；桌面端管理员可从 3D 控制区打开按 GLB 隔离的“调整位置”，在右侧说明栏的无蒙层面板中实时调整网格上下、模型左右和模型上下位置，恢复默认或一次性保存草稿；中间 3D 画布不重排，普通查看者读取发布值，历史版本与移动端不显示入口；源码已完成生产构建、静态回归并由小糖完成最新容器页面验收；另支持 `编辑 -> 自动播放`，可输入 `0.5-60` 秒间隔从第一步播到最后一步 |
 | `/version-history/:taskId` | VersionHistory.vue | 历史版本与回滚 | 调 /api/manual/* history/version/rollback |
 | `/engineer` | Engineer.vue | 工程师视图（质检/分发） | |
 | `/settings` | Settings.vue | AI 设置（隐藏入口） | 品牌区鼠标左键长按 5 秒解锁；调 `/api/settings` 与 `/api/settings/health`；支持每调用点 `兜底模型`；一键全测会分别测试主模型与兜底模型；测试后端/全测具备超时提示；`newapi` 下多模态调用点不展示 `glm-5`，手填会自动替换并提示；本地缓存缺失时空白保存默认保留服务端已有 Key |
@@ -108,7 +108,7 @@ output/{task_id} (JSON + GLB + 图片)
 ---
 
 ## 运行与环境
-- Docker：`docker-compose up --build`（映射 `8008:8008` 后端、`3008:80` 前端 HTTP、`3443:443` 前端 HTTPS）；前端 `HTTPS` 证书目录统一为宿主机本地 `./ssl` 只读挂载到容器 `/etc/nginx/ssl`，不再打包进镜像；根目录 `.gitignore` 与 `.dockerignore` 都会排除 `ssl/` 与 `runtime_settings/`；后端运行期 AI 设置持久化到宿主机 `./runtime_settings/app_settings.json`；镜像名附版本 `assembly-manual-*-v2.1.56`。
+- Docker：`docker-compose up --build`（映射 `8008:8008` 后端、`3008:80` 前端 HTTP、`3443:443` 前端 HTTPS）；前端 `HTTPS` 证书目录统一为宿主机本地 `./ssl` 只读挂载到容器 `/etc/nginx/ssl`，不再打包进镜像；根目录 `.gitignore` 与 `.dockerignore` 都会排除 `ssl/` 与 `runtime_settings/`；后端运行期 AI 设置持久化到宿主机 `./runtime_settings/app_settings.json`；镜像名附版本 `assembly-manual-*-v2.1.57`。
 - 本地调试：后端 `uvicorn backend.simple_app:app --host 0.0.0.0 --port 8008`；前端 `npm install && npm run dev`（默认 3000）。
 - 必需环境变量：按调用点配置需要 `OPENROUTER_API_KEY` / `DEEPSEEK_API_KEY` / `NEWAPI_API_KEY`（兼容 `ARK_API_KEY`）；可选 `BLENDER_EXE` 指向 Blender 可执行文件。
 
@@ -117,10 +117,9 @@ output/{task_id} (JSON + GLB + 图片)
 ## 最近 3 个版本快照
 | 版本 | 日期 | 关键变更 |
 | --- | --- | --- |
+| v2.1.57 | 2026-07-20 | **ManualViewer 通用场景位置调整**：<br/>- 桌面管理员可按 GLB 独立调整网格上下和模型画面左右/上下位置，配置复用手册草稿/发布链<br/>- 网格默认基线改为归位包围盒底部加相对尺寸安全间距，旧手册无字段时自动计算且无需迁移<br/>- “调整位置”使用右侧说明栏内的无蒙层面板，模型保持可见且画布不重排；历史版本与移动端继续隐藏入口<br/>- 生产构建、`9/9` 场景测试和静态契约检查通过，小糖已完成最新容器页面验收 |
 | v2.1.56 | 2026-07-01 | **设置持久化、隐藏入口与 STEP 失败链路升级**：<br/>- `App.vue` 隐藏设置入口从“10 秒内连点 10 次”改为品牌区鼠标左键长按 `5` 秒，保留用户现场原 Logo/标题，不混入后续头像线<br/>- `simple_app.py` 新增 `runtime_settings/app_settings.json` 持久化、启动优先读取、保存失败回滚、`/api/settings/health` 排障接口<br/>- `Settings.vue` 区分“未改动留空”和“明确清空”，浏览器本地缓存丢失时不会误把服务端已有 Key 擦掉<br/>- STEP 入口新增 Part 21 文本格式预检、大模型 OCP-first、双转换错误保留与已生成 GLB 回收<br/>- STEP 格式错误和转换超时会沿流水线透传到前端，不再统一显示为“生成内容为空”<br/>- `docker-compose.yml` 新增 `runtime_settings` 挂载与 `DEEPSEEK_API_KEY/NEWAPI_API_KEY/ARK_API_KEY` 透传，镜像/容器名升级到 `v2.1.56` |
 | v2.1.55 | 2026-03-18 | **PDF 文本层 BOM 提取支持 5 位尾号代码**：<br/>- `pdf_text_bom_extractor.py` 的记录头识别从固定 `4` 位尾号放宽到 `4-5` 位，`01.01.01.10852/10853` 这类真实 BOM 代码不再被漏掉<br/>- 新增回归测试覆盖 `5` 位尾号 BOM 文本层提取，防止再次只识别到后半段 BOM<br/>- 本地复跑 `组件图1.pdf` 文本层提取后，BOM 数量从 `2` 条恢复为 `4` 条 |
-| v2.1.54 | 2026-03-18 | **Viewer 搜索去掉旧 `taskId` 命中 + ManualViewer 录制文案更名**：<br/>- `Viewer.vue` 搜索不再匹配 `taskId`，重命名后旧名字不会继续命中搜索结果<br/>- 查看器表格时间列文案从“生成时间”改为“修改时间”，与后端返回的文件修改时间口径一致<br/>- `ManualViewer.vue` 的桌面端管理员菜单把 `录制/停止录制` 改为 `自动播放/停止自动播放` |
-| v2.1.53 | 2026-03-17 | **项目分类接口兼容历史坏 `task_status.json`**：<br/>- `simple_app.py` 新增坏状态文件自动重建 helper，`PUT /api/manual/{task_id}/category` 与 `PUT /api/manual/{task_id}/rename` 遇到损坏 `task_status.json` 不再直接报 `Expecting value`<br/>- 历史脏数据会按 `assembly_manual.json` 和任务目录信息重建最小合法状态，再继续写入 `project_category/projectName`<br/>- 已补回归测试覆盖“坏 `task_status.json` 仍能改分类”场景，并修复当前 `output/` 下 3 个坏状态文件 |
 
 ---
 

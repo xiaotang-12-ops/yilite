@@ -1,6 +1,6 @@
 # 智能装配说明书生成系统
 
-[![Version](https://img.shields.io/badge/version-v2.1.56-blue.svg)](https://github.com/xiaotang-12-ops/yilite/releases)
+[![Version](https://img.shields.io/badge/version-v2.1.57-blue.svg)](https://github.com/xiaotang-12-ops/yilite/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Docker](https://img.shields.io/badge/docker-ready-brightgreen.svg)](DOCKER_DEPLOYMENT.md)
 
@@ -8,7 +8,7 @@
 
 一个基于AI的智能装配说明书生成系统，能够自动解析PDF工程图纸和3D模型，生成工人友好的交互式HTML装配说明书。
 
-**当前版本**: v2.1.56 | [查看版本历史](https://github.com/xiaotang-12-ops/yilite/releases) | [部署指南](DOCKER_DEPLOYMENT.md)
+**当前版本**: v2.1.57 | [查看版本历史](https://github.com/xiaotang-12-ops/yilite/releases) | [部署指南](DOCKER_DEPLOYMENT.md)
 
 ## 版本与分支口径（2026-07-01 校正）
 
@@ -17,14 +17,14 @@
 - `v2.1.55`：正式标签，指向提交 `7556710`，表示依据 `assembly-manual_images_v2.1.55.tar` 反推并恢复出的用户现场部署版本。
 - `v2.1.55-cloud-base`：历史保留标签，指向提交 `93e6640`，表示当年云端原始 `release: v2.1.55` 基线；该提交的前端不包含现场包中的 `自动翻页` 改动。
 
-## 🆕 最新更新 (v2.1.56)
+## 🆕 最新更新 (v2.1.57)
 
-- **🔒 隐藏设置入口改为长按 5 秒**：用户现场版保留原 Logo 与标题，不再使用 “10 秒内连点 10 次” 进入 `/settings`，改成鼠标左键长按品牌区 5 秒。
-- **💾 AI 设置改为运行时持久化**：`/api/settings` 现在会把 OpenRouter / DeepSeek / NewAPI Key 及调用点模型配置写入 `runtime_settings/app_settings.json`，Docker 重启或系统重启后会优先从该文件恢复。
-- **🧯 空白保存不再误清空服务端 Key**：设置页会区分“本次没动过输入框”和“用户明确清空”，本地缓存丢失时留空保存默认保留服务端已有 Key。
-- **🧩 STEP 转换链路补强**：非标准/二进制 STEP 会提前给出明确提示；大模型优先走 OCP，并能回收已经生成但进程未及时回传的 GLB 结果。
-- **📣 失败原因直达前端**：STEP 格式不兼容和转换超时不再统一显示为“生成内容为空”，用户可以按真实原因处理文件或联系管理员。
-- **🐳 镜像口径升级到 v2.1.56**：`docker-compose.yml` 中前后端镜像与容器名已同步切到 `v2.1.56`，避免继续和用户现场 `v2.1.55` 混淆。
+- **📐 网格自动贴近模型底部**：不再对所有 GLB 使用固定 `y=-5`，默认位置会根据当前模型归位后的包围盒与尺寸自动计算。
+- **🎛️ 桌面管理员可调整位置**：在手册 3D 控制区点击“调整位置”，可分别调整网格上下、模型画面左右和模型画面上下位置。
+- **👀 调整时模型始终可见**：面板覆盖右侧说明区域，无全屏遮罩，不重排中间画布；可边旋转、缩放模型边观察实时效果。
+- **🧩 多 GLB 配置互不串值**：每个 GLB 单独保存校准值，继续复用手册草稿/发布链；旧手册无需迁移即可使用自动默认。
+- **🔒 权限和历史边界保持不变**：入口只对桌面管理员当前版本显示，普通查看者读取已发布效果，历史版本和移动端不显示编辑入口。
+- **🐳 镜像口径升级到 v2.1.57**：`docker-compose.yml` 中前后端镜像与容器名同步切到 `v2.1.57`。
 
 ### 🌟 v2.0.x 系列演进亮点
 
@@ -76,7 +76,7 @@ docker-compose up -d
 
 说明：首次保存设置后，后端会自动创建 `runtime_settings/app_settings.json`，后续重启会优先读取它而不是回退到默认 `openrouter` 配置。
 
-如果当前机器上已经跑着旧版本容器，先执行 `docker compose down --remove-orphans`，或手动停止并删除旧的 `assembly-backend-v2.1.58 / assembly-frontend-v2.1.58`，再启动 `v2.1.56`，否则 `8008/3008/3443` 端口会被旧容器占用。
+如果当前机器上已经跑着旧版本容器，先执行 `docker compose down --remove-orphans`，或手动停止并删除对应的旧版 `assembly-backend-* / assembly-frontend-*` 容器，再构建并启动 `v2.1.57`，否则 `8008/3008/3443` 端口会被占用。
 
 证书目录结构示例：
 
