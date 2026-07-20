@@ -23,7 +23,9 @@
    - 媒体：`/api/manual/{task_id}/glb/{file}`（GLB），`/api/manual/{task_id}/pdf_images/{pdf}/page_xxx.png`。  
    - 进度/日志：`/api/status/{task_id}`、SSE `/api/stream/{task_id}`、WebSocket `/ws/task/{task_id}`。
 5. 编辑与版本  
-   - 前端 ManualViewer 支持编辑焊接/安全/质检/组件名；调用 `PUT /api/manual/{task_id}` 自增版本号、写回并打 `lastUpdated`。
+   - 前端 `ManualViewer` 的当前编辑链优先调用 `POST /api/manual/{task_id}/save-draft` 写 `draft.json`，再由 `POST /api/manual/{task_id}/publish` 生成发布版与历史归档；旧 `PUT /api/manual/{task_id}` 只保留为直接发布兼容入口。
+   - 场景校准沿用同一条 opaque `manual_data` 草稿/发布链，字段位于 `metadata.viewer_settings.scene_calibration_by_glb[glb_file]`；保存归一化网格/画面偏移与 `schema_version/box_signature`，因此同一任务的多个 GLB 不串值。旧手册没有该字段时前端直接计算自动网格，不做批量迁移。
+   - 滑杆输入只更新浏览器内 Three.js 预览；管理员确认才发一笔 `save-draft`。发布后普通查看者从发布版读取同一配置；`?version=v*` 历史预览保持只读。
 
 输出目录示例
 ```

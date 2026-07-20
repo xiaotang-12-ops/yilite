@@ -2,7 +2,7 @@
 
 本文档说明如何从 GitHub 克隆项目并使用 Docker 部署智能装配说明书生成系统。
 
-**当前版本**: v2.1.56 | [查看所有版本](https://github.com/xiaotang-12-ops/yilite/releases)
+**当前版本**: v2.1.57 | [查看所有版本](https://github.com/xiaotang-12-ops/yilite/releases)
 
 ---
 
@@ -48,7 +48,7 @@ cd yilite
 
 #### 部署特定版本
 
-如果你想部署特定版本（例如 `v2.1.56`），可以使用以下命令：
+如果你想部署特定版本（例如 `v2.1.57`），可以使用以下命令：
 
 ```bash
 # 克隆项目
@@ -59,7 +59,7 @@ cd yilite
 git tag
 
 # 切换到特定版本
-git checkout v2.1.56
+git checkout v2.1.57
 
 # 进入项目目录
 cd yilite
@@ -141,8 +141,8 @@ docker-compose logs -f
 
 | 服务名称 | 容器名称 | 端口 | 说明 |
 |---------|---------|------|------|
-| backend | assembly-backend-v2.1.56 | 8008 | FastAPI 后端服务 |
-| frontend | assembly-frontend-v2.1.56 | 3008 / 3443 (映射到容器的 80 / 443 端口) | Vue 3 前端服务，支持 HTTP/HTTPS，证书来自宿主机根级 `ssl/` 挂载 |
+| backend | assembly-backend-v2.1.57 | 8008 | FastAPI 后端服务 |
+| frontend | assembly-frontend-v2.1.57 | 3008 / 3443 (映射到容器的 80 / 443 端口) | Vue 3 前端服务，支持 HTTP/HTTPS，证书来自宿主机根级 `ssl/` 挂载 |
 
 ### 数据持久化
 
@@ -176,7 +176,7 @@ docker-compose up -d backend
 docker-compose up -d frontend
 ```
 
-如果你之前是手动启动的 `assembly-backend-v2.1.58` / `assembly-frontend-v2.1.58`，也可以先用 `docker stop` + `docker rm` 清掉旧容器，再启动 `v2.1.56`。
+如果你之前是手动启动的旧版 `assembly-backend-*` / `assembly-frontend-*` 容器，也可以先用 `docker stop` + `docker rm` 清理对应旧容器，再构建并启动 `v2.1.57`。
 
 ### 停止服务
 ```bash
@@ -232,13 +232,13 @@ docker-compose build backend
 ### 进入容器
 ```bash
 # 进入后端容器
-docker exec -it assembly-backend-v2.1.56 bash
+docker exec -it assembly-backend-v2.1.57 bash
 
 # 进入前端容器
-docker exec -it assembly-frontend-v2.1.56 sh
+docker exec -it assembly-frontend-v2.1.57 sh
 
 # 在后端容器中执行Python命令
-docker exec -it assembly-backend-v2.1.56 python -c "print('Hello')"
+docker exec -it assembly-backend-v2.1.57 python -c "print('Hello')"
 ```
 
 ---

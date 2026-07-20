@@ -347,6 +347,16 @@
               </el-button>
             </el-button-group>
 
+            <el-button
+              v-if="isAdmin && !isReadOnlyMode && !isMobile"
+              class="scene-calibration-entry"
+              type="primary"
+              plain
+              @click="openSceneCalibration"
+            >
+              调整位置
+            </el-button>
+
             <!-- 爆炸比例滑块（放在按钮组同一行） -->
             <div v-if="isExploded && !isMobile" class="explode-slider-inline">
               <el-slider
@@ -581,6 +591,18 @@
           </div>
           </el-scrollbar>
         </div>
+
+        <SceneCalibrationPanel
+          :model-value="sceneCalibrationPanelVisible"
+          :glb-file="loadedGlbFile"
+          :calibration="activeSceneCalibration"
+          :geometry="activeSceneCalibrationGeometry"
+          :saving="sceneCalibrationSaving"
+          :save-error="sceneCalibrationSaveError"
+          @preview="previewSceneCalibration"
+          @cancel="cancelSceneCalibration"
+          @save="saveSceneCalibration"
+        />
 
         <div class="split-handle split-handle-right" @pointerdown="startSidebarResize('right', $event)"></div>
         <div class="split-toggle right" :title="isRightSidebarCollapsed ? '展开步骤' : '收起步骤'" @click="toggleRightSidebar">
@@ -1349,6 +1371,7 @@
         </div>
       </template>
     </el-dialog>
+
   </div>
 
   <Teleport to="body">
@@ -1412,6 +1435,18 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { ElImageViewer } from 'element-plus'
 import { useAdminStore } from '../stores/admin'
+import SceneCalibrationPanel from './manual-viewer/components/SceneCalibrationPanel.vue'
+import {
+  calculateGridHeight,
+  createAutomaticSceneCalibration,
+  createSceneCalibrationGeometry,
+  readSceneCalibration,
+  sanitizeSceneCalibration,
+  writeSceneCalibration,
+  type BoundsSnapshot,
+  type SceneCalibration,
+  type SceneCalibrationGeometry
+} from './manual-viewer/sceneCalibration'
 
 // ============ 辅助函数 ============
 
@@ -1833,15 +1868,26 @@ let camera: THREE.PerspectiveCamera | null = null
 let renderer: THREE.WebGLRenderer | null = null
 let controls: OrbitControls | null = null
 let model: THREE.Group | null = null
+let gridGroup: THREE.Group | null = null
 let gridHelper: THREE.GridHelper | null = null
 let gridBoundary: THREE.Line | null = null
 let animationId: number | null = null
 let resizeHandler: (() => void) | null = null
+let restModelBox: THREE.Box3 | null = null
+const appliedCameraPan = new THREE.Vector3()
 
-// 固定网格配置：与验证脚本一致，提供小范围且有边界的网格
+// 场景校准按当前已加载 GLB 工作；Three.js 实例保持非响应式，面板只接收轻量数值快照。
+const loadedGlbFile = ref('')
+const activeSceneCalibration = ref<SceneCalibration>(createAutomaticSceneCalibration())
+const activeSceneCalibrationGeometry = ref<SceneCalibrationGeometry>(createSceneCalibrationGeometry(null))
+const sceneCalibrationPanelVisible = ref(false)
+const sceneCalibrationSaving = ref(false)
+const sceneCalibrationSaveError = ref('')
+const sceneCalibrationOpeningValue = ref<SceneCalibration>(createAutomaticSceneCalibration())
+
+// 网格尺寸与视觉风格沿用现状；高度改由归位模型包围盒和当前 GLB 校准共同决定。
 const GRID_SIZE = 150
 const GRID_DIVISIONS = 40
-const GRID_HEIGHT = -5
 const GRID_COLOR_CENTER = 0x666666
 const GRID_COLOR_LINE = 0x999999
 const GRID_BOUNDARY_COLOR = 0x444444
@@ -3121,6 +3167,7 @@ const refreshManualFromServer = async () => {
     const cacheKey = `current_manual_${props.taskId}`
     localStorage.setItem(cacheKey, JSON.stringify(data))
     setManualDataValue(data)
+    syncSceneCalibrationFromManual()
     if (isMobile.value) {
       restoreMobileStepIndex(stepBeforeRefresh)
     } else {
@@ -3801,6 +3848,9 @@ watch(historyVersion, (newVal, oldVal) => {
 watch(isAdmin, async (newVal, oldVal) => {
   if (newVal === oldVal) return
   if (!props.taskId || isReadOnlyMode.value) return
+  if (!newVal && sceneCalibrationPanelVisible.value) {
+    cancelSceneCalibration()
+  }
 
   const beforeVersion = manualData.value?.version || ''
   const beforeLastUpdated = manualData.value?.lastUpdated || ''
@@ -4007,21 +4057,43 @@ const getMeshGeometryCenterWorld = (mesh: THREE.Mesh, fallbackWorldPos: THREE.Ve
   return mesh.localToWorld(localCenter)
 }
 
-// 依据固定配置刷新网格：小范围 + 边界，高度锁定
-const refreshGridHelper = (_box: THREE.Box3) => {
-  if (!scene) return
+const getBoundsSnapshot = (box: THREE.Box3 | null): BoundsSnapshot | null => {
+  if (!box || box.isEmpty()) return null
+  const { min, max } = box
+  const coords = [min.x, min.y, min.z, max.x, max.y, max.z]
+  if (!coords.every(Number.isFinite)) return null
+  return {
+    min: { x: min.x, y: min.y, z: min.z },
+    max: { x: max.x, y: max.y, z: max.z }
+  }
+}
 
-  if (gridHelper && scene) {
-    scene.remove(gridHelper)
-  }
-  if (gridBoundary && scene) {
-    scene.remove(gridBoundary)
-  }
+const disposeMaterial = (material: THREE.Material | THREE.Material[]) => {
+  const materials = Array.isArray(material) ? material : [material]
+  materials.forEach(item => item.dispose())
+}
+
+const disposeGridGroup = () => {
+  if (!gridGroup) return
+  gridGroup.traverse((child: any) => {
+    child.geometry?.dispose?.()
+    if (child.material) disposeMaterial(child.material)
+  })
+  scene?.remove(gridGroup)
+  gridGroup = null
+  gridHelper = null
+  gridBoundary = null
+}
+
+// 网格与边界只创建一次；滑杆预览只移动父 Group，避免反复分配几何体和材质。
+const ensureGridGroup = () => {
+  if (!scene || gridGroup) return
+
+  gridGroup = new THREE.Group()
+  gridGroup.name = 'manual_grid_group'
 
   gridHelper = new THREE.GridHelper(GRID_SIZE, GRID_DIVISIONS, GRID_COLOR_CENTER, GRID_COLOR_LINE)
   gridHelper.name = 'manual_grid_helper'
-  gridHelper.position.y = GRID_HEIGHT
-
   const mats = Array.isArray(gridHelper.material) ? gridHelper.material : [gridHelper.material]
   mats.forEach((mat: any) => {
     mat.depthWrite = false
@@ -4030,40 +4102,90 @@ const refreshGridHelper = (_box: THREE.Box3) => {
     mat.opacity = 0.35
   })
   gridHelper.renderOrder = -1
+  gridGroup.add(gridHelper)
 
-  scene.add(gridHelper)
-
-  // 添加边界线，强化范围感知
   const half = GRID_SIZE / 2
-  const boundaryY = GRID_HEIGHT + 0.01
   const points = [
-    new THREE.Vector3(-half, boundaryY, -half),
-    new THREE.Vector3(half, boundaryY, -half),
-    new THREE.Vector3(half, boundaryY, half),
-    new THREE.Vector3(-half, boundaryY, half),
-    new THREE.Vector3(-half, boundaryY, -half)
+    new THREE.Vector3(-half, 0.01, -half),
+    new THREE.Vector3(half, 0.01, -half),
+    new THREE.Vector3(half, 0.01, half),
+    new THREE.Vector3(-half, 0.01, half),
+    new THREE.Vector3(-half, 0.01, -half)
   ]
-  const boundaryMaterial = new THREE.LineBasicMaterial({
-    color: GRID_BOUNDARY_COLOR,
-    transparent: true,
-    opacity: 0.9
-  })
-  gridBoundary = new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), boundaryMaterial)
+  gridBoundary = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints(points),
+    new THREE.LineBasicMaterial({
+      color: GRID_BOUNDARY_COLOR,
+      transparent: true,
+      opacity: 0.9
+    })
+  )
   gridBoundary.name = 'manual_grid_boundary'
   gridBoundary.renderOrder = -1
-  scene.add(gridBoundary)
+  gridGroup.add(gridBoundary)
+  scene.add(gridGroup)
 }
 
-// 基于包围盒重置相机位置/near/far，并更新控制器 target
+const refreshGridHelper = (box: THREE.Box3) => {
+  activeSceneCalibrationGeometry.value = createSceneCalibrationGeometry(getBoundsSnapshot(box))
+  ensureGridGroup()
+  if (!gridGroup) return
+  gridGroup.position.y = calculateGridHeight(
+    activeSceneCalibration.value,
+    activeSceneCalibrationGeometry.value
+  )
+}
+
+const removeAppliedCameraPan = () => {
+  if (camera && controls && appliedCameraPan.lengthSq() > 0) {
+    camera.position.sub(appliedCameraPan)
+    controls.target.sub(appliedCameraPan)
+  }
+  appliedCameraPan.set(0, 0, 0)
+}
+
+// 正值表示模型在画面中向右/向上移动，因此相机与观察中心沿反方向同步平移。
+const applyCameraCompositionOffset = (calibration: SceneCalibration) => {
+  if (!camera || !controls) return
+  removeAppliedCameraPan()
+
+  const forward = controls.target.clone().sub(camera.position)
+  if (forward.lengthSq() <= 1e-12) return
+  forward.normalize()
+  const right = forward.clone().cross(camera.up)
+  if (right.lengthSq() <= 1e-12) return
+  right.normalize()
+  const viewUp = right.clone().cross(forward).normalize()
+  const panScale = activeSceneCalibrationGeometry.value.modelScale * 0.35
+
+  appliedCameraPan
+    .copy(right)
+    .multiplyScalar(-calibration.viewOffsetXRatio * panScale)
+    .add(viewUp.multiplyScalar(-calibration.viewOffsetYRatio * panScale))
+
+  camera.position.add(appliedCameraPan)
+  controls.target.add(appliedCameraPan)
+  controls.update()
+}
+
+const applySceneCalibrationPreview = (value: SceneCalibration) => {
+  activeSceneCalibration.value = sanitizeSceneCalibration(value)
+  refreshGridHelper(restModelBox?.clone() || new THREE.Box3())
+  applyCameraCompositionOffset(activeSceneCalibration.value)
+}
+
+// 基于包围盒重置相机位置/near/far，并重放当前 GLB 的画面偏移。
 const fitCameraToBox = (box: THREE.Box3) => {
   if (!camera) return
 
-  const size = new THREE.Vector3()
-  box.getSize(size)
-  const center = box.getCenter(new THREE.Vector3())
+  const geometry = createSceneCalibrationGeometry(getBoundsSnapshot(box))
+  const size = new THREE.Vector3(geometry.modelScale, geometry.modelScale, geometry.modelScale)
+  const center = geometry.isValid ? box.getCenter(new THREE.Vector3()) : new THREE.Vector3()
+  if (geometry.isValid) box.getSize(size)
   const maxDim = Math.max(size.x, size.y, size.z, 1)
   const dist = maxDim * 2.5
 
+  appliedCameraPan.set(0, 0, 0)
   camera.position.set(center.x + dist, center.y + dist * 0.6, center.z + dist)
   camera.lookAt(center)
   camera.near = Math.max(0.1, maxDim / 500)
@@ -4073,6 +4195,7 @@ const fitCameraToBox = (box: THREE.Box3) => {
   if (controls) {
     controls.target.copy(center)
     controls.update()
+    applyCameraCompositionOffset(activeSceneCalibration.value)
   }
 
   console.log('🎯 相机自适应完成', {
@@ -4080,8 +4203,109 @@ const fitCameraToBox = (box: THREE.Box3) => {
     center: center.toArray(),
     cameraPosition: camera.position.toArray(),
     near: camera.near,
-    far: camera.far
+    far: camera.far,
+    calibration: activeSceneCalibration.value
   })
+}
+
+const activateSceneCalibrationForModel = (glbFile: string, box: THREE.Box3) => {
+  loadedGlbFile.value = glbFile
+  restModelBox = getBoundsSnapshot(box) ? box.clone() : null
+  activeSceneCalibration.value = readSceneCalibration(manualData.value, glbFile)
+  activeSceneCalibrationGeometry.value = createSceneCalibrationGeometry(getBoundsSnapshot(restModelBox))
+  sceneCalibrationSaveError.value = ''
+  fitCameraToBox(box)
+  refreshGridHelper(restModelBox?.clone() || new THREE.Box3())
+
+  if (!activeSceneCalibrationGeometry.value.isValid && isAdmin.value) {
+    ElMessage.warning('当前模型的位置读取不完整，已使用默认位置；可在“调整位置”中手动调整')
+  }
+}
+
+const syncSceneCalibrationFromManual = () => {
+  if (!loadedGlbFile.value) return
+  applySceneCalibrationPreview(readSceneCalibration(manualData.value, loadedGlbFile.value))
+}
+
+const openSceneCalibration = () => {
+  if (!isAdmin.value) {
+    ElMessage.warning('请先登录管理员')
+    return
+  }
+  if (isReadOnlyMode.value) {
+    ElMessage.warning('历史版本为只读，请回到当前版本后保存位置')
+    return
+  }
+  if (!loadedGlbFile.value || !model) {
+    ElMessage.warning('当前没有可调整的模型')
+    return
+  }
+
+  stopAutoPaging()
+  sceneCalibrationOpeningValue.value = { ...activeSceneCalibration.value }
+  sceneCalibrationSaveError.value = ''
+  sceneCalibrationPanelVisible.value = true
+}
+
+const previewSceneCalibration = (value: SceneCalibration) => {
+  applySceneCalibrationPreview(value)
+}
+
+const cancelSceneCalibration = () => {
+  if (sceneCalibrationSaving.value) return
+  applySceneCalibrationPreview(sceneCalibrationOpeningValue.value)
+  sceneCalibrationSaveError.value = ''
+  sceneCalibrationPanelVisible.value = false
+}
+
+const saveSceneCalibration = async (value: SceneCalibration) => {
+  if (!isAdmin.value || isReadOnlyMode.value) {
+    sceneCalibrationSaveError.value = '保存失败，当前调整仍保留，可以重试'
+    return
+  }
+  if (!loadedGlbFile.value || !manualData.value) {
+    sceneCalibrationSaveError.value = '保存失败，当前调整仍保留，可以重试'
+    return
+  }
+
+  const calibration = sanitizeSceneCalibration(value)
+  applySceneCalibrationPreview(calibration)
+  sceneCalibrationSaving.value = true
+  sceneCalibrationSaveError.value = ''
+
+  try {
+    const currentEditVersion = manualData.value?._edit_version ?? 0
+    const updatedData: any = writeSceneCalibration(
+      manualData.value,
+      loadedGlbFile.value,
+      calibration,
+      activeSceneCalibrationGeometry.value.boxSignature
+    )
+    updatedData._edit_version = currentEditVersion
+
+    // 滑杆期间不访问后端；管理员确认时只提交这一笔整份手册草稿。
+    const response = await axios.post(`/api/manual/${props.taskId}/save-draft`, {
+      manual_data: updatedData
+    })
+    if (!response.data?.success) throw new Error(response.data?.message || '草稿保存未返回成功状态')
+
+    updatedData._edit_version = currentEditVersion + 1
+    if (response.data.lastUpdated) updatedData.lastUpdated = response.data.lastUpdated
+    setManualDataValue(updatedData)
+    isDraftMode.value = true
+    localStorage.setItem(`current_manual_draft_${props.taskId}`, JSON.stringify(updatedData))
+    activeSceneCalibration.value = readSceneCalibration(updatedData, loadedGlbFile.value)
+    sceneCalibrationOpeningValue.value = { ...activeSceneCalibration.value }
+    sceneCalibrationPanelVisible.value = false
+    ElMessage.success('位置已保存')
+  } catch (error: any) {
+    const detail = error.response?.data?.detail || error.message || '未知错误'
+    console.error('保存位置失败', detail)
+    sceneCalibrationSaveError.value = '保存失败，当前调整仍保留，可以重试'
+    ElMessage.error(sceneCalibrationSaveError.value)
+  } finally {
+    sceneCalibrationSaving.value = false
+  }
 }
 
 // 清理3D资源，避免重复初始化叠加canvas/事件
@@ -4106,14 +4330,7 @@ const cleanup3DViewer = () => {
     renderer.dispose()
     renderer = null
   }
-  if (scene && gridHelper) {
-    scene.remove(gridHelper)
-  }
-  if (scene && gridBoundary) {
-    scene.remove(gridBoundary)
-  }
-  gridHelper = null
-  gridBoundary = null
+  disposeGridGroup()
   model = null
   scene = null
   camera = null
@@ -4130,6 +4347,13 @@ const cleanup3DViewer = () => {
   meshWorldExplodeDistances = new Map()
   meshWorldExplodeMaxDistance = 0
   cachedModelMaxDim = 0  // ✅ 清理缓存
+  restModelBox = null
+  loadedGlbFile.value = ''
+  appliedCameraPan.set(0, 0, 0)
+  activeSceneCalibration.value = createAutomaticSceneCalibration()
+  activeSceneCalibrationGeometry.value = createSceneCalibrationGeometry(null)
+  sceneCalibrationPanelVisible.value = false
+  sceneCalibrationSaveError.value = ''
 }
 
 // 历史预览版本的暂存（用于返回当前页面时创建草稿）
@@ -4281,7 +4505,7 @@ const init3DViewer = () => {
   controls.enableDamping = true
   controls.dampingFactor = 0.05
 
-  // 添加底部地面网格（初始位置，后续模型加载时仍会重建）
+  // 先创建唯一网格组，模型加载后只按归位包围盒更新尺寸与位置。
   refreshGridHelper(new THREE.Box3())
 
   // 动画循环
@@ -4295,8 +4519,33 @@ const init3DViewer = () => {
   animate()
   console.log('🎬 动画循环已启动')
 
-  // ✅ 调试：暴露到window对象
-  ;(window as any).__three_debug__ = { scene, camera, renderer, controls, THREE }
+  // ✅ 调试：保留既有入口，并补充校准状态与对象计数，供真实页面回归验证。
+  ;(window as any).__three_debug__ = {
+    scene,
+    camera,
+    renderer,
+    controls,
+    THREE,
+    getSceneCalibrationState: () => ({
+      glbFile: loadedGlbFile.value,
+      calibration: { ...activeSceneCalibration.value },
+      geometry: { ...activeSceneCalibrationGeometry.value },
+      gridHeight: calculateGridHeight(
+        activeSceneCalibration.value,
+        activeSceneCalibrationGeometry.value
+      ),
+      modelPosition: model?.position.toArray() || null,
+      cameraPosition: camera?.position.toArray() || null,
+      controlsTarget: controls?.target.toArray() || null
+    }),
+    countObjectsByName: (name: string) => {
+      let count = 0
+      scene?.traverse(item => {
+        if (item.name === name) count += 1
+      })
+      return count
+    }
+  }
 
   // 窗口大小调整
   const handleResize = () => {
@@ -4490,10 +4739,9 @@ const load3DModel = async () => {
       console.log(`⚠️ ${nearCenterCount} 个零件非常接近中心，使用随机方向`)
     }
 
-    // 调整相机位置/near/far 以适应模型
+    // 缓存归位包围盒，并按当前 GLB 读取网格与画面校准。
     const fitBox = new THREE.Box3().setFromObject(model)
-    fitCameraToBox(fitBox)
-    refreshGridHelper(fitBox)
+    activateSceneCalibrationForModel(glbFile, fitBox)
 
     scene.add(model)
     console.log('✅ 3D模型已添加到场景')
@@ -4673,9 +4921,9 @@ const switchGLBModel = async (glbFile: string) => {
       console.log(`⚠️ ${nearCenterCount} 个零件非常接近中心，使用随机方向`)
     }
 
-    // 7. 调整相机
-    fitCameraToBox(new THREE.Box3().setFromObject(model))
-    refreshGridHelper(new THREE.Box3().setFromObject(model))
+    // 7. 缓存归位包围盒，并重放此 GLB 独立的场景校准。
+    const fitBox = new THREE.Box3().setFromObject(model)
+    activateSceneCalibrationForModel(glbFile, fitBox)
 
     // 8. 添加到场景
     scene.add(model)
@@ -6308,6 +6556,10 @@ onUnmounted(() => {
       justify-content: center;
       gap: 16px;
       flex-wrap: wrap;
+    }
+
+    .scene-calibration-entry {
+      margin-left: 0;
     }
 
     // PC端：滑块和按钮在同一行

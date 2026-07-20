@@ -1,5 +1,34 @@
 # Memory Changelog
 
+## v2.1.57 (2026-07-20)
+- **ManualViewer 通用场景位置调整与右侧无蒙层面板**：
+  - **用户目标**：
+    - 不同 GLB 的模型底部高度差异较大，固定 `y=-5` 的网格会穿入部分模型；管理员需要边看模型边调整网格和画面位置，并把结果随手册草稿/发布共享给普通查看者。
+    - 居中弹窗和全屏遮罩会挡住 3D 模型，调整时无法观察实时效果，因此入口和面板文案也需要改成普通用户能直接理解的表达。
+  - **问题根因**：
+    1. `ManualViewer.vue` 旧实现用固定绝对高度创建网格，无法覆盖不同尺寸、不同包围盒底部的 GLB。
+    2. 画面构图若直接移动模型根节点，会破坏爆炸/收起依赖的世界坐标缓存；正确边界是同步平移相机与 `OrbitControls.target`。
+    3. 同一手册可能包含多个 GLB，只按任务保存一个值会串配置。
+    4. 初版居中 `el-dialog` 使用遮罩并占据模型区域，不适合需要持续观察 3D 反馈的调节场景。
+  - **实现方案**：
+    1. 新增 `manual-viewer/sceneCalibration.ts`，按归位模型包围盒底部与相对模型尺寸计算自动网格基线，并以 `schema_version`、归一化偏移和 `box_signature` 处理旧手册及包围盒变化。
+    2. 配置写入 `metadata.viewer_settings.scene_calibration_by_glb[glb_file]`，复用现有 `save-draft/publish` 链；滑杆拖动只更新本地预览，点击保存才请求一次后端。
+    3. 网格与边界合并到唯一 `THREE.Group`，实时调整只移动 Group；画面左右/上下调整同步移动相机和观察目标，不改变模型世界坐标或爆炸缓存。
+    4. 新增 `SceneCalibrationPanel.vue`，桌面管理员从 3D 控制区点击“调整位置”后，在右侧说明栏内打开无蒙层面板；面板不锁页面滚动、不重排或覆盖中间画布，X/取消恢复打开前状态。
+    5. 旧手册没有字段时直接使用自动默认；历史版本和移动端不显示入口，普通查看者只读取已发布配置。
+  - **验证结果**：
+    1. `npm.cmd run build` 通过，Vite 构建 `1856 modules`。
+    2. `node --test tests/sceneCalibration.test.mjs tests/sceneCalibrationPanel.test.mjs` 为 `9/9` 通过，覆盖旧数据默认、按 GLB 隔离、恢复默认、无模态遮罩、挂载位置、事件签名和用户文案。
+    3. `git diff --check` 通过；已有 `vue-tsc@1.8.27` 与 `typescript@5.9.3` 不兼容，独立类型检查仍无法运行，生产构建不受影响。
+    4. 核心 Three.js 状态与数据流完成两轮有效外部代码审查；小糖自行重建最新容器后于 `2026-07-20` 明确反馈“验收好了没啥问题”，页面视觉验收通过。
+  - **决策摘要**：
+    - **根因判断**：问题来自固定网格绝对高度和不可观察的模态调节方式，不是单个模型需要写死一个新高度。
+    - **方案取舍**：选择“自动基线 + 按 GLB 归一化微调 + 相机构图平移 + 既有草稿/发布链”，同时兼顾旧手册兼容、多 GLB 隔离、模型世界坐标稳定与跨模型尺度。
+    - **未选方案**：没有移动模型根节点、没有新增数据库或独立设置接口，也没有为移动端管理员新增入口；这些方案会破坏爆炸坐标、扩大数据链或违背移动端只读口径。
+    - **当前遗留边界**：显式 `vue-tsc` 仍受既有工具链版本不兼容影响；多 GLB 页面切换缺少可重复的自动化浏览器样本，当前由纯函数回归和真实数据结构取证覆盖。
+  - **影响文件**：`frontend/src/views/ManualViewer.vue`、`frontend/src/views/manual-viewer/sceneCalibration.ts`、`frontend/src/views/manual-viewer/components/SceneCalibrationPanel.vue`、`frontend/tests/sceneCalibration.test.mjs`、`frontend/tests/sceneCalibrationPanel.test.mjs`、`Memory_Development/index.md`、`Memory_Development/frontend/routes.md`、`Memory_Development/data-flow/data_flow.md`
+  - **记录人**：Codex 独立执行任务 `019f7d02-7394-7682-aff9-5531416fc7e1`
+
 ## v2.1.56 (2026-07-01)
 - **STEP->GLB 转换链路补强：区分非标准 STEP、放宽重模型链路，并回收已生成的 GLB 结果（2026-07-02）**：
   - **用户提问**：
