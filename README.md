@@ -1,6 +1,6 @@
 # 智能装配说明书生成系统
 
-[![Version](https://img.shields.io/badge/version-v2.1.57-blue.svg)](https://github.com/xiaotang-12-ops/yilite/releases)
+[![Version](https://img.shields.io/badge/version-v2.1.58-blue.svg)](https://github.com/xiaotang-12-ops/yilite/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Docker](https://img.shields.io/badge/docker-ready-brightgreen.svg)](DOCKER_DEPLOYMENT.md)
 
@@ -8,16 +8,26 @@
 
 一个基于AI的智能装配说明书生成系统，能够自动解析PDF工程图纸和3D模型，生成工人友好的交互式HTML装配说明书。
 
-**当前版本**: v2.1.57 | [查看版本历史](https://github.com/xiaotang-12-ops/yilite/releases) | [部署指南](DOCKER_DEPLOYMENT.md)
+**当前版本**: v2.1.58 | [查看版本历史](https://github.com/xiaotang-12-ops/yilite/releases) | [部署指南](DOCKER_DEPLOYMENT.md)
 
 ## 版本与分支口径（2026-07-01 校正）
+
+正式入口使用 Docker：`http://<服务器IP>:3008/`（HTTPS 为 `3443`）。名称、管理员菜单和厂区成果看板随正式前后端镜像交付，不再依赖 `4181/8009` 临时预览。左上品牌长按 5 秒进入设置；名称与菜单分别保存到 `runtime_settings/brand_settings.json`、`navigation_settings.json`，与 AI 配置分离。隐藏菜单只改变管理员顶栏展示，不禁止直接访问网址。
 
 - `main`：用户当前正式/部署版本分支。2026-07-01 起以现场稳定版本为准维护主线。
 - `dev`：后续开发分支。日常改动先进入 `dev`，准备上线时再合并回 `main`。
 - `v2.1.55`：正式标签，指向提交 `7556710`，表示依据 `assembly-manual_images_v2.1.55.tar` 反推并恢复出的用户现场部署版本。
 - `v2.1.55-cloud-base`：历史保留标签，指向提交 `93e6640`，表示当年云端原始 `release: v2.1.55` 基线；该提交的前端不包含现场包中的 `自动翻页` 改动。
 
-## 🆕 最新更新 (v2.1.57)
+## 🆕 最新更新 (v2.1.58)
+
+- 平台、首页和厂区看板名称可独立设置并持久化。
+- 管理员可在设置页控制首页、生成器、查看器、厂区模型四项顶栏入口。
+- 新增厂区成果看板、厂区模型与说明书/图纸摘要，复用正式后端接口。
+- 正式入口统一为 `3008`，清退临时预览；两份网页 GLB 随仓库和镜像交付。
+- 发布及回退说明见 [RELEASE_v2.1.58.md](RELEASE_v2.1.58.md) 和 [DEPLOYMENT.md](DEPLOYMENT.md)。
+
+### v2.1.57 已有能力
 
 - **📐 网格自动贴近模型底部**：不再对所有 GLB 使用固定 `y=-5`，默认位置会根据当前模型归位后的包围盒与尺寸自动计算。
 - **🎛️ 桌面管理员可调整位置**：在手册 3D 控制区点击“调整位置”，可分别调整网格上下、模型画面左右和模型画面上下位置。
@@ -70,13 +80,13 @@ cp .env.example .env
 # 3. 准备 HTTPS 证书目录（前端容器必需）
 # 在 ssl/ 下放入 server.crt 和 server.key
 
-# 4. 启动服务
-docker-compose up -d
+# 4. 构建并启动服务
+docker compose up -d --build
 ```
 
 说明：首次保存设置后，后端会自动创建 `runtime_settings/app_settings.json`，后续重启会优先读取它而不是回退到默认 `openrouter` 配置。
 
-如果当前机器上已经跑着旧版本容器，先执行 `docker compose down --remove-orphans`，或手动停止并删除对应的旧版 `assembly-backend-* / assembly-frontend-*` 容器，再构建并启动 `v2.1.57`，否则 `8008/3008/3443` 端口会被占用。
+同一个 Compose 项目更新时，`docker compose up -d --build` 会重建并替换对应服务。若端口被手动启动的其他容器占用，先核实容器归属，再停止对应旧实例；不要清理其他项目或业务目录。
 
 证书目录结构示例：
 

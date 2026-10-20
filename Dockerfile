@@ -1,7 +1,7 @@
 # 智能装配说明书生成系统 - 后端Dockerfile
-# 基于Python 3.11（slim-bullseye 规避 slim 默认镜像元数据异常）
+# 基于 Python 3.11 + Debian 12 Bookworm（Bullseye 已结束 LTS）
 
-FROM python:3.11-slim-bullseye
+FROM python:3.11-slim-bookworm
 
 # 设置工作目录
 WORKDIR /app
@@ -13,14 +13,6 @@ ENV PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     LANG=C.UTF-8 \
     LC_ALL=C.UTF-8
-
-# 配置国内镜像源以加速下载（兼容 bullseye-slim 没有 debian.sources 的情况）
-RUN if [ -f /etc/apt/sources.list.d/debian.sources ]; then \
-      sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources && \
-      sed -i 's/security.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources ; \
-    fi && \
-    sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list && \
-    sed -i 's/security.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list
 
 # 安装系统依赖
 # PDF处理依赖:
@@ -53,10 +45,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # 复制依赖文件
 COPY requirements.txt .
 
-# 配置pip国内镜像源并安装Python依赖
-RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/ && \
-    pip config set install.trusted-host mirrors.aliyun.com && \
-    pip install --no-cache-dir -r requirements.txt
+# 安装 Python 依赖（使用 pip 默认官方源）
+RUN pip install --no-cache-dir -r requirements.txt
 
 # 复制核心源码（白名单）
 COPY backend ./backend

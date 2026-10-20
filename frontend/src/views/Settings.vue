@@ -8,6 +8,8 @@
         </div>
       </template>
 
+      <BrandingSettings />
+      <NavigationSettings />
       <el-form :model="settings" label-width="150px" label-position="left">
         <!-- API密钥配置 -->
         <el-divider content-position="left">
@@ -281,6 +283,8 @@
 </template>
 
 <script setup lang="ts">
+import BrandingSettings from './Settings/BrandingSettings.vue'
+import NavigationSettings from './Settings/NavigationSettings.vue'
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Setting, Key, Lock, Tools, Connection, Link, Select, RefreshLeft, QuestionFilled, Cpu } from '@element-plus/icons-vue'

@@ -13,12 +13,18 @@
 | `/settings` | Settings.vue | 配置 AI Key / 模型（隐藏入口） | `/api/settings`, `/api/settings/health`, `/api/test-model`；品牌区鼠标左键长按 5 秒进入；provider 对外统一为 `newapi`（兼容旧 `doubao`）；支持每调用点配置 `fallback_model`（主模型失败自动切换）；一键全测会分别验证主模型与兜底模型连通性；测试后端连接与一键全测具备超时提示；一键全测会返回思考参数/completion 上限的警告信息（警告但允许）；多模态调用点（`assembly/welding/bom_vision`）在 `newapi` 下不展示 `glm-5`，手填后保存会自动替换并提示；本地缓存缺失时留空保存默认保留服务端已有 Key |
 | `/glb-test` | GLBTest.vue | GLB 场景调试 | 本地 mock 资源 |
 | `/simple-glb-test` | SimpleGLBTest.vue | 轻量 GLB 测试 | 本地 mock 资源 |
+| `/factory-model` | FactoryModel/index.vue | 桌面管理员厂区成果看板；模型探索与复位、项目状态/步骤规模/最近项目 | `/api/manuals`、`/api/branding`；静态 `/models/yilite-factory.glb` 和 `/models/yilite-tree.glb` |
 | `/icon-test` | IconTest.vue | 图标样例 | - |
 
 默认 API 基础地址：`VITE_API_BASE_URL`（未配置时同源 `/api`）；WebSocket：默认跟随当前页面协议/主机拼接 `/ws/task/{id}`（`TaskWebSocket`）；SSE：同源 `/api/stream/{id}`。
 移动端扫码注意：浏览器摄像头通常要求安全上下文（`https://` 或 `localhost`）；当前已验证内网自签 `HTTPS` 方案可用，但推荐使用系统浏览器/Chrome/Safari，第三方浏览器兼容性不稳定；客户若使用固定内网 `IP` 部署，证书需按该 `IP` 重签。
 
+## 管理员顶部菜单配置（2026-10-20，正式3008/8008）
+
+`App.vue` 在原有管理员/设备条件上叠加 `stores/navigation.ts` 的四项显隐配置；首页和查看器对普通用户保持可见。设置页 `Settings/NavigationSettings.vue` 保存草稿时才提交 `PUT /api/navigation`，共享已保存状态只在确认响应后更新；其他客户端刷新读取。隐藏不改变 `main.ts` 的路由守卫，全部隐藏后仍可长按品牌进入设置恢复。此前隔离环境已验证保存、刷新、普通用户、直链及失败恢复；本次3008验证正式页面、长按设置入口及四项开关可见性。管理员显示测试fixture不等于登录认证验证，未建立自动登录基线。
+
 ## 主要组件
+- `views/FactoryModel/`：页面私有 Three.js 场景与成果统计，窄屏和手机设备不初始化画布、不请求模型；当前只提供探索与复位，不再显示旧预设视角栏。`useFactoryStats.ts` 读取手册摘要，`backend/manual_metrics.py` 统计步骤和项目内唯一引用页。依照片近似还原厂区，非工程测绘模型。2026-10-20 已部署3008正式容器；本地 `frontend/modeling/` Blender源保留但不随本版Git发布，运行只依赖已提交的两个公共GLB。
 - `ProcessingSteps.vue` / `ProcessingVisualization*.vue`：展示任务进度与阶段。
 - `AssemblyManualViewer.vue`：渲染与交互编辑手册数据。
 - `ThreeViewer.vue`、`WorkerThreeViewer.vue`：Three.js 模型展示。

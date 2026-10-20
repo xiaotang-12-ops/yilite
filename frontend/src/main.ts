@@ -23,6 +23,7 @@ import './style/main.scss'
 // 路由配置
 const routes = [
   { path: '/', name: 'Home', component: Home },
+  { path: '/factory-model', name: 'FactoryModel', component: () => import('./views/FactoryModel/index.vue') },
   { path: '/generator', name: 'Generator', component: Generator },
   { path: '/viewer/:id?', name: 'Viewer', component: Viewer, props: true },
   { path: '/manual/:taskId', name: 'ManualViewer', component: ManualViewer, props: true },
@@ -43,7 +44,7 @@ const SETTINGS_UNLOCK_KEY = 'settings_unlock_until'
 const ADMIN_STATUS_KEY = 'isAdmin'
 
 router.beforeEach((to, _from, next) => {
-  if (to.path === '/generator') {
+  if (to.path === '/generator' || to.name === 'FactoryModel') {
     const adminStatus = sessionStorage.getItem(ADMIN_STATUS_KEY)
     if (adminStatus !== 'true') {
       next({ path: '/' })

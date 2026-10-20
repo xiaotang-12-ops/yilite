@@ -12,7 +12,7 @@
       <div class="main-title-section">
         <h1 class="main-title">
           <!-- <div class="title-line">易力特</div> -->
-          <div class="title-line">装配指导</div>
+          <div class="title-line" :style="{ '--brand-title-length': titleLineLength }">{{ brandingStore.branding.home_title }}</div>
         </h1>
         
         <div class="feature-list">
@@ -84,7 +84,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { useBrandingStore } from '@/stores/branding'
+const brandingStore = useBrandingStore()
+import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
+// 保留短标题原字号，长配置按最长行收敛字号，避免把首页内容挤出首屏。-codex，2026-10-10
+const titleLineLength = computed(() => Math.max(1, ...brandingStore.branding.home_title.split('\n').map(line => Array.from(line).length)))
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useDark } from '@vueuse/core'
@@ -581,6 +585,9 @@ onUnmounted(() => {
   text-transform: uppercase;
 
   .title-line {
+    font-size: min(1em, max(1.25rem, calc(40rem / var(--brand-title-length, 4))));
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
     display: block;
     line-height: 1.08;
     padding: 0;

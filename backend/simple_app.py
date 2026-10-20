@@ -32,6 +32,9 @@ from fastapi import FastAPI, UploadFile, File, HTTPException, WebSocket, WebSock
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse, Response, JSONResponse
 from pydantic import BaseModel, Field
+from backend.brand_settings import create_brand_router
+from backend.navigation_settings import create_navigation_router
+from backend.manual_metrics import summarize_manual
 import uvicorn
 import asyncio
 from fastapi import Query
@@ -70,6 +73,9 @@ app = FastAPI(
     docs_url="/api/docs",
     redoc_url="/api/redoc"
 )
+
+app.include_router(create_brand_router(RUNTIME_SETTINGS_DIR))
+app.include_router(create_navigation_router(RUNTIME_SETTINGS_DIR))
 
 # CORS中间件
 app.add_middleware(
@@ -1436,6 +1442,7 @@ async def list_manuals(include_failed: bool = Query(False, description="是否�
                         'productName': product_name,
                         'timestamp': timestamp,
                         'stepCount': step_count,
+                        **summarize_manual(manual_data, task_dir.name),
                         'status': 'completed',
                         'projectCategory': project_category,
                     })

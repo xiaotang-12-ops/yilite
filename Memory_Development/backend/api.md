@@ -4,7 +4,11 @@
 
 | 方法 | 路径 | 目的 | 请求要点 | 响应/副作用 |
 | --- | --- | --- | --- | --- |
+| GET | `/api/branding` | 读取公开平台名称（v2.1.58正式8008） | 无 | 返回 `branding.platform_name/home_title/dashboard_title` 与 `warning`；缺失/损坏配置回退并告警，不自动覆盖 |
+| PUT | `/api/branding` | 独立保存名称（v2.1.58正式8008） | 平台名1-24字单行，首页标题1-60字最多3行；看板标题默认“装配成果总览”、1-24字最多2行；去首尾空白，拒绝额外字段 | `backend/brand_settings.py` 原子替换 `runtime_settings/brand_settings.json`；不触碰AI设置；沿用既有无服务端认证边界，隐藏入口不是鉴权 |
 | GET | `/api/health` | 健康检查 | - | `status`,`version`,`timestamp` |
+| GET | `/api/navigation` | 读取管理员顶栏显示配置（v2.1.58正式8008） | 无 | 返回 `navigation.home/generator/viewer/factory` 四布尔与 `warning`；默认全显示；损坏配置回退并告警；`Cache-Control: no-store` |
+| PUT | `/api/navigation` | 独立保存管理员顶栏显示配置（v2.1.58正式8008） | 四个严格布尔全部必填，拒绝额外字段；允许全部隐藏 | `backend/navigation_settings.py` 原子保存 `runtime_settings/navigation_settings.json`，不覆盖名称/AI配置；仅控制菜单展示，不承担鉴权。原8009临时服务已停止清理 |
 | POST | `/api/upload` | 上传 PDF/STEP 文件 | FormData：`pdf_files[]`、`model_files[]`；后端限制一次**仅 1 个 PDF + 1 个 STEP**，上传前清空 `uploads/` | 200：返回文件名/size/path；409：`code=TASK_BUSY`（全局已有任务运行，返回 `task_id/project_name/created_at/updated_at`） |
 | POST | `/api/generate` | 启动生成任务 | JSON：`config.projectName`，`pdf_files[]`(1)，`model_files[]`(1)，`conflict_strategy`（可选：`prompt` 默认/`overwrite` 覆盖/`duplicate` 生成 `_v_n`）；task_id = PDF 基名，STEP 名可不同，生成时会按最终 task_id 重命名存储 | 200：启动成功返回 `task_id`；409：`code=TASK_BUSY`（已有任务运行）或 `TASK_EXISTS/TASK_RUNNING/TASK_FAILED`（同名冲突，含 `manual_exists/manual_valid/manual_error/failure_hint` 等）；`overwrite`：成功任务归档到 `output_archive/{task_id}/<timestamp>/`，失败/损坏任务直接删除 |
 | GET | `/api/status/{task_id}` | 查询任务状态 | 路径参数 | 优先返回内存任务；若不存在则回退读取 `output/{task_id}/task_status.json` |
@@ -12,7 +16,7 @@
 | POST | `/api/task/{task_id}/resume` | 继续失败/中断任务 | 路径参数 | 基于 `output/{task_id}` 继续跑；若已完成/运行中会返回 409 冲突 |
 | GET | `/api/stream/{task_id}` | SSE 日志/进度流 | 路径参数 | 文本/event-stream，读取 utils.logger 日志缓冲 |
 | WS | `/ws/task/{task_id}` | WebSocket 进度流 | 路径参数 | 周期推送进度/完成/失败 |
-| GET | `/api/manuals` | 列出已生成手册 | - | 扫描 `output/*/assembly_manual.json`，返回列表；每条含 `projectCategory`（`pending/published/archived`） |
+| GET | `/api/manuals` | 列出已生成手册 | - | 扫描 `output/*/assembly_manual.json`，返回列表；每条含 `projectCategory`（`pending/published/archived`）、`assemblyStepCount`、`referencedDrawingPageCount`；后两项由 `manual_metrics.summarize_manual` 计算，异常为null及 `metricsError`，引用页是本项目API图片路径去重数，不代表原PDF总页数 |
 | GET | `/api/manual/{task_id}` | 读取已发布手册 | 路径参数 | 直接读文件，替换 JSON 中 `{task_id}` 占位 |
 | PUT | `/api/manual/{task_id}/category` | 更新项目业务分类 | JSON：`category`=`pending/published/archived` | 同步更新 `assembly_manual.json`、`draft.json`、`task_status.json` 和内存任务中的 `project_category`；若 `task_status.json` 是历史坏文件，会按发布版手册自动重建最小合法状态后继续写入 |
 | GET | `/api/manual/{task_id}/draft` | 读取草稿 | 路径参数 | 无草稿返回 404 |

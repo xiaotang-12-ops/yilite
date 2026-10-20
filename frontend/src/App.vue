@@ -16,23 +16,27 @@
           <!-- 用户现场版本保留原 Logo 与标题，仅把隐藏设置入口改成左键长按 5 秒。 -->
           <img class="brand-icon" src="/logo.png" alt="品牌Logo" />
           <div class="brand-text">
-            <h1>装配指导</h1>
+            <h1 :title="brandingStore.branding.platform_name">{{ brandingStore.branding.platform_name }}</h1>
             <span>Assembly Instructions</span>
           </div>
         </div>
         
         <div class="nav-menu">
-          <router-link to="/" class="nav-item" active-class="active">
+          <router-link v-if="!isAdmin || navigationStore.visible.home" to="/" class="nav-item" active-class="active">
             <el-icon><House /></el-icon>
             <span>首页</span>
           </router-link>
-          <router-link v-if="isAdmin" to="/generator" class="nav-item" active-class="active">
+          <router-link v-if="isAdmin && navigationStore.visible.generator" to="/generator" class="nav-item" active-class="active">
             <el-icon><DocumentAdd /></el-icon>
             <span>生成器</span>
           </router-link>
-          <router-link to="/viewer" class="nav-item" active-class="active">
+          <router-link v-if="!isAdmin || navigationStore.visible.viewer" to="/viewer" class="nav-item" active-class="active">
             <el-icon><View /></el-icon>
             <span>查看器</span>
+          </router-link>
+          <router-link v-if="isAdmin && navigationStore.visible.factory && !isMobile && !factoryMobileDevice" to="/factory-model" class="nav-item" active-class="active">
+            <el-icon><OfficeBuilding /></el-icon>
+            <span>厂区模型</span>
           </router-link>
           <router-link to="/settings" class="nav-item" active-class="active" v-if="false">
             <el-icon v-if="false"><Setting /></el-icon>
@@ -161,16 +165,24 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { storeToRefs } from 'pinia'
 import { useDark, useToggle, useMediaQuery } from '@vueuse/core'
-import { Sunny, Moon, House, DocumentAdd, View, Setting, Menu, Lock, User } from '@element-plus/icons-vue'
+import { Sunny, Moon, House, DocumentAdd, View, Setting, Menu, Lock, User, OfficeBuilding } from '@element-plus/icons-vue'
 import { useAdminStore } from './stores/admin'
+import { useBrandingStore } from './stores/branding'
+import { useNavigationStore } from './stores/navigation'
+import { isMobileDevice } from './utils/isMobileDevice'
 
 const isDark = useDark()
 const toggleDark = useToggle(isDark)
 const isMobile = useMediaQuery('(max-width: 1024px)')
+const factoryMobileDevice = isMobileDevice()
 const mobileMenuOpen = ref(false)
 const router = useRouter()
 const settingsUnlockTimer = ref<number | null>(null)
 const adminStore = useAdminStore()
+const brandingStore = useBrandingStore()
+void brandingStore.load()
+const navigationStore = useNavigationStore()
+void navigationStore.load()
 const { isAdmin } = storeToRefs(adminStore)
 
 adminStore.ensureInit()
@@ -243,6 +255,11 @@ const handleLogout = () => {
     router.push('/')
   }
 }
+
+// 登录态失效立即离开成果看板，路由守卫同时限制直接访问。-codex，2026-10-10
+watch(isAdmin, (loggedIn) => {
+  if (!loggedIn && router.currentRoute.value.name === 'FactoryModel') void router.replace('/')
+}, { flush: 'sync' })
 
 const clearSettingsUnlockTimer = () => {
   if (settingsUnlockTimer.value !== null) {
@@ -325,7 +342,12 @@ onBeforeUnmount(() => {
     }
     
     .brand-text {
+      min-width: 0;
       h1 {
+        max-width: 240px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
         margin: 0;
         font-size: 18px;
         font-weight: 600;

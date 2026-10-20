@@ -1,11 +1,16 @@
 # 📸 项目快照 - Memory Development
 
 **创建时间**: 2025-11-18
-**最后校对**: 2026-07-20
-**当前版本**: v2.1.57
+**最后校对**: 2026-10-20
+**当前版本**: v2.1.58
 **项目状态**: 核心功能完成，可用；ManualViewer“调整位置”右侧无蒙层面板已由小糖完成页面验收
 
 ---
+
+## 当前正式能力（2026-10-20，3008/8008 Docker）
+- **管理员菜单显示**：设置页独立控制首页、生成器、查看器、厂区模型四项管理员顶部入口。`stores/navigation.ts` 与 `backend/navigation_settings.py` 的 `GET/PUT /api/navigation` 使用独立 `navigation_settings.json`，不覆盖名称或AI设置。仅隐藏管理员顶栏，不禁止直链，普通用户菜单不变；其他电脑刷新生效。
+- **平台展示名称**：品牌区长按 5 秒进入 `/settings`，独立编辑平台名、首页标题与看板标题，局部预览后保存。`stores/branding.ts` 与 `backend/brand_settings.py` 使用独立 `runtime_settings/brand_settings.json`，不读写 AI Key。沿用既有隐藏入口，未新增服务端认证。
+- **厂区成果看板**：`views/FactoryModel/` 在桌面管理员路由 `/factory-model` 展示厂房/树GLB、项目分类、装配步骤、引用图纸页与最近项目；统计复用 `/api/manuals` 摘要，不新增数据表。正式资源随前端镜像发布，模型加载与名称/菜单读取已在3008核对。原4181/8009预览进程、专用脚本与构建已清理；客户部署与回退见根目录 `RELEASE_v2.1.58.md`。
 
 ## Git 版本口径（2026-07-01 校正）
 - `main` = 用户当前部署/正式版本分支；2026-07-01 起主线以现场稳定版本口径为准。
@@ -108,7 +113,7 @@ output/{task_id} (JSON + GLB + 图片)
 ---
 
 ## 运行与环境
-- Docker：`docker-compose up --build`（映射 `8008:8008` 后端、`3008:80` 前端 HTTP、`3443:443` 前端 HTTPS）；前端 `HTTPS` 证书目录统一为宿主机本地 `./ssl` 只读挂载到容器 `/etc/nginx/ssl`，不再打包进镜像；根目录 `.gitignore` 与 `.dockerignore` 都会排除 `ssl/` 与 `runtime_settings/`；后端运行期 AI 设置持久化到宿主机 `./runtime_settings/app_settings.json`；镜像名附版本 `assembly-manual-*-v2.1.57`。
+- Docker：`docker-compose up --build`（映射 `8008:8008` 后端、`3008:80` 前端 HTTP、`3443:443` 前端 HTTPS）；后端基于 `python:3.11-slim-bookworm`，APT 与 pip 复用基础镜像/工具默认官方源，不再硬编码第三方镜像；前端 `HTTPS` 证书目录统一为宿主机本地 `./ssl` 只读挂载到容器 `/etc/nginx/ssl`，不再打包进镜像；根目录 `.gitignore` 与 `.dockerignore` 都会排除 `ssl/` 与 `runtime_settings/`；后端运行期 AI 设置持久化到宿主机 `./runtime_settings/app_settings.json`；镜像标签为 `assembly-manual-backend:v2.1.58` 与 `assembly-manual-frontend:v2.1.58`。
 - 本地调试：后端 `uvicorn backend.simple_app:app --host 0.0.0.0 --port 8008`；前端 `npm install && npm run dev`（默认 3000）。
 - 必需环境变量：按调用点配置需要 `OPENROUTER_API_KEY` / `DEEPSEEK_API_KEY` / `NEWAPI_API_KEY`（兼容 `ARK_API_KEY`）；可选 `BLENDER_EXE` 指向 Blender 可执行文件。
 

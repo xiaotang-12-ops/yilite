@@ -2,7 +2,11 @@
 
 本文档说明如何从 GitHub 克隆项目并使用 Docker 部署智能装配说明书生成系统。
 
-**当前版本**: v2.1.57 | [查看所有版本](https://github.com/xiaotang-12-ops/yilite/releases)
+**当前版本**: v2.1.58 | [查看所有版本](https://github.com/xiaotang-12-ops/yilite/releases)
+
+本版包含厂区模型/成果看板、名称与管理员菜单显示设置，正式端口为 HTTP `3008`、HTTPS `3443`、后端 `8008`，不依赖 `4181/8009`。固定版本交付、已验证范围和回退方法见 [v2.1.58 发布说明](RELEASE_v2.1.58.md)。`docker compose build` 只构建镜像，还需执行 `docker compose up -d` 更新运行容器。
+
+升级前备份 `.env`、`ssl/`、`runtime_settings/`、`output/`、`output_archive/` 等持久目录，保留旧镜像。名称/菜单分别使用 `runtime_settings/brand_settings.json`、`navigation_settings.json`；不要用预览配置覆盖客户的 `app_settings.json` 或密钥。新客户可部署后长按品牌 5 秒，在设置中填写展示名称并设置四项菜单显隐。
 
 ---
 
@@ -48,7 +52,7 @@ cd yilite
 
 #### 部署特定版本
 
-如果你想部署特定版本（例如 `v2.1.57`），可以使用以下命令：
+如果你想部署特定版本（例如 `v2.1.58`），可以使用以下命令：
 
 ```bash
 # 克隆项目
@@ -59,10 +63,7 @@ cd yilite
 git tag
 
 # 切换到特定版本
-git checkout v2.1.57
-
-# 进入项目目录
-cd yilite
+git checkout v2.1.58
 ```
 
 **查看所有版本**: https://github.com/xiaotang-12-ops/yilite/releases
@@ -141,8 +142,8 @@ docker-compose logs -f
 
 | 服务名称 | 容器名称 | 端口 | 说明 |
 |---------|---------|------|------|
-| backend | assembly-backend-v2.1.57 | 8008 | FastAPI 后端服务 |
-| frontend | assembly-frontend-v2.1.57 | 3008 / 3443 (映射到容器的 80 / 443 端口) | Vue 3 前端服务，支持 HTTP/HTTPS，证书来自宿主机根级 `ssl/` 挂载 |
+| backend | assembly-backend-v2.1.58 | 8008 | FastAPI 后端服务 |
+| frontend | assembly-frontend-v2.1.58 | 3008 / 3443 (映射到容器的 80 / 443 端口) | Vue 3 前端服务，支持 HTTP/HTTPS，证书来自宿主机根级 `ssl/` 挂载 |
 
 ### 数据持久化
 
@@ -163,11 +164,8 @@ docker-compose logs -f
 
 ### 启动服务
 ```bash
-# 如果本机已经跑着旧版本容器，先停掉旧容器避免 8008/3008/3443 端口占用
-docker compose down --remove-orphans
-
-# 启动所有服务
-docker-compose up -d
+# 构建并启动；同项目旧容器由Compose替换，不清空持久目录
+docker compose up -d --build
 
 # 只启动后端
 docker-compose up -d backend
@@ -176,7 +174,7 @@ docker-compose up -d backend
 docker-compose up -d frontend
 ```
 
-如果你之前是手动启动的旧版 `assembly-backend-*` / `assembly-frontend-*` 容器，也可以先用 `docker stop` + `docker rm` 清理对应旧容器，再构建并启动 `v2.1.57`。
+如果你之前是手动启动的旧版 `assembly-backend-*` / `assembly-frontend-*` 容器，也可以先用 `docker stop` + `docker rm` 清理对应旧容器，再构建并启动 `v2.1.58`。
 
 ### 停止服务
 ```bash
@@ -232,13 +230,13 @@ docker-compose build backend
 ### 进入容器
 ```bash
 # 进入后端容器
-docker exec -it assembly-backend-v2.1.57 bash
+docker exec -it assembly-backend-v2.1.58 bash
 
 # 进入前端容器
-docker exec -it assembly-frontend-v2.1.57 sh
+docker exec -it assembly-frontend-v2.1.58 sh
 
 # 在后端容器中执行Python命令
-docker exec -it assembly-backend-v2.1.57 python -c "print('Hello')"
+docker exec -it assembly-backend-v2.1.58 python -c "print('Hello')"
 ```
 
 ---
@@ -286,8 +284,8 @@ Error: bind: address already in use
 
 3. 检查健康状态：
    ```bash
-   docker inspect assembly-backend-v2.1.48 | grep -A 10 Health
-   docker inspect assembly-frontend-v2.1.48 | grep -A 10 Health
+   docker inspect assembly-backend-v2.1.58 --format '{{json .State.Health}}'
+   docker inspect assembly-frontend-v2.1.58 --format '{{json .State.Health}}'
    ```
 
 ### 问题3: API密钥错误
@@ -339,7 +337,7 @@ Error: OPENROUTER_API_KEY not set
    df -h
    ```
 
-3. 使用国内镜像源（已在 Dockerfile 中配置）
+3. 当前 Dockerfile 使用默认官方 APT/pip 源；构建网络受限时，按客户网络条件配置可用代理或镜像源，不假定已内置国内源。
 
 ---
 

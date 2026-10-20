@@ -77,6 +77,11 @@ runtime_settings/
 # Large model files
 *.glb
 *.gltf
+# 本页自带的厂区静态资源必须随源码交付，其他生成模型继续忽略。
+!frontend/public/models/yilite-factory.glb
+!frontend/public/models/yilite-tree.glb
+# 写实树木的可再下载原始高模不随源码提交，网页轻量GLB单独交付。
+frontend/modeling/reference-assets/
 *.step
 *.stp
 *.STEP
@@ -137,3 +142,6 @@ models_cache/
 
 assembly-manual_images_*.tar
 
+# 名称功能隔离预览构建（不覆盖正式 dist）
+/frontend/dist-branding/
+/20261010_092631_factory-dashboard/
